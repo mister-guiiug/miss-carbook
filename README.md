@@ -104,6 +104,15 @@ Si Supabase n’est pas disponible : **Firebase** (plan Spark) peut remplacer Au
 - GitHub Pages : pas de traitement serveur, pas de données hautement sensibles (CGU GitHub).
 - La sécurité repose sur **RLS** et sur la **clé anon** ; ne pas désactiver RLS en production.
 
+## Dépannage
+
+### Création de dossier en **403** (`42501`)
+
+Souvent dû à la RLS sur **`workspace_members`** : la policy `wm_insert_admin` exige déjà le rôle admin, alors que le trigger qui vous ajoute comme premier admin ne peut pas la satisfaire tant qu’aucun membre n’existe — toute la transaction échoue (y compris l’INSERT sur `workspaces`).
+
+**Correctif** : dans Supabase → **SQL Editor**, exécuter le fichier `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql`  
+(ajoute la policy `wm_insert_creator_first` pour la **première** ligne membre, réservée au créateur du dossier).
+
 ## Licence
 
 Voir le fichier `LICENSE` du dépôt.
