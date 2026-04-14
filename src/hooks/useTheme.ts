@@ -12,10 +12,13 @@ function getSnapshot(): ThemeMode {
 
 export function useTheme() {
   const mode = useSyncExternalStore(subscribe, getSnapshot, () => 'light' as ThemeMode)
-  const toggle = useCallback(() => {
-    const next: ThemeMode = mode === 'dark' ? 'light' : 'dark'
+  const setMode = useCallback((next: ThemeMode) => {
     setTheme(next)
     window.dispatchEvent(new Event('mc-theme'))
-  }, [mode])
-  return { mode, toggle, set: setTheme }
+  }, [])
+  const toggle = useCallback(() => {
+    const next: ThemeMode = mode === 'dark' ? 'light' : 'dark'
+    setMode(next)
+  }, [mode, setMode])
+  return { mode, toggle, setMode }
 }

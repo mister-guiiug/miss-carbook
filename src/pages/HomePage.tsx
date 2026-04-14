@@ -2,17 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { notifyProfileUpdated } from '../lib/profileEvents'
-import { authEmailRedirectUrl } from '../lib/authRedirect'
-import { formatAuthEmailSendError } from '../lib/authEmailErrors'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useToast } from '../contexts/ToastContext'
-import {
-  displayNameRules,
-  displayNameSchema,
-  shareCodeSchema,
-  workspaceCreateSchema,
-} from '../lib/validation/schemas'
+import { shareCodeSchema, workspaceCreateSchema } from '../lib/validation/schemas'
 
 type Row = {
   workspace_id: string
@@ -44,14 +36,6 @@ export function HomePage() {
   const [code, setCode] = useState('')
   const [busyJoin, setBusyJoin] = useState(false)
 
-  const [pseudoEdit, setPseudoEdit] = useState('')
-  const [busyPseudo, setBusyPseudo] = useState(false)
-  const [profilePseudo, setProfilePseudo] = useState<string | null>(null)
-  const [busyEmail, setBusyEmail] = useState(false)
-  const [emailHint, setEmailHint] = useState<{ variant: 'info' | 'error'; text: string } | null>(
-    null
-  )
-
   const load = async () => {
     if (!user) return
     setLoading(true)
@@ -80,19 +64,6 @@ export function HomePage() {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
-
-  useEffect(() => {
-    if (!user) {
-      setProfilePseudo(null)
-      return
-    }
-    void supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setProfilePseudo(data?.display_name ?? null))
-  }, [user])
 
   useEffect(() => {
     const token = searchParams.get('invite')
@@ -182,57 +153,6 @@ export function HomePage() {
     }
   }
 
-  const savePseudo = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-    setBusyPseudo(true)
-    const parsed = displayNameSchema.safeParse(pseudoEdit)
-    if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Pseudo invalide'
-      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
-      setBusyPseudo(false)
-      return
-    }
-    try {
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
-        display_name: parsed.data,
-      })
-      if (error) throw error
-      setPseudoEdit('')
-      setProfilePseudo(parsed.data)
-      notifyProfileUpdated()
-      showToast('Pseudo mis à jour')
-    } catch (e: unknown) {
-      reportException(e, 'Mise à jour du pseudo (page d’accueil)')
-    } finally {
-      setBusyPseudo(false)
-    }
-  }
-
-  const resendMagicLink = async () => {
-    if (!user?.email) return
-    setEmailHint(null)
-    setBusyEmail(true)
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: user.email,
-        options: { emailRedirectTo: authEmailRedirectUrl() },
-      })
-      if (error) throw error
-      setEmailHint({ variant: 'info', text: 'Nouveau lien envoyé sur votre adresse.' })
-    } catch (e: unknown) {
-      const friendly = formatAuthEmailSendError(e)
-      if (friendly) {
-        setEmailHint({ variant: 'error', text: friendly })
-      } else {
-        reportException(e, 'Renvoi du lien magique')
-      }
-    } finally {
-      setBusyEmail(false)
-    }
-  }
-
   if (!user) {
     return (
       <div className="shell">
@@ -250,44 +170,10 @@ export function HomePage() {
       <div className="card stack">
         <h2 style={{ marginTop: 0 }}>Compte</h2>
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session e-mail</span>}
-          . Pour ouvrir une session sur un autre appareil, déconnectez-vous ou utilisez un autre
-          navigateur, puis saisissez la même adresse sur l’écran de bienvenue.
-          {user.email ? (
-            <button
-              type="button"
-              className="secondary"
-              style={{ marginLeft: '0.5rem' }}
-              disabled={busyEmail}
-              onClick={() => void resendMagicLink()}
-            >
-              Renvoyer un lien
-            </button>
-          ) : null}
+          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session</span>}.
+          Pseudo, thème, changement d’e-mail et renvoi de lien magique&nbsp;:{' '}
+          <Link to="/parametres">paramètres du compte</Link>.
         </p>
-        {emailHint ? (
-          <p className={emailHint.variant === 'error' ? 'error' : 'muted'}>{emailHint.text}</p>
-        ) : null}
-      </div>
-
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Modifier le pseudo</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.85rem' }}>
-          Actuel : <strong>{profilePseudo ?? '…'}</strong>. {displayNameRules}
-        </p>
-        <form onSubmit={savePseudo} className="row">
-          <input
-            value={pseudoEdit}
-            onChange={(e) => setPseudoEdit(e.target.value)}
-            placeholder="Nouveau pseudo"
-            maxLength={30}
-            autoComplete="nickname"
-            style={{ flex: '1 1 200px' }}
-          />
-          <button type="submit" className="secondary" disabled={busyPseudo || !pseudoEdit.trim()}>
-            Enregistrer
-          </button>
-        </form>
       </div>
 
       <div className="card stack">
