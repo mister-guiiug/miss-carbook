@@ -1,29 +1,50 @@
 -- Miss Carbook — schéma initial + RLS + Storage
 -- Exécuter dans Supabase SQL Editor ou via CLI : supabase db push
+-- Idempotent : base déjà provisionnée (SQL Editor sans historique migrations) → pas d’échec sur « already exists ».
 
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Types énumérés
-CREATE TYPE public.member_role AS ENUM ('read', 'write', 'admin');
-CREATE TYPE public.requirement_level AS ENUM ('mandatory', 'discuss');
-CREATE TYPE public.candidate_status AS ENUM (
-  'to_see',
-  'tried',
-  'shortlist',
-  'selected',
-  'rejected'
-);
+DO $$
+BEGIN
+  CREATE TYPE public.member_role AS ENUM ('read', 'write', 'admin');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END;
+$$;
+
+DO $$
+BEGIN
+  CREATE TYPE public.requirement_level AS ENUM ('mandatory', 'discuss');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END;
+$$;
+
+DO $$
+BEGIN
+  CREATE TYPE public.candidate_status AS ENUM (
+    'to_see',
+    'tried',
+    'shortlist',
+    'selected',
+    'rejected'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END;
+$$;
 
 -- Profils (1:1 auth.users) — pseudo affiché
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
   display_name text NOT NULL CHECK (char_length(trim(display_name)) BETWEEN 1 AND 80),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.workspaces (
+CREATE TABLE IF NOT EXISTS public.workspaces (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   name text NOT NULL CHECK (char_length(trim(name)) BETWEEN 1 AND 120),
   description text NOT NULL DEFAULT '' CHECK (char_length(description) <= 4000),
@@ -34,10 +55,10 @@ CREATE TABLE public.workspaces (
   is_active boolean NOT NULL DEFAULT true
 );
 
-CREATE INDEX idx_workspaces_share_code ON public.workspaces (share_code);
-CREATE INDEX idx_workspaces_created_by ON public.workspaces (created_by);
+CREATE INDEX IF NOT EXISTS idx_workspaces_share_code ON public.workspaces (share_code);
+CREATE INDEX IF NOT EXISTS idx_workspaces_created_by ON public.workspaces (created_by);
 
-CREATE TABLE public.workspace_members (
+CREATE TABLE IF NOT EXISTS public.workspace_members (
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
   role public.member_role NOT NULL DEFAULT 'read',
@@ -45,9 +66,9 @@ CREATE TABLE public.workspace_members (
   PRIMARY KEY (workspace_id, user_id)
 );
 
-CREATE INDEX idx_workspace_members_user ON public.workspace_members (user_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON public.workspace_members (user_id);
 
-CREATE TABLE public.current_vehicle (
+CREATE TABLE IF NOT EXISTS public.current_vehicle (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL UNIQUE REFERENCES public.workspaces (id) ON DELETE CASCADE,
   brand text NOT NULL DEFAULT '',
@@ -59,7 +80,7 @@ CREATE TABLE public.current_vehicle (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.requirements (
+CREATE TABLE IF NOT EXISTS public.requirements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   label text NOT NULL CHECK (char_length(trim(label)) BETWEEN 1 AND 200),
@@ -71,10 +92,10 @@ CREATE TABLE public.requirements (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_requirements_workspace ON public.requirements (workspace_id);
-CREATE INDEX idx_requirements_level ON public.requirements (workspace_id, level);
+CREATE INDEX IF NOT EXISTS idx_requirements_workspace ON public.requirements (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_requirements_level ON public.requirements (workspace_id, level);
 
-CREATE TABLE public.candidates (
+CREATE TABLE IF NOT EXISTS public.candidates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   brand text NOT NULL DEFAULT '',
@@ -92,18 +113,18 @@ CREATE TABLE public.candidates (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_candidates_workspace ON public.candidates (workspace_id);
-CREATE INDEX idx_candidates_status ON public.candidates (workspace_id, status);
+CREATE INDEX IF NOT EXISTS idx_candidates_workspace ON public.candidates (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_candidates_status ON public.candidates (workspace_id, status);
 
 -- Données constructeur flexibles (JSON avec schéma côté app — Zod)
-CREATE TABLE public.candidate_specs (
+CREATE TABLE IF NOT EXISTS public.candidate_specs (
   candidate_id uuid PRIMARY KEY REFERENCES public.candidates (id) ON DELETE CASCADE,
   specs jsonb NOT NULL DEFAULT '{}'::jsonb,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Avis / ressenti par participant
-CREATE TABLE public.candidate_reviews (
+CREATE TABLE IF NOT EXISTS public.candidate_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   candidate_id uuid NOT NULL REFERENCES public.candidates (id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -115,10 +136,10 @@ CREATE TABLE public.candidate_reviews (
   UNIQUE (candidate_id, user_id)
 );
 
-CREATE INDEX idx_candidate_reviews_candidate ON public.candidate_reviews (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_reviews_candidate ON public.candidate_reviews (candidate_id);
 
 -- Bloc-notes collaboratif par dossier (last-write-wins + journal dans activity_log)
-CREATE TABLE public.notes (
+CREATE TABLE IF NOT EXISTS public.notes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL UNIQUE REFERENCES public.workspaces (id) ON DELETE CASCADE,
   body text NOT NULL DEFAULT '' CHECK (char_length(body) <= 100000),
@@ -128,7 +149,7 @@ CREATE TABLE public.notes (
   edit_lock_expires_at timestamptz
 );
 
-CREATE TABLE public.comments (
+CREATE TABLE IF NOT EXISTS public.comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   candidate_id uuid NOT NULL REFERENCES public.candidates (id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -136,9 +157,9 @@ CREATE TABLE public.comments (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_comments_candidate ON public.comments (candidate_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_candidate ON public.comments (candidate_id, created_at DESC);
 
-CREATE TABLE public.activity_log (
+CREATE TABLE IF NOT EXISTS public.activity_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   user_id uuid REFERENCES auth.users (id) ON DELETE SET NULL,
@@ -149,10 +170,10 @@ CREATE TABLE public.activity_log (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_activity_workspace_time ON public.activity_log (workspace_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_workspace_time ON public.activity_log (workspace_id, created_at DESC);
 
 -- Métadonnées fichiers (chemins Storage sous {workspace_id}/...)
-CREATE TABLE public.attachments (
+CREATE TABLE IF NOT EXISTS public.attachments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   candidate_id uuid REFERENCES public.candidates (id) ON DELETE CASCADE,
@@ -163,12 +184,18 @@ CREATE TABLE public.attachments (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_attachments_workspace ON public.attachments (workspace_id);
-CREATE INDEX idx_attachments_candidate ON public.attachments (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_workspace ON public.attachments (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_candidate ON public.attachments (candidate_id);
 
-ALTER TABLE public.current_vehicle
-ADD CONSTRAINT fk_current_vehicle_photo
-FOREIGN KEY (photo_attachment_id) REFERENCES public.attachments (id) ON DELETE SET NULL;
+DO $$
+BEGIN
+  ALTER TABLE public.current_vehicle
+  ADD CONSTRAINT fk_current_vehicle_photo
+  FOREIGN KEY (photo_attachment_id) REFERENCES public.attachments (id) ON DELETE SET NULL;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END;
+$$;
 
 -- Triggers utilitaires
 CREATE OR REPLACE FUNCTION public.set_updated_at ()
@@ -181,13 +208,19 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_profiles_updated ON public.profiles;
+
 CREATE TRIGGER trg_profiles_updated BEFORE
 UPDATE ON public.profiles FOR EACH ROW
 EXECUTE FUNCTION public.set_updated_at ();
 
+DROP TRIGGER IF EXISTS trg_candidates_updated ON public.candidates;
+
 CREATE TRIGGER trg_candidates_updated BEFORE
 UPDATE ON public.candidates FOR EACH ROW
 EXECUTE FUNCTION public.set_updated_at ();
+
+DROP TRIGGER IF EXISTS trg_candidate_specs_updated ON public.candidate_specs;
 
 CREATE TRIGGER trg_candidate_specs_updated BEFORE
 UPDATE ON public.candidate_specs FOR EACH ROW
@@ -212,6 +245,8 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_workspaces_share ON public.workspaces;
+
 CREATE TRIGGER trg_workspaces_share BEFORE INSERT ON public.workspaces FOR EACH ROW
 EXECUTE FUNCTION public.workspaces_set_share_code ();
 
@@ -227,6 +262,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_workspace_creator ON public.workspaces;
 
 CREATE TRIGGER trg_workspace_creator AFTER INSERT ON public.workspaces FOR EACH ROW
 EXECUTE FUNCTION public.add_creator_as_admin ();
@@ -244,6 +281,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_workspace_note ON public.workspaces;
 
 CREATE TRIGGER trg_workspace_note AFTER INSERT ON public.workspaces FOR EACH ROW
 EXECUTE FUNCTION public.ensure_note_row ();
@@ -270,6 +309,8 @@ END;
 $$;
 
 -- Profil pour auth anonyme : display_name provisoire
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
 CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user ();
@@ -355,6 +396,8 @@ ALTER TABLE public.activity_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 
 -- profiles
+DROP POLICY IF EXISTS profiles_select_shared ON public.profiles;
+
 CREATE POLICY profiles_select_shared ON public.profiles FOR
 SELECT USING (
     id = auth.uid ()
@@ -367,16 +410,24 @@ SELECT USING (
     )
   );
 
+DROP POLICY IF EXISTS profiles_update_own ON public.profiles;
+
 CREATE POLICY profiles_update_own ON public.profiles FOR
 UPDATE USING (id = auth.uid ())
 WITH CHECK (id = auth.uid ());
+
+DROP POLICY IF EXISTS profiles_insert_own ON public.profiles;
 
 CREATE POLICY profiles_insert_own ON public.profiles FOR INSERT
 WITH CHECK (id = auth.uid ());
 
 -- workspaces
+DROP POLICY IF EXISTS workspaces_select_member ON public.workspaces;
+
 CREATE POLICY workspaces_select_member ON public.workspaces FOR
 SELECT USING (public.is_workspace_member (id));
+
+DROP POLICY IF EXISTS workspaces_insert_auth ON public.workspaces;
 
 CREATE POLICY workspaces_insert_auth ON public.workspaces FOR INSERT
 WITH CHECK (
@@ -384,19 +435,27 @@ WITH CHECK (
  AND created_by = auth.uid ()
 );
 
+DROP POLICY IF EXISTS workspaces_update_admin ON public.workspaces;
+
 CREATE POLICY workspaces_update_admin ON public.workspaces FOR
 UPDATE USING (public.is_workspace_admin (id))
 WITH CHECK (public.is_workspace_admin (id));
 
 -- workspace_members
+DROP POLICY IF EXISTS wm_select ON public.workspace_members;
+
 CREATE POLICY wm_select ON public.workspace_members FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS wm_insert_admin ON public.workspace_members;
 
 CREATE POLICY wm_insert_admin ON public.workspace_members FOR INSERT
 WITH CHECK (public.is_workspace_admin (workspace_id));
 
 -- Première ligne membre : le trigger add_creator_as_admin ne peut pas passer wm_insert_admin
 -- (œuf et poule). Autoriser le créateur du workspace à s’ajouter une fois comme admin.
+DROP POLICY IF EXISTS wm_insert_creator_first ON public.workspace_members;
+
 CREATE POLICY wm_insert_creator_first ON public.workspace_members FOR INSERT
 WITH CHECK (
   user_id = auth.uid ()
@@ -415,34 +474,52 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS wm_update_admin ON public.workspace_members;
+
 CREATE POLICY wm_update_admin ON public.workspace_members FOR
 UPDATE USING (public.is_workspace_admin (workspace_id))
 WITH CHECK (public.is_workspace_admin (workspace_id));
 
+DROP POLICY IF EXISTS wm_delete_admin ON public.workspace_members;
+
 CREATE POLICY wm_delete_admin ON public.workspace_members FOR DELETE USING (public.is_workspace_admin (workspace_id));
 
 -- current_vehicle
+DROP POLICY IF EXISTS cv_select ON public.current_vehicle;
+
 CREATE POLICY cv_select ON public.current_vehicle FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS cv_write ON public.current_vehicle;
 
 CREATE POLICY cv_write ON public.current_vehicle FOR ALL USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
 -- requirements
+DROP POLICY IF EXISTS req_select ON public.requirements;
+
 CREATE POLICY req_select ON public.requirements FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS req_write ON public.requirements;
 
 CREATE POLICY req_write ON public.requirements FOR ALL USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
 -- candidates
+DROP POLICY IF EXISTS cand_select ON public.candidates;
+
 CREATE POLICY cand_select ON public.candidates FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS cand_write ON public.candidates;
 
 CREATE POLICY cand_write ON public.candidates FOR ALL USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
 -- candidate_specs
+DROP POLICY IF EXISTS cs_select ON public.candidate_specs;
+
 CREATE POLICY cs_select ON public.candidate_specs FOR
 SELECT USING (
     EXISTS (
@@ -453,6 +530,8 @@ SELECT USING (
         AND public.is_workspace_member (c.workspace_id)
     )
   );
+
+DROP POLICY IF EXISTS cs_write ON public.candidate_specs;
 
 CREATE POLICY cs_write ON public.candidate_specs FOR ALL USING (
   EXISTS (
@@ -474,6 +553,8 @@ WITH CHECK (
 );
 
 -- candidate_reviews
+DROP POLICY IF EXISTS cr_select ON public.candidate_reviews;
+
 CREATE POLICY cr_select ON public.candidate_reviews FOR
 SELECT USING (
     EXISTS (
@@ -484,6 +565,8 @@ SELECT USING (
         AND public.is_workspace_member (c.workspace_id)
     )
   );
+
+DROP POLICY IF EXISTS cr_insert ON public.candidate_reviews;
 
 CREATE POLICY cr_insert ON public.candidate_reviews FOR INSERT
 WITH CHECK (
@@ -496,6 +579,8 @@ WITH CHECK (
       AND public.can_write_workspace (c.workspace_id)
   )
 );
+
+DROP POLICY IF EXISTS cr_update_own ON public.candidate_reviews;
 
 CREATE POLICY cr_update_own ON public.candidate_reviews FOR
 UPDATE USING (
@@ -519,16 +604,24 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS cr_delete_own ON public.candidate_reviews;
+
 CREATE POLICY cr_delete_own ON public.candidate_reviews FOR DELETE USING (user_id = auth.uid ());
 
 -- notes
+DROP POLICY IF EXISTS notes_select ON public.notes;
+
 CREATE POLICY notes_select ON public.notes FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS notes_write ON public.notes;
 
 CREATE POLICY notes_write ON public.notes FOR ALL USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
 -- comments
+DROP POLICY IF EXISTS com_select ON public.comments;
+
 CREATE POLICY com_select ON public.comments FOR
 SELECT USING (
     EXISTS (
@@ -539,6 +632,8 @@ SELECT USING (
         AND public.is_workspace_member (c.workspace_id)
     )
   );
+
+DROP POLICY IF EXISTS com_insert ON public.comments;
 
 CREATE POLICY com_insert ON public.comments FOR INSERT
 WITH CHECK (
@@ -551,11 +646,17 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS com_delete_own ON public.comments;
+
 CREATE POLICY com_delete_own ON public.comments FOR DELETE USING (user_id = auth.uid ());
 
 -- activity_log (lecture membres ; écriture writers+)
+DROP POLICY IF EXISTS act_select ON public.activity_log;
+
 CREATE POLICY act_select ON public.activity_log FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS act_insert ON public.activity_log;
 
 CREATE POLICY act_insert ON public.activity_log FOR INSERT
 WITH CHECK (
@@ -564,8 +665,12 @@ WITH CHECK (
 );
 
 -- attachments
+DROP POLICY IF EXISTS att_select ON public.attachments;
+
 CREATE POLICY att_select ON public.attachments FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS att_write ON public.attachments;
 
 CREATE POLICY att_write ON public.attachments FOR ALL USING (public.can_write_workspace (workspace_id))
 WITH CHECK (
@@ -604,15 +709,80 @@ $$;
 GRANT EXECUTE ON FUNCTION public.join_workspace (text) TO authenticated;
 
 -- Realtime (tables utiles)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notes;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'notes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notes;
+  END IF;
+END;
+$$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.candidates;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'candidates'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.candidates;
+  END IF;
+END;
+$$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'comments'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
+  END IF;
+END;
+$$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_log;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'activity_log'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_log;
+  END IF;
+END;
+$$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.candidate_reviews;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'candidate_reviews'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.candidate_reviews;
+  END IF;
+END;
+$$;
 
 -- Storage : bucket + policies (exécuter une fois ; ajuster si le bucket existe déjà)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -625,6 +795,8 @@ VALUES (
   )
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS storage_select_workspace ON storage.objects;
+
 CREATE POLICY storage_select_workspace ON storage.objects FOR
 SELECT USING (
     bucket_id = 'workspace-media'
@@ -635,6 +807,8 @@ SELECT USING (
         AND wm.workspace_id::text = split_part(name, '/', 1)
     )
   );
+
+DROP POLICY IF EXISTS storage_insert_workspace ON storage.objects;
 
 CREATE POLICY storage_insert_workspace ON storage.objects FOR INSERT
 WITH CHECK (
@@ -649,6 +823,8 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS storage_update_workspace ON storage.objects;
+
 CREATE POLICY storage_update_workspace ON storage.objects FOR
 UPDATE USING (
   bucket_id = 'workspace-media'
@@ -661,6 +837,8 @@ UPDATE USING (
       AND wm.workspace_id::text = split_part(name, '/', 1)
   )
 );
+
+DROP POLICY IF EXISTS storage_delete_workspace ON storage.objects;
 
 CREATE POLICY storage_delete_workspace ON storage.objects FOR DELETE USING (
   bucket_id = 'workspace-media'
