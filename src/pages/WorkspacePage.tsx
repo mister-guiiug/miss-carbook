@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import type { Database } from '../types/database'
 import { WorkspaceOnboarding } from '../components/WorkspaceOnboarding'
 import { WorkspaceSearchModal } from '../components/WorkspaceSearchModal'
@@ -33,10 +34,11 @@ type TabId = (typeof tabs)[number]['id']
 export function WorkspacePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const { user } = useAuth()
+  const { reportException, reportMessage } = useErrorDialog()
   const [workspace, setWorkspace] = useState<Ws | null>(null)
   const [role, setRole] = useState<Role | null>(null)
   const [tab, setTab] = useState<TabId>('notepad')
-  const [err, setErr] = useState<string | null>(null)
+  const [accessBlocked, setAccessBlocked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
   const [decisionLabel, setDecisionLabel] = useState<string | null>(null)
@@ -46,18 +48,27 @@ export function WorkspacePage() {
     if (!workspaceId || !user) return
     setLoading(true)
     try {
+      setAccessBlocked(false)
       const { data: ws, error: wErr } = await supabase
         .from('workspaces')
         .select('*')
         .eq('id', workspaceId)
         .maybeSingle()
       if (wErr) {
-        setErr(wErr.message)
+        reportException(wErr, 'Chargement du dossier (workspaces)')
+        setWorkspace(null)
+        setRole(null)
+        setAccessBlocked(true)
         return
       }
       if (!ws) {
-        setErr('Dossier introuvable.')
+        reportMessage(
+          'Ce dossier est introuvable. Il a peut-être été supprimé ou l’identifiant dans l’URL est incorrect.',
+          `workspaceId=${workspaceId} — requête sans ligne`
+        )
         setWorkspace(null)
+        setRole(null)
+        setAccessBlocked(true)
         return
       }
       setWorkspace(ws as Ws)
@@ -78,16 +89,22 @@ export function WorkspacePage() {
         .eq('user_id', user.id)
         .maybeSingle()
       if (mErr) {
-        setErr(mErr.message)
+        reportException(mErr, 'Vérification du rôle (workspace_members)')
+        setRole(null)
+        setAccessBlocked(true)
         return
       }
       if (!mem) {
-        setErr('Vous n’êtes pas membre de ce dossier.')
+        reportMessage(
+          'Vous n’êtes pas membre de ce dossier, ou vous n’avez plus accès.',
+          `user_id=${user.id} workspace_id=${workspaceId} — aucune ligne membre`
+        )
         setRole(null)
+        setAccessBlocked(true)
         return
       }
       setRole(mem.role as Role)
-      setErr(null)
+      setAccessBlocked(false)
     } finally {
       setLoading(false)
     }
@@ -129,10 +146,12 @@ export function WorkspacePage() {
     )
   }
 
-  if (err || !workspace || !role) {
+  if (accessBlocked || !workspace || !role) {
     return (
       <div className="shell stack">
-        <p className="error">{err ?? 'Accès impossible'}</p>
+        <p className="muted">
+          Consultez la fenêtre d’erreur si besoin, ou retournez à l’accueil pour ouvrir un autre dossier.
+        </p>
         <Link to="/">← Retour</Link>
       </div>
     )

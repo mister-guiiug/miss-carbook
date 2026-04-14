@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 type Row = {
   id: string
@@ -18,13 +19,13 @@ export function RemindersTab({
   workspaceId: string
   canWrite: boolean
 }) {
+  const { reportException } = useErrorDialog()
   const [rows, setRows] = useState<Row[]>([])
   const [candidates, setCandidates] = useState<{ id: string; label: string }[]>([])
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [due, setDue] = useState('')
   const [candId, setCandId] = useState('')
-  const [err, setErr] = useState<string | null>(null)
 
   const load = async () => {
     const { data, error } = await supabase
@@ -32,11 +33,8 @@ export function RemindersTab({
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('due_at', { ascending: true, nullsFirst: false })
-    if (error) setErr(error.message)
-    else {
-      setErr(null)
-      setRows((data ?? []) as Row[])
-    }
+    if (error) reportException(error, 'Chargement des rappels')
+    else setRows((data ?? []) as Row[])
   }
 
   useEffect(() => {
@@ -65,7 +63,7 @@ export function RemindersTab({
       due_at: due ? new Date(due).toISOString() : null,
       candidate_id: candId || null,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Création d’un rappel')
     else {
       setTitle('')
       setBody('')
@@ -79,21 +77,20 @@ export function RemindersTab({
   const toggle = async (r: Row) => {
     if (!canWrite) return
     const { error } = await supabase.from('reminders').update({ done: !r.done }).eq('id', r.id)
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Mise à jour d’un rappel (fait / rouvrir)')
     else await load()
   }
 
   const remove = async (id: string) => {
     if (!canWrite || !confirm('Supprimer ce rappel ?')) return
     const { error } = await supabase.from('reminders').delete().eq('id', id)
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Suppression d’un rappel')
     else await load()
   }
 
   return (
     <div className="stack">
       <p className="muted">Prochains essais, relances garage, échéances — visibles par tous les membres.</p>
-      {err ? <p className="error">{err}</p> : null}
 
       {canWrite ? (
         <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 type Row = {
   id: string
@@ -12,9 +13,9 @@ type Row = {
 }
 
 export function ActivityTab({ workspaceId }: { workspaceId: string }) {
+  const { reportException } = useErrorDialog()
   const [rows, setRows] = useState<Row[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
-  const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -27,7 +28,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         .limit(120)
       if (cancelled) return
       if (error) {
-        setErr(error.message)
+        reportException(error, 'Chargement du journal d’activité')
         return
       }
       const list = (data ?? []) as Row[]
@@ -60,12 +61,11 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       cancelled = true
       void supabase.removeChannel(ch)
     }
-  }, [workspaceId])
+  }, [workspaceId, reportException])
 
   return (
     <div className="stack">
       <p className="muted">Journal des actions récentes (temps réel pour les nouvelles entrées).</p>
-      {err ? <p className="error">{err}</p> : null}
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {rows.map((r) => (
           <li key={r.id} className="card" style={{ boxShadow: 'none' }}>

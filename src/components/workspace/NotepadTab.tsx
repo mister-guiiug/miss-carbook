@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 const LOCK_MS = 90_000
 
@@ -11,12 +12,12 @@ export function NotepadTab({
   workspaceId: string
   canWrite: boolean
 }) {
+  const { reportException } = useErrorDialog()
   const [body, setBody] = useState('')
   const [noteId, setNoteId] = useState<string | null>(null)
   const [lockUser, setLockUser] = useState<string | null>(null)
   const [lockExp, setLockExp] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const [myId, setMyId] = useState<string | null>(null)
   const lockTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -46,7 +47,7 @@ export function NotepadTab({
         .maybeSingle()
       if (cancelled) return
       if (error) {
-        setErr(error.message)
+        reportException(error, 'Chargement du bloc-notes')
         return
       }
       if (data) {
@@ -65,7 +66,7 @@ export function NotepadTab({
     return () => {
       cancelled = true
     }
-  }, [workspaceId, canWrite])
+  }, [workspaceId, canWrite, reportException])
 
   useEffect(() => {
     const ch = supabase
@@ -150,7 +151,6 @@ export function NotepadTab({
   const save = async () => {
     if (!canWrite || !noteId || lockedByOther) return
     setBusy(true)
-    setErr(null)
     try {
       const {
         data: { user },
@@ -162,7 +162,7 @@ export function NotepadTab({
       if (error) throw error
       await logActivity(workspaceId, 'note.update', 'note', noteId, { chars: body.length })
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Sauvegarde impossible')
+      reportException(e, 'Sauvegarde du bloc-notes')
     } finally {
       setBusy(false)
     }
@@ -180,7 +180,6 @@ export function NotepadTab({
           forcer l’enregistrement au risque d’écraser.
         </p>
       ) : null}
-      {err ? <p className="error">{err}</p> : null}
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}

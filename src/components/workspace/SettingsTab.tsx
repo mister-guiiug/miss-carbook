@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema } from '../../lib/validation/schemas'
 import type { Database } from '../../types/database'
 import { ExportWorkspaceButton } from './ExportWorkspaceButton'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
 
@@ -33,6 +34,7 @@ export function SettingsTab({
   userId: string
   onWorkspaceRefresh: () => void
 }) {
+  const { reportException, reportMessage } = useErrorDialog()
   const [members, setMembers] = useState<(Member & { display_name?: string })[]>([])
   const [invites, setInvites] = useState<InviteRow[]>([])
   const [vehicle, setVehicle] = useState({
@@ -43,7 +45,6 @@ export function SettingsTab({
     options: '',
   })
   const [vehicleId, setVehicleId] = useState<string | null>(null)
-  const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [inviteRole, setInviteRole] = useState<'read' | 'write' | 'admin'>('read')
   const [inviteDays, setInviteDays] = useState(7)
@@ -56,14 +57,14 @@ export function SettingsTab({
   const base = import.meta.env.BASE_URL
   const inviteUrl = `${origin}${base}`.replace(/([^:]\/)\/+/g, '$1') + `w/${workspace.id}`
 
-  const loadInvites = async () => {
+  const loadInvites = useCallback(async () => {
     const { data } = await supabase
       .from('workspace_invites')
       .select('id, token, role, expires_at, used_at')
       .eq('workspace_id', workspace.id)
       .order('created_at', { ascending: false })
     setInvites((data ?? []) as InviteRow[])
-  }
+  }, [workspace.id])
 
   useEffect(() => {
     void (async () => {
@@ -72,7 +73,7 @@ export function SettingsTab({
         .select('user_id, role')
         .eq('workspace_id', workspace.id)
       if (error) {
-        setErr(error.message)
+        reportException(error, 'Chargement des membres du dossier')
         return
       }
       const list = (mems ?? []) as Member[]
@@ -95,7 +96,7 @@ export function SettingsTab({
         }))
       )
     })()
-  }, [workspace.id])
+  }, [workspace.id, reportException, loadInvites])
 
   useEffect(() => {
     setDecisionCand(workspace.selected_candidate_id ?? '')
@@ -127,13 +128,13 @@ export function SettingsTab({
     e.preventDefault()
     if (!canWrite || !workspace.replacement_enabled) return
     setBusy(true)
-    setErr(null)
     const parsed = currentVehicleSchema.safeParse({
       ...vehicle,
       year: vehicle.year === '' ? undefined : Number(vehicle.year),
     })
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       setBusy(false)
       return
     }
@@ -157,7 +158,7 @@ export function SettingsTab({
       await logActivity(workspace.id, 'current_vehicle.upsert', 'current_vehicle', vehicleId, {})
       onWorkspaceRefresh()
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Sauvegarde impossible')
+      reportException(e, 'Sauvegarde du véhicule actuel')
     } finally {
       setBusy(false)
     }
@@ -170,7 +171,7 @@ export function SettingsTab({
       .update({ role })
       .eq('workspace_id', workspace.id)
       .eq('user_id', uid)
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Changement de rôle d’un membre')
     else {
       setMembers((m) => m.map((x) => (x.user_id === uid ? { ...x, role } : x)))
       await logActivity(workspace.id, 'member.role_change', 'workspace_member', uid, { role })
@@ -179,13 +180,12 @@ export function SettingsTab({
 
   const createInvite = async () => {
     if (!isAdmin) return
-    setErr(null)
     const { data, error } = await supabase.rpc('create_workspace_invite', {
       p_workspace_id: workspace.id,
       p_role: inviteRole,
       p_ttl_days: inviteDays,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Création d’une invitation au dossier')
     else {
       setLastToken(data as string)
       await loadInvites()
@@ -207,7 +207,7 @@ export function SettingsTab({
   const leave = async () => {
     if (!confirm('Quitter ce dossier ?')) return
     const { error } = await supabase.rpc('leave_workspace', { p_workspace_id: workspace.id })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Quitter le dossier')
     else window.location.assign(`${origin}${base}`.replace(/([^:]\/)\/+/g, '$1'))
   }
 
@@ -217,7 +217,7 @@ export function SettingsTab({
       p_workspace_id: workspace.id,
       p_user_id: uid,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Retrait d’un membre du dossier')
     else {
       setMembers((m) => m.filter((x) => x.user_id !== uid))
       await logActivity(workspace.id, 'member.removed', 'workspace_member', uid, {})
@@ -233,7 +233,7 @@ export function SettingsTab({
       p_candidate_id: cid,
       p_notes: decisionNotes,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Enregistrement de la décision (modèle retenu)')
     else {
       await logActivity(workspace.id, 'workspace.decision', 'workspace', workspace.id, {})
       onWorkspaceRefresh()
@@ -244,7 +244,10 @@ export function SettingsTab({
     try {
       await navigator.clipboard.writeText(inviteUrl)
     } catch {
-      setErr('Copie impossible — sélectionnez le lien manuellement.')
+      reportMessage(
+        'Copie impossible — sélectionnez le lien manuellement.',
+        'navigator.clipboard.writeText a échoué (permissions navigateur ou contexte non sécurisé)'
+      )
     }
   }
 
@@ -434,8 +437,6 @@ export function SettingsTab({
           ) : null}
         </form>
       ) : null}
-
-      {err ? <p className="error">{err}</p> : null}
     </div>
   )
 }
