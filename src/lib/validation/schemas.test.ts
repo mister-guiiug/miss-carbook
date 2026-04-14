@@ -7,6 +7,7 @@ import {
   displayNameSchema,
   requirementSchema,
   shareCodeSchema,
+  workspaceMetaUpdateSchema,
 } from './schemas'
 
 describe('changeEmailSchema', () => {
@@ -57,6 +58,19 @@ describe('displayNameSchema', () => {
   it('refuse espace ou accents', () => {
     expect(displayNameSchema.safeParse('a b').success).toBe(false)
     expect(displayNameSchema.safeParse('été').success).toBe(false)
+  })
+})
+
+describe('workspaceMetaUpdateSchema', () => {
+  it('accepte nom + description', () => {
+    const r = workspaceMetaUpdateSchema.safeParse({ name: ' Mon projet ', description: 'Détail' })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.name).toBe('Mon projet')
+  })
+  it('refuse nom vide', () => {
+    expect(workspaceMetaUpdateSchema.safeParse({ name: '   ', description: '' }).success).toBe(
+      false
+    )
   })
 })
 
