@@ -3,6 +3,10 @@ import { z } from 'zod'
 const authEmailField = z.string().trim().email('Adresse e-mail invalide')
 
 /** Connexion par mot de passe (aligné client ; le projet Supabase peut imposer 6+ caractères). */
+export const changeEmailSchema = z.object({
+  email: authEmailField,
+})
+
 export const authPasswordLoginSchema = z.object({
   email: authEmailField,
   password: z.string().min(1, 'Saisissez le mot de passe'),

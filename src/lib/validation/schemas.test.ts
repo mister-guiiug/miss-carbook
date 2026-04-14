@@ -3,10 +3,20 @@ import {
   authPasswordLoginSchema,
   authPasswordSignUpSchema,
   candidateSchema,
+  changeEmailSchema,
   displayNameSchema,
   requirementSchema,
   shareCodeSchema,
 } from './schemas'
+
+describe('changeEmailSchema', () => {
+  it('accepte un e-mail valide', () => {
+    expect(changeEmailSchema.safeParse({ email: '  user@host.com  ' }).success).toBe(true)
+  })
+  it('refuse invalide', () => {
+    expect(changeEmailSchema.safeParse({ email: 'pas-un-mail' }).success).toBe(false)
+  })
+})
 
 describe('authPasswordSignUpSchema', () => {
   it('refuse si les mots de passe diffèrent', () => {
