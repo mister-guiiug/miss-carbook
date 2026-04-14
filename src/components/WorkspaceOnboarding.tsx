@@ -27,6 +27,8 @@ export function WorkspaceOnboarding({
     onDone()
   }
 
+  const stepCount = 3
+
   const steps = [
     <>
       <h3 style={{ marginTop: 0 }}>Bienvenue dans « {workspaceName} »</h3>
@@ -55,6 +57,17 @@ export function WorkspaceOnboarding({
 
   return (
     <div className="card onboarding-card stack">
+      <div className="onboarding-steps" aria-hidden="true">
+        {Array.from({ length: stepCount }, (_, i) => (
+          <span
+            key={i}
+            className={`onboarding-step-dot${i === step ? ' onboarding-step-dot--active' : ''}`}
+          />
+        ))}
+      </div>
+      <p className="onboarding-step-meta muted">
+        Étape {step + 1} sur {stepCount}
+      </p>
       {steps[step]}
       <div className="row" style={{ justifyContent: 'flex-end', gap: '0.5rem' }}>
         <button type="button" className="secondary" onClick={finish}>
