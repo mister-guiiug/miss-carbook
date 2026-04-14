@@ -90,6 +90,17 @@ const candidateSpecsShape = z.object({
 /** Schéma documenté côté app ; champs supplémentaires autorisés (constructeurs variés). */
 export const candidateSpecsSchema = candidateSpecsShape.partial().passthrough()
 
+const currentVehicleSpecsShape = candidateSpecsShape.extend({
+  doorCount: z.number().int().min(2).max(9).optional(),
+  /** Puissance fiscale (CV, France) */
+  fiscalCv: z.number().int().min(1).max(99).optional(),
+  gearbox: z.string().max(120).optional(),
+  exteriorColor: z.string().max(120).optional(),
+})
+
+/** Données techniques du véhicule actuel ; champs supplémentaires autorisés. */
+export const currentVehicleSpecsSchema = currentVehicleSpecsShape.partial().passthrough()
+
 export const candidateSchema = z.object({
   brand: z.string().max(120).optional().default(''),
   model: z.string().max(120).optional().default(''),
@@ -139,6 +150,7 @@ export const currentVehicleSchema = z.object({
     .optional()
     .transform((v) => (typeof v === 'number' && !Number.isNaN(v) ? v : null)),
   options: z.string().max(4000).optional().default(''),
+  specs: currentVehicleSpecsSchema.optional().default({}),
 })
 
 /** Limite client alignée sur le bucket (5 Mo) */

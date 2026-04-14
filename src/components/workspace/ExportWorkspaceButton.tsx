@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { IconActionButton, IconArchiveDown } from '../ui/IconActionButton'
+import { fetchWorkspaceExportBundle } from '../../lib/workspaceExportBundle'
 
 const EXPORT_VERSION = '2'
 
@@ -17,77 +17,26 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
       const folder = zip.folder(`miss-carbook-${workspaceId.slice(0, 8)}`)
       if (!folder) throw new Error('zip')
 
-      const [ws, req, cand, notes, act, reminders, invites, members, presets, currVehicle] =
-        await Promise.all([
-          supabase.from('workspaces').select('*').eq('id', workspaceId).single(),
-          supabase.from('requirements').select('*').eq('workspace_id', workspaceId),
-          supabase
-            .from('candidates')
-            .select('*, candidate_specs ( specs )')
-            .eq('workspace_id', workspaceId),
-          supabase.from('notes').select('*').eq('workspace_id', workspaceId).maybeSingle(),
-          supabase
-            .from('activity_log')
-            .select('*')
-            .eq('workspace_id', workspaceId)
-            .order('created_at', { ascending: false })
-            .limit(500),
-          supabase.from('reminders').select('*').eq('workspace_id', workspaceId),
-          supabase.from('workspace_invites').select('*').eq('workspace_id', workspaceId),
-          supabase.from('workspace_members').select('*').eq('workspace_id', workspaceId),
-          supabase.from('comparison_presets').select('*').eq('workspace_id', workspaceId),
-          supabase
-            .from('current_vehicle')
-            .select('*')
-            .eq('workspace_id', workspaceId)
-            .maybeSingle(),
-        ])
+      const b = await fetchWorkspaceExportBundle(workspaceId)
 
-      const requirementIds = (req.data ?? []).map((r: { id: string }) => r.id)
-      const candidateIds = (cand.data ?? []).map((c: { id: string }) => c.id)
-
-      const empty = { data: [] as unknown[], error: null as null }
-
-      const [evals, votes, comments, reviews, attachments] = await Promise.all([
-        requirementIds.length
-          ? supabase
-              .from('requirement_candidate_evaluations')
-              .select('*')
-              .in('requirement_id', requirementIds)
-          : Promise.resolve(empty),
-        requirementIds.length
-          ? supabase
-              .from('requirement_priority_votes')
-              .select('*')
-              .in('requirement_id', requirementIds)
-          : Promise.resolve(empty),
-        candidateIds.length
-          ? supabase.from('comments').select('*').in('candidate_id', candidateIds)
-          : Promise.resolve(empty),
-        candidateIds.length
-          ? supabase.from('candidate_reviews').select('*').in('candidate_id', candidateIds)
-          : Promise.resolve(empty),
-        supabase.from('attachments').select('*').eq('workspace_id', workspaceId),
-      ])
-
-      folder.file('workspace.json', JSON.stringify(ws.data ?? {}, null, 2))
-      folder.file('requirements.json', JSON.stringify(req.data ?? [], null, 2))
-      folder.file('candidates.json', JSON.stringify(cand.data ?? [], null, 2))
-      folder.file('notes.json', JSON.stringify(notes.data ?? {}, null, 2))
-      folder.file('activity_log.json', JSON.stringify(act.data ?? [], null, 2))
-      folder.file('reminders.json', JSON.stringify(reminders.data ?? [], null, 2))
-      folder.file('workspace_invites.json', JSON.stringify(invites.data ?? [], null, 2))
-      folder.file('workspace_members.json', JSON.stringify(members.data ?? [], null, 2))
-      folder.file('comparison_presets.json', JSON.stringify(presets.data ?? [], null, 2))
-      folder.file('current_vehicle.json', JSON.stringify(currVehicle.data ?? {}, null, 2))
+      folder.file('workspace.json', JSON.stringify(b.workspace ?? {}, null, 2))
+      folder.file('requirements.json', JSON.stringify(b.requirements, null, 2))
+      folder.file('candidates.json', JSON.stringify(b.candidates, null, 2))
+      folder.file('notes.json', JSON.stringify(b.notes ?? {}, null, 2))
+      folder.file('activity_log.json', JSON.stringify(b.activityLog, null, 2))
+      folder.file('reminders.json', JSON.stringify(b.reminders, null, 2))
+      folder.file('workspace_invites.json', JSON.stringify(b.invites, null, 2))
+      folder.file('workspace_members.json', JSON.stringify(b.members, null, 2))
+      folder.file('comparison_presets.json', JSON.stringify(b.presets, null, 2))
+      folder.file('current_vehicle.json', JSON.stringify(b.currentVehicle ?? {}, null, 2))
       folder.file(
         'requirement_candidate_evaluations.json',
-        JSON.stringify(evals.data ?? [], null, 2)
+        JSON.stringify(b.evaluations, null, 2)
       )
-      folder.file('requirement_priority_votes.json', JSON.stringify(votes.data ?? [], null, 2))
-      folder.file('comments.json', JSON.stringify(comments.data ?? [], null, 2))
-      folder.file('candidate_reviews.json', JSON.stringify(reviews.data ?? [], null, 2))
-      folder.file('attachments.json', JSON.stringify(attachments.data ?? [], null, 2))
+      folder.file('requirement_priority_votes.json', JSON.stringify(b.votes, null, 2))
+      folder.file('comments.json', JSON.stringify(b.comments, null, 2))
+      folder.file('candidate_reviews.json', JSON.stringify(b.reviews, null, 2))
+      folder.file('attachments.json', JSON.stringify(b.attachments, null, 2))
 
       const generatedAt = new Date().toISOString()
       folder.file(
