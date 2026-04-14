@@ -35,12 +35,12 @@ export default function App() {
         <a href="#contenu-principal" className="skip-link">
           Aller au contenu principal
         </a>
-        <div className="app-layout">
-          <div className="app-main" id="contenu-principal" tabIndex={-1}>
-            <TrustBanner />
-            <PseudoGate>
-              <WorkspaceChromeProvider>
-                <TopBar />
+        <div className="app-shell">
+          <PseudoGate>
+            <WorkspaceChromeProvider>
+              <TrustBanner />
+              <TopBar />
+              <main className="app-main" id="contenu-principal" tabIndex={-1}>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
@@ -50,9 +50,9 @@ export default function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>
-              </WorkspaceChromeProvider>
-            </PseudoGate>
-          </div>
+              </main>
+            </WorkspaceChromeProvider>
+          </PseudoGate>
           <SiteFooter />
           <UpdateBanner />
         </div>
