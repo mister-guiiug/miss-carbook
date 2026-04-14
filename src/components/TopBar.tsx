@@ -136,6 +136,7 @@ export function TopBar() {
 
   const label = loading ? '…' : displayName?.trim() || 'Profil'
   const themeNextLabel = mode === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'
+  const modeSubmenuLabel = mode === 'dark' ? 'Mode · passer en clair' : 'Mode · passer en sombre'
   const onWorkspace = isWorkspacePath(location.pathname)
   const hideAccountCluster = onWorkspace
   const showWorkspaceToolbar = onWorkspace && workspaceChrome
@@ -175,7 +176,7 @@ export function TopBar() {
             ) : null}
           </div>
         ) : (
-          <div className="app-topbar-right">
+          <div className="app-topbar-right app-topbar-right--account">
             <div className="app-topbar-tools" role="toolbar" aria-label="Actions du compte">
               <span
                 className={`online-dot ${online ? 'on' : 'off'}`}
@@ -184,7 +185,7 @@ export function TopBar() {
               />
               <button
                 type="button"
-                className="app-topbar-icon-btn"
+                className="app-topbar-icon-btn app-topbar-tool-desktop"
                 onClick={toggle}
                 title={themeNextLabel}
                 aria-label={themeNextLabel}
@@ -193,7 +194,7 @@ export function TopBar() {
               </button>
               <Link
                 to="/parametres"
-                className="app-topbar-icon-btn"
+                className="app-topbar-icon-btn app-topbar-tool-desktop"
                 title="Paramètres généraux — compte, thème, application"
                 aria-label="Paramètres généraux"
               >
@@ -201,7 +202,7 @@ export function TopBar() {
               </Link>
               <button
                 type="button"
-                className="app-topbar-icon-btn app-topbar-icon-btn-danger"
+                className="app-topbar-icon-btn app-topbar-icon-btn-danger app-topbar-tool-desktop"
                 onClick={signOut}
                 title="Déconnexion"
                 aria-label="Déconnexion"
@@ -209,27 +210,44 @@ export function TopBar() {
                 <IconLogOut />
               </button>
             </div>
-            <Link
-              to="/parametres"
-              className="app-profile-chip app-profile-chip-action"
-              title={`${label} — paramètres généraux`}
-            >
-              <span className="app-profile-avatar" aria-hidden="true">
-                {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
-              </span>
-              <span className="app-profile-name">{label}</span>
-              <span className="app-profile-chevron" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M6 9l6 6 6-6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </Link>
+            <div className="app-topbar-account-block">
+              <Link
+                to="/parametres"
+                className="app-profile-chip app-profile-chip-action"
+                title={`${label} — paramètres généraux`}
+              >
+                <span className="app-profile-avatar" aria-hidden="true">
+                  {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+                </span>
+                <span className="app-profile-name">{label}</span>
+                <span className="app-profile-chevron" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 9l6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </Link>
+              <nav className="app-topbar-account-submenu" aria-label="Menu compte (mobile)">
+                <Link to="/parametres" className="app-topbar-submenu-item">
+                  Options générales
+                </Link>
+                <button type="button" className="app-topbar-submenu-item" onClick={toggle}>
+                  {modeSubmenuLabel}
+                </button>
+                <button
+                  type="button"
+                  className="app-topbar-submenu-item app-topbar-submenu-item--danger"
+                  onClick={signOut}
+                >
+                  Déconnexion
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </div>

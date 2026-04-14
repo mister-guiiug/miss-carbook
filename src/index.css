@@ -309,6 +309,105 @@ a.app-profile-chip-action {
   white-space: nowrap;
 }
 
+.app-topbar-right--account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.app-topbar-account-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* Sous-menu compte sous le pseudo : visible uniquement sur petit écran */
+.app-topbar-account-submenu {
+  display: none;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.app-topbar-submenu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--touch-target);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.app-topbar-submenu-item:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.app-topbar-submenu-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app-topbar-submenu-item--danger {
+  color: var(--danger);
+}
+
+.app-topbar-submenu-item--danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgb(254 242 242);
+}
+
+[data-theme='dark'] .app-topbar-submenu-item--danger:hover {
+  background: rgb(127 29 29 / 0.25);
+}
+
+@media (max-width: 639.98px) {
+  .app-topbar-right--account {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    gap: 0.5rem;
+  }
+
+  .app-topbar-right--account .app-topbar-tools {
+    align-self: flex-end;
+  }
+
+  .app-topbar-right--account .app-topbar-tool-desktop {
+    display: none !important;
+  }
+
+  .app-topbar-account-block .app-profile-chip {
+    max-width: none;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .app-topbar-account-block .app-profile-chevron {
+    display: none;
+  }
+
+  .app-topbar-account-submenu {
+    display: flex;
+  }
+}
+
 .site-footer {
   flex-shrink: 0;
   margin-top: auto;
