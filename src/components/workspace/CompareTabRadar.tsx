@@ -18,6 +18,7 @@ type Candidate = {
   trim: string
   parent_candidate_id: string | null
   candidate_specs: { specs: Json } | null
+  is_current?: boolean
 }
 
 type Props = {
@@ -36,12 +37,16 @@ export default function CompareTabRadar({ radarData, picked }: Props) {
           {picked.map((p, i) => (
             <Radar
               key={p.id}
-              name={formatCandidateListLabel({
-                brand: p.brand,
-                model: p.model,
-                trim: p.trim ?? '',
-                parent_candidate_id: p.parent_candidate_id ?? null,
-              })}
+              name={
+                p.is_current
+                  ? 'Véhicule actuel'
+                  : formatCandidateListLabel({
+                      brand: p.brand,
+                      model: p.model,
+                      trim: p.trim ?? '',
+                      parent_candidate_id: p.parent_candidate_id ?? null,
+                    })
+              }
               dataKey={p.id}
               stroke={COMPARE_RADAR_COLORS[i % COMPARE_RADAR_COLORS.length]}
               fill={COMPARE_RADAR_COLORS[i % COMPARE_RADAR_COLORS.length]}
