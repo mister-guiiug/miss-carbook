@@ -5,6 +5,13 @@ import { CRITERIA } from '../../lib/compareCriteria'
 import type { CandidateStatus, Json } from '../../types/database'
 import { useToast } from '../../contexts/ToastContext'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import {
+  IconActionButton,
+  IconJson,
+  IconPrinter,
+  IconSave,
+  IconTable,
+} from '../ui/IconActionButton'
 
 const CompareTabRadar = lazy(() => import('./CompareTabRadar'))
 
@@ -246,16 +253,20 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           ))}
         </div>
         {canWrite ? (
-          <div className="row">
+          <div className="row icon-action-toolbar" style={{ alignItems: 'center' }}>
             <input
               placeholder="Nom du profil"
               value={presetName}
               onChange={(e) => setPresetName(e.target.value)}
               style={{ flex: 1 }}
             />
-            <button type="button" onClick={() => void savePreset()}>
-              Enregistrer critères actuels
-            </button>
+            <IconActionButton
+              variant="primary"
+              label="Enregistrer le profil de critères actuels"
+              onClick={() => void savePreset()}
+            >
+              <IconSave />
+            </IconActionButton>
           </div>
         ) : null}
       </div>
@@ -301,16 +312,31 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         </div>
       </div>
 
-      <div className="row no-print">
-        <button type="button" className="secondary" onClick={exportJson} disabled={!rows.length}>
-          Export JSON
-        </button>
-        <button type="button" className="secondary" onClick={exportCsv} disabled={!rows.length}>
-          Export CSV
-        </button>
-        <button type="button" className="secondary" onClick={printCompare} disabled={!rows.length}>
-          Imprimer / PDF
-        </button>
+      <div className="row no-print icon-action-toolbar">
+        <IconActionButton
+          variant="secondary"
+          label="Exporter la comparaison en JSON"
+          onClick={exportJson}
+          disabled={!rows.length}
+        >
+          <IconJson />
+        </IconActionButton>
+        <IconActionButton
+          variant="secondary"
+          label="Exporter la comparaison en CSV"
+          onClick={exportCsv}
+          disabled={!rows.length}
+        >
+          <IconTable />
+        </IconActionButton>
+        <IconActionButton
+          variant="secondary"
+          label="Imprimer ou enregistrer en PDF"
+          onClick={printCompare}
+          disabled={!rows.length}
+        >
+          <IconPrinter />
+        </IconActionButton>
       </div>
 
       <div ref={printRef} className="print-area">

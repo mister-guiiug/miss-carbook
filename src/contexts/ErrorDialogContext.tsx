@@ -10,6 +10,14 @@ import {
 } from 'react'
 import { explainUnknownError } from '../lib/errorReporting'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+import {
+  IconActionButton,
+  IconCheck,
+  IconChevronRight,
+  IconChevronUp,
+  IconCopy,
+  IconX,
+} from '../components/ui/IconActionButton'
 
 type ErrorPayload = {
   userMessage: string
@@ -115,32 +123,43 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
             </p>
 
             <div className="error-dialog-details">
-              <button
-                type="button"
-                className="secondary error-dialog-details-toggle"
+              <IconActionButton
+                variant="secondary"
+                className="error-dialog-details-toggle"
+                label={
+                  detailsOpen
+                    ? 'Masquer les détails techniques'
+                    : 'Afficher les détails techniques (copie support)'
+                }
                 onClick={() => setDetailsOpen((o) => !o)}
                 aria-expanded={detailsOpen}
               >
-                {detailsOpen
-                  ? 'Masquer les détails techniques'
-                  : 'Détails techniques (copie support)'}
-              </button>
+                {detailsOpen ? <IconChevronUp /> : <IconChevronRight />}
+              </IconActionButton>
               {detailsOpen ? (
                 <div className="error-dialog-technical-wrap">
                   <pre className="error-dialog-technical" tabIndex={0}>
                     {payload.technical}
                   </pre>
-                  <button type="button" onClick={() => void copyTechnical()}>
-                    {copied ? 'Copié' : 'Copier les détails'}
-                  </button>
+                  <IconActionButton
+                    variant="primary"
+                    label={
+                      copied
+                        ? 'Détails copiés dans le presse-papiers'
+                        : 'Copier les détails techniques dans le presse-papiers'
+                    }
+                    onClick={() => void copyTechnical()}
+                  >
+                    {copied ? <IconCheck /> : <IconCopy />}
+                  </IconActionButton>
                 </div>
               ) : null}
             </div>
 
             <div className="error-dialog-actions">
-              <button type="button" className="secondary" onClick={dismiss}>
-                Fermer
-              </button>
+              <IconActionButton variant="secondary" label="Fermer la boîte de dialogue" onClick={dismiss}>
+                <IconX />
+              </IconActionButton>
             </div>
           </div>
         </div>

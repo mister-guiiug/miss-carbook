@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { IconActionButton, IconSave } from '../ui/IconActionButton'
 import { useToast } from '../../contexts/ToastContext'
 
 const LOCK_MS = 90_000
@@ -200,10 +201,19 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
         onFocus={onFocus}
         onBlur={onBlur}
       />
-      <div className="row">
-        <button type="button" onClick={() => void save()} disabled={!canWrite || busy || !noteId}>
-          {busy ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
+      <div className="row icon-action-toolbar">
+        <IconActionButton
+          variant="primary"
+          label={
+            busy
+              ? 'Enregistrement du bloc-notes en cours…'
+              : 'Enregistrer le bloc-notes (dernière version gagne)'
+          }
+          disabled={!canWrite || busy || !noteId}
+          onClick={() => void save()}
+        >
+          <IconSave />
+        </IconActionButton>
         {!canWrite ? <span className="muted">Lecture seule</span> : null}
       </div>
     </div>

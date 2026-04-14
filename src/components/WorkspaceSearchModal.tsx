@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatCandidateListLabel } from '../lib/candidateLabel'
 import { supabase } from '../lib/supabase'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+import { IconActionButton, IconX } from './ui/IconActionButton'
 
 type Item = { type: string; label: string; tab: string; hint?: string }
 
@@ -86,9 +87,9 @@ export function WorkspaceSearchModal({
       <div ref={panelRef} className="search-modal card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <strong>Recherche dans le dossier</strong>
-          <button type="button" className="secondary" onClick={onClose}>
-            Fermer
-          </button>
+          <IconActionButton variant="secondary" label="Fermer la recherche" onClick={onClose}>
+            <IconX />
+          </IconActionButton>
         </div>
         <input
           autoFocus

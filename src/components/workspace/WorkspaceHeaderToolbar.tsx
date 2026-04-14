@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { useTheme } from '../../hooks/useTheme'
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -21,9 +22,9 @@ function IconPlus() {
   )
 }
 
-function IconGear() {
+function IconGear({ className }: { className?: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
         stroke="currentColor"
@@ -42,9 +43,9 @@ function IconGear() {
   )
 }
 
-function IconSun() {
+function IconSun({ className }: { className?: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
       <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
       <path
         d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
@@ -56,9 +57,9 @@ function IconSun() {
   )
 }
 
-function IconMoon() {
+function IconMoon({ className }: { className?: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
         stroke="currentColor"
@@ -69,6 +70,120 @@ function IconMoon() {
     </svg>
   )
 }
+
+function IconSearch({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconHome({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M3 10.5L12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20V10.5z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M9 21.5V12h6v9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconFolderSettings({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 6.5h5l1.5 2H19a1 1 0 0 1 1 1V9H4V6.5zM4 9v8a1 1 0 0 0 1 1h5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="17" cy="15" r="2.25" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M17 12.6v-1.1M17 18.5v-1.1M14.35 15h-1.1M20.25 15h-1.1M15.2 13.2l-.8-.8M19.6 17.6l-.8-.8M15.2 16.8l-.8.8M19.6 12.4l-.8.8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function IconNote({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M8 4h10a1 1 0 0 1 1 1v14l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M9 8h6M9 12h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconClipboard({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M9 5h6l1 2h3v14H5V7h3l1-2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconBell({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zM18 16V11a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function IconModel({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
+function IconLogOut({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const flyoutSvg = 'app-topbar-flyout-svg'
 
 function initialsFromDisplayName(name: string) {
   const t = name.trim()
@@ -91,6 +206,7 @@ export function WorkspaceHeaderToolbar({
 }) {
   const navigate = useNavigate()
   const { mode, toggle } = useTheme()
+  const online = useOnlineStatus()
   const { reportException } = useErrorDialog()
   const [open, setOpen] = useState<Menu>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
@@ -163,6 +279,7 @@ export function WorkspaceHeaderToolbar({
   }
 
   const signOut = () => {
+    close()
     void supabase.auth.signOut().then(() => navigate('/', { replace: true }))
   }
 
@@ -175,7 +292,7 @@ export function WorkspaceHeaderToolbar({
         <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
-            className="workspace-toolbar-btn workspace-toolbar-btn-primary"
+            className={`workspace-toolbar-btn workspace-toolbar-btn-primary${open === 'plus' ? ' workspace-toolbar-btn--open' : ''}`}
             aria-expanded={open === 'plus'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-plus"
@@ -187,7 +304,7 @@ export function WorkspaceHeaderToolbar({
           {open === 'plus' ? (
             <div
               id="workspace-menu-plus"
-              className="workspace-toolbar-menu"
+              className="workspace-toolbar-menu chrome-menu-panel"
               role="menu"
               aria-label="Ajouter"
             >
@@ -200,7 +317,10 @@ export function WorkspaceHeaderToolbar({
                 title={!canWrite ? 'Lecture seule' : undefined}
                 onClick={() => quickAdd('notepad')}
               >
-                Note (bloc-notes)
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconNote />
+                </span>
+                <span>Note (bloc-notes)</span>
               </button>
               <button
                 type="button"
@@ -210,7 +330,10 @@ export function WorkspaceHeaderToolbar({
                 title={!canWrite ? 'Lecture seule' : undefined}
                 onClick={() => quickAdd('requirements')}
               >
-                Exigence
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconClipboard />
+                </span>
+                <span>Exigence</span>
               </button>
               <button
                 type="button"
@@ -220,7 +343,10 @@ export function WorkspaceHeaderToolbar({
                 title={!canWrite ? 'Lecture seule' : undefined}
                 onClick={() => quickAdd('reminders')}
               >
-                Rappel
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconBell />
+                </span>
+                <span>Rappel</span>
               </button>
               <button
                 type="button"
@@ -230,7 +356,10 @@ export function WorkspaceHeaderToolbar({
                 title={!canWrite ? 'Lecture seule' : undefined}
                 onClick={() => quickAdd('candidates')}
               >
-                Modèle
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconModel />
+                </span>
+                <span>Modèle</span>
               </button>
             </div>
           ) : null}
@@ -239,7 +368,7 @@ export function WorkspaceHeaderToolbar({
         <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
-            className="workspace-toolbar-btn"
+            className={`workspace-toolbar-btn${open === 'gear' ? ' workspace-toolbar-btn--open' : ''}`}
             aria-expanded={open === 'gear'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-gear"
@@ -251,7 +380,7 @@ export function WorkspaceHeaderToolbar({
           {open === 'gear' ? (
             <div
               id="workspace-menu-gear"
-              className="workspace-toolbar-menu"
+              className="workspace-toolbar-menu chrome-menu-panel"
               role="menu"
               aria-label="Menu dossier et navigation"
             >
@@ -265,7 +394,10 @@ export function WorkspaceHeaderToolbar({
                   close()
                 }}
               >
-                Recherche (Ctrl+K)
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconSearch />
+                </span>
+                <span>Recherche (Ctrl+K)</span>
               </button>
               <button
                 type="button"
@@ -276,7 +408,10 @@ export function WorkspaceHeaderToolbar({
                   close()
                 }}
               >
-                Réglages de ce dossier
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconFolderSettings />
+                </span>
+                <span>Réglages de ce dossier</span>
               </button>
               <button
                 type="button"
@@ -284,15 +419,18 @@ export function WorkspaceHeaderToolbar({
                 className="workspace-toolbar-menu-item"
                 onClick={toggle}
               >
-                <span className="workspace-toolbar-menu-row">
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   {mode === 'dark' ? <IconSun /> : <IconMoon />}
-                  <span>{themeLabel}</span>
                 </span>
+                <span>{themeLabel}</span>
               </button>
               <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
               <div className="workspace-toolbar-menu-label">Navigation</div>
               <Link role="menuitem" className="workspace-toolbar-menu-item" to="/" onClick={close}>
-                Accueil Miss Carbook
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconHome />
+                </span>
+                <span>Accueil Miss Carbook</span>
               </Link>
               <Link
                 role="menuitem"
@@ -300,7 +438,10 @@ export function WorkspaceHeaderToolbar({
                 to="/parametres"
                 onClick={close}
               >
-                Paramètres généraux (compte et appli)
+                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
+                  <IconGear />
+                </span>
+                <span>Paramètres généraux (compte et appli)</span>
               </Link>
             </div>
           ) : null}
@@ -309,7 +450,7 @@ export function WorkspaceHeaderToolbar({
         <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
-            className="workspace-toolbar-avatar-btn"
+            className={`workspace-toolbar-avatar-btn${open === 'user' ? ' workspace-toolbar-avatar-btn--open' : ''}`}
             aria-expanded={open === 'user'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
@@ -319,32 +460,65 @@ export function WorkspaceHeaderToolbar({
             <span className="workspace-toolbar-avatar" aria-hidden="true">
               {loadingProfile ? '…' : initialsFromDisplayName(displayName ?? '')}
             </span>
+            <span className="workspace-toolbar-avatar-chevron" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6 9l6 6 6-6"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
           </button>
           {open === 'user' ? (
-            <div
+            <nav
               id="workspace-menu-user"
-              className="workspace-toolbar-menu workspace-toolbar-menu--right"
+              className="app-topbar-account-flyout chrome-menu-panel workspace-toolbar-menu--right"
               role="menu"
               aria-label="Compte et paramètres généraux"
             >
-              <div className="workspace-toolbar-menu-heading muted">{profileLabel}</div>
-              <Link
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                to="/parametres"
-                onClick={close}
-              >
-                Paramètres généraux
-              </Link>
-              <button
-                type="button"
-                role="menuitem"
-                className="workspace-toolbar-menu-item danger"
-                onClick={signOut}
-              >
-                Déconnexion
-              </button>
-            </div>
+              <div className="app-topbar-flyout-meta">
+                <div className="app-topbar-flyout-ident">
+                  <span className="app-topbar-flyout-name">{profileLabel}</span>
+                  <span className="app-topbar-flyout-hint muted">Compte sur cet appareil</span>
+                </div>
+                <div
+                  className="app-topbar-flyout-online"
+                  title={online ? 'En ligne' : 'Hors ligne'}
+                >
+                  <span className={`online-dot ${online ? 'on' : 'off'}`} aria-hidden="true" />
+                  <span className="app-topbar-flyout-online-txt">
+                    {online ? 'En ligne' : 'Hors ligne'}
+                  </span>
+                </div>
+              </div>
+              <div className="app-topbar-flyout-list">
+                <Link
+                  role="menuitem"
+                  to="/parametres"
+                  className="app-topbar-flyout-row"
+                  onClick={close}
+                >
+                  <span className="app-topbar-flyout-ic" aria-hidden="true">
+                    <IconGear className={flyoutSvg} />
+                  </span>
+                  <span className="app-topbar-flyout-txt">Paramètres généraux</span>
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-topbar-flyout-row app-topbar-flyout-row--danger"
+                  onClick={signOut}
+                >
+                  <span className="app-topbar-flyout-ic" aria-hidden="true">
+                    <IconLogOut className={flyoutSvg} />
+                  </span>
+                  <span className="app-topbar-flyout-txt">Déconnexion</span>
+                </button>
+              </div>
+            </nav>
           ) : null}
         </div>
       </div>
