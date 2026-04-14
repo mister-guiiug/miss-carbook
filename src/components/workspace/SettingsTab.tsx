@@ -1,40 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema, workspaceMetaUpdateSchema } from '../../lib/validation/schemas'
-import type { Database, Json } from '../../types/database'
-import { ExportWorkspaceButton } from './ExportWorkspaceButton'
-import { ExportWorkspacePromptButton } from './ExportWorkspacePromptButton'
+import type { Json } from '../../types/database'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
-import {
-  IconActionButton,
-  IconBan,
-  IconCopy,
-  IconEye,
-  IconLogOut,
-  IconPencil,
-  IconPlus,
-  IconShield,
-  IconUserMinus,
-} from '../ui/IconActionButton'
-
-type Ws = Database['public']['Tables']['workspaces']['Row']
-
-type Member = {
-  user_id: string
-  role: Database['public']['Tables']['workspace_members']['Row']['role']
-}
-
-type InviteRow = {
-  id: string
-  token: string
-  role: string
-  expires_at: string
-  used_at: string | null
-}
+import { SettingsCurrentVehicleForm } from './settings/SettingsCurrentVehicleForm'
+import { SettingsDecisionCard } from './settings/SettingsDecisionCard'
+import { SettingsExportCard } from './settings/SettingsExportCard'
+import { SettingsInvitesCard } from './settings/SettingsInvitesCard'
+import { SettingsParticipantsCard } from './settings/SettingsParticipantsCard'
+import { SettingsScopeBanner } from './settings/SettingsScopeBanner'
+import { SettingsShareClassicCard } from './settings/SettingsShareClassicCard'
+import { SettingsWorkspaceMetaCard } from './settings/SettingsWorkspaceMetaCard'
+import type { CandidateOption, InviteRow, Member, Ws } from './settings/settingsTypes'
 
 export function SettingsTab({
   workspace,
@@ -66,9 +45,7 @@ export function SettingsTab({
   const [inviteRole, setInviteRole] = useState<'read' | 'write' | 'admin'>('read')
   const [inviteDays, setInviteDays] = useState(7)
   const [lastToken, setLastToken] = useState<string | null>(null)
-  const [candidates, setCandidates] = useState<
-    { id: string; brand: string; model: string; trim: string; parent_candidate_id: string | null }[]
-  >([])
+  const [candidates, setCandidates] = useState<CandidateOption[]>([])
   const [decisionCand, setDecisionCand] = useState<string>('')
   const [decisionNotes, setDecisionNotes] = useState('')
 
@@ -357,361 +334,60 @@ export function SettingsTab({
 
   return (
     <div className="stack settings-tab">
-      <div
-        className="settings-scope-banner stack"
-        role="region"
-        aria-label="Périmètre des réglages"
-      >
-        <p style={{ margin: 0, fontWeight: 600 }}>
-          <span className="settings-scope-badge settings-scope-badge--workspace">Ce dossier</span>{' '}
-          Tout ce qui suit ne concerne que le projet « {workspace.name} » (partage, membres, nom…).
-        </p>
-        <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>
-          Pour votre pseudo, le thème sur cet appareil ou le rechargement de l’application :{' '}
-          <Link to="/parametres">paramètres généraux</Link>.
-        </p>
-      </div>
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Nom et description du dossier</h3>
-        <p className="muted">
-          Visibles dans l’en-tête du dossier et sur l’accueil. Seuls les administrateurs peuvent les
-          modifier (règles de sécurité de la base).
-        </p>
-        {isAdmin ? (
-          <form onSubmit={saveWorkspaceMeta} className="stack">
-            <div>
-              <label htmlFor="ws-settings-name">Nom du dossier</label>
-              <input
-                id="ws-settings-name"
-                value={wsName}
-                onChange={(e) => setWsName(e.target.value)}
-                maxLength={120}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="ws-settings-desc">Description</label>
-              <textarea
-                id="ws-settings-desc"
-                value={wsDesc}
-                onChange={(e) => setWsDesc(e.target.value)}
-                rows={4}
-                maxLength={4000}
-              />
-            </div>
-            <button type="submit" disabled={busyWorkspaceMeta}>
-              {busyWorkspaceMeta ? 'Enregistrement…' : 'Enregistrer nom et description'}
-            </button>
-          </form>
-        ) : (
-          <div className="stack">
-            <p style={{ margin: 0 }}>
-              <strong>{workspace.name}</strong>
-            </p>
-            <p className="muted" style={{ margin: 0 }}>
-              {workspace.description?.trim() ? workspace.description : 'Sans description'}
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div id="workspace-settings-decision" className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Décision</h3>
-        <p className="muted">Modèle retenu (visible en bannière dans l’en-tête du dossier).</p>
-        {canWrite ? (
-          <form onSubmit={saveDecision} className="stack">
-            <label>Modèle retenu</label>
-            <select value={decisionCand} onChange={(e) => setDecisionCand(e.target.value)}>
-              <option value="">— Aucun —</option>
-              {candidates.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {formatCandidateListLabel(c)}
-                </option>
-              ))}
-            </select>
-            <label>Notes / motif</label>
-            <textarea value={decisionNotes} onChange={(e) => setDecisionNotes(e.target.value)} />
-            <button type="submit">Enregistrer la décision</button>
-          </form>
-        ) : (
-          <p className="muted">Lecture seule.</p>
-        )}
-      </div>
-
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Partage classique</h3>
-        <p>
-          Code court&nbsp;: <code>{workspace.share_code}</code>
-        </p>
-        <p className="muted" style={{ wordBreak: 'break-all' }}>
-          Lien d’invitation&nbsp;: {inviteUrl}
-        </p>
-        <IconActionButton
-          variant="secondary"
-          label="Copier le lien d’invitation"
-          onClick={() => void copy()}
-        >
-          <IconCopy />
-        </IconActionButton>
-      </div>
-
+      <SettingsScopeBanner workspaceName={workspace.name} />
+      <SettingsWorkspaceMetaCard
+        workspace={workspace}
+        isAdmin={isAdmin}
+        wsName={wsName}
+        setWsName={setWsName}
+        wsDesc={wsDesc}
+        setWsDesc={setWsDesc}
+        busyWorkspaceMeta={busyWorkspaceMeta}
+        onSave={saveWorkspaceMeta}
+      />
+      <SettingsDecisionCard
+        canWrite={canWrite}
+        candidates={candidates}
+        decisionCand={decisionCand}
+        setDecisionCand={setDecisionCand}
+        decisionNotes={decisionNotes}
+        setDecisionNotes={setDecisionNotes}
+        onSave={saveDecision}
+      />
+      <SettingsShareClassicCard workspace={workspace} inviteUrl={inviteUrl} onCopy={copy} />
       {isAdmin ? (
-        <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h3 style={{ margin: 0 }}>Invitations avec rôle & expiration</h3>
-          <p className="muted">
-            Lien à usage unique (après acceptation). Copié dans le presse-papiers à la création.
-          </p>
-          <div className="row">
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
-            >
-              <option value="read">Lecture</option>
-              <option value="write">Écriture</option>
-              <option value="admin">Admin</option>
-            </select>
-            <input
-              type="number"
-              min={1}
-              max={90}
-              value={inviteDays}
-              onChange={(e) => setInviteDays(Number(e.target.value))}
-              style={{ width: '5rem' }}
-            />
-            <span className="muted">jours</span>
-            <IconActionButton
-              variant="primary"
-              label="Créer une invitation avec rôle et expiration"
-              onClick={() => void createInvite()}
-            >
-              <IconPlus />
-            </IconActionButton>
-          </div>
-          {lastToken ? (
-            <p className="muted" style={{ wordBreak: 'break-all' }}>
-              Dernier lien :{' '}
-              <code>{`${origin}${base}?invite=${lastToken}`.replace(/([^:]\/)\/+/g, '$1')}</code>
-            </p>
-          ) : null}
-          <ul style={{ paddingLeft: '1.1rem' }}>
-            {invites.map((i) => (
-              <li key={i.id}>
-                <code>{i.token.slice(0, 8)}…</code> — {i.role} — exp.{' '}
-                {new Date(i.expires_at).toLocaleDateString('fr-FR')}
-                {i.used_at ? ' — utilisée' : ''}
-                {!i.used_at ? (
-                  <IconActionButton
-                    variant="danger"
-                    label={`Révoquer l’invitation ${i.token.slice(0, 8)}…`}
-                    onClick={() => void revokeInvite(i.id)}
-                  >
-                    <IconBan />
-                  </IconActionButton>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <SettingsInvitesCard
+          origin={origin}
+          base={base}
+          inviteRole={inviteRole}
+          setInviteRole={setInviteRole}
+          inviteDays={inviteDays}
+          setInviteDays={setInviteDays}
+          lastToken={lastToken}
+          invites={invites}
+          onCreateInvite={createInvite}
+          onRevokeInvite={revokeInvite}
+        />
       ) : null}
-
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Participants</h3>
-        <ul style={{ paddingLeft: '1.1rem' }}>
-          {members.map((m) => (
-            <li key={m.user_id}>
-              <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong> — {m.role}
-              {isAdmin && m.user_id !== userId ? (
-                <>
-                  <span className="row icon-action-toolbar" style={{ marginLeft: '0.5rem' }}>
-                    <IconActionButton
-                      variant="secondary"
-                      label={`Attribuer le rôle lecture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                      onClick={() => void setRole(m.user_id, 'read')}
-                    >
-                      <IconEye />
-                    </IconActionButton>
-                    <IconActionButton
-                      variant="secondary"
-                      label={`Attribuer le rôle écriture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                      onClick={() => void setRole(m.user_id, 'write')}
-                    >
-                      <IconPencil />
-                    </IconActionButton>
-                    <IconActionButton
-                      variant="secondary"
-                      label={`Attribuer le rôle administrateur à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                      onClick={() => void setRole(m.user_id, 'admin')}
-                    >
-                      <IconShield />
-                    </IconActionButton>
-                  </span>
-                  <IconActionButton
-                    variant="danger"
-                    label={`Retirer ${m.display_name ?? m.user_id.slice(0, 8)} du dossier`}
-                    style={{ marginLeft: '0.5rem' }}
-                    onClick={() => void removeMember(m.user_id)}
-                  >
-                    <IconUserMinus />
-                  </IconActionButton>
-                </>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        <IconActionButton
-          variant="secondary"
-          label="Quitter ce dossier"
-          onClick={() => void leave()}
-        >
-          <IconLogOut />
-        </IconActionButton>
-      </div>
-
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Export dossier</h3>
-        <div className="row" style={{ flexWrap: 'wrap', alignItems: 'flex-start', gap: '1.25rem' }}>
-          <ExportWorkspaceButton workspaceId={workspace.id} />
-          <ExportWorkspacePromptButton workspaceId={workspace.id} />
-        </div>
-      </div>
-
+      <SettingsParticipantsCard
+        members={members}
+        isAdmin={isAdmin}
+        userId={userId}
+        onSetRole={setRole}
+        onRemoveMember={removeMember}
+        onLeave={leave}
+      />
+      <SettingsExportCard workspaceId={workspace.id} />
       {workspace.replacement_enabled ? (
-        <form onSubmit={saveVehicle} className="card stack" style={{ boxShadow: 'none' }}>
-          <h3 style={{ margin: 0 }}>Véhicule actuel (remplacement)</h3>
-          {!canWrite ? <p className="muted">Lecture seule</p> : null}
-          <div className="row">
-            <div style={{ flex: '1 1 140px' }}>
-              <label>Marque</label>
-              <input
-                value={vehicle.brand}
-                onChange={(e) => setVehicle((v) => ({ ...v, brand: e.target.value }))}
-                disabled={!canWrite}
-              />
-            </div>
-            <div style={{ flex: '1 1 140px' }}>
-              <label>Modèle</label>
-              <input
-                value={vehicle.model}
-                onChange={(e) => setVehicle((v) => ({ ...v, model: e.target.value }))}
-                disabled={!canWrite}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div style={{ flex: '1 1 140px' }}>
-              <label>Motorisation</label>
-              <input
-                value={vehicle.engine}
-                onChange={(e) => setVehicle((v) => ({ ...v, engine: e.target.value }))}
-                disabled={!canWrite}
-              />
-            </div>
-            <div style={{ flex: '1 1 120px' }}>
-              <label>Année</label>
-              <input
-                type="number"
-                value={vehicle.year}
-                onChange={(e) => setVehicle((v) => ({ ...v, year: e.target.value }))}
-                disabled={!canWrite}
-              />
-            </div>
-          </div>
-          <div className="stack" style={{ gap: '0.35rem' }}>
-            <h4 style={{ margin: 0, fontSize: '1rem' }}>Données techniques (flexibles)</h4>
-            <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-              Même principe que les fiches modèles : champs optionnels, stockés en JSON.
-            </p>
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 140px' }}>
-                <label htmlFor="cv-spec-doors">Nombre de portes</label>
-                <input
-                  id="cv-spec-doors"
-                  type="number"
-                  min={2}
-                  max={9}
-                  value={typeof vehicle.specs.doorCount === 'number' ? vehicle.specs.doorCount : ''}
-                  onChange={(e) => setVehicleSpecNum('doorCount', e.target.value)}
-                  disabled={!canWrite}
-                />
-              </div>
-              <div style={{ flex: '1 1 140px' }}>
-                <label htmlFor="cv-spec-hp">Puissance (ch)</label>
-                <input
-                  id="cv-spec-hp"
-                  type="number"
-                  min={0}
-                  value={typeof vehicle.specs.powerHp === 'number' ? vehicle.specs.powerHp : ''}
-                  onChange={(e) => setVehicleSpecNum('powerHp', e.target.value)}
-                  disabled={!canWrite}
-                />
-              </div>
-              <div style={{ flex: '1 1 140px' }}>
-                <label htmlFor="cv-spec-fiscal">Puissance fiscale (CV)</label>
-                <input
-                  id="cv-spec-fiscal"
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={typeof vehicle.specs.fiscalCv === 'number' ? vehicle.specs.fiscalCv : ''}
-                  onChange={(e) => setVehicleSpecNum('fiscalCv', e.target.value)}
-                  disabled={!canWrite}
-                />
-              </div>
-              <div style={{ flex: '1 1 140px' }}>
-                <label htmlFor="cv-spec-trunk">Volume du coffre (L)</label>
-                <input
-                  id="cv-spec-trunk"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={
-                    typeof vehicle.specs.trunkLiters === 'number' ? vehicle.specs.trunkLiters : ''
-                  }
-                  onChange={(e) => setVehicleSpecNum('trunkLiters', e.target.value)}
-                  disabled={!canWrite}
-                />
-              </div>
-            </div>
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 180px' }}>
-                <label htmlFor="cv-spec-gearbox">Boîte de vitesses</label>
-                <input
-                  id="cv-spec-gearbox"
-                  value={typeof vehicle.specs.gearbox === 'string' ? vehicle.specs.gearbox : ''}
-                  onChange={(e) => setVehicleSpecStr('gearbox', e.target.value)}
-                  placeholder="ex. Manuelle 6, BVA8…"
-                  disabled={!canWrite}
-                />
-              </div>
-              <div style={{ flex: '1 1 180px' }}>
-                <label htmlFor="cv-spec-color">Couleur extérieure</label>
-                <input
-                  id="cv-spec-color"
-                  value={
-                    typeof vehicle.specs.exteriorColor === 'string'
-                      ? vehicle.specs.exteriorColor
-                      : ''
-                  }
-                  onChange={(e) => setVehicleSpecStr('exteriorColor', e.target.value)}
-                  disabled={!canWrite}
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <label>Options</label>
-            <textarea
-              value={vehicle.options}
-              onChange={(e) => setVehicle((v) => ({ ...v, options: e.target.value }))}
-              disabled={!canWrite}
-            />
-          </div>
-          {canWrite ? (
-            <button type="submit" disabled={busy}>
-              {busy ? '…' : 'Enregistrer le véhicule actuel'}
-            </button>
-          ) : null}
-        </form>
+        <SettingsCurrentVehicleForm
+          canWrite={canWrite}
+          busy={busy}
+          vehicle={vehicle}
+          setVehicle={setVehicle}
+          setVehicleSpecNum={setVehicleSpecNum}
+          setVehicleSpecStr={setVehicleSpecStr}
+          onSubmit={saveVehicle}
+        />
       ) : null}
     </div>
   )
