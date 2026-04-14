@@ -162,62 +162,79 @@ export function HomePage() {
   }
 
   return (
-    <div className="shell">
-      <header style={{ marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Miss Carbook</h1>
+    <div className="shell home-page">
+      <header className="home-hero stack">
+        <h1 className="home-hero-title">Miss Carbook</h1>
+        <p className="muted home-hero-lead" style={{ margin: 0, maxWidth: '36rem' }}>
+          Dossiers partagés pour comparer des véhicules, noter des exigences et décider ensemble.
+          Ouvrez un dossier ci-dessous ou utilisez les actions pliables.
+        </p>
       </header>
 
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Compte</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session</span>}.
-          Pseudo, thème, changement d’e-mail et renvoi de lien magique&nbsp;:{' '}
-          <Link to="/parametres">paramètres généraux</Link> (compte, thème, application).
-        </p>
-      </div>
-
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Créer un dossier</h2>
-        <form onSubmit={createWs} className="stack">
-          <div>
-            <label htmlFor="ws-name">Nom du projet véhicule</label>
-            <input id="ws-name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <div className="home-actions-accordions stack">
+        <details className="card home-accordion" name="home-action">
+          <summary className="home-accordion-summary">Créer un dossier</summary>
+          <div className="home-accordion-body stack">
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Nouveau projet véhicule dont vous serez administrateur.
+            </p>
+            <form onSubmit={createWs} className="stack">
+              <div>
+                <label htmlFor="ws-name">Nom du projet</label>
+                <input
+                  id="ws-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="ws-desc">Description</label>
+                <textarea id="ws-desc" value={desc} onChange={(e) => setDesc(e.target.value)} />
+              </div>
+              <label className="row" style={{ gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={replacement}
+                  onChange={(e) => setReplacement(e.target.checked)}
+                />
+                Activer le bloc « véhicule actuel / remplacement »
+              </label>
+              <button type="submit" disabled={busyCreate}>
+                {busyCreate ? 'Création…' : 'Créer le dossier'}
+              </button>
+            </form>
           </div>
-          <div>
-            <label htmlFor="ws-desc">Description</label>
-            <textarea id="ws-desc" value={desc} onChange={(e) => setDesc(e.target.value)} />
+        </details>
+
+        <details className="card home-accordion" name="home-action">
+          <summary className="home-accordion-summary">Rejoindre un dossier</summary>
+          <div className="home-accordion-body stack">
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Saisissez le code court partagé par un membre du dossier (6 caractères).
+            </p>
+            <form onSubmit={joinWs} className="stack">
+              <div>
+                <label htmlFor="ws-code">Code de partage</label>
+                <input
+                  id="ws-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="Ex. AB12CD"
+                  autoComplete="off"
+                  maxLength={12}
+                />
+              </div>
+              <button type="submit" className="secondary" disabled={busyJoin}>
+                {busyJoin ? 'Connexion…' : 'Rejoindre'}
+              </button>
+            </form>
           </div>
-          <label className="row" style={{ gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={replacement}
-              onChange={(e) => setReplacement(e.target.checked)}
-            />
-            Activer le bloc « véhicule actuel / remplacement »
-          </label>
-          <button type="submit" disabled={busyCreate}>
-            Créer
-          </button>
-        </form>
+        </details>
       </div>
 
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Rejoindre avec un code</h2>
-        <form onSubmit={joinWs} className="row">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="CODE PARTAGE"
-            style={{ flex: '1 1 160px' }}
-          />
-          <button type="submit" className="secondary" disabled={busyJoin}>
-            Rejoindre
-          </button>
-        </form>
-      </div>
-
-      <section className="card stack">
-        <h2 style={{ marginTop: 0 }}>Mes dossiers</h2>
+      <section className="card stack home-workspaces">
+        <h2 className="home-section-title">Mes dossiers</h2>
         {loading ? <p className="muted">Chargement…</p> : null}
         {!loading && rows.length === 0 ? (
           <p className="muted">Aucun dossier pour l’instant.</p>
