@@ -1,4 +1,5 @@
 -- Améliorations fonctionnelles : décision, invitations, évaluations, votes MoSCoW, rappels, presets comparaison, RPC sociale
+-- Idempotent : ré-exécution / base déjà partiellement à jour → pas d’échec sur objets existants.
 
 -- --- Décision dossier (modèle retenu) ---
 ALTER TABLE public.workspaces
@@ -13,7 +14,7 @@ ADD COLUMN IF NOT EXISTS decision_at timestamptz;
 CREATE INDEX IF NOT EXISTS idx_workspaces_selected_candidate ON public.workspaces (selected_candidate_id);
 
 -- --- Invitations avec rôle + expiration ---
-CREATE TABLE public.workspace_invites (
+CREATE TABLE IF NOT EXISTS public.workspace_invites (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   token text NOT NULL UNIQUE DEFAULT encode (gen_random_bytes (16), 'hex'),
@@ -24,12 +25,12 @@ CREATE TABLE public.workspace_invites (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_workspace_invites_workspace ON public.workspace_invites (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_invites_workspace ON public.workspace_invites (workspace_id);
 
-CREATE INDEX idx_workspace_invites_token ON public.workspace_invites (token);
+CREATE INDEX IF NOT EXISTS idx_workspace_invites_token ON public.workspace_invites (token);
 
 -- --- Exigence × candidat (satisfaction) ---
-CREATE TABLE public.requirement_candidate_evaluations (
+CREATE TABLE IF NOT EXISTS public.requirement_candidate_evaluations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   requirement_id uuid NOT NULL REFERENCES public.requirements (id) ON DELETE CASCADE,
   candidate_id uuid NOT NULL REFERENCES public.candidates (id) ON DELETE CASCADE,
@@ -42,12 +43,12 @@ CREATE TABLE public.requirement_candidate_evaluations (
   UNIQUE (requirement_id, candidate_id)
 );
 
-CREATE INDEX idx_rce_requirement ON public.requirement_candidate_evaluations (requirement_id);
+CREATE INDEX IF NOT EXISTS idx_rce_requirement ON public.requirement_candidate_evaluations (requirement_id);
 
-CREATE INDEX idx_rce_candidate ON public.requirement_candidate_evaluations (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_rce_candidate ON public.requirement_candidate_evaluations (candidate_id);
 
 -- --- Vote MoSCoW par exigence (agrégation côté app) ---
-CREATE TABLE public.requirement_priority_votes (
+CREATE TABLE IF NOT EXISTS public.requirement_priority_votes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   requirement_id uuid NOT NULL REFERENCES public.requirements (id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -56,10 +57,10 @@ CREATE TABLE public.requirement_priority_votes (
   UNIQUE (requirement_id, user_id)
 );
 
-CREATE INDEX idx_rpv_requirement ON public.requirement_priority_votes (requirement_id);
+CREATE INDEX IF NOT EXISTS idx_rpv_requirement ON public.requirement_priority_votes (requirement_id);
 
 -- --- Rappels / prochaines étapes ---
-CREATE TABLE public.reminders (
+CREATE TABLE IF NOT EXISTS public.reminders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   title text NOT NULL CHECK (char_length(trim(title)) BETWEEN 1 AND 200),
@@ -71,10 +72,10 @@ CREATE TABLE public.reminders (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_reminders_workspace ON public.reminders (workspace_id, done, due_at);
+CREATE INDEX IF NOT EXISTS idx_reminders_workspace ON public.reminders (workspace_id, done, due_at);
 
 -- --- Profils de critères (comparaison) ---
-CREATE TABLE public.comparison_presets (
+CREATE TABLE IF NOT EXISTS public.comparison_presets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid (),
   workspace_id uuid NOT NULL REFERENCES public.workspaces (id) ON DELETE CASCADE,
   name text NOT NULL CHECK (char_length(trim(name)) BETWEEN 1 AND 80),
@@ -83,7 +84,7 @@ CREATE TABLE public.comparison_presets (
   created_at timestamptz NOT NULL DEFAULT now ()
 );
 
-CREATE INDEX idx_comparison_presets_ws ON public.comparison_presets (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_comparison_presets_ws ON public.comparison_presets (workspace_id);
 
 -- Forcer created_by / user_id / updated_by côté serveur
 CREATE OR REPLACE FUNCTION public.reminders_set_creator ()
@@ -97,6 +98,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_reminders_creator ON public.reminders;
 
 CREATE TRIGGER trg_reminders_creator BEFORE INSERT ON public.reminders FOR EACH ROW
 EXECUTE FUNCTION public.reminders_set_creator ();
@@ -112,6 +115,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_rpv_user ON public.requirement_priority_votes;
 
 CREATE TRIGGER trg_rpv_user BEFORE INSERT OR
 UPDATE ON public.requirement_priority_votes FOR EACH ROW
@@ -130,6 +135,8 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_rce_updated ON public.requirement_candidate_evaluations;
+
 CREATE TRIGGER trg_rce_updated BEFORE INSERT OR
 UPDATE ON public.requirement_candidate_evaluations FOR EACH ROW
 EXECUTE FUNCTION public.rce_set_updated ();
@@ -146,8 +153,12 @@ ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comparison_presets ENABLE ROW LEVEL SECURITY;
 
 -- workspace_invites : lecture / création admin uniquement
+DROP POLICY IF EXISTS wi_select ON public.workspace_invites;
+
 CREATE POLICY wi_select ON public.workspace_invites FOR
 SELECT USING (public.is_workspace_admin (workspace_id));
+
+DROP POLICY IF EXISTS wi_insert ON public.workspace_invites;
 
 CREATE POLICY wi_insert ON public.workspace_invites FOR INSERT
 WITH CHECK (
@@ -155,12 +166,18 @@ WITH CHECK (
   AND created_by = auth.uid ()
 );
 
+DROP POLICY IF EXISTS wi_update ON public.workspace_invites;
+
 CREATE POLICY wi_update ON public.workspace_invites FOR
 UPDATE USING (public.is_workspace_admin (workspace_id));
+
+DROP POLICY IF EXISTS wi_delete ON public.workspace_invites;
 
 CREATE POLICY wi_delete ON public.workspace_invites FOR DELETE USING (public.is_workspace_admin (workspace_id));
 
 -- requirement_candidate_evaluations
+DROP POLICY IF EXISTS rce_select ON public.requirement_candidate_evaluations;
+
 CREATE POLICY rce_select ON public.requirement_candidate_evaluations FOR
 SELECT USING (
     EXISTS (
@@ -171,6 +188,8 @@ SELECT USING (
         AND public.is_workspace_member (r.workspace_id)
     )
   );
+
+DROP POLICY IF EXISTS rce_write ON public.requirement_candidate_evaluations;
 
 CREATE POLICY rce_write ON public.requirement_candidate_evaluations FOR ALL USING (
   EXISTS (
@@ -192,6 +211,8 @@ WITH CHECK (
 );
 
 -- requirement_priority_votes
+DROP POLICY IF EXISTS rpv_select ON public.requirement_priority_votes;
+
 CREATE POLICY rpv_select ON public.requirement_priority_votes FOR
 SELECT USING (
     EXISTS (
@@ -203,6 +224,8 @@ SELECT USING (
     )
   );
 
+DROP POLICY IF EXISTS rpv_insert ON public.requirement_priority_votes;
+
 CREATE POLICY rpv_insert ON public.requirement_priority_votes FOR INSERT
 WITH CHECK (
   EXISTS (
@@ -213,6 +236,8 @@ WITH CHECK (
       AND public.can_write_workspace (r.workspace_id)
   )
 );
+
+DROP POLICY IF EXISTS rpv_update ON public.requirement_priority_votes;
 
 CREATE POLICY rpv_update ON public.requirement_priority_votes FOR
 UPDATE USING (
@@ -236,6 +261,8 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS rpv_delete ON public.requirement_priority_votes;
+
 CREATE POLICY rpv_delete ON public.requirement_priority_votes FOR DELETE USING (
   user_id = auth.uid ()
   AND EXISTS (
@@ -248,21 +275,33 @@ CREATE POLICY rpv_delete ON public.requirement_priority_votes FOR DELETE USING (
 );
 
 -- reminders
+DROP POLICY IF EXISTS rem_select ON public.reminders;
+
 CREATE POLICY rem_select ON public.reminders FOR
 SELECT USING (public.is_workspace_member (workspace_id));
 
+DROP POLICY IF EXISTS rem_insert ON public.reminders;
+
 CREATE POLICY rem_insert ON public.reminders FOR INSERT
 WITH CHECK (public.can_write_workspace (workspace_id));
+
+DROP POLICY IF EXISTS rem_update ON public.reminders;
 
 CREATE POLICY rem_update ON public.reminders FOR
 UPDATE USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
+DROP POLICY IF EXISTS rem_delete ON public.reminders;
+
 CREATE POLICY rem_delete ON public.reminders FOR DELETE USING (public.can_write_workspace (workspace_id));
 
 -- comparison_presets
+DROP POLICY IF EXISTS cp_select ON public.comparison_presets;
+
 CREATE POLICY cp_select ON public.comparison_presets FOR
 SELECT USING (public.is_workspace_member (workspace_id));
+
+DROP POLICY IF EXISTS cp_insert ON public.comparison_presets;
 
 CREATE POLICY cp_insert ON public.comparison_presets FOR INSERT
 WITH CHECK (
@@ -270,9 +309,13 @@ WITH CHECK (
   AND created_by = auth.uid ()
 );
 
+DROP POLICY IF EXISTS cp_update ON public.comparison_presets;
+
 CREATE POLICY cp_update ON public.comparison_presets FOR
 UPDATE USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
+
+DROP POLICY IF EXISTS cp_delete ON public.comparison_presets;
 
 CREATE POLICY cp_delete ON public.comparison_presets FOR DELETE USING (public.can_write_workspace (workspace_id));
 
@@ -493,6 +536,32 @@ $$;
 GRANT EXECUTE ON FUNCTION public.remove_workspace_member (uuid, uuid) TO authenticated;
 
 -- Realtime (optionnel)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.reminders;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'reminders'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.reminders;
+  END IF;
+END;
+$$;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.requirement_candidate_evaluations;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE
+      pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'requirement_candidate_evaluations'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.requirement_candidate_evaluations;
+  END IF;
+END;
+$$;

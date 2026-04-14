@@ -52,6 +52,8 @@ Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https:
 
 Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
 
+**CI / `supabase db push`** : les fichiers du dossier `supabase/migrations/` sont rédigés pour être **ré-appliquables** si la base a déjà été créée via le SQL Editor (types / tables / policies déjà présents). Si le schéma distant est à jour mais que l’historique `supabase_migrations` ne l’est pas, on peut aussi marquer des versions comme déjà appliquées sans les ré-exécuter : `supabase migration repair --status applied <version>` (voir la doc CLI).
+
 ### 3. Realtime
 
 Les tables `notes`, `candidates`, `comments`, `activity_log`, `candidate_reviews` sont ajoutées à `supabase_realtime`. La migration fonctionnelle ajoute notamment `requirement_candidate_evaluations` (et d’autres selon le fichier). Vérifier dans le tableau de bord que la réplication est active si besoin.
