@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import type { RequirementLevel } from '../../types/database'
 
 type Req = { id: string; label: string; level: RequirementLevel }
@@ -36,11 +37,11 @@ export function EvaluationsTab({
   canWrite: boolean
   userId: string
 }) {
+  const { reportException } = useErrorDialog()
   const [reqs, setReqs] = useState<Req[]>([])
   const [cands, setCands] = useState<Cand[]>([])
   const [evals, setEvals] = useState<EvalRow[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
-  const [err, setErr] = useState<string | null>(null)
 
   const load = async () => {
     const [r, c, e, v] = await Promise.all([
@@ -49,8 +50,8 @@ export function EvaluationsTab({
       supabase.from('requirement_candidate_evaluations').select('requirement_id, candidate_id, status, note'),
       supabase.from('requirement_priority_votes').select('requirement_id, user_id, vote'),
     ])
-    if (r.error) setErr(r.error.message)
-    else setErr(null)
+    const firstErr = r.error ?? c.error ?? e.error ?? v.error
+    if (firstErr) reportException(firstErr, 'Chargement de la matrice d’évaluation')
     const reqRows = (r.data ?? []) as Req[]
     const candRows = (c.data ?? []) as Cand[]
     const reqIds = new Set(reqRows.map((x) => x.id))
@@ -98,7 +99,7 @@ export function EvaluationsTab({
       },
       { onConflict: 'requirement_id,candidate_id' }
     )
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Mise à jour du statut d’évaluation (exigence / modèle)')
     else {
       await load()
       await logActivity(workspaceId, 'rce.upsert', 'requirement_candidate', requirementId, { candidateId })
@@ -122,7 +123,7 @@ export function EvaluationsTab({
       },
       { onConflict: 'requirement_id,candidate_id' }
     )
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Mise à jour de la note d’évaluation')
     else await load()
   }
 
@@ -132,7 +133,7 @@ export function EvaluationsTab({
       { requirement_id: requirementId, vote },
       { onConflict: 'requirement_id,user_id' }
     )
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Enregistrement du vote MoSCoW')
     else await load()
   }
 
@@ -149,7 +150,6 @@ export function EvaluationsTab({
 
   return (
     <div className="stack eval-tab">
-      {err ? <p className="error">{err}</p> : null}
       <p className="muted">
         Pour chaque exigence : votre vote MoSCoW (priorisation) et, par modèle, si l’exigence est
         satisfaite.

@@ -9,6 +9,7 @@ import {
 } from '../../lib/validation/schemas'
 import { uploadCandidateImage, signedUrlForPath } from '../../lib/storageUpload'
 import { renderMentions } from '../../lib/renderMentions'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import type { CandidateStatus, Json } from '../../types/database'
 
 type CandidateRow = {
@@ -44,9 +45,9 @@ export function CandidatesTab({
   canWrite: boolean
   userId: string
 }) {
+  const { reportException, reportMessage } = useErrorDialog()
   const [candidates, setCandidates] = useState<CandidateRow[]>([])
   const [reviews, setReviews] = useState<{ candidate_id: string; score: number }[]>([])
-  const [err, setErr] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
 
   const load = async () => {
@@ -55,11 +56,8 @@ export function CandidatesTab({
       .select('*, candidate_specs ( specs )')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
-    if (error) setErr(error.message)
-    else {
-      setErr(null)
-      setCandidates((data ?? []) as unknown as CandidateRow[])
-    }
+    if (error) reportException(error, 'Chargement des modèles candidats')
+    else setCandidates((data ?? []) as unknown as CandidateRow[])
     const ids = (data ?? []).map((c: { id: string }) => c.id)
     if (ids.length) {
       const { data: revs } = await supabase.from('candidate_reviews').select('candidate_id, score').in('candidate_id', ids)
@@ -88,7 +86,6 @@ export function CandidatesTab({
 
   const duplicateOne = async (c: CandidateRow) => {
     if (!canWrite) return
-    setErr(null)
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -114,13 +111,12 @@ export function CandidatesTab({
       await logActivity(workspaceId, 'candidate.duplicate', 'candidate', data.id, { from: c.id })
       await load()
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Duplication impossible')
+      reportException(e, 'Duplication d’un modèle candidat')
     }
   }
 
   const importCsv = async (file: File | null) => {
     if (!file || !canWrite) return
-    setErr(null)
     try {
       const text = await file.text()
       const lines = text.split(/\r?\n/).filter((l) => l.trim())
@@ -166,21 +162,21 @@ export function CandidatesTab({
       await load()
       await logActivity(workspaceId, 'candidate.import_csv', 'workspace', workspaceId, {})
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Import CSV impossible')
+      reportException(e, 'Import CSV des modèles')
     }
   }
 
   const addCandidate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite) return
-    setErr(null)
     const parsed = candidateSchema.safeParse({
       ...form,
       price: form.price,
       event_date: form.event_date || null,
     })
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     try {
@@ -220,14 +216,12 @@ export function CandidatesTab({
       })
       await load()
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Création impossible')
+      reportException(e, 'Création d’un modèle candidat')
     }
   }
 
   return (
     <div className="stack">
-      {err ? <p className="error">{err}</p> : null}
-
       {canWrite ? (
         <div className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Import CSV</h3>
@@ -380,6 +374,7 @@ function CandidateDetail({
   userId: string
   onChanged: () => void
 }) {
+  const { reportException, reportMessage } = useErrorDialog()
   const [specs, setSpecs] = useState<Record<string, unknown>>(
     () => (candidate.candidate_specs?.specs as Record<string, unknown>) ?? {}
   )
@@ -388,7 +383,6 @@ function CandidateDetail({
   const [comments, setComments] = useState<{ id: string; body: string; user_id: string; created_at: string }[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [photos, setPhotos] = useState<{ id: string; url: string }[]>([])
-  const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     setSpecs((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
@@ -453,16 +447,18 @@ function CandidateDetail({
   const saveSpecs = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite) return
-    setErr(null)
     const parsed = candidateSpecsSchema.safeParse(specs)
     if (!parsed.success) {
-      setErr('Données constructeur invalides')
+      reportMessage(
+        'Données constructeur invalides',
+        JSON.stringify(parsed.error.flatten(), null, 2)
+      )
       return
     }
     const { error } = await supabase
       .from('candidate_specs')
       .upsert({ candidate_id: candidate.id, specs: parsed.data as Json })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Enregistrement des données constructeur')
     else {
       await logActivity(workspaceId, 'candidate.specs.upsert', 'candidate', candidate.id, {})
       onChanged()
@@ -472,13 +468,13 @@ function CandidateDetail({
   const saveReview = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite) return
-    setErr(null)
     const parsed = reviewSchema.safeParse({
       ...review,
       score: review.score,
     })
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Avis invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Avis invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     const { error } = await supabase.from('candidate_reviews').upsert({
@@ -489,7 +485,7 @@ function CandidateDetail({
       pros: parsed.data.pros,
       cons: parsed.data.cons,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Enregistrement de l’avis sur le modèle')
     else {
       await logActivity(workspaceId, 'candidate.review.upsert', 'candidate', candidate.id, {})
       onChanged()
@@ -501,7 +497,10 @@ function CandidateDetail({
     if (!canWrite) return
     const parsed = commentSchema.safeParse({ body: comment })
     if (!parsed.success) {
-      setErr('Commentaire invalide')
+      reportMessage(
+        'Commentaire invalide',
+        JSON.stringify(parsed.error.flatten(), null, 2)
+      )
       return
     }
     const { error } = await supabase.from('comments').insert({
@@ -509,7 +508,7 @@ function CandidateDetail({
       user_id: userId,
       body: parsed.data.body,
     })
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Envoi d’un commentaire')
     else {
       setComment('')
       await loadComments()
@@ -518,13 +517,12 @@ function CandidateDetail({
 
   const onFile = async (file: File | null) => {
     if (!file || !canWrite) return
-    setErr(null)
     try {
       await uploadCandidateImage(workspaceId, candidate.id, file, userId)
       await loadPhotos()
       await logActivity(workspaceId, 'candidate.photo.upload', 'candidate', candidate.id, {})
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Upload impossible')
+      reportException(e, 'Upload d’une photo pour le modèle')
     }
   }
 
@@ -547,7 +545,6 @@ function CandidateDetail({
 
   return (
     <div className="stack" style={{ marginTop: '0.75rem' }}>
-      {err ? <p className="error">{err}</p> : null}
       <form onSubmit={saveSpecs} className="stack">
         <h4 style={{ margin: 0 }}>Données constructeur (flexibles)</h4>
         <div className="row" style={{ flexWrap: 'wrap' }}>

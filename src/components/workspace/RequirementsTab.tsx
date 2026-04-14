@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { requirementSchema } from '../../lib/validation/schemas'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import type { RequirementLevel } from '../../types/database'
 
 type Req = {
@@ -21,9 +22,9 @@ export function RequirementsTab({
   workspaceId: string
   canWrite: boolean
 }) {
+  const { reportException, reportMessage } = useErrorDialog()
   const [rows, setRows] = useState<Req[]>([])
   const [filter, setFilter] = useState<'all' | RequirementLevel>('all')
-  const [err, setErr] = useState<string | null>(null)
 
   const [label, setLabel] = useState('')
   const [description, setDescription] = useState('')
@@ -38,11 +39,8 @@ export function RequirementsTab({
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('sort_order', { ascending: true })
-    if (error) setErr(error.message)
-    else {
-      setErr(null)
-      setRows((data ?? []) as Req[])
-    }
+    if (error) reportException(error, 'Chargement des exigences')
+    else setRows((data ?? []) as Req[])
   }
 
   useEffect(() => {
@@ -70,10 +68,10 @@ export function RequirementsTab({
     e.preventDefault()
     if (!canWrite) return
     setBusy(true)
-    setErr(null)
     const parsed = requirementSchema.safeParse({ label, description, level, weight, tags })
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       setBusy(false)
       return
     }
@@ -100,7 +98,7 @@ export function RequirementsTab({
       await load()
       await logActivity(workspaceId, 'requirement.create', 'requirement', data?.id ?? null, {})
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Ajout impossible')
+      reportException(e, 'Ajout d’une exigence')
     } finally {
       setBusy(false)
     }
@@ -110,7 +108,7 @@ export function RequirementsTab({
     if (!canWrite) return
     if (!confirm('Supprimer cette exigence ?')) return
     const { error } = await supabase.from('requirements').delete().eq('id', id)
-    if (error) setErr(error.message)
+    if (error) reportException(error, 'Suppression d’une exigence')
     else {
       await load()
       await logActivity(workspaceId, 'requirement.delete', 'requirement', id, {})
@@ -130,8 +128,6 @@ export function RequirementsTab({
           <option value="discuss">À discuter</option>
         </select>
       </div>
-
-      {err ? <p className="error">{err}</p> : null}
 
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {filtered.map((r) => (

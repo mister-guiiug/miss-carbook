@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
 import { authEmailRedirectUrl } from '../lib/authRedirect'
-import { formatProfileSaveError } from '../lib/profileErrors'
+import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import {
   displayNameRules,
   displayNameSchema,
@@ -25,13 +25,13 @@ type Row = {
 }
 
 export function HomePage() {
+  const { reportException, reportMessage } = useErrorDialog()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const inviteHandled = useRef(false)
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState<string | null>(null)
 
   const [name, setName] = useState('')
   const [desc, setDesc] = useState('')
@@ -51,7 +51,6 @@ export function HomePage() {
   const load = async () => {
     if (!user) return
     setLoading(true)
-    setErr(null)
     const { data, error } = await supabase
       .from('workspace_members')
       .select(
@@ -65,7 +64,7 @@ export function HomePage() {
       .order('joined_at', { ascending: false })
 
     if (error) {
-      setErr(error.message)
+      reportException(error, 'Chargement de la liste des dossiers')
       setRows([])
     } else {
       setRows((data ?? []) as unknown as Row[])
@@ -100,7 +99,7 @@ export function HomePage() {
     void (async () => {
       const { data, error } = await supabase.rpc('accept_workspace_invite', { p_token: token })
       if (error) {
-        setErr(error.message)
+        reportException(error, 'Acceptation d’une invitation (paramètre invite)')
         inviteHandled.current = false
         return
       }
@@ -109,7 +108,7 @@ export function HomePage() {
       setSearchParams(next, { replace: true })
       if (data) navigate(`/w/${data}`, { replace: true })
     })()
-  }, [user, navigate, searchParams, setSearchParams])
+  }, [user, navigate, searchParams, setSearchParams, reportException])
 
   useEffect(() => {
     if (!searchParams.get('invite')) inviteHandled.current = false
@@ -118,14 +117,14 @@ export function HomePage() {
   const createWs = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    setErr(null)
     const parsed = workspaceCreateSchema.safeParse({
       name,
       description: desc,
       replacement_enabled: replacement,
     })
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Formulaire invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Formulaire invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     setBusyCreate(true)
@@ -150,7 +149,7 @@ export function HomePage() {
         navigate(`/w/${data.id}`)
       }
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Création impossible')
+      reportException(e, 'Création d’un dossier')
     } finally {
       setBusyCreate(false)
     }
@@ -159,10 +158,9 @@ export function HomePage() {
   const joinWs = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    setErr(null)
     const parsed = shareCodeSchema.safeParse(code)
     if (!parsed.success) {
-      setErr('Code invalide')
+      reportMessage('Code invalide', JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     setBusyJoin(true)
@@ -173,7 +171,7 @@ export function HomePage() {
       await load()
       if (data) navigate(`/w/${data}`)
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Code inconnu ou accès refusé')
+      reportException(e, 'Rejoindre un dossier avec un code')
     } finally {
       setBusyJoin(false)
     }
@@ -183,10 +181,10 @@ export function HomePage() {
     e.preventDefault()
     if (!user) return
     setBusyPseudo(true)
-    setErr(null)
     const parsed = displayNameSchema.safeParse(pseudoEdit)
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Pseudo invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Pseudo invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       setBusyPseudo(false)
       return
     }
@@ -200,7 +198,7 @@ export function HomePage() {
       setProfilePseudo(parsed.data)
       notifyProfileUpdated()
     } catch (e: unknown) {
-      setErr(formatProfileSaveError(e))
+      reportException(e, 'Mise à jour du pseudo (page d’accueil)')
     } finally {
       setBusyPseudo(false)
     }
@@ -209,11 +207,10 @@ export function HomePage() {
   const associateEmail = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    setErr(null)
     setEmailHint(null)
     const email = emailField.trim()
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErr('Adresse e-mail invalide')
+      reportMessage('Adresse e-mail invalide', `Saisie : ${JSON.stringify(email)}`)
       return
     }
     setBusyEmail(true)
@@ -224,7 +221,7 @@ export function HomePage() {
         'Un e-mail de confirmation vous a été envoyé. Après validation, vous pourrez vous reconnecter avec « Connexion par e-mail » depuis la page d’accueil.'
       )
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Association impossible')
+      reportException(e, 'Association d’une adresse e-mail au compte')
     } finally {
       setBusyEmail(false)
     }
@@ -232,7 +229,6 @@ export function HomePage() {
 
   const resendMagicLink = async () => {
     if (!user?.email) return
-    setErr(null)
     setEmailHint(null)
     setBusyEmail(true)
     try {
@@ -243,7 +239,7 @@ export function HomePage() {
       if (error) throw error
       setEmailHint('Nouveau lien envoyé sur votre adresse.')
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Envoi impossible')
+      reportException(e, 'Renvoi du lien magique')
     } finally {
       setBusyEmail(false)
     }
@@ -373,8 +369,6 @@ export function HomePage() {
           </button>
         </form>
       </div>
-
-      {err ? <p className="error">{err}</p> : null}
 
       <section className="card stack">
         <h2 style={{ marginTop: 0 }}>Mes dossiers</h2>

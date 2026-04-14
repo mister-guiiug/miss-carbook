@@ -3,13 +3,13 @@ import { supabase } from '../lib/supabase'
 import { displayNameRules, displayNameSchema } from '../lib/validation/schemas'
 import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
-import { formatProfileSaveError } from '../lib/profileErrors'
 import { authEmailRedirectUrl } from '../lib/authRedirect'
+import { useErrorDialog } from '../contexts/ErrorDialogContext'
 
 export function PseudoGate({ children }: { children: ReactNode }) {
+  const { reportException, reportMessage } = useErrorDialog()
   const { user, loading } = useAuth()
   const [pseudo, setPseudo] = useState('')
-  const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
   const [busyMagic, setBusyMagic] = useState(false)
@@ -17,10 +17,10 @@ export function PseudoGate({ children }: { children: ReactNode }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErr(null)
     const parsed = displayNameSchema.safeParse(pseudo)
     if (!parsed.success) {
-      setErr(parsed.error.errors[0]?.message ?? 'Pseudo invalide')
+      const msg = parsed.error.errors[0]?.message ?? 'Pseudo invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     setBusy(true)
@@ -42,7 +42,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (upErr) throw upErr
       notifyProfileUpdated()
     } catch (e: unknown) {
-      setErr(formatProfileSaveError(e))
+      reportException(e, 'Enregistrement du pseudo (écran d’accueil)')
     } finally {
       setBusy(false)
     }
@@ -50,11 +50,10 @@ export function PseudoGate({ children }: { children: ReactNode }) {
 
   const sendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErr(null)
     setMagicMsg(null)
     const email = loginEmail.trim()
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErr('Adresse e-mail invalide')
+      reportMessage('Adresse e-mail invalide', `Saisie : ${JSON.stringify(email)}`)
       return
     }
     setBusyMagic(true)
@@ -67,7 +66,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       setMagicMsg('Lien envoyé : ouvrez l’e-mail pour vous connecter sur cet appareil.')
       setLoginEmail('')
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Envoi impossible')
+      reportException(e, 'Envoi du lien magique (écran d’accueil)')
     } finally {
       setBusyMagic(false)
     }
@@ -107,7 +106,6 @@ export function PseudoGate({ children }: { children: ReactNode }) {
                 placeholder="ex. Guillaume_M"
               />
             </div>
-            {err ? <p className="error">{err}</p> : null}
             <button type="submit" disabled={busy}>
               {busy ? 'Connexion…' : 'Continuer en anonyme'}
             </button>

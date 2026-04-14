@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) {
+  const { reportException } = useErrorDialog()
   const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
 
   const run = async () => {
     setBusy(true)
-    setErr(null)
     try {
       const JSZip = (await import('jszip')).default
       const zip = new JSZip()
@@ -37,7 +37,7 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
       a.click()
       URL.revokeObjectURL(url)
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Export impossible')
+      reportException(e, 'Export ZIP du dossier')
     } finally {
       setBusy(false)
     }
@@ -48,7 +48,6 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
       <button type="button" className="secondary" disabled={busy} onClick={() => void run()}>
         {busy ? 'Export…' : 'Exporter le dossier (ZIP JSON)'}
       </button>
-      {err ? <p className="error">{err}</p> : null}
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
         Archive locale : résumé workspace, exigences, modèles, notes, journal récent. Pas de photos
         binaires.

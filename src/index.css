@@ -454,6 +454,82 @@ th {
   box-shadow: 0 -6px 28px rgb(0 0 0 / 0.35);
 }
 
+.error-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  background: rgb(15 23 42 / 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.error-dialog {
+  width: min(420px, 100%);
+  max-height: min(90vh, 560px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  margin: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 48px rgb(15 23 42 / 0.2);
+}
+
+.error-dialog-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.error-dialog-message {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.error-dialog-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-dialog-details-toggle {
+  align-self: flex-start;
+}
+
+.error-dialog-technical-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-dialog-technical {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.error-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 .search-modal-backdrop {
   position: fixed;
   inset: 0;
