@@ -43,7 +43,7 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
 5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
 
-Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → *Relancer la visite*. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
+Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → _Relancer la visite_. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
 
 ---
 
@@ -92,10 +92,10 @@ Scripts utiles :
 
 ### Visite guidée (mobile / PWA)
 
-- **Route** : `/assistant` — assistant d’accueil (5 étapes). Déclenché automatiquement une fois par session sur **fenêtre ≤ 768 px** ou **display-mode: standalone**, si l’utilisateur n’a pas choisi *Ne plus proposer* (`localStorage` `mc_assistant_global_done`).
+- **Route** : `/assistant` — assistant d’accueil (5 étapes). Déclenché automatiquement une fois par session sur **fenêtre ≤ 768 px** ou **display-mode: standalone**, si l’utilisateur n’a pas choisi _Ne plus proposer_ (`localStorage` `mc_assistant_global_done`).
 - **Dossier** : après création, l’onboarding existant passe en **plein écran** sur la même cible ; la session `mc_new_ws` est inchangée.
 - **Invitation** : après acceptation d’un lien `?invite=`, deux écrans plein écran peuvent s’afficher (`sessionStorage` `mc_invite_welcome`).
-- **Réinitialisation** : **Paramètres généraux** → *Réinitialiser les indicateurs* (`resetAllAssistantFlags` : global, session auto, `mc_onboard_*`, astuces invitation).
+- **Réinitialisation** : **Paramètres généraux** → _Réinitialiser les indicateurs_ (`resetAllAssistantFlags` : global, session auto, `mc_onboard_*`, astuces invitation).
 
 ### Variables d’environnement (front)
 

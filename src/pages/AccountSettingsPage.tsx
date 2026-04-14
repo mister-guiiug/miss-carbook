@@ -183,9 +183,9 @@ export function AccountSettingsPage() {
       <div className="card stack">
         <h2 style={{ marginTop: 0 }}>Visite guidée (mobile / PWA)</h2>
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Réinitialise les écrans « déjà vus » (accueil, arrivée par invitation, premier passage dans
-          un nouveau dossier sur petit écran). Ensuite, rouvrez l’accueil sur téléphone ou lancez la
-          visite ci-dessous.
+          Réinitialise les écrans « déjà vus » (accueil, arrivée par invitation, premier passage
+          dans un nouveau dossier sur petit écran). Ensuite, rouvrez l’accueil sur téléphone ou
+          lancez la visite ci-dessous.
         </p>
         <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
           <button
