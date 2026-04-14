@@ -73,6 +73,14 @@ a:hover {
   border-bottom: 1px solid var(--border);
 }
 
+.app-topbar--workspace {
+  box-shadow: 0 1px 0 rgb(15 23 42 / 0.06);
+}
+
+[data-theme='dark'] .app-topbar--workspace {
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
+}
+
 .app-topbar-inner {
   max-width: 960px;
   margin: 0 auto;
@@ -927,15 +935,16 @@ th {
   margin: 0;
 }
 
-.workspace-header-actions {
-  width: 100%;
-  justify-content: stretch;
+.workspace-header--document .workspace-header-title {
+  margin-top: 0;
 }
 
-.workspace-header-actions > .btn,
-.workspace-header-actions > button {
-  flex: 1 1 0;
-  min-width: 0;
+.workspace-header-breadcrumb a {
+  text-decoration: none;
+}
+
+.workspace-header-breadcrumb a:hover {
+  text-decoration: underline;
 }
 
 .requirements-tab .requirement-list {
@@ -1043,17 +1052,6 @@ th {
     gap: 1rem;
   }
 
-  .workspace-header-actions {
-    width: auto;
-    flex-shrink: 0;
-    justify-content: flex-end;
-  }
-
-  .workspace-header-actions > .btn,
-  .workspace-header-actions > button {
-    flex: 0 0 auto;
-  }
-
   .site-footer-lead {
     flex: 1 1 auto;
     text-align: inherit;
@@ -1127,19 +1125,19 @@ th {
   touch-action: manipulation;
 }
 
-/* Barre dossier : + (ajout), roue (paramètres / nav), avatar */
-.workspace-header-toolbar {
+/* Barre dossier (sticky TopBar) : +, roue, avatar */
+.workspace-chrome-toolbar {
   flex-shrink: 0;
 }
 
-.workspace-header-toolbar-inner {
+.workspace-chrome-toolbar-inner {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.4rem;
 }
 
-.workspace-header-toolbar-group {
+.workspace-chrome-toolbar-group {
   position: relative;
 }
 
@@ -1223,7 +1221,7 @@ th {
 
 .workspace-toolbar-menu {
   position: absolute;
-  z-index: 80;
+  z-index: 100;
   top: calc(100% + 6px);
   left: 0;
   min-width: min(240px, calc(100vw - 2rem));
@@ -1234,6 +1232,21 @@ th {
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: 0 12px 32px rgb(15 23 42 / 0.12);
+}
+
+.workspace-toolbar-menu-label {
+  padding: 0.2rem 0.85rem 0.1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.workspace-toolbar-menu-sep {
+  height: 1px;
+  margin: 0.35rem 0.5rem;
+  background: var(--border);
 }
 
 .workspace-toolbar-menu--right {
@@ -1294,5 +1307,14 @@ th {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  min-height: var(--touch-target);
+}
+
+.app-topbar-right--workspace {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   min-height: var(--touch-target);
 }

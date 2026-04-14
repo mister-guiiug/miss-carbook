@@ -6,6 +6,8 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useTheme } from '../hooks/useTheme'
 import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
+import { useWorkspaceChrome } from '../contexts/WorkspaceChromeContext'
+import { WorkspaceHeaderToolbar } from './workspace/WorkspaceHeaderToolbar'
 
 const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
@@ -87,6 +89,7 @@ function isWorkspacePath(pathname: string) {
 export function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { api: workspaceChrome } = useWorkspaceChrome()
   const { user } = useAuth()
   const { mode, toggle } = useTheme()
   const online = useOnlineStatus()
@@ -133,10 +136,15 @@ export function TopBar() {
 
   const label = loading ? '…' : displayName?.trim() || 'Profil'
   const themeNextLabel = mode === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'
-  const hideAccountCluster = isWorkspacePath(location.pathname)
+  const onWorkspace = isWorkspacePath(location.pathname)
+  const hideAccountCluster = onWorkspace
+  const showWorkspaceToolbar = onWorkspace && workspaceChrome
 
   return (
-    <header className="app-topbar" role="banner">
+    <header
+      className={`app-topbar${onWorkspace ? ' app-topbar--workspace' : ''}`}
+      role="banner"
+    >
       <div className="app-topbar-inner">
         <Link to="/" className="app-brand">
           <img
@@ -151,12 +159,23 @@ export function TopBar() {
         </Link>
         <div className="app-topbar-spacer" aria-hidden="true" />
         {hideAccountCluster ? (
-          <div className="app-topbar-right app-topbar-right--minimal">
+          <div
+            className={`app-topbar-right${showWorkspaceToolbar ? ' app-topbar-right--workspace' : ' app-topbar-right--minimal'}`}
+            role={showWorkspaceToolbar ? 'toolbar' : undefined}
+            aria-label={showWorkspaceToolbar ? 'Actions dossier' : undefined}
+          >
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
               title={online ? 'En ligne' : 'Hors ligne'}
               aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
             />
+            {showWorkspaceToolbar ? (
+              <WorkspaceHeaderToolbar
+                canWrite={workspaceChrome.canWrite}
+                onOpenTab={workspaceChrome.setTab}
+                onOpenSearch={workspaceChrome.openSearch}
+              />
+            ) : null}
           </div>
         ) : (
           <div className="app-topbar-right">

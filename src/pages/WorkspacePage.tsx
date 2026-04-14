@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { formatCandidateListLabel } from '../lib/candidateLabel'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
+import { useWorkspaceChrome } from '../contexts/WorkspaceChromeContext'
 import type { Database } from '../types/database'
 import { WorkspaceOnboarding } from '../components/WorkspaceOnboarding'
 import { WorkspaceSearchModal } from '../components/WorkspaceSearchModal'
@@ -15,7 +16,6 @@ import { CompareTab } from '../components/workspace/CompareTab'
 import { ActivityTab } from '../components/workspace/ActivityTab'
 import { RemindersTab } from '../components/workspace/RemindersTab'
 import { SettingsTab } from '../components/workspace/SettingsTab'
-import { WorkspaceHeaderToolbar } from '../components/workspace/WorkspaceHeaderToolbar'
 import { WORKSPACE_TABS, type TabId } from '../components/workspace/workspaceTabs'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
@@ -24,6 +24,7 @@ type Role = Database['public']['Tables']['workspace_members']['Row']['role']
 export function WorkspacePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const { user } = useAuth()
+  const { setWorkspaceChrome } = useWorkspaceChrome()
   const { reportException, reportMessage } = useErrorDialog()
   const [workspace, setWorkspace] = useState<Ws | null>(null)
   const [role, setRole] = useState<Role | null>(null)
@@ -125,6 +126,36 @@ export function WorkspacePage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const openSearch = useCallback(() => setSearchOpen(true), [])
+
+  useEffect(() => {
+    if (!workspaceId || !user) {
+      setWorkspaceChrome(null)
+      return
+    }
+    if (loading || accessBlocked || !workspace || !role) {
+      setWorkspaceChrome(null)
+      return
+    }
+    const canW = role === 'write' || role === 'admin'
+    setWorkspaceChrome({
+      canWrite: canW,
+      setTab,
+      openSearch,
+    })
+    return () => setWorkspaceChrome(null)
+  }, [
+    workspaceId,
+    user,
+    loading,
+    accessBlocked,
+    workspace,
+    role,
+    setTab,
+    openSearch,
+    setWorkspaceChrome,
+  ])
+
   if (!workspaceId) return <p className="shell">Dossier introuvable.</p>
 
   if (!user) {
@@ -184,36 +215,20 @@ export function WorkspacePage() {
         </div>
       ) : null}
 
-      <header className="workspace-header">
+      <header className="workspace-header workspace-header--document">
         <div className="workspace-header-main">
-          <h1 className="workspace-header-title">{workspace.name}</h1>
+          <p className="workspace-header-breadcrumb muted" style={{ margin: '0 0 0.35rem', fontSize: '0.85rem' }}>
+            <Link to="/">← Dossiers</Link>
+          </p>
+          <h1 className="workspace-header-title" id="workspace-title">
+            {workspace.name}
+          </h1>
           <p className="muted workspace-header-desc">
             {workspace.description || 'Sans description'}
           </p>
-        </div>
-        <div
-          className="workspace-header-actions row"
-          style={{
-            width: '100%',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}
-        >
-          <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button type="button" className="secondary" onClick={() => setSearchOpen(true)}>
-              Recherche
-            </button>
-            <Link className="btn secondary" to="/">
-              Accueil
-            </Link>
-          </div>
-          <WorkspaceHeaderToolbar
-            canWrite={canWrite}
-            onOpenTab={setTab}
-            onOpenSearch={() => setSearchOpen(true)}
-          />
+          <p className="muted workspace-header-hint" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
+            Recherche, ajouts (<strong>+</strong>), paramètres et compte : barre fixe en haut à droite.
+          </p>
         </div>
       </header>
 

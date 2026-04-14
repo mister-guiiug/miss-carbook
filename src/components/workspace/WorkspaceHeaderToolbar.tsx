@@ -170,9 +170,9 @@ export function WorkspaceHeaderToolbar({
   const themeLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre'
 
   return (
-    <div ref={wrapRef} className="workspace-header-toolbar" role="presentation">
-      <div className="workspace-header-toolbar-inner row">
-        <div className="workspace-header-toolbar-group">
+    <div ref={wrapRef} className="workspace-chrome-toolbar" role="presentation">
+      <div className="workspace-chrome-toolbar-inner row">
+        <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
             className="workspace-toolbar-btn workspace-toolbar-btn-primary"
@@ -191,6 +191,7 @@ export function WorkspaceHeaderToolbar({
               role="menu"
               aria-label="Ajouter"
             >
+              <div className="workspace-toolbar-menu-label">Ajouter</div>
               <button
                 type="button"
                 role="menuitem"
@@ -235,7 +236,7 @@ export function WorkspaceHeaderToolbar({
           ) : null}
         </div>
 
-        <div className="workspace-header-toolbar-group">
+        <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
             className="workspace-toolbar-btn"
@@ -252,8 +253,9 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-gear"
               className="workspace-toolbar-menu"
               role="menu"
-              aria-label="Paramètres"
+              aria-label="Paramètres et navigation"
             >
+              <div className="workspace-toolbar-menu-label">Dossier</div>
               <button
                 type="button"
                 role="menuitem"
@@ -282,6 +284,8 @@ export function WorkspaceHeaderToolbar({
                   <span>{themeLabel}</span>
                 </span>
               </button>
+              <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
+              <div className="workspace-toolbar-menu-label">Navigation</div>
               <Link
                 role="menuitem"
                 className="workspace-toolbar-menu-item"
@@ -302,7 +306,7 @@ export function WorkspaceHeaderToolbar({
           ) : null}
         </div>
 
-        <div className="workspace-header-toolbar-group">
+        <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
             className="workspace-toolbar-avatar-btn"
