@@ -55,6 +55,8 @@ Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https:
 2. `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` — correctif RLS pour la première insertion membre à la création d’un dossier.
 3. `supabase/migrations/20260415000000_functional_enhancements.sql` — décision dossier, invitations, évaluations / votes MoSCoW, rappels, presets de comparaison, RPC associées (voir le fichier pour le détail des tables et policies).
 4. `supabase/migrations/20260416000000_profiles_display_name_unique.sql` — unicité des pseudos (insensible à la casse), règles de caractères, trigger profil par défaut à la création du compte (`handle_new_user`).
+5. `supabase/migrations/20260418120000_rpc_create_workspace.sql` — fonction RPC `create_workspace` : la création de dossier passe par le serveur (`SECURITY DEFINER`) pour éviter les refus RLS sur la table `workspaces` lorsque l’INSERT direct ne passe pas.
+
 Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
 
 **Remise à zéro complète (manuel)** : le fichier `supabase/scripts/reset_all_data_and_auth.sql` vide les tables métier, supprime les objets Storage du bucket `workspace-media` et **tous les comptes Auth**. À exécuter **à la main** dans le SQL Editor (il n’est **pas** dans `migrations/` pour éviter qu’un `supabase db push` automatique ne détruise une base en production).
@@ -117,12 +119,15 @@ Si Supabase n’est pas disponible : **Firebase** (plan Spark) peut remplacer Au
 
 ## Dépannage
 
-### Création de dossier en **403** (`42501`)
+### Création de dossier en **403** / erreur **`42501`**
 
-Souvent dû à la RLS sur **`workspace_members`** : la policy `wm_insert_admin` exige déjà le rôle admin, alors que le trigger qui vous ajoute comme premier admin ne peut pas la satisfaire tant qu’aucun membre n’existe — toute la transaction échoue (y compris l’INSERT sur `workspaces`).
+**Message** `new row violates row-level security policy for table "workspaces"` : la policy `workspaces_insert_auth` exige `auth.uid() IS NOT NULL` et `created_by = auth.uid()`. Si la requête part **sans JWT utilisateur** (session expirée, mauvaise clé, onglet privé qui bloque le stockage de session), `auth.uid()` est nul et l’INSERT est refusé.
 
-**Correctif** : dans Supabase → **SQL Editor**, exécuter le fichier `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql`  
-(ajoute la policy `wm_insert_creator_first` pour la **première** ligne membre, réservée au créateur du dossier).
+**Côté app** : la création utilise désormais la RPC **`create_workspace`** (migration `20260418120000_rpc_create_workspace.sql`) : appliquer cette migration avec `supabase db push` ou le SQL Editor.
+
+**Autre cause fréquente** : RLS sur **`workspace_members`** — sans la policy `wm_insert_creator_first`, le trigger qui ajoute le créateur comme admin peut faire échouer toute la transaction.
+
+**Correctif membres** : exécuter `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` si ce n’est pas déjà fait.
 
 ## Licence
 

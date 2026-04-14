@@ -126,24 +126,20 @@ export function HomePage() {
     }
     setBusyCreate(true)
     try {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .insert({
-          name: parsed.data.name,
-          description: parsed.data.description,
-          replacement_enabled: parsed.data.replacement_enabled,
-          created_by: user.id,
-        })
-        .select('id')
-        .single()
+      const { data, error } = await supabase.rpc('create_workspace', {
+        p_name: parsed.data.name,
+        p_description: parsed.data.description,
+        p_replacement_enabled: parsed.data.replacement_enabled,
+      })
       if (error) throw error
       setName('')
       setDesc('')
       setReplacement(false)
       await load()
-      if (data?.id) {
-        sessionStorage.setItem('mc_new_ws', data.id)
-        navigate(`/w/${data.id}`)
+      const newId = typeof data === 'string' ? data : null
+      if (newId) {
+        sessionStorage.setItem('mc_new_ws', newId)
+        navigate(`/w/${newId}`)
       }
     } catch (e: unknown) {
       reportException(e, 'Création d’un dossier')
