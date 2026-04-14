@@ -58,18 +58,50 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
   padding: 0.5rem 1rem;
   background: rgb(248 250 252 / 0.92);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
 
-.app-topbar-spacer {
-  flex: 1;
+.app-topbar-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.app-brand:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.app-brand-logo {
+  display: block;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.app-brand-title {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .app-profile-chip {

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents'
+
+const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
 function initialsFromDisplayName(name: string) {
   const t = name.trim()
@@ -53,12 +56,24 @@ export function TopBar() {
 
   return (
     <header className="app-topbar" role="banner">
-      <div className="app-topbar-spacer" aria-hidden="true" />
-      <div className="app-profile-chip" title={`Connecté : ${label}`}>
-        <span className="app-profile-avatar" aria-hidden="true">
-          {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
-        </span>
-        <span className="app-profile-name">{label}</span>
+      <div className="app-topbar-inner">
+        <Link to="/" className="app-brand">
+          <img
+            src={logoSrc}
+            alt=""
+            className="app-brand-logo"
+            width={36}
+            height={36}
+            decoding="async"
+          />
+          <span className="app-brand-title">Miss Carbook</span>
+        </Link>
+        <div className="app-profile-chip" title={`Connecté : ${label}`}>
+          <span className="app-profile-avatar" aria-hidden="true">
+            {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+          </span>
+          <span className="app-profile-name">{label}</span>
+        </div>
       </div>
     </header>
   )
