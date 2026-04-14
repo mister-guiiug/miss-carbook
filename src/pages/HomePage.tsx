@@ -44,7 +44,6 @@ export function HomePage() {
   const [pseudoEdit, setPseudoEdit] = useState('')
   const [busyPseudo, setBusyPseudo] = useState(false)
   const [profilePseudo, setProfilePseudo] = useState<string | null>(null)
-  const [emailField, setEmailField] = useState('')
   const [busyEmail, setBusyEmail] = useState(false)
   const [emailHint, setEmailHint] = useState<string | null>(null)
 
@@ -80,10 +79,8 @@ export function HomePage() {
   useEffect(() => {
     if (!user) {
       setProfilePseudo(null)
-      setEmailField('')
       return
     }
-    setEmailField(user.email ?? '')
     void supabase
       .from('profiles')
       .select('display_name')
@@ -189,10 +186,10 @@ export function HomePage() {
       return
     }
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ display_name: parsed.data })
-        .eq('id', user.id)
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        display_name: parsed.data,
+      })
       if (error) throw error
       setPseudoEdit('')
       setProfilePseudo(parsed.data)
@@ -201,29 +198,6 @@ export function HomePage() {
       reportException(e, 'Mise à jour du pseudo (page d’accueil)')
     } finally {
       setBusyPseudo(false)
-    }
-  }
-
-  const associateEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-    setEmailHint(null)
-    const email = emailField.trim()
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      reportMessage('Adresse e-mail invalide', `Saisie : ${JSON.stringify(email)}`)
-      return
-    }
-    setBusyEmail(true)
-    try {
-      const { error } = await supabase.auth.updateUser({ email })
-      if (error) throw error
-      setEmailHint(
-        'Un e-mail de confirmation vous a été envoyé. Après validation, vous pourrez vous reconnecter avec « Connexion par e-mail » depuis la page d’accueil.'
-      )
-    } catch (e: unknown) {
-      reportException(e, 'Association d’une adresse e-mail au compte')
-    } finally {
-      setBusyEmail(false)
     }
   }
 
@@ -260,53 +234,23 @@ export function HomePage() {
       </header>
 
       <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Compte et e-mail</h2>
+        <h2 style={{ marginTop: 0 }}>Compte</h2>
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Session {user.is_anonymous ? 'anonyme' : 'avec e-mail'}
+          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session e-mail</span>}.
+          Pour ouvrir une session sur un autre appareil, déconnectez-vous ou utilisez un autre navigateur,
+          puis saisissez la même adresse sur l’écran de bienvenue.
           {user.email ? (
-            <>
-              {' '}
-              · <code>{user.email}</code>
-            </>
+            <button
+              type="button"
+              className="secondary"
+              style={{ marginLeft: '0.5rem' }}
+              disabled={busyEmail}
+              onClick={() => void resendMagicLink()}
+            >
+              Renvoyer un lien
+            </button>
           ) : null}
         </p>
-        {user.is_anonymous ? (
-          <form onSubmit={associateEmail} className="stack">
-            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-              Associez un e-mail pour recevoir un lien de connexion sur un autre appareil (sans perdre
-              vos dossiers). Le fournisseur « Email » doit être activé dans Supabase.
-            </p>
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              <input
-                type="email"
-                value={emailField}
-                onChange={(e) => setEmailField(e.target.value)}
-                placeholder="vous@exemple.com"
-                autoComplete="email"
-                style={{ flex: '1 1 220px' }}
-              />
-              <button type="submit" className="secondary" disabled={busyEmail}>
-                {busyEmail ? 'Envoi…' : 'Associer et confirmer par e-mail'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-            Pour vous reconnecter ailleurs, utilisez « Connexion par e-mail » sur l’écran d’accueil
-            (lien magique).
-            {user.email ? (
-              <button
-                type="button"
-                className="secondary"
-                style={{ marginLeft: '0.5rem' }}
-                disabled={busyEmail}
-                onClick={() => void resendMagicLink()}
-              >
-                Renvoyer un lien
-              </button>
-            ) : null}
-          </p>
-        )}
         {emailHint ? <p className="muted">{emailHint}</p> : null}
       </div>
 

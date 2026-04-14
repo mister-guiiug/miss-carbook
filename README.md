@@ -6,7 +6,7 @@ Référence déploiement Pages via Actions : [Configurer une source de publicati
 
 ## Prérequis
 
-- Node.js 20+
+- Node.js 22+ (voir `.github/workflows`)
 - Un projet Supabase (plan Free acceptable)
 - Compte GitHub (Pages + Actions)
 
@@ -38,9 +38,14 @@ Scripts utiles :
 
 ## Configuration Supabase
 
-### 1. Auth anonyme
+### 1. Auth (e-mail uniquement)
 
-Dans **Authentication → Providers**, activer **Anonymous sign-ins** pour le flux « pseudo + session » sécurisée (JWT standard, droits limités par RLS).
+Dans **Authentication → Providers** :
+
+- Activer **Email** (lien magique / OTP, sans mot de passe côté app).
+- **Désactiver Anonymous sign-ins** (l’application ne crée plus de session anonyme).
+
+Dans **Authentication → URL Configuration**, renseigner **Site URL** et **Redirect URLs** pour votre déploiement (ex. `https://<user>.github.io/<repo>/` et variantes avec / sans slash final, plus `http://localhost:5173/` en local).
 
 ### 2. Schéma SQL
 
@@ -49,11 +54,12 @@ Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https:
 1. `supabase/migrations/20260414000000_initial_schema.sql` — schéma de base, RLS, `join_workspace`, Realtime, Storage.
 2. `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` — correctif RLS pour la première insertion membre à la création d’un dossier.
 3. `supabase/migrations/20260415000000_functional_enhancements.sql` — décision dossier, invitations, évaluations / votes MoSCoW, rappels, presets de comparaison, RPC associées (voir le fichier pour le détail des tables et policies).
-4. `supabase/migrations/20260416000000_profiles_display_name_unique.sql` — unicité des pseudos (insensible à la casse), règles de caractères, trigger profil par défaut.
-
+4. `supabase/migrations/20260416000000_profiles_display_name_unique.sql` — unicité des pseudos (insensible à la casse), règles de caractères, trigger profil par défaut à la création du compte (`handle_new_user`).
 Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
 
-**E-mail / lien magique** : dans **Authentication → Providers**, activer **Email** et renseigner les URL de redirection (ex. `https://<user>.github.io/<repo>/` en production). Les utilisateurs anonymes peuvent associer un e-mail depuis l’accueil ; la connexion sur un autre appareil utilise le bloc « Connexion par e-mail » sur l’écran de bienvenue.
+**Remise à zéro complète (manuel)** : le fichier `supabase/scripts/reset_all_data_and_auth.sql` vide les tables métier, supprime les objets Storage du bucket `workspace-media` et **tous les comptes Auth**. À exécuter **à la main** dans le SQL Editor (il n’est **pas** dans `migrations/` pour éviter qu’un `supabase db push` automatique ne détruise une base en production).
+
+**Nouveaux comptes** : le trigger crée une ligne `profiles` avec un pseudo dérivé de la partie locale de l’e-mail (ou un identifiant `u_…` si collision). L’utilisateur peut changer son pseudo depuis l’accueil.
 
 **CI / `supabase db push`** : les fichiers du dossier `supabase/migrations/` sont rédigés pour être **ré-appliquables** si la base a déjà été créée via le SQL Editor (types / tables / policies déjà présents). Si le schéma distant est à jour mais que l’historique `supabase_migrations` ne l’est pas, on peut aussi marquer des versions comme déjà appliquées sans les ré-exécuter : `supabase migration repair --status applied <version>` (voir la doc CLI).
 
@@ -97,7 +103,7 @@ Si Supabase n’est pas disponible : **Firebase** (plan Spark) peut remplacer Au
 
 ## Guide utilisateur (court)
 
-1. **Créer un dossier** : accueil → pseudo → « Créer un dossier » (nom, description, option remplacement).
+1. **Créer un dossier** : écran de bienvenue → e-mail → lien magique → accueil → « Créer un dossier » (nom, description, option remplacement). Ajuster le pseudo si besoin.
 2. **Inviter** : onglet **Paramètres** → copier le **code** ou le **lien** ; les invités utilisent « Rejoindre avec un code ».
 3. **Exigences** : onglet **Exigences** → ajouter, filtrer par niveau, tri par poids.
 4. **Modèles** : onglet **Modèles** → ajouter un candidat, ouvrir le détail pour fiche technique (JSON structuré), avis, commentaires, photos.
