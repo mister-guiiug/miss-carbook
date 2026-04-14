@@ -44,14 +44,12 @@ export function WorkspacePage() {
   const { user } = useAuth()
   const { setWorkspaceChrome } = useWorkspaceChrome()
   const { reportException, reportMessage } = useErrorDialog()
-  const {
-    workspace,
-    role,
-    decisionLabel,
-    loading,
-    accessBlocked,
-    refresh,
-  } = useWorkspace(workspaceId, user?.id, reportException, reportMessage)
+  const { workspace, role, decisionLabel, loading, accessBlocked, refresh } = useWorkspace(
+    workspaceId,
+    user?.id,
+    reportException,
+    reportMessage
+  )
   const tab = parseWorkspaceTabParam(searchParams.get('tab'))
   const [searchOpen, setSearchOpen] = useState(false)
   const [, bump] = useState(0)
@@ -276,11 +274,7 @@ export function WorkspacePage() {
               className={`badge workspace-role-badge workspace-role-badge--${role}`}
               title="Votre rôle dans ce dossier"
             >
-              {role === 'admin'
-                ? 'Administrateur'
-                : role === 'write'
-                  ? 'Édition'
-                  : 'Lecture seule'}
+              {role === 'admin' ? 'Administrateur' : role === 'write' ? 'Édition' : 'Lecture seule'}
             </span>
           </div>
           <p className="muted workspace-header-desc">

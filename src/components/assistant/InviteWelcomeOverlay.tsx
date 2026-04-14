@@ -42,7 +42,6 @@ export function InviteWelcomeOverlay({
     onClose()
   }
 
-
   if (step === 0) {
     return (
       <AssistantFullscreenLayout

@@ -2312,8 +2312,9 @@ button.workspace-journey-link {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) calc(0.75rem + env(safe-area-inset-right, 0px))
-    calc(0.75rem + env(safe-area-inset-bottom, 0px)) calc(0.75rem + env(safe-area-inset-left, 0px));
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px))
+    calc(0.75rem + env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px))
+    calc(0.75rem + env(safe-area-inset-left, 0px));
   background: var(--bg);
   overflow: auto;
   -webkit-overflow-scrolling: touch;

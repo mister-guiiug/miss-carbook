@@ -76,8 +76,8 @@ export function AssistantWelcomePage() {
       titleId: 'assistant-create-title',
       content: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Sur l’<strong>accueil</strong>, créez un dossier (projet véhicule) ou rejoignez-en un avec un{' '}
-          <strong>code de partage</strong>. Vous pourrez inviter d’autres personnes ensuite.
+          Sur l’<strong>accueil</strong>, créez un dossier (projet véhicule) ou rejoignez-en un avec
+          un <strong>code de partage</strong>. Vous pourrez inviter d’autres personnes ensuite.
         </p>
       ),
     },
@@ -91,10 +91,7 @@ export function AssistantWelcomePage() {
     },
   ]
 
-  const primary =
-    step < STEP_COUNT - 1
-      ? () => setStep((s) => s + 1)
-      : finishCompleted
+  const primary = step < STEP_COUNT - 1 ? () => setStep((s) => s + 1) : finishCompleted
   const primaryLabel = step < STEP_COUNT - 1 ? 'Suivant' : 'Aller à l’accueil'
 
   return (
