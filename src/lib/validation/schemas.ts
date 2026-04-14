@@ -1,10 +1,17 @@
 import { z } from 'zod'
 
+/** Aligné sur Postgres : lettres ASCII, chiffres, `.`, `_`, `-` — pas d’espace ni d’accents. */
+export const DISPLAY_NAME_REGEX = /^[a-zA-Z0-9._-]+$/
+
+export const displayNameRules =
+  '3 à 30 caractères : lettres sans accent, chiffres, point, tiret et underscore. Unicité (insensible à la casse).'
+
 export const displayNameSchema = z
   .string()
   .trim()
-  .min(1, 'Pseudo requis')
-  .max(80, '80 caractères max')
+  .min(3, 'Au moins 3 caractères')
+  .max(30, '30 caractères maximum')
+  .regex(DISPLAY_NAME_REGEX, displayNameRules)
 
 export const workspaceCreateSchema = z.object({
   name: z.string().trim().min(1).max(120),

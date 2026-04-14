@@ -8,10 +8,17 @@ import {
 
 describe('displayNameSchema', () => {
   it('accepte un pseudo valide', () => {
-    expect(displayNameSchema.safeParse('  Ada  ').success).toBe(true)
+    expect(displayNameSchema.safeParse('  Ada_Lovelace9  ').success).toBe(true)
   })
   it('refuse vide', () => {
     expect(displayNameSchema.safeParse('').success).toBe(false)
+  })
+  it('refuse trop court', () => {
+    expect(displayNameSchema.safeParse('ab').success).toBe(false)
+  })
+  it('refuse espace ou accents', () => {
+    expect(displayNameSchema.safeParse('a b').success).toBe(false)
+    expect(displayNameSchema.safeParse('été').success).toBe(false)
   })
 })
 
