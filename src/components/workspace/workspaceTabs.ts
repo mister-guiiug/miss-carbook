@@ -6,7 +6,7 @@ export const WORKSPACE_TABS = [
   { id: 'compare', label: 'Comparer' },
   { id: 'reminders', label: 'Rappels' },
   { id: 'activity', label: 'Activité' },
-  { id: 'settings', label: 'Paramètres' },
+  { id: 'settings', label: 'Réglages' },
 ] as const
 
 export type TabId = (typeof WORKSPACE_TABS)[number]['id']

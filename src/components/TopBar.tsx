@@ -197,8 +197,8 @@ export function TopBar() {
               <Link
                 to="/parametres"
                 className="app-topbar-icon-btn"
-                title="Paramètres du compte"
-                aria-label="Paramètres du compte"
+                title="Paramètres généraux — compte, thème, application"
+                aria-label="Paramètres généraux"
               >
                 <IconGear />
               </Link>
@@ -215,7 +215,7 @@ export function TopBar() {
             <Link
               to="/parametres"
               className="app-profile-chip app-profile-chip-action"
-              title={`${label} — paramètres du compte`}
+              title={`${label} — paramètres généraux`}
             >
               <span className="app-profile-avatar" aria-hidden="true">
                 {loading ? '…' : initialsFromDisplayName(displayName ?? '')}

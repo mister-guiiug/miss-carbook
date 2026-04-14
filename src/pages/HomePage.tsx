@@ -172,7 +172,7 @@ export function HomePage() {
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
           Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session</span>}.
           Pseudo, thème, changement d’e-mail et renvoi de lien magique&nbsp;:{' '}
-          <Link to="/parametres">paramètres du compte</Link>.
+          <Link to="/parametres">paramètres généraux</Link> (compte, thème, application).
         </p>
       </div>
 

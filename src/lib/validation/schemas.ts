@@ -43,7 +43,7 @@ export const workspaceCreateSchema = z.object({
   replacement_enabled: z.boolean().optional().default(false),
 })
 
-/** Mise à jour du nom et de la description d’un dossier (onglet Paramètres). */
+/** Mise à jour du nom et de la description d’un dossier (onglet Réglages). */
 export const workspaceMetaUpdateSchema = workspaceCreateSchema.pick({
   name: true,
   description: true,

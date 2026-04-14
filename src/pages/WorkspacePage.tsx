@@ -227,7 +227,8 @@ export function WorkspacePage() {
             {workspace.description || 'Sans description'}
           </p>
           <p className="muted workspace-header-hint" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
-            Recherche, ajouts (<strong>+</strong>), paramètres et compte : barre fixe en haut à droite.
+            Onglet <strong>Réglages</strong> : options de <em>ce</em> dossier. Compte, thème et mise à
+            jour de l’app : menu en haut à droite (icône compte ou roue → paramètres généraux).
           </p>
         </div>
       </header>
@@ -238,6 +239,11 @@ export function WorkspacePage() {
             <button
               type="button"
               className={tab === t.id ? 'active' : ''}
+              title={
+                t.id === 'settings'
+                  ? 'Nom du dossier, membres, invitations, partage — uniquement ce projet'
+                  : undefined
+              }
               onClick={() => setTab(t.id)}
             >
               {t.label}

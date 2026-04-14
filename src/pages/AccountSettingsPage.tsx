@@ -166,10 +166,13 @@ export function AccountSettingsPage() {
       <p style={{ marginTop: 0 }}>
         <Link to="/">← Retour à l’accueil</Link>
       </p>
-      <header style={{ marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Paramètres du compte</h1>
-        <p className="muted" style={{ marginBottom: 0 }}>
-          Pseudo affiché dans l’app, apparence (thème) et identifiants de connexion.
+      <header className="account-settings-header" style={{ marginBottom: '1rem' }}>
+        <span className="settings-scope-badge settings-scope-badge--global">Toute l’application</span>
+        <h1 style={{ margin: '0.35rem 0 0' }}>Paramètres généraux</h1>
+        <p className="muted" style={{ marginBottom: 0, marginTop: '0.35rem' }}>
+          Compte Miss Carbook, apparence sur cet appareil et version de l’app. Rien ici ne modifie un
+          dossier de recherche véhicule ouvert depuis l’accueil — pour cela, ouvrez le dossier puis
+          l’onglet <strong>Réglages</strong>.
         </p>
       </header>
 
