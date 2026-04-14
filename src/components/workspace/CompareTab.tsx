@@ -25,6 +25,7 @@ type Candidate = {
   price: number | null
   status: CandidateStatus
   candidate_specs: { specs: Json } | null
+  is_current?: boolean
 }
 
 type Review = { candidate_id: string; score: number }
@@ -56,6 +57,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   const { showToast } = useToast()
   const { reportException } = useErrorDialog()
   const [candidates, setCandidates] = useState<Candidate[]>([])
+  const [currentVehicle, setCurrentVehicle] = useState<Candidate | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [criteria, setCriteria] = useState<Record<string, boolean>>(() =>
@@ -83,6 +85,30 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
     }))
     setCandidates(list)
+
+    const { data: cvData } = await supabase
+      .from('current_vehicle')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .maybeSingle()
+
+    if (cvData) {
+      setCurrentVehicle({
+        id: 'current',
+        brand: cvData.brand,
+        model: cvData.model,
+        trim: '',
+        parent_candidate_id: null,
+        engine: cvData.engine,
+        price: null,
+        status: 'selected' as CandidateStatus,
+        candidate_specs: { specs: cvData.specs },
+        is_current: true,
+      })
+    } else {
+      setCurrentVehicle(null)
+    }
+
     const ids = list.map((c) => c.id)
     if (!ids.length) {
       setReviews([])
@@ -113,10 +139,11 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   useEffect(() => {
     setSelected((prev) => {
       const next = { ...prev }
+      if (currentVehicle && next[currentVehicle.id] === undefined) next[currentVehicle.id] = true
       for (const c of candidates) if (next[c.id] === undefined) next[c.id] = false
       return next
     })
-  }, [candidates])
+  }, [candidates, currentVehicle])
 
   const avgByCand = useMemo(() => {
     const map: Record<string, { sum: number; n: number }> = {}
@@ -133,19 +160,25 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
     return out
   }, [reviews])
 
-  const picked = candidates.filter((c) => selected[c.id])
+  const picked = useMemo(() => {
+    const list = candidates.filter((c) => selected[c.id])
+    if (currentVehicle && selected[currentVehicle.id]) {
+      list.unshift(currentVehicle)
+    }
+    return list
+  }, [candidates, currentVehicle, selected])
 
   const rows = useMemo(() => {
     return picked.map((c) => {
       const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
       const row: Record<string, string | number | null> = {
         id: c.id,
-        libellé: formatCandidateListLabel(c),
+        libellé: c.is_current ? 'Véhicule actuel' : formatCandidateListLabel(c),
         marque: c.brand,
         modele: c.model,
         finition: c.trim,
         motorisation: c.engine,
-        statut: c.status,
+        statut: c.is_current ? 'Actuel' : c.status,
       }
       for (const def of CRITERIA) {
         if (!criteria[def.key]) continue
@@ -273,7 +306,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
 
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Modèles</h3>
-        {candidates.length === 0 ? (
+        {candidates.length === 0 && !currentVehicle ? (
           <div className="empty-state">
             <p className="muted" style={{ margin: 0 }}>
               Aucun modèle candidat pour l’instant. Ajoutez des véhicules dans l’onglet{' '}
@@ -282,6 +315,16 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           </div>
         ) : (
           <div className="stack">
+            {currentVehicle && (
+              <label key={currentVehicle.id} className="row" style={{ gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={!!selected[currentVehicle.id]}
+                  onChange={() => toggleCand(currentVehicle.id)}
+                />
+                <strong>Véhicule actuel</strong> (référence)
+              </label>
+            )}
             {candidates.map((c) => (
               <label key={c.id} className="row" style={{ gap: '0.5rem' }}>
                 <input
