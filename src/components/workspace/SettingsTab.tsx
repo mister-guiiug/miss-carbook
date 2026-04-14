@@ -415,7 +415,7 @@ export function SettingsTab({
         )}
       </div>
 
-      <div className="card stack" style={{ boxShadow: 'none' }}>
+      <div id="workspace-settings-decision" className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Décision</h3>
         <p className="muted">Modèle retenu (visible en bannière dans l’en-tête du dossier).</p>
         {canWrite ? (
