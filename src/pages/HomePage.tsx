@@ -4,6 +4,12 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useToast } from '../contexts/ToastContext'
+import { shouldOfferAssistantUi } from '../lib/assistantDevice'
+import {
+  hasSessionAutoOffered,
+  isGlobalAssistantDone,
+  setSessionAutoOffered,
+} from '../lib/assistantStorage'
 import { shareCodeSchema, workspaceCreateSchema } from '../lib/validation/schemas'
 
 type Row = {
@@ -65,6 +71,16 @@ export function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
+  /** Itération 1 : première visite mobile / PWA → assistant d’accueil (une fois par session). */
+  useEffect(() => {
+    if (!user) return
+    if (!shouldOfferAssistantUi()) return
+    if (isGlobalAssistantDone()) return
+    if (hasSessionAutoOffered()) return
+    setSessionAutoOffered()
+    navigate('/assistant', { replace: true })
+  }, [user, navigate])
+
   useEffect(() => {
     const token = searchParams.get('invite')
     if (!token || !user || inviteHandled.current) return
@@ -80,6 +96,11 @@ export function HomePage() {
       next.delete('invite')
       setSearchParams(next, { replace: true })
       if (data) {
+        try {
+          sessionStorage.setItem('mc_invite_welcome', data)
+        } catch {
+          /* ignore */
+        }
         showToast('Invitation acceptée')
         navigate(`/w/${data}`, { replace: true })
       }
@@ -169,6 +190,12 @@ export function HomePage() {
           Dossiers partagés pour comparer des véhicules, noter des exigences et décider ensemble.
           Ouvrez un dossier ci-dessous ou utilisez les actions pliables.
         </p>
+        {!isGlobalAssistantDone() ? (
+          <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+            <Link to="/assistant">Visite guidée</Link> — présentation rapide (recommandée sur
+            mobile).
+          </p>
+        ) : null}
       </header>
 
       <div className="home-actions-accordions stack">

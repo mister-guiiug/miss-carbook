@@ -22,6 +22,7 @@ import {
 import { WorkspaceTabStrip } from '../components/workspace/WorkspaceTabStrip'
 import { WorkspaceJourneyCard } from '../components/workspace/WorkspaceJourneyCard'
 import { WorkspaceDecisionSummaryCard } from '../components/workspace/WorkspaceDecisionSummaryCard'
+import { InviteWelcomeOverlay } from '../components/assistant/InviteWelcomeOverlay'
 
 function WorkspacePageSkeleton() {
   return (
@@ -204,6 +205,13 @@ export function WorkspacePage() {
 
   return (
     <div className="shell stack">
+      {workspace ? (
+        <InviteWelcomeOverlay
+          workspaceId={workspaceId!}
+          workspaceName={workspace.name}
+          onClose={() => {}}
+        />
+      ) : null}
       <WorkspaceSearchModal
         workspaceId={workspaceId}
         open={searchOpen}

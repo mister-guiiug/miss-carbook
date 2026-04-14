@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useUpdatePrompt } from '../hooks/useUpdatePrompt'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
@@ -8,12 +8,14 @@ import { authEmailRedirectUrl } from '../lib/authRedirect'
 import { formatAuthCredentialError, formatAuthEmailSendError } from '../lib/authEmailErrors'
 import { notifyProfileUpdated } from '../lib/profileEvents'
 import { formatProfileSaveError } from '../lib/profileErrors'
+import { resetAllAssistantFlags } from '../lib/assistantStorage'
 import { changeEmailSchema, displayNameRules, displayNameSchema } from '../lib/validation/schemas'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useToast } from '../contexts/ToastContext'
 import type { ThemeMode } from '../lib/theme'
 
 export function AccountSettingsPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { mode, setMode } = useTheme()
   const { needRefresh, reloadToLatest } = useUpdatePrompt()
@@ -177,6 +179,35 @@ export function AccountSettingsPage() {
           puis l’onglet <strong>Réglages</strong>.
         </p>
       </header>
+
+      <div className="card stack">
+        <h2 style={{ marginTop: 0 }}>Visite guidée (mobile / PWA)</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
+          Réinitialise les écrans « déjà vus » (accueil, arrivée par invitation, premier passage dans
+          un nouveau dossier sur petit écran). Ensuite, rouvrez l’accueil sur téléphone ou lancez la
+          visite ci-dessous.
+        </p>
+        <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => {
+              resetAllAssistantFlags()
+              try {
+                sessionStorage.removeItem('mc_invite_welcome')
+              } catch {
+                /* ignore */
+              }
+              showToast('Visite guidée réinitialisée.')
+            }}
+          >
+            Réinitialiser les indicateurs
+          </button>
+          <button type="button" onClick={() => navigate('/assistant')}>
+            Lancer la visite d’accueil
+          </button>
+        </div>
+      </div>
 
       <div className="card stack">
         <h2 style={{ marginTop: 0 }}>Pseudo</h2>
