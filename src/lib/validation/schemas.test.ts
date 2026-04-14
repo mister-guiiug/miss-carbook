@@ -1,5 +1,38 @@
 import { describe, expect, it } from 'vitest'
-import { candidateSchema, displayNameSchema, requirementSchema, shareCodeSchema } from './schemas'
+import {
+  authPasswordLoginSchema,
+  authPasswordSignUpSchema,
+  candidateSchema,
+  displayNameSchema,
+  requirementSchema,
+  shareCodeSchema,
+} from './schemas'
+
+describe('authPasswordSignUpSchema', () => {
+  it('refuse si les mots de passe diffèrent', () => {
+    const r = authPasswordSignUpSchema.safeParse({
+      email: 'a@b.co',
+      password: 'abcdefgh',
+      confirmPassword: 'abcdefgi',
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('accepte inscription cohérente', () => {
+    const r = authPasswordSignUpSchema.safeParse({
+      email: 'a@b.co',
+      password: 'abcdefgh',
+      confirmPassword: 'abcdefgh',
+    })
+    expect(r.success).toBe(true)
+  })
+})
+
+describe('authPasswordLoginSchema', () => {
+  it('exige un mot de passe', () => {
+    expect(authPasswordLoginSchema.safeParse({ email: 'a@b.co', password: '' }).success).toBe(false)
+  })
+})
 
 describe('displayNameSchema', () => {
   it('accepte un pseudo valide', () => {
