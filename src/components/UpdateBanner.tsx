@@ -1,7 +1,7 @@
 import { useUpdatePrompt } from '../hooks/useUpdatePrompt'
 
 export function UpdateBanner() {
-  const { needRefresh, update } = useUpdatePrompt()
+  const { needRefresh, reloadToLatest } = useUpdatePrompt()
 
   if (!needRefresh) return null
 
@@ -10,7 +10,7 @@ export function UpdateBanner() {
       <p className="pwa-update-banner-text">
         Une nouvelle version de l’application est disponible.
       </p>
-      <button type="button" onClick={update}>
+      <button type="button" onClick={() => void reloadToLatest()}>
         Mettre à jour
       </button>
     </div>
