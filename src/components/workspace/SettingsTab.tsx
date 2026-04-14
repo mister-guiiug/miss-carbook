@@ -446,7 +446,11 @@ export function SettingsTab({
         <p className="muted" style={{ wordBreak: 'break-all' }}>
           Lien d’invitation&nbsp;: {inviteUrl}
         </p>
-        <IconActionButton variant="secondary" label="Copier le lien d’invitation" onClick={() => void copy()}>
+        <IconActionButton
+          variant="secondary"
+          label="Copier le lien d’invitation"
+          onClick={() => void copy()}
+        >
           <IconCopy />
         </IconActionButton>
       </div>
@@ -554,7 +558,11 @@ export function SettingsTab({
             </li>
           ))}
         </ul>
-        <IconActionButton variant="secondary" label="Quitter ce dossier" onClick={() => void leave()}>
+        <IconActionButton
+          variant="secondary"
+          label="Quitter ce dossier"
+          onClick={() => void leave()}
+        >
           <IconLogOut />
         </IconActionButton>
       </div>
@@ -680,7 +688,9 @@ export function SettingsTab({
                 <input
                   id="cv-spec-color"
                   value={
-                    typeof vehicle.specs.exteriorColor === 'string' ? vehicle.specs.exteriorColor : ''
+                    typeof vehicle.specs.exteriorColor === 'string'
+                      ? vehicle.specs.exteriorColor
+                      : ''
                   }
                   onChange={(e) => setVehicleSpecStr('exteriorColor', e.target.value)}
                   disabled={!canWrite}

@@ -157,7 +157,11 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
             </div>
 
             <div className="error-dialog-actions">
-              <IconActionButton variant="secondary" label="Fermer la boîte de dialogue" onClick={dismiss}>
+              <IconActionButton
+                variant="secondary"
+                label="Fermer la boîte de dialogue"
+                onClick={dismiss}
+              >
                 <IconX />
               </IconActionButton>
             </div>

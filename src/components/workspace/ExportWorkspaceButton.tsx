@@ -29,10 +29,7 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
       folder.file('workspace_members.json', JSON.stringify(b.members, null, 2))
       folder.file('comparison_presets.json', JSON.stringify(b.presets, null, 2))
       folder.file('current_vehicle.json', JSON.stringify(b.currentVehicle ?? {}, null, 2))
-      folder.file(
-        'requirement_candidate_evaluations.json',
-        JSON.stringify(b.evaluations, null, 2)
-      )
+      folder.file('requirement_candidate_evaluations.json', JSON.stringify(b.evaluations, null, 2))
       folder.file('requirement_priority_votes.json', JSON.stringify(b.votes, null, 2))
       folder.file('comments.json', JSON.stringify(b.comments, null, 2))
       folder.file('candidate_reviews.json', JSON.stringify(b.reviews, null, 2))

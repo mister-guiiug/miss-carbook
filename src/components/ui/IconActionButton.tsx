@@ -208,7 +208,12 @@ export function IconSave() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 17h6M9 13h6M9 5v4h6V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 17h6M9 13h6M9 5v4h6V5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -222,7 +227,12 @@ export function IconArchiveDown() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M12 11v6m0 0l-2.5-2.5M12 17l2.5-2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M12 11v6m0 0l-2.5-2.5M12 17l2.5-2.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
