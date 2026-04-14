@@ -2,17 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const LOCK_MS = 90_000
 
-export function NotepadTab({
-  workspaceId,
-  canWrite,
-}: {
-  workspaceId: string
-  canWrite: boolean
-}) {
+export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
   const { reportException } = useErrorDialog()
+  const { showToast } = useToast()
   const [body, setBody] = useState('')
   const [noteId, setNoteId] = useState<string | null>(null)
   const [lockUser, setLockUser] = useState<string | null>(null)
@@ -142,11 +138,7 @@ export function NotepadTab({
   }, [])
 
   const lockedByOther =
-    lockUser &&
-    lockUser !== myId &&
-    lockExp &&
-    new Date(lockExp) > new Date() &&
-    canWrite
+    lockUser && lockUser !== myId && lockExp && new Date(lockExp) > new Date() && canWrite
 
   const save = async () => {
     if (!canWrite || !noteId || lockedByOther) return
@@ -161,6 +153,7 @@ export function NotepadTab({
         .eq('id', noteId)
       if (error) throw error
       await logActivity(workspaceId, 'note.update', 'note', noteId, { chars: body.length })
+      showToast('Bloc-notes enregistré')
     } catch (e: unknown) {
       reportException(e, 'Sauvegarde du bloc-notes')
     } finally {
@@ -171,8 +164,9 @@ export function NotepadTab({
   return (
     <div className="stack">
       <p className="muted">
-        Bloc-notes partagé — <strong>last-write-wins</strong>. Verrou léger pendant la frappe (~90 s,
-        renouvelé tant que le champ est focalisé) pour signaler une édition en cours.
+        Bloc-notes partagé — <strong>last-write-wins</strong> : la dernière sauvegarde remplace le
+        contenu côté serveur pour tout le monde. Verrou léger pendant la frappe (~90 s, renouvelé
+        tant que le champ est focalisé) pour signaler une édition en cours.
       </p>
       {lockedByOther ? (
         <p className="error">

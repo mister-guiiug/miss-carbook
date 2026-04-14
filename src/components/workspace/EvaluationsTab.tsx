@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
 
 type Req = { id: string; label: string; level: RequirementLevel }
@@ -38,16 +39,19 @@ export function EvaluationsTab({
   userId: string
 }) {
   const { reportException } = useErrorDialog()
+  const { showToast } = useToast()
   const [reqs, setReqs] = useState<Req[]>([])
   const [cands, setCands] = useState<Cand[]>([])
   const [evals, setEvals] = useState<EvalRow[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const [r, c, e, v] = await Promise.all([
       supabase.from('requirements').select('id, label, level').eq('workspace_id', workspaceId),
       supabase.from('candidates').select('id, brand, model').eq('workspace_id', workspaceId),
-      supabase.from('requirement_candidate_evaluations').select('requirement_id, candidate_id, status, note'),
+      supabase
+        .from('requirement_candidate_evaluations')
+        .select('requirement_id, candidate_id, status, note'),
       supabase.from('requirement_priority_votes').select('requirement_id, user_id, vote'),
     ])
     const firstErr = r.error ?? c.error ?? e.error ?? v.error
@@ -64,11 +68,11 @@ export function EvaluationsTab({
       ) as EvalRow[]
     )
     setVotes((v.data ?? []).filter((x: Vote) => reqIds.has(x.requirement_id)) as Vote[])
-  }
+  }, [workspaceId, reportException])
 
   useEffect(() => {
     void load()
-  }, [workspaceId])
+  }, [load])
 
   const evalKey = (rid: string, cid: string) => `${rid}:${cid}`
   const evalMap = useMemo(() => {
@@ -80,7 +84,8 @@ export function EvaluationsTab({
   const voteAgg = useMemo(() => {
     const m = new Map<string, Record<string, number>>()
     for (const v of votes) {
-      if (!m.has(v.requirement_id)) m.set(v.requirement_id, { must: 0, should: 0, could: 0, wont: 0 })
+      if (!m.has(v.requirement_id))
+        m.set(v.requirement_id, { must: 0, should: 0, could: 0, wont: 0 })
       const o = m.get(v.requirement_id)!
       if (v.vote in o) o[v.vote] += 1
     }
@@ -102,7 +107,9 @@ export function EvaluationsTab({
     if (error) reportException(error, 'Mise à jour du statut d’évaluation (exigence / modèle)')
     else {
       await load()
-      await logActivity(workspaceId, 'rce.upsert', 'requirement_candidate', requirementId, { candidateId })
+      await logActivity(workspaceId, 'rce.upsert', 'requirement_candidate', requirementId, {
+        candidateId,
+      })
     }
   }
 
@@ -124,27 +131,36 @@ export function EvaluationsTab({
       { onConflict: 'requirement_id,candidate_id' }
     )
     if (error) reportException(error, 'Mise à jour de la note d’évaluation')
-    else await load()
+    else {
+      await load()
+      showToast('Note enregistrée')
+    }
   }
 
   const setMyVote = async (requirementId: string, vote: string) => {
     if (!canWrite) return
-    const { error } = await supabase.from('requirement_priority_votes').upsert(
-      { requirement_id: requirementId, vote },
-      { onConflict: 'requirement_id,user_id' }
-    )
+    const { error } = await supabase
+      .from('requirement_priority_votes')
+      .upsert({ requirement_id: requirementId, vote }, { onConflict: 'requirement_id,user_id' })
     if (error) reportException(error, 'Enregistrement du vote MoSCoW')
-    else await load()
+    else {
+      await load()
+      showToast('Vote MoSCoW enregistré')
+    }
   }
 
-  const myVote = (rid: string) => votes.find((v) => v.requirement_id === rid && v.user_id === userId)?.vote
+  const myVote = (rid: string) =>
+    votes.find((v) => v.requirement_id === rid && v.user_id === userId)?.vote
 
   if (!reqs.length || !cands.length) {
     return (
-      <p className="muted">
-        Ajoutez des <strong>exigences</strong> et des <strong>modèles</strong> pour remplir la matrice
-        d’évaluation.
-      </p>
+      <div className="empty-state">
+        <p className="muted" style={{ margin: 0 }}>
+          Ajoutez des <strong>exigences</strong> (onglet <strong>Exigences</strong>) et des{' '}
+          <strong>modèles</strong> (onglet <strong>Modèles</strong>) pour remplir la matrice
+          d’évaluation.
+        </p>
+      </div>
     )
   }
 
@@ -155,7 +171,7 @@ export function EvaluationsTab({
         satisfaite.
       </p>
 
-      <div className="table-wrap">
+      <div className="table-wrap eval-table-wrap">
         <table className="eval-matrix">
           <thead>
             <tr>
@@ -173,7 +189,9 @@ export function EvaluationsTab({
             {reqs.map((r) => (
               <tr key={r.id}>
                 <td>
-                  <span className={`badge ${r.level}`}>{r.level === 'mandatory' ? 'Obl.' : 'Disc.'}</span>{' '}
+                  <span className={`badge ${r.level}`}>
+                    {r.level === 'mandatory' ? 'Obl.' : 'Disc.'}
+                  </span>{' '}
                   {r.label}
                 </td>
                 <td>

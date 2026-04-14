@@ -12,9 +12,9 @@ export function TrustBanner() {
   return (
     <div className="trust-banner" role="note">
       <p>
-        <strong>Usage responsable :</strong> Miss Carbook sert à organiser un choix de véhicule entre
-        proches ou collègues. N’y stockez pas de données bancaires, de mots de passe ni de contrats
-        signés — ce n’est pas un coffre-fort certifié.
+        <strong>Usage responsable :</strong> Miss Carbook sert à organiser un choix de véhicule
+        entre proches ou collègues. N’y stockez pas de données bancaires, de mots de passe ni de
+        contrats signés — ce n’est pas un coffre-fort certifié.
       </p>
       <button
         type="button"

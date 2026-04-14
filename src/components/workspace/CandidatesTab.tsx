@@ -60,14 +60,17 @@ export function CandidatesTab({
     else setCandidates((data ?? []) as unknown as CandidateRow[])
     const ids = (data ?? []).map((c: { id: string }) => c.id)
     if (ids.length) {
-      const { data: revs } = await supabase.from('candidate_reviews').select('candidate_id, score').in('candidate_id', ids)
+      const { data: revs } = await supabase
+        .from('candidate_reviews')
+        .select('candidate_id, score')
+        .in('candidate_id', ids)
       setReviews(revs ?? [])
     } else setReviews([])
   }
 
   useEffect(() => {
     void load()
- // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId])
 
   const [form, setForm] = useState({
@@ -150,8 +153,8 @@ export function CandidatesTab({
             workspace_id: workspaceId,
             brand,
             model,
-            trim: iTrim >= 0 ? cols[iTrim] ?? '' : '',
-            engine: iEngine >= 0 ? cols[iEngine] ?? '' : '',
+            trim: iTrim >= 0 ? (cols[iTrim] ?? '') : '',
+            engine: iEngine >= 0 ? (cols[iEngine] ?? '') : '',
             price: Number.isFinite(price as number) ? price : null,
           })
           .select('id')
@@ -226,9 +229,14 @@ export function CandidatesTab({
         <div className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Import CSV</h3>
           <p className="muted" style={{ margin: 0 }}>
-            Première ligne : brand, model (obligatoires), trim, engine, price… Séparateur virgule (simple).
+            Première ligne : brand, model (obligatoires), trim, engine, price… Séparateur virgule
+            (simple).
           </p>
-          <input type="file" accept=".csv,text/csv" onChange={(e) => void importCsv(e.target.files?.[0] ?? null)} />
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => void importCsv(e.target.files?.[0] ?? null)}
+          />
         </div>
       ) : null}
 
@@ -238,21 +246,33 @@ export function CandidatesTab({
           <div className="row">
             <div style={{ flex: '1 1 160px' }}>
               <label>Marque</label>
-              <input value={form.brand} onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))} />
+              <input
+                value={form.brand}
+                onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
+              />
             </div>
             <div style={{ flex: '1 1 160px' }}>
               <label>Modèle</label>
-              <input value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
+              <input
+                value={form.model}
+                onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+              />
             </div>
           </div>
           <div className="row">
             <div style={{ flex: '1 1 160px' }}>
               <label>Finition</label>
-              <input value={form.trim} onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))} />
+              <input
+                value={form.trim}
+                onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
+              />
             </div>
             <div style={{ flex: '1 1 160px' }}>
               <label>Motorisation</label>
-              <input value={form.engine} onChange={(e) => setForm((f) => ({ ...f, engine: e.target.value }))} />
+              <input
+                value={form.engine}
+                onChange={(e) => setForm((f) => ({ ...f, engine: e.target.value }))}
+              />
             </div>
           </div>
           <div className="row">
@@ -290,14 +310,19 @@ export function CandidatesTab({
           </div>
           <div>
             <label>Options</label>
-            <textarea value={form.options} onChange={(e) => setForm((f) => ({ ...f, options: e.target.value }))} />
+            <textarea
+              value={form.options}
+              onChange={(e) => setForm((f) => ({ ...f, options: e.target.value }))}
+            />
           </div>
           <div className="row">
             <div style={{ flex: '1 1 200px' }}>
               <label>Statut</label>
               <select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as CandidateStatus }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.value as CandidateStatus }))
+                }
               >
                 {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
                   <option key={k} value={k}>
@@ -336,7 +361,11 @@ export function CandidatesTab({
               <button type="button" className="secondary" onClick={() => void duplicateOne(c)}>
                 Dupliquer
               </button>
-              <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setOpen(open === c.id ? null : c.id)}
+              >
                 {open === c.id ? 'Fermer' : 'Détail'}
               </button>
             </div>
@@ -354,8 +383,8 @@ export function CandidatesTab({
       </ul>
 
       <p className="muted">
-        Les avis agrégés pour la comparaison proviennent des notes saisies ci-dessous ({reviews.length}{' '}
-        entrées chargées).
+        Les avis agrégés pour la comparaison proviennent des notes saisies ci-dessous (
+        {reviews.length} entrées chargées).
       </p>
     </div>
   )
@@ -380,7 +409,9 @@ function CandidateDetail({
   )
   const [review, setReview] = useState({ score: '8', free_text: '', pros: '', cons: '' })
   const [comment, setComment] = useState('')
-  const [comments, setComments] = useState<{ id: string; body: string; user_id: string; created_at: string }[]>([])
+  const [comments, setComments] = useState<
+    { id: string; body: string; user_id: string; created_at: string }[]
+  >([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [photos, setPhotos] = useState<{ id: string; url: string }[]>([])
 
@@ -398,7 +429,10 @@ function CandidateDetail({
     setComments(list)
     const ids = [...new Set(list.map((x) => x.user_id))]
     if (ids.length) {
-      const { data: profs } = await supabase.from('profiles').select('id, display_name').in('id', ids)
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', ids)
       const m: Record<string, string> = {}
       for (const p of profs ?? []) m[p.id] = p.display_name
       setNames(m)
@@ -441,7 +475,7 @@ function CandidateDetail({
     return () => {
       void supabase.removeChannel(ch)
     }
- // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidate.id])
 
   const saveSpecs = async (e: React.FormEvent) => {
@@ -497,10 +531,7 @@ function CandidateDetail({
     if (!canWrite) return
     const parsed = commentSchema.safeParse({ body: comment })
     if (!parsed.success) {
-      reportMessage(
-        'Commentaire invalide',
-        JSON.stringify(parsed.error.flatten(), null, 2)
-      )
+      reportMessage('Commentaire invalide', JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
     const { error } = await supabase.from('comments').insert({
@@ -608,13 +639,18 @@ function CandidateDetail({
         <ul style={{ paddingLeft: '1.1rem' }}>
           {comments.map((c) => (
             <li key={c.id}>
-              <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> — {renderMentions(c.body)}
+              <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> —{' '}
+              {renderMentions(c.body)}
             </li>
           ))}
         </ul>
         {canWrite ? (
           <form onSubmit={sendComment} className="row">
-            <input value={comment} onChange={(e) => setComment(e.target.value)} style={{ flex: 1 }} />
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              style={{ flex: 1 }}
+            />
             <button type="submit">Envoyer</button>
           </form>
         ) : null}
@@ -623,12 +659,24 @@ function CandidateDetail({
       <div className="stack">
         <h4 style={{ margin: 0 }}>Photos (max 5 Mo, JPEG/PNG/WebP/GIF)</h4>
         {canWrite ? (
-          <input type="file" accept="image/*" onChange={(e) => void onFile(e.target.files?.[0] ?? null)} />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
+          />
         ) : null}
         <div className="row" style={{ flexWrap: 'wrap' }}>
           {photos.map((p) => (
             <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
-              <img src={p.url} alt="" style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+              <img
+                src={p.url}
+                alt=""
+                width={120}
+                height={80}
+                loading="lazy"
+                decoding="async"
+                style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
+              />
             </a>
           ))}
         </div>

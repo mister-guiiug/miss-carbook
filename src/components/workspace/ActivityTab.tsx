@@ -35,7 +35,10 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       setRows(list)
       const ids = [...new Set(list.map((r) => r.user_id).filter(Boolean))] as string[]
       if (ids.length) {
-        const { data: profs } = await supabase.from('profiles').select('id, display_name').in('id', ids)
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', ids)
         const map: Record<string, string> = {}
         for (const p of profs ?? []) map[p.id] = p.display_name
         setNames(map)
@@ -66,20 +69,31 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="stack">
       <p className="muted">Journal des actions récentes (temps réel pour les nouvelles entrées).</p>
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {rows.map((r) => (
-          <li key={r.id} className="card" style={{ boxShadow: 'none' }}>
-            <div className="muted">
-              {new Date(r.created_at).toLocaleString('fr-FR')} ·{' '}
-              <strong>{r.user_id ? names[r.user_id] ?? r.user_id.slice(0, 8) : 'Système'}</strong>
-            </div>
-            <div>
-              {r.action_type} · {r.entity_type}
-              {r.entity_id ? ` · ${r.entity_id.slice(0, 8)}…` : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {rows.length === 0 ? (
+        <div className="empty-state">
+          <p className="muted" style={{ margin: 0 }}>
+            Aucune entrée pour l’instant. Les actions (ajouts, votes, invitations…) apparaîtront ici
+            au fil de l’usage du dossier.
+          </p>
+        </div>
+      ) : (
+        <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {rows.map((r) => (
+            <li key={r.id} className="card" style={{ boxShadow: 'none' }}>
+              <div className="muted">
+                {new Date(r.created_at).toLocaleString('fr-FR')} ·{' '}
+                <strong>
+                  {r.user_id ? (names[r.user_id] ?? r.user_id.slice(0, 8)) : 'Système'}
+                </strong>
+              </div>
+              <div>
+                {r.action_type} · {r.entity_type}
+                {r.entity_id ? ` · ${r.entity_id.slice(0, 8)}…` : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

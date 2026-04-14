@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 type Item = { type: string; label: string; tab: string; hint?: string }
 
@@ -16,6 +17,8 @@ export function WorkspaceSearchModal({
 }) {
   const [q, setQ] = useState('')
   const [items, setItems] = useState<Item[]>([])
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -24,7 +27,11 @@ export function WorkspaceSearchModal({
       const [req, cand, rem] = await Promise.all([
         supabase.from('requirements').select('id, label').eq('workspace_id', workspaceId),
         supabase.from('candidates').select('id, brand, model').eq('workspace_id', workspaceId),
-        supabase.from('reminders').select('id, title').eq('workspace_id', workspaceId).eq('done', false),
+        supabase
+          .from('reminders')
+          .select('id, title')
+          .eq('workspace_id', workspaceId)
+          .eq('done', false),
       ])
       if (cancelled) return
       const list: Item[] = []
@@ -53,14 +60,21 @@ export function WorkspaceSearchModal({
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
     if (!s) return items.slice(0, 40)
-    return items.filter((i) => i.label.toLowerCase().includes(s) || i.type.toLowerCase().includes(s)).slice(0, 40)
+    return items
+      .filter((i) => i.label.toLowerCase().includes(s) || i.type.toLowerCase().includes(s))
+      .slice(0, 40)
   }, [items, q])
 
   if (!open) return null
 
   return (
-    <div className="search-modal-backdrop" role="dialog" aria-modal="true" aria-label="Recherche dossier">
-      <div className="search-modal card">
+    <div
+      className="search-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Recherche dossier"
+    >
+      <div ref={panelRef} className="search-modal card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <strong>Recherche dans le dossier</strong>
           <button type="button" className="secondary" onClick={onClose}>

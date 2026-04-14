@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -7,6 +7,8 @@ import { useTheme } from '../hooks/useTheme'
 import { notifyProfileUpdated, PROFILE_UPDATED_EVENT } from '../lib/profileEvents'
 import { displayNameRules, displayNameSchema } from '../lib/validation/schemas'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
+import { useToast } from '../contexts/ToastContext'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
@@ -77,8 +79,7 @@ function initialsFromDisplayName(name: string) {
   const t = name.trim()
   if (!t) return '?'
   const parts = t.split(/\s+/).filter(Boolean)
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
   return t.slice(0, 2).toUpperCase()
 }
 
@@ -88,12 +89,15 @@ export function TopBar() {
   const { mode, toggle } = useTheme()
   const online = useOnlineStatus()
   const { reportException, reportMessage } = useErrorDialog()
+  const { showToast } = useToast()
   const modalTitleId = useId()
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [pseudoModalOpen, setPseudoModalOpen] = useState(false)
   const [pseudoDraft, setPseudoDraft] = useState('')
   const [pseudoBusy, setPseudoBusy] = useState(false)
+  const pseudoModalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(pseudoModalRef, pseudoModalOpen)
 
   const load = useCallback(async () => {
     if (!user) {
@@ -158,6 +162,7 @@ export function TopBar() {
       if (error) throw error
       notifyProfileUpdated()
       setPseudoModalOpen(false)
+      showToast('Pseudo mis à jour')
       await load()
     } catch (err: unknown) {
       reportException(err, 'Mise à jour du pseudo (en-tête)')
@@ -261,6 +266,7 @@ export function TopBar() {
           }}
         >
           <div
+            ref={pseudoModalRef}
             className="app-topbar-modal"
             role="dialog"
             aria-modal="true"
@@ -283,7 +289,11 @@ export function TopBar() {
                 />
               </div>
               <div className="app-topbar-modal-actions">
-                <button type="button" className="secondary" onClick={() => setPseudoModalOpen(false)}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setPseudoModalOpen(false)}
+                >
                   Annuler
                 </button>
                 <button type="submit" disabled={pseudoBusy}>

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { requirementSchema } from '../../lib/validation/schemas'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
 
 type Req = {
@@ -23,6 +24,7 @@ export function RequirementsTab({
   canWrite: boolean
 }) {
   const { reportException, reportMessage } = useErrorDialog()
+  const { showToast } = useToast()
   const [rows, setRows] = useState<Req[]>([])
   const [filter, setFilter] = useState<'all' | RequirementLevel>('all')
 
@@ -33,7 +35,7 @@ export function RequirementsTab({
   const [tags, setTags] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('requirements')
       .select('*')
@@ -41,12 +43,11 @@ export function RequirementsTab({
       .order('sort_order', { ascending: true })
     if (error) reportException(error, 'Chargement des exigences')
     else setRows((data ?? []) as Req[])
-  }
+  }, [workspaceId, reportException])
 
   useEffect(() => {
     void load()
- // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId])
+  }, [load])
 
   const filtered = useMemo(() => {
     const list = filter === 'all' ? rows : rows.filter((r) => r.level === filter)
@@ -97,6 +98,7 @@ export function RequirementsTab({
       setTags('')
       await load()
       await logActivity(workspaceId, 'requirement.create', 'requirement', data?.id ?? null, {})
+      showToast('Exigence ajoutée')
     } catch (e: unknown) {
       reportException(e, 'Ajout d’une exigence')
     } finally {
@@ -112,6 +114,7 @@ export function RequirementsTab({
     else {
       await load()
       await logActivity(workspaceId, 'requirement.delete', 'requirement', id, {})
+      showToast('Exigence supprimée')
     }
   }
 
@@ -129,48 +132,73 @@ export function RequirementsTab({
         </select>
       </div>
 
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {filtered.map((r) => (
-          <li key={r.id} className="card" style={{ boxShadow: 'none' }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <span className={`badge ${r.level}`}>
-                  {r.level === 'mandatory' ? 'Obligatoire' : 'À discuter'}
-                </span>{' '}
-                <strong>{r.label}</strong>
-                {r.weight != null ? (
-                  <span className="muted"> · poids {r.weight}</span>
+      {rows.length === 0 ? (
+        <div className="empty-state">
+          <p className="muted" style={{ margin: 0 }}>
+            Aucune exigence encore. Ajoutez des critères (obligatoires ou à discuter) pour
+            structurer la comparaison des modèles.
+          </p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state">
+          <p className="muted" style={{ margin: 0 }}>
+            Aucune exigence pour le filtre choisi. Changez le filtre ou ajoutez des entrées du
+            niveau concerné.
+          </p>
+        </div>
+      ) : (
+        <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {filtered.map((r) => (
+            <li key={r.id} className="card" style={{ boxShadow: 'none' }}>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <div>
+                  <span className={`badge ${r.level}`}>
+                    {r.level === 'mandatory' ? 'Obligatoire' : 'À discuter'}
+                  </span>{' '}
+                  <strong>{r.label}</strong>
+                  {r.weight != null ? <span className="muted"> · poids {r.weight}</span> : null}
+                  {r.tags?.length ? <div className="muted">tags : {r.tags.join(', ')}</div> : null}
+                  {r.description ? <p style={{ margin: '0.35rem 0 0' }}>{r.description}</p> : null}
+                </div>
+                {canWrite ? (
+                  <button type="button" className="secondary" onClick={() => void remove(r.id)}>
+                    Supprimer
+                  </button>
                 ) : null}
-                {r.tags?.length ? (
-                  <div className="muted">tags : {r.tags.join(', ')}</div>
-                ) : null}
-                {r.description ? <p style={{ margin: '0.35rem 0 0' }}>{r.description}</p> : null}
               </div>
-              {canWrite ? (
-                <button type="button" className="secondary" onClick={() => void remove(r.id)}>
-                  Supprimer
-                </button>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {canWrite ? (
         <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Ajouter une exigence</h3>
           <div>
             <label htmlFor="rq-label">Libellé</label>
-            <input id="rq-label" value={label} onChange={(e) => setLabel(e.target.value)} required />
+            <input
+              id="rq-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              required
+            />
           </div>
           <div>
             <label htmlFor="rq-desc">Description</label>
-            <textarea id="rq-desc" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <textarea
+              id="rq-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div className="row">
             <div style={{ flex: '1 1 140px' }}>
               <label htmlFor="rq-level">Niveau</label>
-              <select id="rq-level" value={level} onChange={(e) => setLevel(e.target.value as RequirementLevel)}>
+              <select
+                id="rq-level"
+                value={level}
+                onChange={(e) => setLevel(e.target.value as RequirementLevel)}
+              >
                 <option value="mandatory">Obligatoire</option>
                 <option value="discuss">À discuter</option>
               </select>
