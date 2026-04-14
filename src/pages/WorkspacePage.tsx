@@ -15,22 +15,11 @@ import { CompareTab } from '../components/workspace/CompareTab'
 import { ActivityTab } from '../components/workspace/ActivityTab'
 import { RemindersTab } from '../components/workspace/RemindersTab'
 import { SettingsTab } from '../components/workspace/SettingsTab'
+import { WorkspaceHeaderToolbar } from '../components/workspace/WorkspaceHeaderToolbar'
+import { WORKSPACE_TABS, type TabId } from '../components/workspace/workspaceTabs'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
 type Role = Database['public']['Tables']['workspace_members']['Row']['role']
-
-const tabs = [
-  { id: 'notepad', label: 'Bloc-notes' },
-  { id: 'requirements', label: 'Exigences' },
-  { id: 'evaluations', label: 'Évaluations' },
-  { id: 'candidates', label: 'Modèles' },
-  { id: 'compare', label: 'Comparer' },
-  { id: 'reminders', label: 'Rappels' },
-  { id: 'activity', label: 'Activité' },
-  { id: 'settings', label: 'Paramètres' },
-] as const
-
-type TabId = (typeof tabs)[number]['id']
 
 export function WorkspacePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -202,18 +191,34 @@ export function WorkspacePage() {
             {workspace.description || 'Sans description'}
           </p>
         </div>
-        <div className="workspace-header-actions row">
-          <button type="button" className="secondary" onClick={() => setSearchOpen(true)}>
-            Recherche
-          </button>
-          <Link className="btn secondary" to="/">
-            Accueil
-          </Link>
+        <div
+          className="workspace-header-actions row"
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
+          <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button type="button" className="secondary" onClick={() => setSearchOpen(true)}>
+              Recherche
+            </button>
+            <Link className="btn secondary" to="/">
+              Accueil
+            </Link>
+          </div>
+          <WorkspaceHeaderToolbar
+            canWrite={canWrite}
+            onOpenTab={setTab}
+            onOpenSearch={() => setSearchOpen(true)}
+          />
         </div>
       </header>
 
       <ul className="tabs">
-        {tabs.map((t) => (
+        {WORKSPACE_TABS.map((t) => (
           <li key={t.id}>
             <button
               type="button"

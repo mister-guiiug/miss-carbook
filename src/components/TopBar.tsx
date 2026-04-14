@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
@@ -80,8 +80,13 @@ function initialsFromDisplayName(name: string) {
   return t.slice(0, 2).toUpperCase()
 }
 
+function isWorkspacePath(pathname: string) {
+  return /^\/w\/[^/]+/.test(pathname)
+}
+
 export function TopBar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { mode, toggle } = useTheme()
   const online = useOnlineStatus()
@@ -128,6 +133,7 @@ export function TopBar() {
 
   const label = loading ? '…' : displayName?.trim() || 'Profil'
   const themeNextLabel = mode === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'
+  const hideAccountCluster = isWorkspacePath(location.pathname)
 
   return (
     <header className="app-topbar" role="banner">
@@ -144,62 +150,72 @@ export function TopBar() {
           <span className="app-brand-title">Miss Carbook</span>
         </Link>
         <div className="app-topbar-spacer" aria-hidden="true" />
-        <div className="app-topbar-right">
-          <div className="app-topbar-tools" role="toolbar" aria-label="Actions du compte">
+        {hideAccountCluster ? (
+          <div className="app-topbar-right app-topbar-right--minimal">
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
               title={online ? 'En ligne' : 'Hors ligne'}
               aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
             />
-            <button
-              type="button"
-              className="app-topbar-icon-btn"
-              onClick={toggle}
-              title={themeNextLabel}
-              aria-label={themeNextLabel}
-            >
-              {mode === 'dark' ? <IconSun /> : <IconMoon />}
-            </button>
+          </div>
+        ) : (
+          <div className="app-topbar-right">
+            <div className="app-topbar-tools" role="toolbar" aria-label="Actions du compte">
+              <span
+                className={`online-dot ${online ? 'on' : 'off'}`}
+                title={online ? 'En ligne' : 'Hors ligne'}
+                aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
+              />
+              <button
+                type="button"
+                className="app-topbar-icon-btn"
+                onClick={toggle}
+                title={themeNextLabel}
+                aria-label={themeNextLabel}
+              >
+                {mode === 'dark' ? <IconSun /> : <IconMoon />}
+              </button>
+              <Link
+                to="/parametres"
+                className="app-topbar-icon-btn"
+                title="Paramètres du compte"
+                aria-label="Paramètres du compte"
+              >
+                <IconGear />
+              </Link>
+              <button
+                type="button"
+                className="app-topbar-icon-btn app-topbar-icon-btn-danger"
+                onClick={signOut}
+                title="Déconnexion"
+                aria-label="Déconnexion"
+              >
+                <IconLogOut />
+              </button>
+            </div>
             <Link
               to="/parametres"
-              className="app-topbar-icon-btn"
-              title="Paramètres du compte"
-              aria-label="Paramètres du compte"
+              className="app-profile-chip app-profile-chip-action"
+              title={`${label} — paramètres du compte`}
             >
-              <IconGear />
+              <span className="app-profile-avatar" aria-hidden="true">
+                {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+              </span>
+              <span className="app-profile-name">{label}</span>
+              <span className="app-profile-chevron" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
             </Link>
-            <button
-              type="button"
-              className="app-topbar-icon-btn app-topbar-icon-btn-danger"
-              onClick={signOut}
-              title="Déconnexion"
-              aria-label="Déconnexion"
-            >
-              <IconLogOut />
-            </button>
           </div>
-          <Link
-            to="/parametres"
-            className="app-profile-chip app-profile-chip-action"
-            title={`${label} — paramètres du compte`}
-          >
-            <span className="app-profile-avatar" aria-hidden="true">
-              {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
-            </span>
-            <span className="app-profile-name">{label}</span>
-            <span className="app-profile-chevron" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M6 9l6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </Link>
-        </div>
+        )}
       </div>
     </header>
   )

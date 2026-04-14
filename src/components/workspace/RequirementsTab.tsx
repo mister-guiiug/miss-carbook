@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import {
+  WORKSPACE_QUICK_ADD_EVENT,
+  type WorkspaceQuickAddDetail,
+} from '../../lib/workspaceHeaderEvents'
 import { requirementSchema } from '../../lib/validation/schemas'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -62,6 +66,19 @@ export function RequirementsTab({
   useEffect(() => {
     if (rows.length === 0) setShowAddForm(true)
   }, [rows.length])
+
+  useEffect(() => {
+    const onQuick = (ev: Event) => {
+      const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
+      if (d?.tab !== 'requirements') return
+      setShowAddForm(true)
+      requestAnimationFrame(() => {
+        document.getElementById('rq-label')?.focus()
+      })
+    }
+    window.addEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+    return () => window.removeEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+  }, [])
 
   const cancelEdit = useCallback(() => {
     setEditingId(null)
