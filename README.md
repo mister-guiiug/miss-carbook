@@ -43,6 +43,8 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
 5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
 
+Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → *Relancer la visite*. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
+
 ---
 
 ## Limites à avoir en tête
@@ -87,6 +89,13 @@ Scripts utiles :
 - `npm run lint` / `npm run format`
 - `npm run test` — tests Vitest (schémas, onglets dossier, dialogue d’erreur)
 - `npm run gen:types` — régénère `src/types/database.gen.ts` depuis le projet **Supabase lié** (`supabase link`). Fichier ignoré par git : comparer ou fusionner avec `src/types/database.ts` à la main après migration.
+
+### Visite guidée (mobile / PWA)
+
+- **Route** : `/assistant` — assistant d’accueil (5 étapes). Déclenché automatiquement une fois par session sur **fenêtre ≤ 768 px** ou **display-mode: standalone**, si l’utilisateur n’a pas choisi *Ne plus proposer* (`localStorage` `mc_assistant_global_done`).
+- **Dossier** : après création, l’onboarding existant passe en **plein écran** sur la même cible ; la session `mc_new_ws` est inchangée.
+- **Invitation** : après acceptation d’un lien `?invite=`, deux écrans plein écran peuvent s’afficher (`sessionStorage` `mc_invite_welcome`).
+- **Réinitialisation** : **Paramètres généraux** → *Réinitialiser les indicateurs* (`resetAllAssistantFlags` : global, session auto, `mc_onboard_*`, astuces invitation).
 
 ### Variables d’environnement (front)
 

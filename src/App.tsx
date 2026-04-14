@@ -16,6 +16,9 @@ const AccountSettingsPage = lazy(() =>
 const WorkspacePage = lazy(() =>
   import('./pages/WorkspacePage').then((m) => ({ default: m.WorkspacePage }))
 )
+const AssistantWelcomePage = lazy(() =>
+  import('./pages/AssistantWelcomePage').then((m) => ({ default: m.AssistantWelcomePage }))
+)
 
 function RouteFallback() {
   return (
@@ -41,6 +44,7 @@ export default function App() {
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/assistant" element={<AssistantWelcomePage />} />
                     <Route path="/parametres" element={<AccountSettingsPage />} />
                     <Route path="/w/:workspaceId" element={<WorkspacePage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />

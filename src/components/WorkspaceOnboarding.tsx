@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { AssistantFullscreenLayout } from './assistant/AssistantFullscreenLayout'
+import { shouldOfferAssistantUi } from '../lib/assistantDevice'
+import { setWorkspaceAssistantTourDone } from '../lib/assistantStorage'
 
 const doneKey = (id: string) => `mc_onboard_${id}`
 
@@ -24,36 +28,69 @@ export function WorkspaceOnboarding({
   const finish = () => {
     localStorage.setItem(doneKey(workspaceId), '1')
     sessionStorage.removeItem('mc_new_ws')
+    setWorkspaceAssistantTourDone(workspaceId)
     onDone()
   }
 
   const stepCount = 3
 
-  const steps = [
-    <>
-      <h3 style={{ marginTop: 0 }}>Bienvenue dans « {workspaceName} »</h3>
-      <p className="muted">
-        Ce dossier est partagé en temps réel. Invitez des participants depuis l’onglet{' '}
-        <strong>Réglages</strong> (code, lien ou invitation avec rôle et date d’expiration).
-      </p>
-    </>,
-    <>
-      <h3 style={{ marginTop: 0 }}>Exigences, évaluations & modèles</h3>
-      <p className="muted">
-        Définissez vos critères dans <strong>Exigences</strong>, ajoutez des véhicules dans{' '}
-        <strong>Modèles</strong>, reliez-les dans <strong>Évaluations</strong> (statut + votes
-        MoSCoW).
-      </p>
-    </>,
-    <>
-      <h3 style={{ marginTop: 0 }}>Comparer, rappels & décision</h3>
-      <p className="muted">
-        <strong>Comparer</strong> : graphiques, profils de critères, impression PDF.{' '}
-        <strong>Rappels</strong> pour les prochaines actions. Décision enregistrée dans{' '}
-        <strong>Réglages</strong>.
-      </p>
-    </>,
+  const steps: { titleId: string; title: string; body: ReactNode }[] = [
+    {
+      titleId: 'ws-onboard-1',
+      title: `Bienvenue dans « ${workspaceName} »`,
+      body: (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Ce dossier est partagé en temps réel. Invitez des participants depuis l’onglet{' '}
+          <strong>Réglages</strong> (code, lien ou invitation avec rôle et date d’expiration).
+        </p>
+      ),
+    },
+    {
+      titleId: 'ws-onboard-2',
+      title: 'Exigences, évaluations & modèles',
+      body: (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Définissez vos critères dans <strong>Exigences</strong>, ajoutez des véhicules dans{' '}
+          <strong>Modèles</strong>, reliez-les dans <strong>Évaluations</strong> (statut + votes
+          MoSCoW).
+        </p>
+      ),
+    },
+    {
+      titleId: 'ws-onboard-3',
+      title: 'Comparer, rappels & décision',
+      body: (
+        <p className="muted" style={{ marginTop: 0 }}>
+          <strong>Comparer</strong> : graphiques, profils de critères, impression.{' '}
+          <strong>Rappels</strong> pour les prochaines actions. Décision enregistrée dans{' '}
+          <strong>Réglages</strong>.
+        </p>
+      ),
+    },
   ]
+
+  const fullscreen = shouldOfferAssistantUi()
+
+  if (fullscreen) {
+    const s = steps[step]
+    const isLast = step >= stepCount - 1
+    return (
+      <AssistantFullscreenLayout
+        stepIndex={step}
+        stepCount={stepCount}
+        titleId={s.titleId}
+        title={s.title}
+        showBack={step > 0}
+        onBack={() => setStep((x) => Math.max(0, x - 1))}
+        onPrimary={isLast ? finish : () => setStep((x) => x + 1)}
+        primaryLabel={isLast ? 'C’est parti' : 'Suivant'}
+        onPassAll={finish}
+        onNeverShowAgain={finish}
+      >
+        {s.body}
+      </AssistantFullscreenLayout>
+    )
+  }
 
   return (
     <div className="card onboarding-card stack">
@@ -68,7 +105,8 @@ export function WorkspaceOnboarding({
       <p className="onboarding-step-meta muted">
         Étape {step + 1} sur {stepCount}
       </p>
-      {steps[step]}
+      <h3 style={{ marginTop: 0 }}>{steps[step].title}</h3>
+      {steps[step].body}
       <div className="row" style={{ justifyContent: 'flex-end', gap: '0.5rem' }}>
         <button type="button" className="secondary" onClick={finish}>
           Ne plus afficher

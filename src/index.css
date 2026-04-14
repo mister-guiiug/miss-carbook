@@ -2303,3 +2303,101 @@ button.workspace-journey-link {
   margin: 0 0 0.25rem;
   font-size: 0.8rem;
 }
+
+/* Visite guidée plein écran (mobile / PWA) */
+.assistant-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) calc(0.75rem + env(safe-area-inset-right, 0px))
+    calc(0.75rem + env(safe-area-inset-bottom, 0px)) calc(0.75rem + env(safe-area-inset-left, 0px));
+  background: var(--bg);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.assistant-fullscreen-inner {
+  width: 100%;
+  max-width: 28rem;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: min(100%, 36rem);
+  justify-content: center;
+}
+
+.assistant-step-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.assistant-progress {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.assistant-progress-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.assistant-progress-dot--active {
+  background: var(--primary);
+  transform: scale(1.2);
+}
+
+.assistant-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 4vw, 1.35rem);
+  line-height: 1.25;
+  text-align: center;
+}
+
+.assistant-body {
+  flex: 1 1 auto;
+}
+
+.assistant-bullet-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.assistant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.assistant-actions-spacer {
+  flex: 1 1 4rem;
+  min-width: 0;
+}
+
+.assistant-btn {
+  min-height: var(--touch-target, 44px);
+  touch-action: manipulation;
+}
+
+.assistant-btn-primary {
+  min-width: 8rem;
+}
+
+.assistant-footer-links {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
