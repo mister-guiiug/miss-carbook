@@ -39,7 +39,8 @@ export function WorkspaceOnboarding({
       <h3 style={{ marginTop: 0 }}>Exigences, évaluations & modèles</h3>
       <p className="muted">
         Définissez vos critères dans <strong>Exigences</strong>, ajoutez des véhicules dans{' '}
-        <strong>Modèles</strong>, reliez-les dans <strong>Évaluations</strong> (statut + votes MoSCoW).
+        <strong>Modèles</strong>, reliez-les dans <strong>Évaluations</strong> (statut + votes
+        MoSCoW).
       </p>
     </>,
     <>

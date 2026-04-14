@@ -4,10 +4,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
 import { explainUnknownError } from '../lib/errorReporting'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 type ErrorPayload = {
   userMessage: string
@@ -36,6 +38,8 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
   const [payload, setPayload] = useState<ErrorPayload | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, !!payload)
 
   const dismiss = useCallback(() => {
     setPayload(null)
@@ -96,6 +100,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
           }}
         >
           <div
+            ref={panelRef}
             className="error-dialog"
             role="alertdialog"
             aria-modal="true"
@@ -116,7 +121,9 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                 onClick={() => setDetailsOpen((o) => !o)}
                 aria-expanded={detailsOpen}
               >
-                {detailsOpen ? 'Masquer les détails techniques' : 'Détails techniques (copie support)'}
+                {detailsOpen
+                  ? 'Masquer les détails techniques'
+                  : 'Détails techniques (copie support)'}
               </button>
               {detailsOpen ? (
                 <div className="error-dialog-technical-wrap">

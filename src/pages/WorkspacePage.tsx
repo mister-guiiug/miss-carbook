@@ -112,7 +112,7 @@ export function WorkspacePage() {
 
   useEffect(() => {
     void refresh()
- // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, user?.id])
 
   useEffect(() => {
@@ -150,7 +150,8 @@ export function WorkspacePage() {
     return (
       <div className="shell stack">
         <p className="muted">
-          Consultez la fenêtre d’erreur si besoin, ou retournez à l’accueil pour ouvrir un autre dossier.
+          Consultez la fenêtre d’erreur si besoin, ou retournez à l’accueil pour ouvrir un autre
+          dossier.
         </p>
         <Link to="/">← Retour</Link>
       </div>
@@ -204,7 +205,11 @@ export function WorkspacePage() {
       <ul className="tabs">
         {tabs.map((t) => (
           <li key={t.id}>
-            <button type="button" className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+            <button
+              type="button"
+              className={tab === t.id ? 'active' : ''}
+              onClick={() => setTab(t.id)}
+            >
               {t.label}
             </button>
           </li>
@@ -212,9 +217,7 @@ export function WorkspacePage() {
       </ul>
 
       <div className="card">
-        {tab === 'notepad' ? (
-          <NotepadTab workspaceId={workspaceId} canWrite={canWrite} />
-        ) : null}
+        {tab === 'notepad' ? <NotepadTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
         {tab === 'requirements' ? (
           <RequirementsTab workspaceId={workspaceId} canWrite={canWrite} />
         ) : null}
@@ -224,10 +227,10 @@ export function WorkspacePage() {
         {tab === 'candidates' ? (
           <CandidatesTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}
-        {tab === 'compare' ? (
-          <CompareTab workspaceId={workspaceId} canWrite={canWrite} />
+        {tab === 'compare' ? <CompareTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
+        {tab === 'reminders' ? (
+          <RemindersTab workspaceId={workspaceId} canWrite={canWrite} />
         ) : null}
-        {tab === 'reminders' ? <RemindersTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
         {tab === 'activity' ? <ActivityTab workspaceId={workspaceId} /> : null}
         {tab === 'settings' ? (
           <SettingsTab

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { useToast } from '../../contexts/ToastContext'
 
 type Row = {
   id: string
@@ -20,6 +21,7 @@ export function RemindersTab({
   canWrite: boolean
 }) {
   const { reportException } = useErrorDialog()
+  const { showToast } = useToast()
   const [rows, setRows] = useState<Row[]>([])
   const [candidates, setCandidates] = useState<{ id: string; label: string }[]>([])
   const [title, setTitle] = useState('')
@@ -27,7 +29,7 @@ export function RemindersTab({
   const [due, setDue] = useState('')
   const [candId, setCandId] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('reminders')
       .select('*')
@@ -35,23 +37,22 @@ export function RemindersTab({
       .order('due_at', { ascending: true, nullsFirst: false })
     if (error) reportException(error, 'Chargement des rappels')
     else setRows((data ?? []) as Row[])
-  }
+
+    const { data: cand } = await supabase
+      .from('candidates')
+      .select('id, brand, model')
+      .eq('workspace_id', workspaceId)
+    setCandidates(
+      (cand ?? []).map((c) => ({
+        id: c.id,
+        label: `${c.brand} ${c.model}`.trim(),
+      }))
+    )
+  }, [workspaceId, reportException])
 
   useEffect(() => {
     void load()
-    void (async () => {
-      const { data } = await supabase
-        .from('candidates')
-        .select('id, brand, model')
-        .eq('workspace_id', workspaceId)
-      setCandidates(
-        (data ?? []).map((c) => ({
-          id: c.id,
-          label: `${c.brand} ${c.model}`.trim(),
-        }))
-      )
-    })()
-  }, [workspaceId])
+  }, [load])
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +72,7 @@ export function RemindersTab({
       setCandId('')
       await load()
       await logActivity(workspaceId, 'reminder.create', 'reminder', null, {})
+      showToast('Rappel ajouté')
     }
   }
 
@@ -78,25 +80,42 @@ export function RemindersTab({
     if (!canWrite) return
     const { error } = await supabase.from('reminders').update({ done: !r.done }).eq('id', r.id)
     if (error) reportException(error, 'Mise à jour d’un rappel (fait / rouvrir)')
-    else await load()
+    else {
+      await load()
+      showToast(r.done ? 'Rappel rouvert' : 'Rappel marqué comme fait')
+    }
   }
 
   const remove = async (id: string) => {
     if (!canWrite || !confirm('Supprimer ce rappel ?')) return
     const { error } = await supabase.from('reminders').delete().eq('id', id)
     if (error) reportException(error, 'Suppression d’un rappel')
-    else await load()
+    else {
+      await load()
+      showToast('Rappel supprimé')
+    }
   }
 
   return (
     <div className="stack">
-      <p className="muted">Prochains essais, relances garage, échéances — visibles par tous les membres.</p>
+      <p className="muted">
+        Prochains essais, relances garage, échéances — visibles par tous les membres.
+      </p>
 
       {canWrite ? (
         <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Nouveau rappel</h3>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre" required />
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Détail (optionnel)" />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Titre"
+            required
+          />
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Détail (optionnel)"
+          />
           <div className="row">
             <div style={{ flex: '1 1 160px' }}>
               <label>Échéance</label>
@@ -118,33 +137,46 @@ export function RemindersTab({
         </form>
       ) : null}
 
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {rows.map((r) => (
-          <li key={r.id} className="card" style={{ boxShadow: 'none', opacity: r.done ? 0.65 : 1 }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <strong>{r.title}</strong>
-                {r.due_at ? (
-                  <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
-                ) : null}
-                {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
+      {rows.length === 0 ? (
+        <div className="empty-state">
+          <p className="muted" style={{ margin: 0 }}>
+            Aucun rappel pour ce dossier. Créez-en un ci-dessus pour suivre essais, relances ou
+            échéances.
+          </p>
+        </div>
+      ) : (
+        <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {rows.map((r) => (
+            <li
+              key={r.id}
+              className="card"
+              style={{ boxShadow: 'none', opacity: r.done ? 0.65 : 1 }}
+            >
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <div>
+                  <strong>{r.title}</strong>
+                  {r.due_at ? (
+                    <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
+                  ) : null}
+                  {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
+                </div>
+                <div className="row">
+                  {canWrite ? (
+                    <>
+                      <button type="button" className="secondary" onClick={() => void toggle(r)}>
+                        {r.done ? 'Rouvrir' : 'Fait'}
+                      </button>
+                      <button type="button" className="secondary" onClick={() => void remove(r.id)}>
+                        Supprimer
+                      </button>
+                    </>
+                  ) : null}
+                </div>
               </div>
-              <div className="row">
-                {canWrite ? (
-                  <>
-                    <button type="button" className="secondary" onClick={() => void toggle(r)}>
-                      {r.done ? 'Rouvrir' : 'Fait'}
-                    </button>
-                    <button type="button" className="secondary" onClick={() => void remove(r.id)}>
-                      Supprimer
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

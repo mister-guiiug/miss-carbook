@@ -5,6 +5,7 @@ import { currentVehicleSchema } from '../../lib/validation/schemas'
 import type { Database } from '../../types/database'
 import { ExportWorkspaceButton } from './ExportWorkspaceButton'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { useToast } from '../../contexts/ToastContext'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
 
@@ -35,6 +36,7 @@ export function SettingsTab({
   onWorkspaceRefresh: () => void
 }) {
   const { reportException, reportMessage } = useErrorDialog()
+  const { showToast } = useToast()
   const [members, setMembers] = useState<(Member & { display_name?: string })[]>([])
   const [invites, setInvites] = useState<InviteRow[]>([])
   const [vehicle, setVehicle] = useState({
@@ -78,7 +80,10 @@ export function SettingsTab({
       }
       const list = (mems ?? []) as Member[]
       const ids = list.map((m) => m.user_id)
-      const { data: profs } = await supabase.from('profiles').select('id, display_name').in('id', ids)
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', ids)
       const names: Record<string, string> = {}
       for (const p of profs ?? []) names[p.id] = p.display_name
       setMembers(list.map((m) => ({ ...m, display_name: names[m.user_id] })))
@@ -151,12 +156,17 @@ export function SettingsTab({
         const { error } = await supabase.from('current_vehicle').update(row).eq('id', vehicleId)
         if (error) throw error
       } else {
-        const { data, error } = await supabase.from('current_vehicle').insert(row).select('id').single()
+        const { data, error } = await supabase
+          .from('current_vehicle')
+          .insert(row)
+          .select('id')
+          .single()
         if (error) throw error
         setVehicleId(data.id)
       }
       await logActivity(workspace.id, 'current_vehicle.upsert', 'current_vehicle', vehicleId, {})
       onWorkspaceRefresh()
+      showToast('Véhicule actuel enregistré')
     } catch (e: unknown) {
       reportException(e, 'Sauvegarde du véhicule actuel')
     } finally {
@@ -175,6 +185,7 @@ export function SettingsTab({
     else {
       setMembers((m) => m.map((x) => (x.user_id === uid ? { ...x, role } : x)))
       await logActivity(workspace.id, 'member.role_change', 'workspace_member', uid, { role })
+      showToast('Rôle mis à jour')
     }
   }
 
@@ -192,8 +203,9 @@ export function SettingsTab({
       const link = `${origin}${base}?invite=${data as string}`.replace(/([^:]\/)\/+/g, '$1')
       try {
         await navigator.clipboard.writeText(link)
+        showToast('Invitation créée — lien copié')
       } catch {
-        /* ignore */
+        showToast('Invitation créée — copiez le lien affiché ci-dessous')
       }
     }
   }
@@ -202,6 +214,7 @@ export function SettingsTab({
     if (!isAdmin) return
     await supabase.from('workspace_invites').delete().eq('id', id)
     await loadInvites()
+    showToast('Invitation révoquée')
   }
 
   const leave = async () => {
@@ -221,6 +234,7 @@ export function SettingsTab({
     else {
       setMembers((m) => m.filter((x) => x.user_id !== uid))
       await logActivity(workspace.id, 'member.removed', 'workspace_member', uid, {})
+      showToast('Membre retiré')
     }
   }
 
@@ -237,12 +251,14 @@ export function SettingsTab({
     else {
       await logActivity(workspace.id, 'workspace.decision', 'workspace', workspace.id, {})
       onWorkspaceRefresh()
+      showToast('Décision enregistrée')
     }
   }
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl)
+      showToast('Lien copié')
     } catch {
       reportMessage(
         'Copie impossible — sélectionnez le lien manuellement.',
@@ -296,7 +312,10 @@ export function SettingsTab({
             Lien à usage unique (après acceptation). Copié dans le presse-papiers à la création.
           </p>
           <div className="row">
-            <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}>
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
+            >
               <option value="read">Lecture</option>
               <option value="write">Écriture</option>
               <option value="admin">Admin</option>
@@ -327,7 +346,11 @@ export function SettingsTab({
                 {new Date(i.expires_at).toLocaleDateString('fr-FR')}
                 {i.used_at ? ' — utilisée' : ''}
                 {!i.used_at ? (
-                  <button type="button" className="secondary" onClick={() => void revokeInvite(i.id)}>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => void revokeInvite(i.id)}
+                  >
                     Révoquer
                   </button>
                 ) : null}

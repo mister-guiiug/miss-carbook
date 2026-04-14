@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
 import { authEmailRedirectUrl } from '../lib/authRedirect'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
+import { useToast } from '../contexts/ToastContext'
 import {
   displayNameRules,
   displayNameSchema,
@@ -26,6 +27,7 @@ type Row = {
 
 export function HomePage() {
   const { reportException, reportMessage } = useErrorDialog()
+  const { showToast } = useToast()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -73,7 +75,7 @@ export function HomePage() {
 
   useEffect(() => {
     void load()
- // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   useEffect(() => {
@@ -103,9 +105,12 @@ export function HomePage() {
       const next = new URLSearchParams(searchParams)
       next.delete('invite')
       setSearchParams(next, { replace: true })
-      if (data) navigate(`/w/${data}`, { replace: true })
+      if (data) {
+        showToast('Invitation acceptée')
+        navigate(`/w/${data}`, { replace: true })
+      }
     })()
-  }, [user, navigate, searchParams, setSearchParams, reportException])
+  }, [user, navigate, searchParams, setSearchParams, reportException, showToast])
 
   useEffect(() => {
     if (!searchParams.get('invite')) inviteHandled.current = false
@@ -139,6 +144,7 @@ export function HomePage() {
       const newId = typeof data === 'string' ? data : null
       if (newId) {
         sessionStorage.setItem('mc_new_ws', newId)
+        showToast('Dossier créé')
         navigate(`/w/${newId}`)
       }
     } catch (e: unknown) {
@@ -162,7 +168,10 @@ export function HomePage() {
       if (error) throw error
       setCode('')
       await load()
-      if (data) navigate(`/w/${data}`)
+      if (data) {
+        showToast('Vous avez rejoint le dossier')
+        navigate(`/w/${data}`)
+      }
     } catch (e: unknown) {
       reportException(e, 'Rejoindre un dossier avec un code')
     } finally {
@@ -190,6 +199,7 @@ export function HomePage() {
       setPseudoEdit('')
       setProfilePseudo(parsed.data)
       notifyProfileUpdated()
+      showToast('Pseudo mis à jour')
     } catch (e: unknown) {
       reportException(e, 'Mise à jour du pseudo (page d’accueil)')
     } finally {
@@ -232,9 +242,9 @@ export function HomePage() {
       <div className="card stack">
         <h2 style={{ marginTop: 0 }}>Compte</h2>
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session e-mail</span>}.
-          Pour ouvrir une session sur un autre appareil, déconnectez-vous ou utilisez un autre navigateur,
-          puis saisissez la même adresse sur l’écran de bienvenue.
+          Connecté avec {user.email ? <code>{user.email}</code> : <span>votre session e-mail</span>}
+          . Pour ouvrir une session sur un autre appareil, déconnectez-vous ou utilisez un autre
+          navigateur, puis saisissez la même adresse sur l’écran de bienvenue.
           {user.email ? (
             <button
               type="button"
@@ -313,7 +323,9 @@ export function HomePage() {
       <section className="card stack">
         <h2 style={{ marginTop: 0 }}>Mes dossiers</h2>
         {loading ? <p className="muted">Chargement…</p> : null}
-        {!loading && rows.length === 0 ? <p className="muted">Aucun dossier pour l’instant.</p> : null}
+        {!loading && rows.length === 0 ? (
+          <p className="muted">Aucun dossier pour l’instant.</p>
+        ) : null}
         <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {rows.map((r) => {
             const w = r.workspaces

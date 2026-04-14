@@ -49,9 +49,8 @@ export function PseudoGate({ children }: { children: ReactNode }) {
         <div className="card stack">
           <h1>Miss Carbook</h1>
           <p className="muted">
-            Carnet collaboratif pour choisir un véhicule. Connectez-vous avec votre adresse e-mail : vous
-            recevrez un lien sécurisé (sans mot de passe). Le fournisseur <strong>Email</strong> doit être
-            activé dans Supabase ; le fournisseur <strong>Anonymous</strong> doit être désactivé.
+            Carnet collaboratif pour choisir un véhicule. Connectez-vous avec votre adresse e-mail :
+            vous recevrez un lien sécurisé (sans mot de passe).
           </p>
           <form onSubmit={sendMagicLink} className="stack">
             <div>

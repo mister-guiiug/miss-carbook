@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  candidateSchema,
-  displayNameSchema,
-  requirementSchema,
-  shareCodeSchema,
-} from './schemas'
+import { candidateSchema, displayNameSchema, requirementSchema, shareCodeSchema } from './schemas'
 
 describe('displayNameSchema', () => {
   it('accepte un pseudo valide', () => {

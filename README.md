@@ -28,11 +28,11 @@ Scripts utiles :
 
 ## Variables d’environnement (front)
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | URL du projet (`https://xxx.supabase.co`) |
-| `VITE_SUPABASE_ANON_KEY` | Clé **anon** publique (compatible navigateur) |
-| `VITE_BASE_PATH` | Chemin de base (ex. `/nom-du-repo/` sur Pages ; `/` en local) |
+| Variable                 | Description                                                   |
+| ------------------------ | ------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`      | URL du projet (`https://xxx.supabase.co`)                     |
+| `VITE_SUPABASE_ANON_KEY` | Clé **anon** publique (compatible navigateur)                 |
+| `VITE_BASE_PATH`         | Chemin de base (ex. `/nom-du-repo/` sur Pages ; `/` en local) |
 
 **Ne jamais** exposer la clé `service_role` ni d’autres secrets dans le dépôt ou le bundle.
 

@@ -19,11 +19,7 @@ export const workspaceCreateSchema = z.object({
   replacement_enabled: z.boolean().optional().default(false),
 })
 
-export const shareCodeSchema = z
-  .string()
-  .trim()
-  .min(4, 'Code trop court')
-  .max(16)
+export const shareCodeSchema = z.string().trim().min(4, 'Code trop court').max(16)
 
 export const requirementSchema = z.object({
   label: z.string().trim().min(1).max(200),
@@ -80,10 +76,7 @@ export const candidateSchema = z.object({
     .max(2000)
     .optional()
     .default('')
-    .refine(
-      (s) => s.trim() === '' || z.string().url().safeParse(s.trim()).success,
-      'URL invalide'
-    ),
+    .refine((s) => s.trim() === '' || z.string().url().safeParse(s.trim()).success, 'URL invalide'),
   event_date: z.string().optional().nullable(),
   status: z
     .enum(['to_see', 'tried', 'shortlist', 'selected', 'rejected'])
