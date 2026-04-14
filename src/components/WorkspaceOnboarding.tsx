@@ -32,7 +32,7 @@ export function WorkspaceOnboarding({
       <h3 style={{ marginTop: 0 }}>Bienvenue dans « {workspaceName} »</h3>
       <p className="muted">
         Ce dossier est partagé en temps réel. Invitez des participants depuis l’onglet{' '}
-        <strong>Paramètres</strong> (code, lien ou invitation avec rôle et date d’expiration).
+        <strong>Réglages</strong> (code, lien ou invitation avec rôle et date d’expiration).
       </p>
     </>,
     <>
@@ -48,7 +48,7 @@ export function WorkspaceOnboarding({
       <p className="muted">
         <strong>Comparer</strong> : graphiques, profils de critères, impression PDF.{' '}
         <strong>Rappels</strong> pour les prochaines actions. Décision enregistrée dans{' '}
-        <strong>Paramètres</strong>.
+        <strong>Réglages</strong>.
       </p>
     </>,
   ]

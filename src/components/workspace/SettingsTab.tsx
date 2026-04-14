@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
@@ -314,7 +315,17 @@ export function SettingsTab({
   }
 
   return (
-    <div className="stack">
+    <div className="stack settings-tab">
+      <div className="settings-scope-banner stack" role="region" aria-label="Périmètre des réglages">
+        <p style={{ margin: 0, fontWeight: 600 }}>
+          <span className="settings-scope-badge settings-scope-badge--workspace">Ce dossier</span>{' '}
+          Tout ce qui suit ne concerne que le projet « {workspace.name} » (partage, membres, nom…).
+        </p>
+        <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>
+          Pour votre pseudo, le thème sur cet appareil ou le rechargement de l’application :{' '}
+          <Link to="/parametres">paramètres généraux</Link>.
+        </p>
+      </div>
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Nom et description du dossier</h3>
         <p className="muted">

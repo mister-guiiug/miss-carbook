@@ -243,7 +243,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'gear'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-gear"
-            title="Paramètres et navigation"
+            title="Réglages du dossier, recherche, navigation"
             onClick={() => setOpen((m) => (m === 'gear' ? null : 'gear'))}
           >
             <IconGear />
@@ -253,7 +253,7 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-gear"
               className="workspace-toolbar-menu"
               role="menu"
-              aria-label="Paramètres et navigation"
+              aria-label="Menu dossier et navigation"
             >
               <div className="workspace-toolbar-menu-label">Dossier</div>
               <button
@@ -276,7 +276,7 @@ export function WorkspaceHeaderToolbar({
                   close()
                 }}
               >
-                Paramètres du dossier
+                Réglages de ce dossier
               </button>
               <button type="button" role="menuitem" className="workspace-toolbar-menu-item" onClick={toggle}>
                 <span className="workspace-toolbar-menu-row">
@@ -300,7 +300,7 @@ export function WorkspaceHeaderToolbar({
                 to="/parametres"
                 onClick={close}
               >
-                Paramètres du compte
+                Paramètres généraux (compte et appli)
               </Link>
             </div>
           ) : null}
@@ -313,7 +313,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'user'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
-            title={`${profileLabel} — compte`}
+            title={`${profileLabel} — paramètres généraux et déconnexion`}
             onClick={() => setOpen((m) => (m === 'user' ? null : 'user'))}
           >
             <span className="workspace-toolbar-avatar" aria-hidden="true">
@@ -325,11 +325,11 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-user"
               className="workspace-toolbar-menu workspace-toolbar-menu--right"
               role="menu"
-              aria-label="Compte"
+              aria-label="Compte et paramètres généraux"
             >
               <div className="workspace-toolbar-menu-heading muted">{profileLabel}</div>
               <Link role="menuitem" className="workspace-toolbar-menu-item" to="/parametres" onClick={close}>
-                Mon compte
+                Paramètres généraux
               </Link>
               <button type="button" role="menuitem" className="workspace-toolbar-menu-item danger" onClick={signOut}>
                 Déconnexion

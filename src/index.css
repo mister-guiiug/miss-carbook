@@ -1318,3 +1318,51 @@ th {
   flex-wrap: wrap;
   min-height: var(--touch-target);
 }
+
+/* Périmètre : paramètres généraux vs réglages d’un dossier */
+.settings-scope-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.settings-scope-badge--global {
+  background: rgb(241 245 249);
+  color: rgb(71 85 105);
+}
+
+.settings-scope-badge--workspace {
+  background: rgb(15 118 110 / 0.12);
+  color: var(--primary);
+  border-color: rgb(15 118 110 / 0.35);
+}
+
+[data-theme='dark'] .settings-scope-badge--global {
+  background: rgb(30 41 59);
+  color: rgb(148 163 184);
+}
+
+[data-theme='dark'] .settings-scope-badge--workspace {
+  background: rgb(45 212 191 / 0.12);
+  color: rgb(45 212 191);
+  border-color: rgb(45 212 191 / 0.35);
+}
+
+.settings-scope-banner {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  background: var(--surface);
+  gap: 0.5rem;
+}
+
+.settings-scope-banner .muted a {
+  font-weight: 500;
+}
