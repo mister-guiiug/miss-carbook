@@ -24,3 +24,6 @@ coverage
 
 # PWA dev
 dev-dist
+
+# Types Supabase générés localement (`npm run gen:types`) — comparer avec src/types/database.ts
+src/types/database.gen.ts

@@ -85,7 +85,8 @@ Scripts utiles :
 - `npm run build` — build production + copie `404.html` pour le routing SPA sur Pages
 - `npm run preview` — prévisualiser le build
 - `npm run lint` / `npm run format`
-- `npm run test` — tests Vitest (schémas Zod)
+- `npm run test` — tests Vitest (schémas, onglets dossier, dialogue d’erreur)
+- `npm run gen:types` — régénère `src/types/database.gen.ts` depuis le projet **Supabase lié** (`supabase link`). Fichier ignoré par git : comparer ou fusionner avec `src/types/database.ts` à la main après migration.
 
 ### Variables d’environnement (front)
 

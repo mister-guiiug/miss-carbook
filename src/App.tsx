@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ErrorDialogProvider } from './contexts/ErrorDialogContext'
 import { ToastProvider } from './contexts/ToastContext'
@@ -7,9 +8,22 @@ import { SiteFooter } from './components/SiteFooter'
 import { TrustBanner } from './components/TrustBanner'
 import { TopBar } from './components/TopBar'
 import { UpdateBanner } from './components/UpdateBanner'
-import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { HomePage } from './pages/HomePage'
-import { WorkspacePage } from './pages/WorkspacePage'
+
+const AccountSettingsPage = lazy(() =>
+  import('./pages/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
+)
+const WorkspacePage = lazy(() =>
+  import('./pages/WorkspacePage').then((m) => ({ default: m.WorkspacePage }))
+)
+
+function RouteFallback() {
+  return (
+    <div className="shell">
+      <p className="muted">Chargement de la page…</p>
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -24,12 +38,14 @@ export default function App() {
             <PseudoGate>
               <WorkspaceChromeProvider>
                 <TopBar />
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/parametres" element={<AccountSettingsPage />} />
-                  <Route path="/w/:workspaceId" element={<WorkspacePage />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/parametres" element={<AccountSettingsPage />} />
+                    <Route path="/w/:workspaceId" element={<WorkspacePage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
               </WorkspaceChromeProvider>
             </PseudoGate>
           </div>
