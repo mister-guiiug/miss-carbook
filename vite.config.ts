@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
       manifest: {
         name: 'Miss Carbook',

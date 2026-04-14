@@ -5,6 +5,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -54,11 +55,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install
         run: npm ci
+
+      - name: Lint & tests
+        run: npm run lint && npm run test
 
       - name: Build
         env:
@@ -78,8 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
-        id: deploy
+        id: deployment
         uses: actions/deploy-pages@v4
