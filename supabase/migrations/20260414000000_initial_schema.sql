@@ -395,6 +395,26 @@ SELECT USING (public.is_workspace_member (workspace_id));
 CREATE POLICY wm_insert_admin ON public.workspace_members FOR INSERT
 WITH CHECK (public.is_workspace_admin (workspace_id));
 
+-- Première ligne membre : le trigger add_creator_as_admin ne peut pas passer wm_insert_admin
+-- (œuf et poule). Autoriser le créateur du workspace à s’ajouter une fois comme admin.
+CREATE POLICY wm_insert_creator_first ON public.workspace_members FOR INSERT
+WITH CHECK (
+  user_id = auth.uid ()
+  AND role = 'admin'
+  AND EXISTS (
+    SELECT 1
+    FROM public.workspaces w
+    WHERE
+      w.id = workspace_id
+      AND w.created_by = auth.uid ()
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.workspace_members wm
+    WHERE wm.workspace_id = workspace_id
+  )
+);
+
 CREATE POLICY wm_update_admin ON public.workspace_members FOR
 UPDATE USING (public.is_workspace_admin (workspace_id))
 WITH CHECK (public.is_workspace_admin (workspace_id));
