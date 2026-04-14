@@ -2,6 +2,7 @@ import { type ReactNode, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { displayNameSchema } from '../lib/validation/schemas'
 import { useAuth } from '../hooks/useAuth'
+import { notifyProfileUpdated } from '../lib/profileEvents'
 
 export function PseudoGate({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
@@ -34,6 +35,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
         display_name: parsed.data,
       })
       if (upErr) throw upErr
+      notifyProfileUpdated()
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Échec de connexion')
     } finally {

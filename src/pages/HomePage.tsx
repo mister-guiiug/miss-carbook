@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { notifyProfileUpdated } from '../lib/profileEvents'
 import { displayNameSchema, shareCodeSchema, workspaceCreateSchema } from '../lib/validation/schemas'
 
 type Row = {
@@ -143,6 +144,7 @@ export function HomePage() {
         .eq('id', user.id)
       if (error) throw error
       setPseudoEdit('')
+      notifyProfileUpdated()
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Mise à jour impossible')
     } finally {
@@ -152,9 +154,8 @@ export function HomePage() {
 
   return (
     <div className="shell">
-      <header className="row" style={{ justifyContent: 'space-between', marginBottom: '1rem' }}>
+      <header style={{ marginBottom: '1rem' }}>
         <h1 style={{ margin: 0 }}>Miss Carbook</h1>
-        <span className="muted">connecté</span>
       </header>
 
       <div className="card stack">
