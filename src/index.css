@@ -1479,6 +1479,80 @@ th {
   min-height: var(--touch-target);
 }
 
+/* Accueil : accordéons Créer / Rejoindre */
+.home-page .home-hero {
+  margin-bottom: 0.25rem;
+}
+
+.home-hero-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.home-actions-accordions {
+  gap: 0.65rem;
+}
+
+.home-accordion {
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.home-accordion > summary.home-accordion-summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.05rem;
+  padding: 0.65rem 0.85rem;
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.home-accordion > summary.home-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-accordion > summary.home-accordion-summary::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: auto;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.home-accordion[open] > summary.home-accordion-summary::after {
+  transform: rotate(-135deg);
+  margin-top: 0.2rem;
+}
+
+.home-accordion > summary.home-accordion-summary:hover {
+  color: var(--primary);
+}
+
+.home-accordion-body {
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+  padding-top: 0.75rem;
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.home-workspaces {
+  margin-top: 0.25rem;
+}
+
 /* Périmètre : paramètres généraux vs réglages d’un dossier */
 .settings-scope-badge {
   display: inline-block;
