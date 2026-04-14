@@ -95,6 +95,10 @@ export const candidateSchema = z.object({
   model: z.string().max(120).optional().default(''),
   trim: z.string().max(120).optional().default(''),
   engine: z.string().max(200).optional().default(''),
+  parent_candidate_id: z
+    .union([z.string().uuid(), z.literal(''), z.null()])
+    .optional()
+    .transform((v) => (v === '' || v === undefined || v === null ? null : v)),
   price: z
     .union([z.coerce.number().min(0), z.nan()])
     .optional()

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -6,7 +7,13 @@ import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
 
 type Req = { id: string; label: string; level: RequirementLevel }
-type Cand = { id: string; brand: string; model: string }
+type Cand = {
+  id: string
+  brand: string
+  model: string
+  trim: string
+  parent_candidate_id: string | null
+}
 type EvalRow = {
   requirement_id: string
   candidate_id: string
@@ -48,7 +55,10 @@ export function EvaluationsTab({
   const load = useCallback(async () => {
     const [r, c, e, v] = await Promise.all([
       supabase.from('requirements').select('id, label, level').eq('workspace_id', workspaceId),
-      supabase.from('candidates').select('id, brand, model').eq('workspace_id', workspaceId),
+      supabase
+        .from('candidates')
+        .select('id, brand, model, trim, parent_candidate_id')
+        .eq('workspace_id', workspaceId),
       supabase
         .from('requirement_candidate_evaluations')
         .select('requirement_id, candidate_id, status, note'),
@@ -57,7 +67,11 @@ export function EvaluationsTab({
     const firstErr = r.error ?? c.error ?? e.error ?? v.error
     if (firstErr) reportException(firstErr, 'Chargement de la matrice d’évaluation')
     const reqRows = (r.data ?? []) as Req[]
-    const candRows = (c.data ?? []) as Cand[]
+    const candRows = (c.data ?? []).map((row) => ({
+      ...(row as Cand),
+      trim: (row as { trim?: string }).trim ?? '',
+      parent_candidate_id: (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+    }))
     const reqIds = new Set(reqRows.map((x) => x.id))
     const candIds = new Set(candRows.map((x) => x.id))
     setReqs(reqRows)
@@ -179,9 +193,7 @@ export function EvaluationsTab({
               <th>MoSCoW (vous)</th>
               <th>Votes agrégés</th>
               {cands.map((c) => (
-                <th key={c.id}>
-                  {c.brand} {c.model}
-                </th>
+                <th key={c.id}>{formatCandidateListLabel(c)}</th>
               ))}
             </tr>
           </thead>

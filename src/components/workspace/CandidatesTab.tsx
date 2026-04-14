@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import {
   candidateSchema,
   candidateSpecsSchema,
@@ -14,6 +15,7 @@ import type { CandidateStatus, Json } from '../../types/database'
 
 type CandidateRow = {
   id: string
+  parent_candidate_id: string | null
   brand: string
   model: string
   trim: string
@@ -50,14 +52,22 @@ export function CandidatesTab({
   const [reviews, setReviews] = useState<{ candidate_id: string; score: number }[]>([])
   const [open, setOpen] = useState<string | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('candidates')
       .select('*, candidate_specs ( specs )')
       .eq('workspace_id', workspaceId)
+      .order('parent_candidate_id', { ascending: true, nullsFirst: true })
       .order('created_at', { ascending: false })
     if (error) reportException(error, 'Chargement des modèles candidats')
-    else setCandidates((data ?? []) as unknown as CandidateRow[])
+    else
+      setCandidates(
+        (data ?? []).map((row) => ({
+          ...(row as unknown as CandidateRow),
+          parent_candidate_id:
+            (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+        }))
+      )
     const ids = (data ?? []).map((c: { id: string }) => c.id)
     if (ids.length) {
       const { data: revs } = await supabase
@@ -66,14 +76,27 @@ export function CandidatesTab({
         .in('candidate_id', ids)
       setReviews(revs ?? [])
     } else setReviews([])
-  }
+  }, [workspaceId, reportException])
 
   useEffect(() => {
     void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId])
+  }, [load])
+
+  const rootCandidates = useMemo(
+    () => candidates.filter((c) => !c.parent_candidate_id),
+    [candidates]
+  )
+
+  const childrenOf = useCallback(
+    (parentId: string) =>
+      candidates
+        .filter((c) => c.parent_candidate_id === parentId)
+        .sort((a, b) => String(a.trim).localeCompare(String(b.trim))),
+    [candidates]
+  )
 
   const [form, setForm] = useState({
+    parent_id: '',
     brand: '',
     model: '',
     trim: '',
@@ -94,6 +117,7 @@ export function CandidatesTab({
         .from('candidates')
         .insert({
           workspace_id: workspaceId,
+          parent_candidate_id: c.parent_candidate_id,
           brand: c.brand,
           model: c.model ? `${c.model} (copie)` : '(copie)',
           trim: c.trim,
@@ -174,6 +198,7 @@ export function CandidatesTab({
     if (!canWrite) return
     const parsed = candidateSchema.safeParse({
       ...form,
+      parent_candidate_id: form.parent_id || null,
       price: form.price,
       event_date: form.event_date || null,
     })
@@ -187,6 +212,7 @@ export function CandidatesTab({
         .from('candidates')
         .insert({
           workspace_id: workspaceId,
+          parent_candidate_id: parsed.data.parent_candidate_id,
           brand: parsed.data.brand,
           model: parsed.data.model,
           trim: parsed.data.trim,
@@ -205,6 +231,7 @@ export function CandidatesTab({
       await supabase.from('candidate_specs').insert({ candidate_id: data.id, specs: {} })
       await logActivity(workspaceId, 'candidate.create', 'candidate', data.id, {})
       setForm({
+        parent_id: '',
         brand: '',
         model: '',
         trim: '',
@@ -223,42 +250,129 @@ export function CandidatesTab({
     }
   }
 
-  return (
-    <div className="stack">
-      {canWrite ? (
-        <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h3 style={{ margin: 0 }}>Import CSV</h3>
-          <p className="muted" style={{ margin: 0 }}>
-            Première ligne : brand, model (obligatoires), trim, engine, price… Séparateur virgule
-            (simple).
-          </p>
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            onChange={(e) => void importCsv(e.target.files?.[0] ?? null)}
-          />
+  const renderCandidateCard = (c: CandidateRow, opts: { nested?: boolean; variationCount?: number }) => (
+    <li
+      key={c.id}
+      className={`card candidate-card${opts.nested ? ' candidate-tree-child' : ''}`}
+      style={{ boxShadow: 'none' }}
+    >
+      <div className="candidate-card-head row">
+        <div className="candidate-card-title" style={{ flex: '1 1 200px', minWidth: 0 }}>
+          <strong>{formatCandidateListLabel(c)}</strong>{' '}
+          <span className="badge">{statusLabels[c.status]}</span>
+          {c.parent_candidate_id ? (
+            <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
+              variation
+            </span>
+          ) : null}
+          <div className="muted">
+            {c.trim ? `${c.trim} · ` : ''}
+            {c.engine}
+            {c.price != null ? ` · ${c.price} €` : ''}
+          </div>
         </div>
+        <div className="candidate-card-toolbar row">
+          <button type="button" className="secondary" onClick={() => void duplicateOne(c)}>
+            Dupliquer
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setOpen(open === c.id ? null : c.id)}
+          >
+            {open === c.id ? 'Fermer' : 'Détail'}
+          </button>
+        </div>
+      </div>
+      {open === c.id ? (
+        <CandidateDetail
+          candidate={c}
+          rootCandidates={rootCandidates.filter((x) => x.id !== c.id)}
+          variationCount={opts.variationCount ?? childrenOf(c.id).length}
+          workspaceId={workspaceId}
+          canWrite={canWrite}
+          userId={userId}
+          onChanged={load}
+        />
       ) : null}
+    </li>
+  )
+
+  return (
+    <div className="stack candidates-tab">
+      <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+        Un <strong>modèle racine</strong> regroupe la marque et le modèle ; les <strong>variations</strong>{' '}
+        partagent la même base (ex. finitions, motorisation) et restent liées pour la comparaison.
+      </p>
 
       {canWrite ? (
-        <form onSubmit={addCandidate} className="card stack" style={{ boxShadow: 'none' }}>
-          <h3 style={{ margin: 0 }}>Nouveau modèle candidat</h3>
-          <div className="row">
-            <div style={{ flex: '1 1 160px' }}>
-              <label>Marque</label>
+        <div className="candidates-panels row">
+          <details className="card candidates-menu-panel" style={{ boxShadow: 'none' }}>
+            <summary>Import CSV</summary>
+            <div className="stack" style={{ marginTop: '0.75rem' }}>
+              <p className="muted" style={{ margin: 0 }}>
+                Première ligne : brand, model (obligatoires), trim, engine, price… Séparateur virgule.
+              </p>
               <input
-                value={form.brand}
-                onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => void importCsv(e.target.files?.[0] ?? null)}
               />
             </div>
-            <div style={{ flex: '1 1 160px' }}>
-              <label>Modèle</label>
-              <input
-                value={form.model}
-                onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-              />
-            </div>
-          </div>
+          </details>
+
+          <details className="card candidates-menu-panel" style={{ boxShadow: 'none' }}>
+            <summary>Nouveau modèle ou variation</summary>
+            <form onSubmit={addCandidate} className="stack" style={{ marginTop: '0.75rem' }}>
+              <div>
+                <label htmlFor="cand-parent">Modèle racine (optionnel)</label>
+                <select
+                  id="cand-parent"
+                  value={form.parent_id}
+                  onChange={(e) => {
+                    const pid = e.target.value
+                    setForm((f) => {
+                      if (!pid) return { ...f, parent_id: '' }
+                      const p = candidates.find((x) => x.id === pid)
+                      return {
+                        ...f,
+                        parent_id: pid,
+                        brand: p?.brand ?? f.brand,
+                        model: p?.model ?? f.model,
+                      }
+                    })
+                  }}
+                >
+                  <option value="">— Aucun (nouveau modèle racine) —</option>
+                  {rootCandidates.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {formatCandidateListLabel(p)}
+                    </option>
+                  ))}
+                </select>
+                <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+                  Si vous choisissez un racine, marque et modèle sont préremplis ; précisez la variation dans
+                  «&nbsp;Finition&nbsp;» ou «&nbsp;Motorisation&nbsp;».
+                </p>
+              </div>
+              <div className="row">
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor="cand-brand">Marque</label>
+                  <input
+                    id="cand-brand"
+                    value={form.brand}
+                    onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
+                  />
+                </div>
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor="cand-model">Modèle</label>
+                  <input
+                    id="cand-model"
+                    value={form.model}
+                    onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+                  />
+                </div>
+              </div>
           <div className="row">
             <div style={{ flex: '1 1 160px' }}>
               <label>Finition</label>
@@ -339,47 +453,28 @@ export function CandidatesTab({
               />
             </div>
           </div>
-          <button type="submit">Ajouter</button>
-        </form>
+              <button type="submit">Ajouter</button>
+            </form>
+          </details>
+        </div>
       ) : null}
 
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {candidates.map((c) => (
-          <li key={c.id} className="card" style={{ boxShadow: 'none' }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <strong>
-                  {c.brand} {c.model}
-                </strong>{' '}
-                <span className="badge">{statusLabels[c.status]}</span>
-                <div className="muted">
-                  {c.trim ? `${c.trim} · ` : ''}
-                  {c.engine}
-                  {c.price != null ? ` · ${c.price} €` : ''}
-                </div>
-              </div>
-              <button type="button" className="secondary" onClick={() => void duplicateOne(c)}>
-                Dupliquer
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setOpen(open === c.id ? null : c.id)}
-              >
-                {open === c.id ? 'Fermer' : 'Détail'}
-              </button>
-            </div>
-            {open === c.id ? (
-              <CandidateDetail
-                candidate={c}
-                workspaceId={workspaceId}
-                canWrite={canWrite}
-                userId={userId}
-                onChanged={load}
-              />
-            ) : null}
-          </li>
+      <ul className="stack candidate-tree" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {rootCandidates.map((root) => (
+          <Fragment key={root.id}>
+            {renderCandidateCard(root, {})}
+            {childrenOf(root.id).map((child) => renderCandidateCard(child, { nested: true }))}
+          </Fragment>
         ))}
+        {candidates
+          .filter(
+            (c) =>
+              c.parent_candidate_id &&
+              !candidates.some((p) => p.id === c.parent_candidate_id)
+          )
+          .map((c) => (
+            <Fragment key={`orphan-${c.id}`}>{renderCandidateCard(c, {})}</Fragment>
+          ))}
       </ul>
 
       <p className="muted">
@@ -392,18 +487,101 @@ export function CandidatesTab({
 
 function CandidateDetail({
   candidate,
+  rootCandidates,
+  variationCount,
   workspaceId,
   canWrite,
   userId,
   onChanged,
 }: {
   candidate: CandidateRow
+  rootCandidates: CandidateRow[]
+  variationCount: number
   workspaceId: string
   canWrite: boolean
   userId: string
   onChanged: () => void
 }) {
   const { reportException, reportMessage } = useErrorDialog()
+  const [meta, setMeta] = useState({
+    parent_candidate_id: candidate.parent_candidate_id ?? '',
+    brand: candidate.brand,
+    model: candidate.model,
+    trim: candidate.trim,
+    engine: candidate.engine,
+    price: candidate.price != null ? String(candidate.price) : '',
+    event_date: candidate.event_date ?? '',
+    status: candidate.status,
+    reject_reason: candidate.reject_reason,
+    options: candidate.options,
+    garage_location: candidate.garage_location,
+    manufacturer_url: candidate.manufacturer_url,
+  })
+
+  useEffect(() => {
+    setMeta({
+      parent_candidate_id: candidate.parent_candidate_id ?? '',
+      brand: candidate.brand,
+      model: candidate.model,
+      trim: candidate.trim,
+      engine: candidate.engine,
+      price: candidate.price != null ? String(candidate.price) : '',
+      event_date: candidate.event_date ?? '',
+      status: candidate.status,
+      reject_reason: candidate.reject_reason,
+      options: candidate.options,
+      garage_location: candidate.garage_location,
+      manufacturer_url: candidate.manufacturer_url,
+    })
+  }, [candidate])
+
+  const saveIdentity = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canWrite) return
+    const parsed = candidateSchema.safeParse({
+      ...meta,
+      parent_candidate_id: meta.parent_candidate_id || null,
+      price: meta.price,
+      event_date: meta.event_date || null,
+    })
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message ?? 'Invalide'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
+      return
+    }
+    if (parsed.data.parent_candidate_id && variationCount > 0) {
+      reportMessage(
+        'Ce modèle a des variations : vous ne pouvez pas le rattacher à un parent tant qu’elles existent. Supprimez ou détachez les variations d’abord.',
+        'variationCount > 0'
+      )
+      return
+    }
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .update({
+          parent_candidate_id: parsed.data.parent_candidate_id,
+          brand: parsed.data.brand,
+          model: parsed.data.model,
+          trim: parsed.data.trim,
+          engine: parsed.data.engine,
+          price: parsed.data.price,
+          options: parsed.data.options,
+          garage_location: parsed.data.garage_location,
+          manufacturer_url: parsed.data.manufacturer_url,
+          event_date: parsed.data.event_date,
+          status: parsed.data.status,
+          reject_reason: parsed.data.reject_reason,
+        })
+        .eq('id', candidate.id)
+      if (error) throw error
+      await logActivity(workspaceId, 'candidate.update_identity', 'candidate', candidate.id, {})
+      await onChanged()
+    } catch (err: unknown) {
+      reportException(err, 'Mise à jour de la fiche modèle')
+    }
+  }
+
   const [specs, setSpecs] = useState<Record<string, unknown>>(
     () => (candidate.candidate_specs?.specs as Record<string, unknown>) ?? {}
   )
@@ -576,6 +754,147 @@ function CandidateDetail({
 
   return (
     <div className="stack" style={{ marginTop: '0.75rem' }}>
+      {canWrite ? (
+        <form onSubmit={saveIdentity} className="card stack" style={{ boxShadow: 'none' }}>
+          <h4 style={{ margin: 0 }}>Fiche modèle</h4>
+          <div>
+            <label htmlFor={`cand-meta-parent-${candidate.id}`}>Modèle racine</label>
+            <select
+              id={`cand-meta-parent-${candidate.id}`}
+              value={meta.parent_candidate_id}
+              onChange={(e) => {
+                const pid = e.target.value
+                setMeta((m) => {
+                  if (!pid) return { ...m, parent_candidate_id: '' }
+                  const p = rootCandidates.find((x) => x.id === pid)
+                  return {
+                    ...m,
+                    parent_candidate_id: pid,
+                    brand: p?.brand ?? m.brand,
+                    model: p?.model ?? m.model,
+                  }
+                })
+              }}
+            >
+              <option value="">— Racine (pas de parent) —</option>
+              {rootCandidates.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {formatCandidateListLabel(p)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="row">
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
+              <input
+                id={`cand-meta-brand-${candidate.id}`}
+                value={meta.brand}
+                onChange={(e) => setMeta((m) => ({ ...m, brand: e.target.value }))}
+              />
+            </div>
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
+              <input
+                id={`cand-meta-model-${candidate.id}`}
+                value={meta.model}
+                onChange={(e) => setMeta((m) => ({ ...m, model: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-trim-${candidate.id}`}>Finition</label>
+              <input
+                id={`cand-meta-trim-${candidate.id}`}
+                value={meta.trim}
+                onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
+              />
+            </div>
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-engine-${candidate.id}`}>Motorisation</label>
+              <input
+                id={`cand-meta-engine-${candidate.id}`}
+                value={meta.engine}
+                onChange={(e) => setMeta((m) => ({ ...m, engine: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
+              <input
+                id={`cand-meta-price-${candidate.id}`}
+                type="number"
+                step="0.01"
+                value={meta.price}
+                onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
+              />
+            </div>
+            <div style={{ flex: '1 1 160px' }}>
+              <label htmlFor={`cand-meta-date-${candidate.id}`}>Date</label>
+              <input
+                id={`cand-meta-date-${candidate.id}`}
+                type="date"
+                value={meta.event_date}
+                onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
+            <input
+              id={`cand-meta-garage-${candidate.id}`}
+              value={meta.garage_location}
+              onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
+            <input
+              id={`cand-meta-url-${candidate.id}`}
+              value={meta.manufacturer_url}
+              onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
+            <textarea
+              id={`cand-meta-opt-${candidate.id}`}
+              value={meta.options}
+              onChange={(e) => setMeta((m) => ({ ...m, options: e.target.value }))}
+            />
+          </div>
+          <div className="row">
+            <div style={{ flex: '1 1 200px' }}>
+              <label htmlFor={`cand-meta-st-${candidate.id}`}>Statut</label>
+              <select
+                id={`cand-meta-st-${candidate.id}`}
+                value={meta.status}
+                onChange={(e) =>
+                  setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
+                }
+              >
+                {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
+                  <option key={k} value={k}>
+                    {statusLabels[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ flex: '1 1 200px' }}>
+              <label htmlFor={`cand-meta-rej-${candidate.id}`}>Raison si rejet</label>
+              <input
+                id={`cand-meta-rej-${candidate.id}`}
+                value={meta.reject_reason}
+                onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
+              />
+            </div>
+          </div>
+          <button type="submit">Enregistrer la fiche</button>
+        </form>
+      ) : null}
+
       <form onSubmit={saveSpecs} className="stack">
         <h4 style={{ margin: 0 }}>Données constructeur (flexibles)</h4>
         <div className="row" style={{ flexWrap: 'wrap' }}>

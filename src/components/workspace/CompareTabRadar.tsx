@@ -7,6 +7,7 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from 'recharts'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { COMPARE_RADAR_COLORS } from '../../lib/compareCriteria'
 import type { Json } from '../../types/database'
 
@@ -14,6 +15,8 @@ type Candidate = {
   id: string
   brand: string
   model: string
+  trim: string
+  parent_candidate_id: string | null
   candidate_specs: { specs: Json } | null
 }
 
@@ -33,7 +36,12 @@ export default function CompareTabRadar({ radarData, picked }: Props) {
           {picked.map((p, i) => (
             <Radar
               key={p.id}
-              name={`${p.brand} ${p.model}`.trim()}
+              name={formatCandidateListLabel({
+                brand: p.brand,
+                model: p.model,
+                trim: p.trim ?? '',
+                parent_candidate_id: p.parent_candidate_id ?? null,
+              })}
               dataKey={p.id}
               stroke={COMPARE_RADAR_COLORS[i % COMPARE_RADAR_COLORS.length]}
               fill={COMPARE_RADAR_COLORS[i % COMPARE_RADAR_COLORS.length]}

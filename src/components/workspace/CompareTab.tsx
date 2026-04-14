@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { CRITERIA } from '../../lib/compareCriteria'
 import type { CandidateStatus, Json } from '../../types/database'
@@ -12,6 +13,7 @@ type Candidate = {
   brand: string
   model: string
   trim: string
+  parent_candidate_id: string | null
   engine: string
   price: number | null
   status: CandidateStatus
@@ -59,14 +61,20 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   const loadCandidates = useCallback(async () => {
     const { data, error } = await supabase
       .from('candidates')
-      .select('id, brand, model, trim, engine, price, status, candidate_specs ( specs )')
+      .select(
+        'id, brand, model, trim, parent_candidate_id, engine, price, status, candidate_specs ( specs )'
+      )
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
     if (error) {
       reportException(error, 'Chargement des modèles (comparer)')
       return
     }
-    const list = (data ?? []) as unknown as Candidate[]
+    const list = (data ?? []).map((row) => ({
+      ...(row as unknown as Candidate),
+      parent_candidate_id:
+        (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+    }))
     setCandidates(list)
     const ids = list.map((c) => c.id)
     if (!ids.length) {
@@ -125,6 +133,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
       const row: Record<string, string | number | null> = {
         id: c.id,
+        libellé: formatCandidateListLabel(c),
         marque: c.brand,
         modele: c.model,
         finition: c.trim,
@@ -269,9 +278,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
                   checked={!!selected[c.id]}
                   onChange={() => toggleCand(c.id)}
                 />
-                <span>
-                  {c.brand} {c.model} {c.trim ? `· ${c.trim}` : ''}
-                </span>
+                <span>{formatCandidateListLabel(c)}</span>
               </label>
             ))}
           </div>

@@ -5,7 +5,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <span className="muted" style={{ fontSize: '0.85rem' }}>
+        <span className="muted site-footer-lead" style={{ fontSize: '0.85rem' }}>
           Dans un dossier ouvert, <kbd>Ctrl</kbd>+<kbd>K</kbd> lance la recherche rapide (exigences,
           modèles, rappels).
         </span>
