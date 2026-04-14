@@ -3,6 +3,7 @@ import { PseudoGate } from './components/PseudoGate'
 import { SiteFooter } from './components/SiteFooter'
 import { TrustBanner } from './components/TrustBanner'
 import { TopBar } from './components/TopBar'
+import { UpdateBanner } from './components/UpdateBanner'
 import { HomePage } from './pages/HomePage'
 import { WorkspacePage } from './pages/WorkspacePage'
 
@@ -23,6 +24,7 @@ export default function App() {
         </PseudoGate>
       </div>
       <SiteFooter />
+      <UpdateBanner />
     </div>
   )
 }
