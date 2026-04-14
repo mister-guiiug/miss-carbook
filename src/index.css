@@ -319,17 +319,78 @@ a.app-profile-chip-action {
 .app-topbar-account-block {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-end;
   min-width: 0;
 }
 
-/* Sous-menu compte sous le pseudo : visible uniquement sur petit écran */
-.app-topbar-account-submenu {
+.app-topbar-mobile-account {
   display: none;
-  flex-direction: column;
-  gap: 0.35rem;
-  width: 100%;
-  margin-top: 0.35rem;
+  position: relative;
+}
+
+.app-topbar-profile-desktop {
+  display: inline-flex;
+}
+
+.app-topbar-avatar-only-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+
+.app-topbar-avatar-only-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app-topbar-avatar-only-btn .app-profile-avatar {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  font-size: 0.85rem;
+}
+
+.app-topbar-account-flyout {
+  position: absolute;
+  z-index: 110;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: min(260px, calc(100vw - 2rem));
+  padding: 0.35rem 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgb(15 23 42 / 0.18);
+}
+
+.app-topbar-flyout-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+
+.app-topbar-flyout-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.app-topbar-account-flyout .app-topbar-submenu-item {
+  margin: 0 0.35rem;
+  width: calc(100% - 0.7rem);
 }
 
 .app-topbar-submenu-item {
@@ -378,33 +439,33 @@ a.app-profile-chip-action {
 
 @media (max-width: 639.98px) {
   .app-topbar-right--account {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    max-width: 100%;
-    gap: 0.5rem;
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    max-width: none;
+    gap: 0;
   }
 
   .app-topbar-right--account .app-topbar-tools {
-    align-self: flex-end;
-  }
-
-  .app-topbar-right--account .app-topbar-tool-desktop {
     display: none !important;
   }
 
-  .app-topbar-account-block .app-profile-chip {
-    max-width: none;
-    width: 100%;
-    justify-content: flex-start;
+  .app-topbar-profile-desktop {
+    display: none !important;
   }
 
-  .app-topbar-account-block .app-profile-chevron {
-    display: none;
+  .app-topbar-mobile-account {
+    display: block;
   }
 
-  .app-topbar-account-submenu {
-    display: flex;
+  .app-topbar-avatar-only-btn {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-topbar-mobile-account {
+    display: none !important;
   }
 }
 

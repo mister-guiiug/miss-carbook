@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -96,6 +96,8 @@ export function TopBar() {
   const { reportException } = useErrorDialog()
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false)
+  const mobileAccountRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     if (!user) {
@@ -128,9 +130,32 @@ export function TopBar() {
     return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdate)
   }, [load])
 
+  useEffect(() => {
+    setMobileAccountOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!mobileAccountOpen) return
+    const onDoc = (e: MouseEvent) => {
+      const el = mobileAccountRef.current
+      if (el && !el.contains(e.target as Node)) setMobileAccountOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileAccountOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [mobileAccountOpen])
+
   const signOut = () => {
     void supabase.auth.signOut().then(() => navigate('/', { replace: true }))
   }
+
+  const closeMobileAccount = () => setMobileAccountOpen(false)
 
   if (!user) return null
 
@@ -213,7 +238,7 @@ export function TopBar() {
             <div className="app-topbar-account-block">
               <Link
                 to="/parametres"
-                className="app-profile-chip app-profile-chip-action"
+                className="app-profile-chip app-profile-chip-action app-topbar-profile-desktop"
                 title={`${label} — paramètres généraux`}
               >
                 <span className="app-profile-avatar" aria-hidden="true">
@@ -232,21 +257,69 @@ export function TopBar() {
                   </svg>
                 </span>
               </Link>
-              <nav className="app-topbar-account-submenu" aria-label="Menu compte (mobile)">
-                <Link to="/parametres" className="app-topbar-submenu-item">
-                  Options générales
-                </Link>
-                <button type="button" className="app-topbar-submenu-item" onClick={toggle}>
-                  {modeSubmenuLabel}
-                </button>
+              <div ref={mobileAccountRef} className="app-topbar-mobile-account">
                 <button
                   type="button"
-                  className="app-topbar-submenu-item app-topbar-submenu-item--danger"
-                  onClick={signOut}
+                  className="app-topbar-avatar-only-btn"
+                  aria-expanded={mobileAccountOpen}
+                  aria-haspopup="menu"
+                  aria-controls="topbar-account-flyout"
+                  aria-label={`Menu compte — ${label}`}
+                  title={`${label} — menu compte`}
+                  onClick={() => setMobileAccountOpen((o) => !o)}
                 >
-                  Déconnexion
+                  <span className="app-profile-avatar" aria-hidden="true">
+                    {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+                  </span>
                 </button>
-              </nav>
+                {mobileAccountOpen ? (
+                  <nav
+                    id="topbar-account-flyout"
+                    className="app-topbar-account-flyout"
+                    role="menu"
+                    aria-label="Compte"
+                  >
+                    <div className="app-topbar-flyout-meta">
+                      <span className="app-topbar-flyout-name">{label}</span>
+                      <span
+                        className={`online-dot ${online ? 'on' : 'off'}`}
+                        title={online ? 'En ligne' : 'Hors ligne'}
+                        aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
+                      />
+                    </div>
+                    <Link
+                      role="menuitem"
+                      to="/parametres"
+                      className="app-topbar-submenu-item"
+                      onClick={closeMobileAccount}
+                    >
+                      Options générales
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="app-topbar-submenu-item"
+                      onClick={() => {
+                        toggle()
+                        closeMobileAccount()
+                      }}
+                    >
+                      {modeSubmenuLabel}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="app-topbar-submenu-item app-topbar-submenu-item--danger"
+                      onClick={() => {
+                        closeMobileAccount()
+                        signOut()
+                      }}
+                    >
+                      Déconnexion
+                    </button>
+                  </nav>
+                ) : null}
+              </div>
             </div>
           </div>
         )}
