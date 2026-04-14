@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  WORKSPACE_QUICK_ADD_EVENT,
+  type WorkspaceQuickAddDetail,
+} from '../../lib/workspaceHeaderEvents'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
@@ -60,6 +64,18 @@ export function RemindersTab({
     void load()
   }, [load])
 
+  useEffect(() => {
+    const onQuick = (ev: Event) => {
+      const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
+      if (d?.tab !== 'reminders') return
+      requestAnimationFrame(() => {
+        document.getElementById('reminder-title')?.focus()
+      })
+    }
+    window.addEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+    return () => window.removeEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+  }, [])
+
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite || !title.trim()) return
@@ -112,6 +128,7 @@ export function RemindersTab({
         <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Nouveau rappel</h3>
           <input
+            id="reminder-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Titre"

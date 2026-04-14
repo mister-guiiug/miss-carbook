@@ -1126,3 +1126,173 @@ th {
   min-height: var(--touch-target);
   touch-action: manipulation;
 }
+
+/* Barre dossier : + (ajout), roue (paramètres / nav), avatar */
+.workspace-header-toolbar {
+  flex-shrink: 0;
+}
+
+.workspace-header-toolbar-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.workspace-header-toolbar-group {
+  position: relative;
+}
+
+.workspace-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.workspace-toolbar-btn:hover {
+  background: var(--bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.workspace-toolbar-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.workspace-toolbar-btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.workspace-toolbar-btn-primary:hover {
+  background: rgb(13 148 136);
+  border-color: rgb(13 148 136);
+  color: var(--primary-contrast);
+}
+
+[data-theme='dark'] .workspace-toolbar-btn-primary:hover {
+  background: rgb(45 212 191);
+  border-color: rgb(45 212 191);
+  color: var(--text);
+}
+
+.workspace-toolbar-avatar-btn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+
+.workspace-toolbar-avatar-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.workspace-toolbar-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.workspace-toolbar-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: min(240px, calc(100vw - 2rem));
+  padding: 0.35rem 0;
+  margin: 0;
+  list-style: none;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(15 23 42 / 0.12);
+}
+
+.workspace-toolbar-menu--right {
+  left: auto;
+  right: 0;
+}
+
+.workspace-toolbar-menu-heading {
+  padding: 0.35rem 0.85rem 0.25rem;
+  font-size: 0.8rem;
+}
+
+.workspace-toolbar-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.workspace-toolbar-menu-item:hover:not(:disabled) {
+  background: var(--bg);
+}
+
+.workspace-toolbar-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.workspace-toolbar-menu-item.danger {
+  color: var(--danger);
+}
+
+.workspace-toolbar-menu-item.danger:hover:not(:disabled) {
+  background: rgb(254 242 242);
+}
+
+[data-theme='dark'] .workspace-toolbar-menu-item.danger:hover:not(:disabled) {
+  background: rgb(127 29 29 / 0.25);
+}
+
+.workspace-toolbar-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-topbar-right--minimal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--touch-target);
+}

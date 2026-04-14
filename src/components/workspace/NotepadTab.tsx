@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  WORKSPACE_QUICK_ADD_EVENT,
+  type WorkspaceQuickAddDetail,
+} from '../../lib/workspaceHeaderEvents'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -137,6 +141,18 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
     }
   }, [])
 
+  useEffect(() => {
+    const onQuick = (ev: Event) => {
+      const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
+      if (d?.tab !== 'notepad') return
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLTextAreaElement>('[data-workspace-focus="notepad-body"]')?.focus()
+      })
+    }
+    window.addEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+    return () => window.removeEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
+  }, [])
+
   const lockedByOther =
     lockUser && lockUser !== myId && lockExp && new Date(lockExp) > new Date() && canWrite
 
@@ -175,6 +191,7 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
         </p>
       ) : null}
       <textarea
+        data-workspace-focus="notepad-body"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         disabled={!canWrite}
