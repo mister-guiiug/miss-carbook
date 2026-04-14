@@ -404,6 +404,7 @@ a.app-profile-chip-action {
   right: 0;
   top: calc(100% + 10px);
   min-width: min(292px, calc(100vw - 1.5rem));
+  box-sizing: border-box;
   padding: 0;
   border-radius: 14px;
   border: 1px solid var(--border);
@@ -1624,6 +1625,8 @@ th {
   top: calc(100% + 8px);
   left: 0;
   min-width: min(260px, calc(100vw - 2rem));
+  max-width: min(300px, calc(100vw - 1rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  box-sizing: border-box;
   padding: 0.4rem 0;
   margin: 0;
   list-style: none;
@@ -1666,6 +1669,7 @@ th {
   padding: 0.45rem 0.75rem 0.45rem 0.55rem;
   margin: 0 0.3rem;
   width: calc(100% - 0.6rem);
+  max-width: 100%;
   border: none;
   border-radius: 10px;
   background: none;
@@ -1680,6 +1684,12 @@ th {
   transition:
     background 0.12s ease,
     color 0.12s ease;
+}
+
+.workspace-toolbar-menu-item > span:not(.workspace-toolbar-menu-ic) {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .workspace-toolbar-menu-ic {

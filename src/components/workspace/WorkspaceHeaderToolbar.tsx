@@ -304,7 +304,7 @@ export function WorkspaceHeaderToolbar({
           {open === 'plus' ? (
             <div
               id="workspace-menu-plus"
-              className="workspace-toolbar-menu chrome-menu-panel"
+              className="workspace-toolbar-menu workspace-toolbar-menu--right chrome-menu-panel"
               role="menu"
               aria-label="Ajouter"
             >
@@ -380,7 +380,7 @@ export function WorkspaceHeaderToolbar({
           {open === 'gear' ? (
             <div
               id="workspace-menu-gear"
-              className="workspace-toolbar-menu chrome-menu-panel"
+              className="workspace-toolbar-menu workspace-toolbar-menu--right chrome-menu-panel"
               role="menu"
               aria-label="Menu dossier et navigation"
             >

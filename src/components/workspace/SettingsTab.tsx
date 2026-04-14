@@ -4,8 +4,9 @@ import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema, workspaceMetaUpdateSchema } from '../../lib/validation/schemas'
-import type { Database } from '../../types/database'
+import type { Database, Json } from '../../types/database'
 import { ExportWorkspaceButton } from './ExportWorkspaceButton'
+import { ExportWorkspacePromptButton } from './ExportWorkspacePromptButton'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import {
@@ -58,6 +59,7 @@ export function SettingsTab({
     engine: '',
     year: '' as string | number,
     options: '',
+    specs: {} as Record<string, unknown>,
   })
   const [vehicleId, setVehicleId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -77,6 +79,26 @@ export function SettingsTab({
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const base = import.meta.env.BASE_URL
   const inviteUrl = `${origin}${base}`.replace(/([^:]\/)\/+/g, '$1') + `w/${workspace.id}`
+
+  const setVehicleSpecNum = (key: string, raw: string) => {
+    setVehicle((v) => ({
+      ...v,
+      specs: {
+        ...v.specs,
+        [key]: raw === '' ? undefined : Number(raw),
+      },
+    }))
+  }
+
+  const setVehicleSpecStr = (key: string, value: string) => {
+    setVehicle((v) => ({
+      ...v,
+      specs: {
+        ...v.specs,
+        [key]: value.trim() === '' ? undefined : value,
+      },
+    }))
+  }
 
   const loadInvites = useCallback(async () => {
     const { data } = await supabase
@@ -145,12 +167,18 @@ export function SettingsTab({
         .maybeSingle()
       if (data) {
         setVehicleId(data.id)
+        const rawSpecs = data.specs
+        const specs =
+          rawSpecs != null && typeof rawSpecs === 'object' && !Array.isArray(rawSpecs)
+            ? (rawSpecs as Record<string, unknown>)
+            : {}
         setVehicle({
           brand: data.brand,
           model: data.model,
           engine: data.engine,
           year: data.year ?? '',
           options: data.options,
+          specs,
         })
       }
     })()
@@ -163,6 +191,7 @@ export function SettingsTab({
     const parsed = currentVehicleSchema.safeParse({
       ...vehicle,
       year: vehicle.year === '' ? undefined : Number(vehicle.year),
+      specs: vehicle.specs,
     })
     if (!parsed.success) {
       const msg = parsed.error.errors[0]?.message ?? 'Invalide'
@@ -178,6 +207,7 @@ export function SettingsTab({
         engine: parsed.data.engine,
         year: parsed.data.year,
         options: parsed.data.options,
+        specs: parsed.data.specs as Json,
       }
       if (vehicleId) {
         const { error } = await supabase.from('current_vehicle').update(row).eq('id', vehicleId)
@@ -531,7 +561,10 @@ export function SettingsTab({
 
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Export dossier</h3>
-        <ExportWorkspaceButton workspaceId={workspace.id} />
+        <div className="row" style={{ flexWrap: 'wrap', alignItems: 'flex-start', gap: '1.25rem' }}>
+          <ExportWorkspaceButton workspaceId={workspace.id} />
+          <ExportWorkspacePromptButton workspaceId={workspace.id} />
+        </div>
       </div>
 
       {workspace.replacement_enabled ? (
@@ -573,6 +606,86 @@ export function SettingsTab({
                 onChange={(e) => setVehicle((v) => ({ ...v, year: e.target.value }))}
                 disabled={!canWrite}
               />
+            </div>
+          </div>
+          <div className="stack" style={{ gap: '0.35rem' }}>
+            <h4 style={{ margin: 0, fontSize: '1rem' }}>Données techniques (flexibles)</h4>
+            <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+              Même principe que les fiches modèles : champs optionnels, stockés en JSON.
+            </p>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 140px' }}>
+                <label htmlFor="cv-spec-doors">Nombre de portes</label>
+                <input
+                  id="cv-spec-doors"
+                  type="number"
+                  min={2}
+                  max={9}
+                  value={typeof vehicle.specs.doorCount === 'number' ? vehicle.specs.doorCount : ''}
+                  onChange={(e) => setVehicleSpecNum('doorCount', e.target.value)}
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 140px' }}>
+                <label htmlFor="cv-spec-hp">Puissance (ch)</label>
+                <input
+                  id="cv-spec-hp"
+                  type="number"
+                  min={0}
+                  value={typeof vehicle.specs.powerHp === 'number' ? vehicle.specs.powerHp : ''}
+                  onChange={(e) => setVehicleSpecNum('powerHp', e.target.value)}
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 140px' }}>
+                <label htmlFor="cv-spec-fiscal">Puissance fiscale (CV)</label>
+                <input
+                  id="cv-spec-fiscal"
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={typeof vehicle.specs.fiscalCv === 'number' ? vehicle.specs.fiscalCv : ''}
+                  onChange={(e) => setVehicleSpecNum('fiscalCv', e.target.value)}
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 140px' }}>
+                <label htmlFor="cv-spec-trunk">Volume du coffre (L)</label>
+                <input
+                  id="cv-spec-trunk"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={
+                    typeof vehicle.specs.trunkLiters === 'number' ? vehicle.specs.trunkLiters : ''
+                  }
+                  onChange={(e) => setVehicleSpecNum('trunkLiters', e.target.value)}
+                  disabled={!canWrite}
+                />
+              </div>
+            </div>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 180px' }}>
+                <label htmlFor="cv-spec-gearbox">Boîte de vitesses</label>
+                <input
+                  id="cv-spec-gearbox"
+                  value={typeof vehicle.specs.gearbox === 'string' ? vehicle.specs.gearbox : ''}
+                  onChange={(e) => setVehicleSpecStr('gearbox', e.target.value)}
+                  placeholder="ex. Manuelle 6, BVA8…"
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 180px' }}>
+                <label htmlFor="cv-spec-color">Couleur extérieure</label>
+                <input
+                  id="cv-spec-color"
+                  value={
+                    typeof vehicle.specs.exteriorColor === 'string' ? vehicle.specs.exteriorColor : ''
+                  }
+                  onChange={(e) => setVehicleSpecStr('exteriorColor', e.target.value)}
+                  disabled={!canWrite}
+                />
+              </div>
             </div>
           </div>
           <div>

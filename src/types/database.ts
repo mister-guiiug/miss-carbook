@@ -85,6 +85,7 @@ export interface Database {
           engine: string
           year: number | null
           options: string
+          specs: Json
           photo_attachment_id: string | null
           updated_at: string
         }
@@ -96,6 +97,7 @@ export interface Database {
           engine?: string
           year?: number | null
           options?: string
+          specs?: Json
           photo_attachment_id?: string | null
         }
         Update: {
@@ -104,6 +106,7 @@ export interface Database {
           engine?: string
           year?: number | null
           options?: string
+          specs?: Json
           photo_attachment_id?: string | null
         }
       }

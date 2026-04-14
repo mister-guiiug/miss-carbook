@@ -318,3 +318,18 @@ export function IconSend() {
     </svg>
   )
 }
+
+/** Document / contexte pour assistant. */
+export function IconPromptFile() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M6 3h9l3 3v15a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M8 10h8M8 14h8M8 18h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
