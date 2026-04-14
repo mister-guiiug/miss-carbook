@@ -1,23 +1,56 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { registerSW } from 'virtual:pwa-register'
+
+type ReloadFn = (reload?: boolean) => Promise<void>
+
+let updateSW: ReloadFn | undefined
+const needRefreshListeners = new Set<() => void>()
+
+function ensureServiceWorkerRegistered() {
+  if (updateSW) return
+  const fn = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      needRefreshListeners.forEach((l) => l())
+    },
+    onOfflineReady() {
+      console.info('[PWA] Cache prêt — coque disponible hors ligne.')
+    },
+  })
+  updateSW = fn as ReloadFn
+}
+
+/**
+ * Active le service worker en attente (si présent) puis recharge la page.
+ * Sinon, recharge simplement pour reprendre le dernier `index.html` / assets.
+ */
+export async function reloadToLatestApp(): Promise<void> {
+  ensureServiceWorkerRegistered()
+  try {
+    await updateSW?.(true)
+  } catch {
+    /* ignore */
+  }
+  window.location.reload()
+}
 
 export function useUpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false)
-  const updateSWRef = useRef<((reload?: boolean) => Promise<void>) | undefined>(undefined)
 
   useEffect(() => {
-    updateSWRef.current = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        setNeedRefresh(true)
-      },
-      onOfflineReady() {
-        console.info('[PWA] Cache prêt — coque disponible hors ligne.')
-      },
-    })
+    ensureServiceWorkerRegistered()
+    const listener = () => setNeedRefresh(true)
+    needRefreshListeners.add(listener)
+    return () => {
+      needRefreshListeners.delete(listener)
+    }
   }, [])
 
-  const update = () => updateSWRef.current?.(true)
+  const update = useCallback(() => {
+    void updateSW?.(true)
+  }, [])
 
-  return { needRefresh, update }
+  const reloadToLatest = useCallback(() => reloadToLatestApp(), [])
+
+  return { needRefresh, update, reloadToLatest }
 }

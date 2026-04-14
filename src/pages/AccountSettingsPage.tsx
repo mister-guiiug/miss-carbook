@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useUpdatePrompt } from '../hooks/useUpdatePrompt'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -15,8 +16,10 @@ import type { ThemeMode } from '../lib/theme'
 export function AccountSettingsPage() {
   const { user } = useAuth()
   const { mode, setMode } = useTheme()
+  const { needRefresh, reloadToLatest } = useUpdatePrompt()
   const { reportException, reportMessage } = useErrorDialog()
   const { showToast } = useToast()
+  const [reloadBusy, setReloadBusy] = useState(false)
 
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [pseudoDraft, setPseudoDraft] = useState('')
@@ -145,6 +148,11 @@ export function AccountSettingsPage() {
     setMode(next)
   }
 
+  const onReloadLatest = () => {
+    setReloadBusy(true)
+    void reloadToLatest()
+  }
+
   if (!user) {
     return (
       <div className="shell">
@@ -208,6 +216,24 @@ export function AccountSettingsPage() {
             Sombre
           </button>
         </div>
+      </div>
+
+      <div className="card stack">
+        <h2 style={{ marginTop: 0 }}>Application</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
+          Après une mise en ligne du site, rechargez pour utiliser la dernière version (interface,
+          correctifs). Sur navigateur ou PWA, cela réapplique aussi le cache du service worker lorsque
+          c’est nécessaire.
+        </p>
+        {needRefresh ? (
+          <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
+            <strong>Mise à jour disponible</strong> — le bouton ci-dessous installera la nouvelle
+            version puis rechargera la page.
+          </p>
+        ) : null}
+        <button type="button" disabled={reloadBusy} onClick={onReloadLatest}>
+          {reloadBusy ? 'Rechargement…' : 'Recharger vers la dernière version'}
+        </button>
       </div>
 
       <div className="card stack">
