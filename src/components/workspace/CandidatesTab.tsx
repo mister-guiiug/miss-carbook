@@ -291,7 +291,9 @@ export function CandidatesTab({
       <div className="candidate-card-head row">
         <div className="candidate-card-title" style={{ flex: '1 1 200px', minWidth: 0 }}>
           <strong>{formatCandidateListLabel(c)}</strong>{' '}
-          <span className="badge">{statusLabels[c.status]}</span>
+          <span className={`badge candidate-status-badge candidate-status-badge--${c.status}`}>
+            {statusLabels[c.status]}
+          </span>
           {c.parent_candidate_id ? (
             <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
               variation
