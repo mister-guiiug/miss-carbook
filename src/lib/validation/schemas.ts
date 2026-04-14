@@ -43,6 +43,12 @@ export const workspaceCreateSchema = z.object({
   replacement_enabled: z.boolean().optional().default(false),
 })
 
+/** Mise à jour du nom et de la description d’un dossier (onglet Paramètres). */
+export const workspaceMetaUpdateSchema = workspaceCreateSchema.pick({
+  name: true,
+  description: true,
+})
+
 export const shareCodeSchema = z.string().trim().min(4, 'Code trop court').max(16)
 
 export const requirementSchema = z.object({

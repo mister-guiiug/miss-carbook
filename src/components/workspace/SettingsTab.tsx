@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
-import { currentVehicleSchema } from '../../lib/validation/schemas'
+import { currentVehicleSchema, workspaceMetaUpdateSchema } from '../../lib/validation/schemas'
 import type { Database } from '../../types/database'
 import { ExportWorkspaceButton } from './ExportWorkspaceButton'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -55,6 +55,10 @@ export function SettingsTab({
   const [decisionCand, setDecisionCand] = useState<string>('')
   const [decisionNotes, setDecisionNotes] = useState('')
 
+  const [wsName, setWsName] = useState(workspace.name)
+  const [wsDesc, setWsDesc] = useState(workspace.description ?? '')
+  const [busyWorkspaceMeta, setBusyWorkspaceMeta] = useState(false)
+
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const base = import.meta.env.BASE_URL
   const inviteUrl = `${origin}${base}`.replace(/([^:]\/)\/+/g, '$1') + `w/${workspace.id}`
@@ -107,6 +111,11 @@ export function SettingsTab({
     setDecisionCand(workspace.selected_candidate_id ?? '')
     setDecisionNotes(workspace.decision_notes ?? '')
   }, [workspace.selected_candidate_id, workspace.decision_notes])
+
+  useEffect(() => {
+    setWsName(workspace.name)
+    setWsDesc(workspace.description ?? '')
+  }, [workspace.id, workspace.name, workspace.description])
 
   useEffect(() => {
     if (!workspace.replacement_enabled) return
@@ -267,8 +276,83 @@ export function SettingsTab({
     }
   }
 
+  const saveWorkspaceMeta = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isAdmin) return
+    const parsed = workspaceMetaUpdateSchema.safeParse({ name: wsName, description: wsDesc })
+    if (!parsed.success) {
+      const msg = parsed.error.errors[0]?.message ?? 'Données invalides'
+      reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
+      return
+    }
+    setBusyWorkspaceMeta(true)
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          name: parsed.data.name,
+          description: parsed.data.description,
+        })
+        .eq('id', workspace.id)
+      if (error) throw error
+      await logActivity(workspace.id, 'workspace.update_meta', 'workspace', workspace.id, {
+        name: parsed.data.name,
+      })
+      onWorkspaceRefresh()
+      showToast('Nom et description enregistrés')
+    } catch (err: unknown) {
+      reportException(err, 'Mise à jour du nom ou de la description du dossier')
+    } finally {
+      setBusyWorkspaceMeta(false)
+    }
+  }
+
   return (
     <div className="stack">
+      <div className="card stack" style={{ boxShadow: 'none' }}>
+        <h3 style={{ margin: 0 }}>Nom et description du dossier</h3>
+        <p className="muted">
+          Visibles dans l’en-tête du dossier et sur l’accueil. Seuls les administrateurs peuvent les
+          modifier (règles de sécurité de la base).
+        </p>
+        {isAdmin ? (
+          <form onSubmit={saveWorkspaceMeta} className="stack">
+            <div>
+              <label htmlFor="ws-settings-name">Nom du dossier</label>
+              <input
+                id="ws-settings-name"
+                value={wsName}
+                onChange={(e) => setWsName(e.target.value)}
+                maxLength={120}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="ws-settings-desc">Description</label>
+              <textarea
+                id="ws-settings-desc"
+                value={wsDesc}
+                onChange={(e) => setWsDesc(e.target.value)}
+                rows={4}
+                maxLength={4000}
+              />
+            </div>
+            <button type="submit" disabled={busyWorkspaceMeta}>
+              {busyWorkspaceMeta ? 'Enregistrement…' : 'Enregistrer nom et description'}
+            </button>
+          </form>
+        ) : (
+          <div className="stack">
+            <p style={{ margin: 0 }}>
+              <strong>{workspace.name}</strong>
+            </p>
+            <p className="muted" style={{ margin: 0 }}>
+              {workspace.description?.trim() ? workspace.description : 'Sans description'}
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Décision</h3>
         <p className="muted">Modèle retenu (visible en bannière dans l’en-tête du dossier).</p>
