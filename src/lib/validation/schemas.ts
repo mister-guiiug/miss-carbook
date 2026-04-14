@@ -1,5 +1,25 @@
 import { z } from 'zod'
 
+const authEmailField = z.string().trim().email('Adresse e-mail invalide')
+
+/** Connexion par mot de passe (aligné client ; le projet Supabase peut imposer 6+ caractères). */
+export const authPasswordLoginSchema = z.object({
+  email: authEmailField,
+  password: z.string().min(1, 'Saisissez le mot de passe'),
+})
+
+/** Inscription e-mail + mot de passe. */
+export const authPasswordSignUpSchema = z
+  .object({
+    email: authEmailField,
+    password: z.string().min(8, 'Au moins 8 caractères'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  })
+
 /** Aligné sur Postgres : lettres ASCII, chiffres, `.`, `_`, `-` — pas d’espace ni d’accents. */
 export const DISPLAY_NAME_REGEX = /^[a-zA-Z0-9._-]+$/
 

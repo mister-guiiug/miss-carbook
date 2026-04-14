@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
 import { authEmailRedirectUrl } from '../lib/authRedirect'
+import { formatAuthEmailSendError } from '../lib/authEmailErrors'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useToast } from '../contexts/ToastContext'
 import {
@@ -47,7 +48,9 @@ export function HomePage() {
   const [busyPseudo, setBusyPseudo] = useState(false)
   const [profilePseudo, setProfilePseudo] = useState<string | null>(null)
   const [busyEmail, setBusyEmail] = useState(false)
-  const [emailHint, setEmailHint] = useState<string | null>(null)
+  const [emailHint, setEmailHint] = useState<{ variant: 'info' | 'error'; text: string } | null>(
+    null
+  )
 
   const load = async () => {
     if (!user) return
@@ -217,9 +220,14 @@ export function HomePage() {
         options: { emailRedirectTo: authEmailRedirectUrl() },
       })
       if (error) throw error
-      setEmailHint('Nouveau lien envoyé sur votre adresse.')
+      setEmailHint({ variant: 'info', text: 'Nouveau lien envoyé sur votre adresse.' })
     } catch (e: unknown) {
-      reportException(e, 'Renvoi du lien magique')
+      const friendly = formatAuthEmailSendError(e)
+      if (friendly) {
+        setEmailHint({ variant: 'error', text: friendly })
+      } else {
+        reportException(e, 'Renvoi du lien magique')
+      }
     } finally {
       setBusyEmail(false)
     }
@@ -257,7 +265,9 @@ export function HomePage() {
             </button>
           ) : null}
         </p>
-        {emailHint ? <p className="muted">{emailHint}</p> : null}
+        {emailHint ? (
+          <p className={emailHint.variant === 'error' ? 'error' : 'muted'}>{emailHint.text}</p>
+        ) : null}
       </div>
 
       <div className="card stack">

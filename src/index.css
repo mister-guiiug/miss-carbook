@@ -824,6 +824,16 @@ th {
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
+.auth-gate-tabs {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.auth-gate-tabs button {
+  flex: 1 1 auto;
+  min-width: min(100%, 8rem);
+}
+
 @media (max-width: 640px) {
   .shell {
     padding: 0.75rem;
