@@ -101,4 +101,18 @@ describe('candidateSchema', () => {
     const r = candidateSchema.safeParse({ manufacturer_url: 'pas-une-url' })
     expect(r.success).toBe(false)
   })
+  it('normalise parent_candidate_id vide en null', () => {
+    const r = candidateSchema.safeParse({ parent_candidate_id: '' })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.parent_candidate_id).toBeNull()
+  })
+  it('accepte un UUID parent_candidate_id', () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000'
+    const r = candidateSchema.safeParse({ parent_candidate_id: id })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.parent_candidate_id).toBe(id)
+  })
+  it('refuse parent_candidate_id non UUID', () => {
+    expect(candidateSchema.safeParse({ parent_candidate_id: 'nope' }).success).toBe(false)
+  })
 })

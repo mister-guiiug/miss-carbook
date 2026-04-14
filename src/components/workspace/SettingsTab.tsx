@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema, workspaceMetaUpdateSchema } from '../../lib/validation/schemas'
@@ -51,7 +52,9 @@ export function SettingsTab({
   const [inviteRole, setInviteRole] = useState<'read' | 'write' | 'admin'>('read')
   const [inviteDays, setInviteDays] = useState(7)
   const [lastToken, setLastToken] = useState<string | null>(null)
-  const [candidates, setCandidates] = useState<{ id: string; label: string }[]>([])
+  const [candidates, setCandidates] = useState<
+    { id: string; brand: string; model: string; trim: string; parent_candidate_id: string | null }[]
+  >([])
   const [decisionCand, setDecisionCand] = useState<string>('')
   const [decisionNotes, setDecisionNotes] = useState('')
 
@@ -96,12 +99,15 @@ export function SettingsTab({
     void (async () => {
       const { data: cand } = await supabase
         .from('candidates')
-        .select('id, brand, model')
+        .select('id, brand, model, trim, parent_candidate_id')
         .eq('workspace_id', workspace.id)
       setCandidates(
         (cand ?? []).map((c) => ({
           id: c.id,
-          label: `${c.brand} ${c.model}`.trim(),
+          brand: c.brand,
+          model: c.model,
+          trim: c.trim ?? '',
+          parent_candidate_id: c.parent_candidate_id ?? null,
         }))
       )
     })()
@@ -363,7 +369,7 @@ export function SettingsTab({
               <option value="">— Aucun —</option>
               {candidates.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.label}
+                  {formatCandidateListLabel(c)}
                 </option>
               ))}
             </select>

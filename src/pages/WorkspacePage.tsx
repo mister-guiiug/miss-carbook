@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { formatCandidateListLabel } from '../lib/candidateLabel'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
@@ -76,10 +77,19 @@ export function WorkspacePage() {
       if (sid) {
         const { data: cand } = await supabase
           .from('candidates')
-          .select('brand, model')
+          .select('brand, model, trim, parent_candidate_id')
           .eq('id', sid)
           .maybeSingle()
-        setDecisionLabel(cand ? `${cand.brand} ${cand.model}`.trim() : null)
+        setDecisionLabel(
+          cand
+            ? formatCandidateListLabel({
+                brand: cand.brand,
+                model: cand.model,
+                trim: cand.trim ?? '',
+                parent_candidate_id: cand.parent_candidate_id ?? null,
+              })
+            : null
+        )
       } else setDecisionLabel(null)
 
       const { data: mem, error: mErr } = await supabase
@@ -185,14 +195,14 @@ export function WorkspacePage() {
         </div>
       ) : null}
 
-      <header className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ margin: '0 0 0.25rem' }}>{workspace.name}</h1>
-          <p className="muted" style={{ margin: 0 }}>
+      <header className="workspace-header">
+        <div className="workspace-header-main">
+          <h1 className="workspace-header-title">{workspace.name}</h1>
+          <p className="muted workspace-header-desc">
             {workspace.description || 'Sans description'}
           </p>
         </div>
-        <div className="row">
+        <div className="workspace-header-actions row">
           <button type="button" className="secondary" onClick={() => setSearchOpen(true)}>
             Recherche
           </button>

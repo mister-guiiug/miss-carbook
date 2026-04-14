@@ -142,6 +142,7 @@ export interface Database {
         Row: {
           id: string
           workspace_id: string
+          parent_candidate_id: string | null
           brand: string
           model: string
           trim: string
@@ -159,6 +160,7 @@ export interface Database {
         Insert: {
           id?: string
           workspace_id: string
+          parent_candidate_id?: string | null
           brand?: string
           model?: string
           trim?: string
@@ -172,6 +174,7 @@ export interface Database {
           reject_reason?: string
         }
         Update: {
+          parent_candidate_id?: string | null
           brand?: string
           model?: string
           trim?: string

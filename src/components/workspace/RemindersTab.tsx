@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -23,7 +24,9 @@ export function RemindersTab({
   const { reportException } = useErrorDialog()
   const { showToast } = useToast()
   const [rows, setRows] = useState<Row[]>([])
-  const [candidates, setCandidates] = useState<{ id: string; label: string }[]>([])
+  const [candidates, setCandidates] = useState<
+    { id: string; brand: string; model: string; trim: string; parent_candidate_id: string | null }[]
+  >([])
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [due, setDue] = useState('')
@@ -40,12 +43,15 @@ export function RemindersTab({
 
     const { data: cand } = await supabase
       .from('candidates')
-      .select('id, brand, model')
+      .select('id, brand, model, trim, parent_candidate_id')
       .eq('workspace_id', workspaceId)
     setCandidates(
       (cand ?? []).map((c) => ({
         id: c.id,
-        label: `${c.brand} ${c.model}`.trim(),
+        brand: c.brand,
+        model: c.model,
+        trim: c.trim ?? '',
+        parent_candidate_id: c.parent_candidate_id ?? null,
       }))
     )
   }, [workspaceId, reportException])
@@ -127,7 +133,7 @@ export function RemindersTab({
                 <option value="">—</option>
                 {candidates.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.label}
+                    {formatCandidateListLabel(c)}
                   </option>
                 ))}
               </select>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { formatCandidateListLabel } from '../lib/candidateLabel'
 import { supabase } from '../lib/supabase'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
@@ -26,7 +27,10 @@ export function WorkspaceSearchModal({
     void (async () => {
       const [req, cand, rem] = await Promise.all([
         supabase.from('requirements').select('id, label').eq('workspace_id', workspaceId),
-        supabase.from('candidates').select('id, brand, model').eq('workspace_id', workspaceId),
+        supabase
+          .from('candidates')
+          .select('id, brand, model, trim, parent_candidate_id')
+          .eq('workspace_id', workspaceId),
         supabase
           .from('reminders')
           .select('id, title')
@@ -40,7 +44,12 @@ export function WorkspaceSearchModal({
       for (const c of cand.data ?? [])
         list.push({
           type: 'Modèle',
-          label: `${c.brand} ${c.model}`.trim(),
+          label: formatCandidateListLabel({
+            brand: c.brand,
+            model: c.model,
+            trim: c.trim ?? '',
+            parent_candidate_id: c.parent_candidate_id ?? null,
+          }),
           tab: 'candidates',
           hint: c.id.slice(0, 8),
         })
