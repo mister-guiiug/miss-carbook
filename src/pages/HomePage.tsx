@@ -3,7 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
-import { displayNameSchema, shareCodeSchema, workspaceCreateSchema } from '../lib/validation/schemas'
+import { authEmailRedirectUrl } from '../lib/authRedirect'
+import { formatProfileSaveError } from '../lib/profileErrors'
+import {
+  displayNameRules,
+  displayNameSchema,
+  shareCodeSchema,
+  workspaceCreateSchema,
+} from '../lib/validation/schemas'
 
 type Row = {
   workspace_id: string
@@ -36,6 +43,10 @@ export function HomePage() {
 
   const [pseudoEdit, setPseudoEdit] = useState('')
   const [busyPseudo, setBusyPseudo] = useState(false)
+  const [profilePseudo, setProfilePseudo] = useState<string | null>(null)
+  const [emailField, setEmailField] = useState('')
+  const [busyEmail, setBusyEmail] = useState(false)
+  const [emailHint, setEmailHint] = useState<string | null>(null)
 
   const load = async () => {
     if (!user) return
@@ -66,6 +77,21 @@ export function HomePage() {
     void load()
  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
+
+  useEffect(() => {
+    if (!user) {
+      setProfilePseudo(null)
+      setEmailField('')
+      return
+    }
+    setEmailField(user.email ?? '')
+    void supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfilePseudo(data?.display_name ?? null))
+  }, [user])
 
   useEffect(() => {
     const token = searchParams.get('invite')
@@ -171,12 +197,64 @@ export function HomePage() {
         .eq('id', user.id)
       if (error) throw error
       setPseudoEdit('')
+      setProfilePseudo(parsed.data)
       notifyProfileUpdated()
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Mise à jour impossible')
+      setErr(formatProfileSaveError(e))
     } finally {
       setBusyPseudo(false)
     }
+  }
+
+  const associateEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+    setErr(null)
+    setEmailHint(null)
+    const email = emailField.trim()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErr('Adresse e-mail invalide')
+      return
+    }
+    setBusyEmail(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ email })
+      if (error) throw error
+      setEmailHint(
+        'Un e-mail de confirmation vous a été envoyé. Après validation, vous pourrez vous reconnecter avec « Connexion par e-mail » depuis la page d’accueil.'
+      )
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Association impossible')
+    } finally {
+      setBusyEmail(false)
+    }
+  }
+
+  const resendMagicLink = async () => {
+    if (!user?.email) return
+    setErr(null)
+    setEmailHint(null)
+    setBusyEmail(true)
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: user.email,
+        options: { emailRedirectTo: authEmailRedirectUrl() },
+      })
+      if (error) throw error
+      setEmailHint('Nouveau lien envoyé sur votre adresse.')
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Envoi impossible')
+    } finally {
+      setBusyEmail(false)
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="shell">
+        <p className="muted">Chargement…</p>
+      </div>
+    )
   }
 
   return (
@@ -186,13 +264,68 @@ export function HomePage() {
       </header>
 
       <div className="card stack">
+        <h2 style={{ marginTop: 0 }}>Compte et e-mail</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
+          Session {user.is_anonymous ? 'anonyme' : 'avec e-mail'}
+          {user.email ? (
+            <>
+              {' '}
+              · <code>{user.email}</code>
+            </>
+          ) : null}
+        </p>
+        {user.is_anonymous ? (
+          <form onSubmit={associateEmail} className="stack">
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Associez un e-mail pour recevoir un lien de connexion sur un autre appareil (sans perdre
+              vos dossiers). Le fournisseur « Email » doit être activé dans Supabase.
+            </p>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              <input
+                type="email"
+                value={emailField}
+                onChange={(e) => setEmailField(e.target.value)}
+                placeholder="vous@exemple.com"
+                autoComplete="email"
+                style={{ flex: '1 1 220px' }}
+              />
+              <button type="submit" className="secondary" disabled={busyEmail}>
+                {busyEmail ? 'Envoi…' : 'Associer et confirmer par e-mail'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+            Pour vous reconnecter ailleurs, utilisez « Connexion par e-mail » sur l’écran d’accueil
+            (lien magique).
+            {user.email ? (
+              <button
+                type="button"
+                className="secondary"
+                style={{ marginLeft: '0.5rem' }}
+                disabled={busyEmail}
+                onClick={() => void resendMagicLink()}
+              >
+                Renvoyer un lien
+              </button>
+            ) : null}
+          </p>
+        )}
+        {emailHint ? <p className="muted">{emailHint}</p> : null}
+      </div>
+
+      <div className="card stack">
         <h2 style={{ marginTop: 0 }}>Modifier le pseudo</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: '0.85rem' }}>
+          Actuel : <strong>{profilePseudo ?? '…'}</strong>. {displayNameRules}
+        </p>
         <form onSubmit={savePseudo} className="row">
           <input
             value={pseudoEdit}
             onChange={(e) => setPseudoEdit(e.target.value)}
             placeholder="Nouveau pseudo"
-            maxLength={80}
+            maxLength={30}
+            autoComplete="nickname"
             style={{ flex: '1 1 200px' }}
           />
           <button type="submit" className="secondary" disabled={busyPseudo || !pseudoEdit.trim()}>

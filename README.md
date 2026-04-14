@@ -49,8 +49,11 @@ Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https:
 1. `supabase/migrations/20260414000000_initial_schema.sql` — schéma de base, RLS, `join_workspace`, Realtime, Storage.
 2. `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` — correctif RLS pour la première insertion membre à la création d’un dossier.
 3. `supabase/migrations/20260415000000_functional_enhancements.sql` — décision dossier, invitations, évaluations / votes MoSCoW, rappels, presets de comparaison, RPC associées (voir le fichier pour le détail des tables et policies).
+4. `supabase/migrations/20260416000000_profiles_display_name_unique.sql` — unicité des pseudos (insensible à la casse), règles de caractères, trigger profil par défaut.
 
 Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
+
+**E-mail / lien magique** : dans **Authentication → Providers**, activer **Email** et renseigner les URL de redirection (ex. `https://<user>.github.io/<repo>/` en production). Les utilisateurs anonymes peuvent associer un e-mail depuis l’accueil ; la connexion sur un autre appareil utilise le bloc « Connexion par e-mail » sur l’écran de bienvenue.
 
 **CI / `supabase db push`** : les fichiers du dossier `supabase/migrations/` sont rédigés pour être **ré-appliquables** si la base a déjà été créée via le SQL Editor (types / tables / policies déjà présents). Si le schéma distant est à jour mais que l’historique `supabase_migrations` ne l’est pas, on peut aussi marquer des versions comme déjà appliquées sans les ré-exécuter : `supabase migration repair --status applied <version>` (voir la doc CLI).
 

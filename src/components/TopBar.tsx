@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
@@ -18,6 +18,7 @@ function initialsFromDisplayName(name: string) {
 }
 
 export function TopBar() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { mode, toggle } = useTheme()
   const online = useOnlineStatus()
@@ -86,6 +87,16 @@ export function TopBar() {
               title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}
             >
               {mode === 'dark' ? 'Clair' : 'Sombre'}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              title="Fermer la session sur cet appareil"
+              onClick={() => {
+                void supabase.auth.signOut().then(() => navigate('/', { replace: true }))
+              }}
+            >
+              Déconnexion
             </button>
           </div>
           <div className="app-profile-chip" title={`Connecté : ${label}`}>
