@@ -141,10 +141,7 @@ export function TopBar() {
   const showWorkspaceToolbar = onWorkspace && workspaceChrome
 
   return (
-    <header
-      className={`app-topbar${onWorkspace ? ' app-topbar--workspace' : ''}`}
-      role="banner"
-    >
+    <header className={`app-topbar${onWorkspace ? ' app-topbar--workspace' : ''}`} role="banner">
       <div className="app-topbar-inner">
         <Link to="/" className="app-brand">
           <img

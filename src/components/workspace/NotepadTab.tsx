@@ -146,7 +146,9 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
       const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
       if (d?.tab !== 'notepad') return
       requestAnimationFrame(() => {
-        document.querySelector<HTMLTextAreaElement>('[data-workspace-focus="notepad-body"]')?.focus()
+        document
+          .querySelector<HTMLTextAreaElement>('[data-workspace-focus="notepad-body"]')
+          ?.focus()
       })
     }
     window.addEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)

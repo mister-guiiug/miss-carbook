@@ -70,7 +70,8 @@ export function EvaluationsTab({
     const candRows = (c.data ?? []).map((row) => ({
       ...(row as Cand),
       trim: (row as { trim?: string }).trim ?? '',
-      parent_candidate_id: (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+      parent_candidate_id:
+        (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
     }))
     const reqIds = new Set(reqRows.map((x) => x.id))
     const candIds = new Set(candRows.map((x) => x.id))

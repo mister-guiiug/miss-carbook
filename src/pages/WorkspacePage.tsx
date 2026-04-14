@@ -217,7 +217,10 @@ export function WorkspacePage() {
 
       <header className="workspace-header workspace-header--document">
         <div className="workspace-header-main">
-          <p className="workspace-header-breadcrumb muted" style={{ margin: '0 0 0.35rem', fontSize: '0.85rem' }}>
+          <p
+            className="workspace-header-breadcrumb muted"
+            style={{ margin: '0 0 0.35rem', fontSize: '0.85rem' }}
+          >
             <Link to="/">← Dossiers</Link>
           </p>
           <h1 className="workspace-header-title" id="workspace-title">
@@ -226,9 +229,12 @@ export function WorkspacePage() {
           <p className="muted workspace-header-desc">
             {workspace.description || 'Sans description'}
           </p>
-          <p className="muted workspace-header-hint" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
-            Onglet <strong>Réglages</strong> : options de <em>ce</em> dossier. Compte, thème et mise à
-            jour de l’app : menu en haut à droite (icône compte ou roue → paramètres généraux).
+          <p
+            className="muted workspace-header-hint"
+            style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}
+          >
+            Onglet <strong>Réglages</strong> : options de <em>ce</em> dossier. Compte, thème et mise
+            à jour de l’app : menu en haut à droite (icône compte ou roue → paramètres généraux).
           </p>
         </div>
       </header>

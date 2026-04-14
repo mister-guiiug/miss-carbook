@@ -316,7 +316,11 @@ export function SettingsTab({
 
   return (
     <div className="stack settings-tab">
-      <div className="settings-scope-banner stack" role="region" aria-label="Périmètre des réglages">
+      <div
+        className="settings-scope-banner stack"
+        role="region"
+        aria-label="Périmètre des réglages"
+      >
         <p style={{ margin: 0, fontWeight: 600 }}>
           <span className="settings-scope-badge settings-scope-badge--workspace">Ce dossier</span>{' '}
           Tout ce qui suit ne concerne que le projet « {workspace.name} » (partage, membres, nom…).

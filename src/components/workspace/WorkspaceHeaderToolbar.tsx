@@ -278,7 +278,12 @@ export function WorkspaceHeaderToolbar({
               >
                 Réglages de ce dossier
               </button>
-              <button type="button" role="menuitem" className="workspace-toolbar-menu-item" onClick={toggle}>
+              <button
+                type="button"
+                role="menuitem"
+                className="workspace-toolbar-menu-item"
+                onClick={toggle}
+              >
                 <span className="workspace-toolbar-menu-row">
                   {mode === 'dark' ? <IconSun /> : <IconMoon />}
                   <span>{themeLabel}</span>
@@ -286,12 +291,7 @@ export function WorkspaceHeaderToolbar({
               </button>
               <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
               <div className="workspace-toolbar-menu-label">Navigation</div>
-              <Link
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                to="/"
-                onClick={close}
-              >
+              <Link role="menuitem" className="workspace-toolbar-menu-item" to="/" onClick={close}>
                 Accueil Miss Carbook
               </Link>
               <Link
@@ -328,10 +328,20 @@ export function WorkspaceHeaderToolbar({
               aria-label="Compte et paramètres généraux"
             >
               <div className="workspace-toolbar-menu-heading muted">{profileLabel}</div>
-              <Link role="menuitem" className="workspace-toolbar-menu-item" to="/parametres" onClick={close}>
+              <Link
+                role="menuitem"
+                className="workspace-toolbar-menu-item"
+                to="/parametres"
+                onClick={close}
+              >
                 Paramètres généraux
               </Link>
-              <button type="button" role="menuitem" className="workspace-toolbar-menu-item danger" onClick={signOut}>
+              <button
+                type="button"
+                role="menuitem"
+                className="workspace-toolbar-menu-item danger"
+                onClick={signOut}
+              >
                 Déconnexion
               </button>
             </div>
