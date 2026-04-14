@@ -35,6 +35,9 @@ export interface Database {
           created_at: string
           created_by: string
           is_active: boolean
+          selected_candidate_id: string | null
+          decision_notes: string
+          decision_at: string | null
         }
         Insert: {
           id?: string
@@ -51,6 +54,9 @@ export interface Database {
           description?: string
           replacement_enabled?: boolean
           is_active?: boolean
+          selected_candidate_id?: string | null
+          decision_notes?: string
+          decision_at?: string | null
         }
       }
       workspace_members: {

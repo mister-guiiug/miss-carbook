@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
+
+const LOCK_MS = 90_000
 
 export function NotepadTab({
   workspaceId,
@@ -11,15 +13,35 @@ export function NotepadTab({
 }) {
   const [body, setBody] = useState('')
   const [noteId, setNoteId] = useState<string | null>(null)
+  const [lockUser, setLockUser] = useState<string | null>(null)
+  const [lockExp, setLockExp] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [myId, setMyId] = useState<string | null>(null)
+  const lockTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const applyRow = (row: {
+    id: string
+    body?: string
+    edit_lock_user_id?: string | null
+    edit_lock_expires_at?: string | null
+  }) => {
+    setNoteId(row.id)
+    if (row.body !== undefined) setBody(row.body ?? '')
+    setLockUser(row.edit_lock_user_id ?? null)
+    setLockExp(row.edit_lock_expires_at ?? null)
+  }
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!cancelled) setMyId(user?.id ?? null)
       const { data, error } = await supabase
         .from('notes')
-        .select('id, body')
+        .select('id, body, edit_lock_user_id, edit_lock_expires_at')
         .eq('workspace_id', workspaceId)
         .maybeSingle()
       if (cancelled) return
@@ -28,20 +50,16 @@ export function NotepadTab({
         return
       }
       if (data) {
-        setNoteId(data.id)
-        setBody(data.body ?? '')
+        applyRow(data)
         return
       }
       if (canWrite) {
         const ins = await supabase
           .from('notes')
           .insert({ workspace_id: workspaceId })
-          .select('id, body')
+          .select('id, body, edit_lock_user_id, edit_lock_expires_at')
           .single()
-        if (!cancelled && !ins.error && ins.data) {
-          setNoteId(ins.data.id)
-          setBody(ins.data.body ?? '')
-        }
+        if (!cancelled && !ins.error && ins.data) applyRow(ins.data)
       }
     })()
     return () => {
@@ -61,11 +79,13 @@ export function NotepadTab({
           filter: `workspace_id=eq.${workspaceId}`,
         },
         (payload) => {
-          const row = payload.new as { id?: string; body?: string }
-          if (row.id && row.body !== undefined) {
-            setNoteId(row.id)
-            setBody(row.body)
+          const row = payload.new as {
+            id?: string
+            body?: string
+            edit_lock_user_id?: string | null
+            edit_lock_expires_at?: string | null
           }
+          if (row.id) applyRow(row as Parameters<typeof applyRow>[0])
         }
       )
       .subscribe()
@@ -74,8 +94,61 @@ export function NotepadTab({
     }
   }, [workspaceId])
 
+  const renewLock = async () => {
+    if (!canWrite || !noteId || !myId) return
+    const exp = new Date(Date.now() + LOCK_MS).toISOString()
+    await supabase
+      .from('notes')
+      .update({ edit_lock_user_id: myId, edit_lock_expires_at: exp })
+      .eq('id', noteId)
+  }
+
+  const clearLock = async () => {
+    if (!canWrite || !noteId || !myId) return
+    await supabase
+      .from('notes')
+      .update({ edit_lock_user_id: null, edit_lock_expires_at: null })
+      .eq('id', noteId)
+      .eq('edit_lock_user_id', myId)
+  }
+
+  const stopLockTimer = () => {
+    if (lockTimerRef.current) {
+      clearInterval(lockTimerRef.current)
+      lockTimerRef.current = null
+    }
+  }
+
+  const startLockTimer = () => {
+    stopLockTimer()
+    void renewLock()
+    lockTimerRef.current = setInterval(() => void renewLock(), 25_000)
+  }
+
+  const onFocus = () => {
+    if (canWrite) startLockTimer()
+  }
+
+  const onBlur = () => {
+    stopLockTimer()
+    void clearLock()
+  }
+
+  useEffect(() => {
+    return () => {
+      stopLockTimer()
+    }
+  }, [])
+
+  const lockedByOther =
+    lockUser &&
+    lockUser !== myId &&
+    lockExp &&
+    new Date(lockExp) > new Date() &&
+    canWrite
+
   const save = async () => {
-    if (!canWrite || !noteId) return
+    if (!canWrite || !noteId || lockedByOther) return
     setBusy(true)
     setErr(null)
     try {
@@ -98,11 +171,23 @@ export function NotepadTab({
   return (
     <div className="stack">
       <p className="muted">
-        Bloc-notes partagé — stratégie <strong>last-write-wins</strong> ; les modifications apparaissent
-        en temps réel (Supabase Realtime).
+        Bloc-notes partagé — <strong>last-write-wins</strong>. Verrou léger pendant la frappe (~90 s,
+        renouvelé tant que le champ est focalisé) pour signaler une édition en cours.
       </p>
+      {lockedByOther ? (
+        <p className="error">
+          Un autre participant semble éditer le bloc-notes (verrou actif). Vous pouvez toujours
+          forcer l’enregistrement au risque d’écraser.
+        </p>
+      ) : null}
       {err ? <p className="error">{err}</p> : null}
-      <textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={!canWrite} />
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        disabled={!canWrite}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />
       <div className="row">
         <button type="button" onClick={() => void save()} disabled={!canWrite || busy || !noteId}>
           {busy ? 'Enregistrement…' : 'Enregistrer'}

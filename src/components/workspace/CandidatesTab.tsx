@@ -8,6 +8,7 @@ import {
   reviewSchema,
 } from '../../lib/validation/schemas'
 import { uploadCandidateImage, signedUrlForPath } from '../../lib/storageUpload'
+import { renderMentions } from '../../lib/renderMentions'
 import type { CandidateStatus, Json } from '../../types/database'
 
 type CandidateRow = {
@@ -85,6 +86,90 @@ export function CandidatesTab({
     reject_reason: '',
   })
 
+  const duplicateOne = async (c: CandidateRow) => {
+    if (!canWrite) return
+    setErr(null)
+    try {
+      const { data, error } = await supabase
+        .from('candidates')
+        .insert({
+          workspace_id: workspaceId,
+          brand: c.brand,
+          model: c.model ? `${c.model} (copie)` : '(copie)',
+          trim: c.trim,
+          engine: c.engine,
+          price: c.price,
+          options: c.options,
+          garage_location: c.garage_location,
+          manufacturer_url: c.manufacturer_url,
+          event_date: c.event_date,
+          status: 'to_see',
+          reject_reason: '',
+        })
+        .select('id')
+        .single()
+      if (error) throw error
+      const specs = (c.candidate_specs?.specs ?? {}) as Json
+      await supabase.from('candidate_specs').insert({ candidate_id: data.id, specs })
+      await logActivity(workspaceId, 'candidate.duplicate', 'candidate', data.id, { from: c.id })
+      await load()
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Duplication impossible')
+    }
+  }
+
+  const importCsv = async (file: File | null) => {
+    if (!file || !canWrite) return
+    setErr(null)
+    try {
+      const text = await file.text()
+      const lines = text.split(/\r?\n/).filter((l) => l.trim())
+      if (lines.length < 2) throw new Error('CSV vide')
+      const head = lines[0].split(',').map((s) => s.trim().toLowerCase())
+      const col = (name: string, ...alts: string[]) => {
+        const i = head.indexOf(name)
+        if (i >= 0) return i
+        for (const a of alts) {
+          const j = head.indexOf(a)
+          if (j >= 0) return j
+        }
+        return -1
+      }
+      const iBrand = col('brand', 'marque')
+      const iModel = col('model', 'modele', 'modèle')
+      const iTrim = col('trim', 'finition')
+      const iEngine = col('engine', 'motorisation')
+      const iPrice = col('price', 'prix')
+      if (iBrand < 0 || iModel < 0) throw new Error('Colonnes brand et model requises')
+      for (let li = 1; li < lines.length; li++) {
+        const cols = lines[li].split(',').map((s) => s.trim())
+        const brand = cols[iBrand] ?? ''
+        const model = cols[iModel] ?? ''
+        if (!brand && !model) continue
+        const priceRaw = iPrice >= 0 ? cols[iPrice] : ''
+        const price = priceRaw ? Number(priceRaw.replace(',', '.')) : null
+        const { data, error } = await supabase
+          .from('candidates')
+          .insert({
+            workspace_id: workspaceId,
+            brand,
+            model,
+            trim: iTrim >= 0 ? cols[iTrim] ?? '' : '',
+            engine: iEngine >= 0 ? cols[iEngine] ?? '' : '',
+            price: Number.isFinite(price as number) ? price : null,
+          })
+          .select('id')
+          .single()
+        if (error) throw error
+        await supabase.from('candidate_specs').insert({ candidate_id: data.id, specs: {} })
+      }
+      await load()
+      await logActivity(workspaceId, 'candidate.import_csv', 'workspace', workspaceId, {})
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Import CSV impossible')
+    }
+  }
+
   const addCandidate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite) return
@@ -142,6 +227,16 @@ export function CandidatesTab({
   return (
     <div className="stack">
       {err ? <p className="error">{err}</p> : null}
+
+      {canWrite ? (
+        <div className="card stack" style={{ boxShadow: 'none' }}>
+          <h3 style={{ margin: 0 }}>Import CSV</h3>
+          <p className="muted" style={{ margin: 0 }}>
+            Première ligne : brand, model (obligatoires), trim, engine, price… Séparateur virgule (simple).
+          </p>
+          <input type="file" accept=".csv,text/csv" onChange={(e) => void importCsv(e.target.files?.[0] ?? null)} />
+        </div>
+      ) : null}
 
       {canWrite ? (
         <form onSubmit={addCandidate} className="card stack" style={{ boxShadow: 'none' }}>
@@ -244,6 +339,9 @@ export function CandidatesTab({
                   {c.price != null ? ` · ${c.price} €` : ''}
                 </div>
               </div>
+              <button type="button" className="secondary" onClick={() => void duplicateOne(c)}>
+                Dupliquer
+              </button>
               <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>
                 {open === c.id ? 'Fermer' : 'Détail'}
               </button>
@@ -513,7 +611,7 @@ function CandidateDetail({
         <ul style={{ paddingLeft: '1.1rem' }}>
           {comments.map((c) => (
             <li key={c.id}>
-              <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> — {c.body}
+              <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> — {renderMentions(c.body)}
             </li>
           ))}
         </ul>

@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Legend,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from 'recharts'
 import { supabase } from '../../lib/supabase'
 import type { CandidateStatus, Json } from '../../types/database'
 
@@ -15,16 +24,20 @@ type Candidate = {
 
 type Review = { candidate_id: string; score: number }
 
-const CRITERIA: { key: string; label: string; path: 'root' | 'spec' }[] = [
-  { key: 'price', label: 'Prix', path: 'root' },
-  { key: 'scoreAvg', label: 'Note moyenne (0–10)', path: 'root' },
-  { key: 'trunkLiters', label: 'Coffre (L)', path: 'spec' },
-  { key: 'consumptionL100', label: 'Conso L/100', path: 'spec' },
-  { key: 'consumptionKwh100', label: 'Conso kWh/100', path: 'spec' },
-  { key: 'powerKw', label: 'Puissance kW', path: 'spec' },
-  { key: 'lengthMm', label: 'Longueur mm', path: 'spec' },
-  { key: 'co2Gkm', label: 'CO₂ g/km', path: 'spec' },
+type Preset = { id: string; name: string; criteria_keys: string[] }
+
+export const CRITERIA: { key: string; label: string; path: 'root' | 'spec'; numeric: boolean }[] = [
+  { key: 'price', label: 'Prix', path: 'root', numeric: true },
+  { key: 'scoreAvg', label: 'Note moy.', path: 'root', numeric: true },
+  { key: 'trunkLiters', label: 'Coffre (L)', path: 'spec', numeric: true },
+  { key: 'consumptionL100', label: 'Conso L/100', path: 'spec', numeric: true },
+  { key: 'consumptionKwh100', label: 'kWh/100', path: 'spec', numeric: true },
+  { key: 'powerKw', label: 'kW', path: 'spec', numeric: true },
+  { key: 'lengthMm', label: 'Long. mm', path: 'spec', numeric: true },
+  { key: 'co2Gkm', label: 'CO₂', path: 'spec', numeric: true },
 ]
+
+const COLORS = ['#0f766e', '#7c3aed', '#ea580c', '#2563eb', '#db2777']
 
 function download(filename: string, mime: string, text: string) {
   const blob = new Blob([text], { type: mime })
@@ -47,13 +60,16 @@ function toCsv(rows: Record<string, string | number | null>[]) {
   return [keys.join(','), ...rows.map((r) => keys.map((k) => esc(r[k])).join(','))].join('\n')
 }
 
-export function CompareTab({ workspaceId }: { workspaceId: string }) {
+export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [criteria, setCriteria] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CRITERIA.map((c) => [c.key, true]))
   )
+  const [presets, setPresets] = useState<Preset[]>([])
+  const [presetName, setPresetName] = useState('')
+  const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -80,6 +96,17 @@ export function CompareTab({ workspaceId }: { workspaceId: string }) {
     return () => {
       cancelled = true
     }
+  }, [workspaceId])
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase
+        .from('comparison_presets')
+        .select('id, name, criteria_keys')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false })
+      setPresets((data ?? []) as Preset[])
+    })()
   }, [workspaceId])
 
   useEffect(() => {
@@ -131,6 +158,37 @@ export function CompareTab({ workspaceId }: { workspaceId: string }) {
     })
   }, [picked, criteria, avgByCand])
 
+  const radarData = useMemo(() => {
+    const keys = CRITERIA.filter((c) => criteria[c.key] && c.numeric).map((c) => c.key)
+    if (picked.length < 2 || keys.length < 2) return []
+    const raw: Record<string, Record<string, number>> = {}
+    for (const p of picked) {
+      raw[p.id] = {}
+      const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>
+      for (const k of keys) {
+        let v = 0
+        if (k === 'price') v = p.price ?? 0
+        else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0
+        else v = Number(spec[k]) || 0
+        raw[p.id][k] = v
+      }
+    }
+    const normKey = (k: string) => {
+      const vals = picked.map((p) => raw[p.id][k])
+      const min = Math.min(...vals)
+      const max = Math.max(...vals)
+      const span = max - min || 1
+      return (p: Candidate) => (raw[p.id][k] - min) / span
+    }
+    return keys.map((k) => {
+      const row: Record<string, string | number> = {
+        subject: CRITERIA.find((c) => c.key === k)?.label ?? k,
+      }
+      for (const p of picked) row[p.id] = Math.round(normKey(k)(p) * 100)
+      return row
+    })
+  }, [picked, criteria, avgByCand])
+
   const toggleCand = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }))
   const toggleCrit = (key: string) => setCriteria((s) => ({ ...s, [key]: !s[key] }))
 
@@ -141,11 +199,67 @@ export function CompareTab({ workspaceId }: { workspaceId: string }) {
     download('comparaison.csv', 'text/csv;charset=utf-8', toCsv(rows))
   }
 
+  const savePreset = async () => {
+    if (!canWrite || !presetName.trim()) return
+    const keys = CRITERIA.filter((c) => criteria[c.key]).map((c) => c.key)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const { error } = await supabase.from('comparison_presets').insert({
+      workspace_id: workspaceId,
+      name: presetName.trim(),
+      criteria_keys: keys,
+      created_by: user.id,
+    })
+    if (!error) {
+      setPresetName('')
+      const { data } = await supabase
+        .from('comparison_presets')
+        .select('id, name, criteria_keys')
+        .eq('workspace_id', workspaceId)
+      setPresets((data ?? []) as Preset[])
+    }
+  }
+
+  const applyPreset = (p: Preset) => {
+    const set = new Set(p.criteria_keys)
+    setCriteria(Object.fromEntries(CRITERIA.map((c) => [c.key, set.has(c.key)])))
+  }
+
+  const printCompare = () => {
+    window.print()
+  }
+
   return (
-    <div className="stack">
+    <div className="stack compare-tab">
       <p className="muted">
-        Sélectionnez des modèles et les critères à comparer. Export JSON/CSV entièrement côté client.
+        Profils de critères, graphique radar (valeurs normalisées), exports et impression.
       </p>
+
+      <div className="card stack no-print" style={{ boxShadow: 'none' }}>
+        <h3 style={{ margin: 0 }}>Profils enregistrés</h3>
+        <div className="row" style={{ flexWrap: 'wrap', gap: '0.35rem' }}>
+          {presets.map((p) => (
+            <button key={p.id} type="button" className="secondary" onClick={() => applyPreset(p)}>
+              {p.name}
+            </button>
+          ))}
+        </div>
+        {canWrite ? (
+          <div className="row">
+            <input
+              placeholder="Nom du profil"
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button type="button" onClick={() => void savePreset()}>
+              Enregistrer critères actuels
+            </button>
+          </div>
+        ) : null}
+      </div>
 
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Modèles</h3>
@@ -173,32 +287,63 @@ export function CompareTab({ workspaceId }: { workspaceId: string }) {
         </div>
       </div>
 
-      <div className="row">
+      <div className="row no-print">
         <button type="button" className="secondary" onClick={exportJson} disabled={!rows.length}>
           Export JSON
         </button>
         <button type="button" className="secondary" onClick={exportCsv} disabled={!rows.length}>
           Export CSV
         </button>
+        <button type="button" className="secondary" onClick={printCompare} disabled={!rows.length}>
+          Imprimer / PDF
+        </button>
       </div>
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              {rows[0] ? Object.keys(rows[0]).map((k) => <th key={k}>{k}</th>) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={String(r.id)}>
-                {Object.values(r).map((v, i) => (
-                  <td key={i}>{v == null ? '' : String(v)}</td>
-                ))}
+      <div ref={printRef} className="print-area">
+        <h2 className="print-only">Comparaison Miss Carbook</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {rows[0] ? Object.keys(rows[0]).map((k) => <th key={k}>{k}</th>) : null}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={String(r.id)}>
+                  {Object.values(r).map((v, i) => (
+                    <td key={i}>{v == null ? '' : String(v)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {radarData.length >= 2 && picked.length >= 2 ? (
+          <div className="radar-wrap" style={{ width: '100%', height: 320 }}>
+            <ResponsiveContainer>
+              <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="80%">
+                <PolarGrid />
+                <PolarAngleAxis dataKey="subject" />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                {picked.map((p, i) => (
+                  <Radar
+                    key={p.id}
+                    name={`${p.brand} ${p.model}`.trim()}
+                    dataKey={p.id}
+                    stroke={COLORS[i % COLORS.length]}
+                    fill={COLORS[i % COLORS.length]}
+                    fillOpacity={0.2}
+                  />
+                ))}
+                <Legend />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <p className="muted print-only">Graphique : sélectionnez au moins 2 modèles et critères numériques.</p>
+        )}
       </div>
     </div>
   )

@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
+import { initTheme } from './lib/theme'
 import './index.css'
+
+initTheme()
 
 const base = import.meta.env.BASE_URL
 

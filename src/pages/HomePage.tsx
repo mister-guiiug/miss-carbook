@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { notifyProfileUpdated } from '../lib/profileEvents'
@@ -20,6 +20,8 @@ type Row = {
 export function HomePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const inviteHandled = useRef(false)
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
@@ -65,6 +67,28 @@ export function HomePage() {
  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
+  useEffect(() => {
+    const token = searchParams.get('invite')
+    if (!token || !user || inviteHandled.current) return
+    inviteHandled.current = true
+    void (async () => {
+      const { data, error } = await supabase.rpc('accept_workspace_invite', { p_token: token })
+      if (error) {
+        setErr(error.message)
+        inviteHandled.current = false
+        return
+      }
+      const next = new URLSearchParams(searchParams)
+      next.delete('invite')
+      setSearchParams(next, { replace: true })
+      if (data) navigate(`/w/${data}`, { replace: true })
+    })()
+  }, [user, navigate, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!searchParams.get('invite')) inviteHandled.current = false
+  }, [searchParams])
+
   const createWs = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -95,7 +119,10 @@ export function HomePage() {
       setDesc('')
       setReplacement(false)
       await load()
-      if (data?.id) navigate(`/w/${data.id}`)
+      if (data?.id) {
+        sessionStorage.setItem('mc_new_ws', data.id)
+        navigate(`/w/${data.id}`)
+      }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Création impossible')
     } finally {
