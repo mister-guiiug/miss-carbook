@@ -44,17 +44,17 @@ Dans **Authentication → Providers**, activer **Anonymous sign-ins** pour le fl
 
 ### 2. Schéma SQL
 
-Exécuter le fichier de migration :
+Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https://supabase.com/docs/guides/cli)) :
 
-`supabase/migrations/20260414000000_initial_schema.sql`
+1. `supabase/migrations/20260414000000_initial_schema.sql` — schéma de base, RLS, `join_workspace`, Realtime, Storage.
+2. `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` — correctif RLS pour la première insertion membre à la création d’un dossier.
+3. `supabase/migrations/20260415000000_functional_enhancements.sql` — décision dossier, invitations, évaluations / votes MoSCoW, rappels, presets de comparaison, RPC associées (voir le fichier pour le détail des tables et policies).
 
-(dans **SQL Editor** ou via [Supabase CLI](https://supabase.com/docs/guides/cli)).
-
-Contenu principal : tables `profiles`, `workspaces`, `workspace_members`, `current_vehicle`, `requirements`, `candidates`, `candidate_specs`, `candidate_reviews`, `notes`, `comments`, `activity_log`, `attachments` ; fonctions helper RLS ; RPC `join_workspace(p_code)` ; publication Realtime ; bucket Storage `workspace-media` (5 Mo max, JPEG/PNG/WebP/GIF) et politiques sur `storage.objects` (premier segment du chemin = `workspace_id`).
+Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
 
 ### 3. Realtime
 
-Les tables `notes`, `candidates`, `comments`, `activity_log`, `candidate_reviews` sont ajoutées à `supabase_realtime`. Vérifier dans le tableau de bord que la réplication est active si besoin.
+Les tables `notes`, `candidates`, `comments`, `activity_log`, `candidate_reviews` sont ajoutées à `supabase_realtime`. La migration fonctionnelle ajoute notamment `requirement_candidate_evaluations` (et d’autres selon le fichier). Vérifier dans le tableau de bord que la réplication est active si besoin.
 
 ### 4. Exemples de requêtes (client)
 

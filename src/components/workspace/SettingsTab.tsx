@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema } from '../../lib/validation/schemas'
 import type { Database } from '../../types/database'
+import { ExportWorkspaceButton } from './ExportWorkspaceButton'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
 
@@ -11,18 +12,29 @@ type Member = {
   role: Database['public']['Tables']['workspace_members']['Row']['role']
 }
 
+type InviteRow = {
+  id: string
+  token: string
+  role: string
+  expires_at: string
+  used_at: string | null
+}
+
 export function SettingsTab({
   workspace,
   canWrite,
   isAdmin,
+  userId,
   onWorkspaceRefresh,
 }: {
   workspace: Ws
   canWrite: boolean
   isAdmin: boolean
+  userId: string
   onWorkspaceRefresh: () => void
 }) {
   const [members, setMembers] = useState<(Member & { display_name?: string })[]>([])
+  const [invites, setInvites] = useState<InviteRow[]>([])
   const [vehicle, setVehicle] = useState({
     brand: '',
     model: '',
@@ -33,10 +45,25 @@ export function SettingsTab({
   const [vehicleId, setVehicleId] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [inviteRole, setInviteRole] = useState<'read' | 'write' | 'admin'>('read')
+  const [inviteDays, setInviteDays] = useState(7)
+  const [lastToken, setLastToken] = useState<string | null>(null)
+  const [candidates, setCandidates] = useState<{ id: string; label: string }[]>([])
+  const [decisionCand, setDecisionCand] = useState<string>('')
+  const [decisionNotes, setDecisionNotes] = useState('')
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const base = import.meta.env.BASE_URL
   const inviteUrl = `${origin}${base}`.replace(/([^:]\/)\/+/g, '$1') + `w/${workspace.id}`
+
+  const loadInvites = async () => {
+    const { data } = await supabase
+      .from('workspace_invites')
+      .select('id, token, role, expires_at, used_at')
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: false })
+    setInvites((data ?? []) as InviteRow[])
+  }
 
   useEffect(() => {
     void (async () => {
@@ -55,7 +82,25 @@ export function SettingsTab({
       for (const p of profs ?? []) names[p.id] = p.display_name
       setMembers(list.map((m) => ({ ...m, display_name: names[m.user_id] })))
     })()
+    void loadInvites()
+    void (async () => {
+      const { data: cand } = await supabase
+        .from('candidates')
+        .select('id, brand, model')
+        .eq('workspace_id', workspace.id)
+      setCandidates(
+        (cand ?? []).map((c) => ({
+          id: c.id,
+          label: `${c.brand} ${c.model}`.trim(),
+        }))
+      )
+    })()
   }, [workspace.id])
+
+  useEffect(() => {
+    setDecisionCand(workspace.selected_candidate_id ?? '')
+    setDecisionNotes(workspace.decision_notes ?? '')
+  }, [workspace.selected_candidate_id, workspace.decision_notes])
 
   useEffect(() => {
     if (!workspace.replacement_enabled) return
@@ -118,17 +163,80 @@ export function SettingsTab({
     }
   }
 
-  const setRole = async (userId: string, role: Member['role']) => {
+  const setRole = async (uid: string, role: Member['role']) => {
     if (!isAdmin) return
     const { error } = await supabase
       .from('workspace_members')
       .update({ role })
       .eq('workspace_id', workspace.id)
-      .eq('user_id', userId)
+      .eq('user_id', uid)
     if (error) setErr(error.message)
     else {
-      setMembers((m) => m.map((x) => (x.user_id === userId ? { ...x, role } : x)))
-      await logActivity(workspace.id, 'member.role_change', 'workspace_member', userId, { role })
+      setMembers((m) => m.map((x) => (x.user_id === uid ? { ...x, role } : x)))
+      await logActivity(workspace.id, 'member.role_change', 'workspace_member', uid, { role })
+    }
+  }
+
+  const createInvite = async () => {
+    if (!isAdmin) return
+    setErr(null)
+    const { data, error } = await supabase.rpc('create_workspace_invite', {
+      p_workspace_id: workspace.id,
+      p_role: inviteRole,
+      p_ttl_days: inviteDays,
+    })
+    if (error) setErr(error.message)
+    else {
+      setLastToken(data as string)
+      await loadInvites()
+      const link = `${origin}${base}?invite=${data as string}`.replace(/([^:]\/)\/+/g, '$1')
+      try {
+        await navigator.clipboard.writeText(link)
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const revokeInvite = async (id: string) => {
+    if (!isAdmin) return
+    await supabase.from('workspace_invites').delete().eq('id', id)
+    await loadInvites()
+  }
+
+  const leave = async () => {
+    if (!confirm('Quitter ce dossier ?')) return
+    const { error } = await supabase.rpc('leave_workspace', { p_workspace_id: workspace.id })
+    if (error) setErr(error.message)
+    else window.location.assign(`${origin}${base}`.replace(/([^:]\/)\/+/g, '$1'))
+  }
+
+  const removeMember = async (uid: string) => {
+    if (!isAdmin || !confirm('Retirer ce participant ?')) return
+    const { error } = await supabase.rpc('remove_workspace_member', {
+      p_workspace_id: workspace.id,
+      p_user_id: uid,
+    })
+    if (error) setErr(error.message)
+    else {
+      setMembers((m) => m.filter((x) => x.user_id !== uid))
+      await logActivity(workspace.id, 'member.removed', 'workspace_member', uid, {})
+    }
+  }
+
+  const saveDecision = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canWrite) return
+    const cid = decisionCand || null
+    const { error } = await supabase.rpc('update_workspace_decision', {
+      p_workspace_id: workspace.id,
+      p_candidate_id: cid,
+      p_notes: decisionNotes,
+    })
+    if (error) setErr(error.message)
+    else {
+      await logActivity(workspace.id, 'workspace.decision', 'workspace', workspace.id, {})
+      onWorkspaceRefresh()
     }
   }
 
@@ -143,7 +251,30 @@ export function SettingsTab({
   return (
     <div className="stack">
       <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Partage</h3>
+        <h3 style={{ margin: 0 }}>Décision</h3>
+        <p className="muted">Modèle retenu (visible en bannière dans l’en-tête du dossier).</p>
+        {canWrite ? (
+          <form onSubmit={saveDecision} className="stack">
+            <label>Modèle retenu</label>
+            <select value={decisionCand} onChange={(e) => setDecisionCand(e.target.value)}>
+              <option value="">— Aucun —</option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <label>Notes / motif</label>
+            <textarea value={decisionNotes} onChange={(e) => setDecisionNotes(e.target.value)} />
+            <button type="submit">Enregistrer la décision</button>
+          </form>
+        ) : (
+          <p className="muted">Lecture seule.</p>
+        )}
+      </div>
+
+      <div className="card stack" style={{ boxShadow: 'none' }}>
+        <h3 style={{ margin: 0 }}>Partage classique</h3>
         <p>
           Code court&nbsp;: <code>{workspace.share_code}</code>
         </p>
@@ -155,30 +286,96 @@ export function SettingsTab({
         </button>
       </div>
 
+      {isAdmin ? (
+        <div className="card stack" style={{ boxShadow: 'none' }}>
+          <h3 style={{ margin: 0 }}>Invitations avec rôle & expiration</h3>
+          <p className="muted">
+            Lien à usage unique (après acceptation). Copié dans le presse-papiers à la création.
+          </p>
+          <div className="row">
+            <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}>
+              <option value="read">Lecture</option>
+              <option value="write">Écriture</option>
+              <option value="admin">Admin</option>
+            </select>
+            <input
+              type="number"
+              min={1}
+              max={90}
+              value={inviteDays}
+              onChange={(e) => setInviteDays(Number(e.target.value))}
+              style={{ width: '5rem' }}
+            />
+            <span className="muted">jours</span>
+            <button type="button" onClick={() => void createInvite()}>
+              Créer invitation
+            </button>
+          </div>
+          {lastToken ? (
+            <p className="muted" style={{ wordBreak: 'break-all' }}>
+              Dernier lien :{' '}
+              <code>{`${origin}${base}?invite=${lastToken}`.replace(/([^:]\/)\/+/g, '$1')}</code>
+            </p>
+          ) : null}
+          <ul style={{ paddingLeft: '1.1rem' }}>
+            {invites.map((i) => (
+              <li key={i.id}>
+                <code>{i.token.slice(0, 8)}…</code> — {i.role} — exp.{' '}
+                {new Date(i.expires_at).toLocaleDateString('fr-FR')}
+                {i.used_at ? ' — utilisée' : ''}
+                {!i.used_at ? (
+                  <button type="button" className="secondary" onClick={() => void revokeInvite(i.id)}>
+                    Révoquer
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Participants</h3>
         <ul style={{ paddingLeft: '1.1rem' }}>
           {members.map((m) => (
             <li key={m.user_id}>
               <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong> — {m.role}
-              {isAdmin ? (
-                <span className="row" style={{ marginLeft: '0.5rem', gap: '0.35rem' }}>
-                  {(['read', 'write', 'admin'] as const).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      className="secondary"
-                      style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
-                      onClick={() => void setRole(m.user_id, r)}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </span>
+              {isAdmin && m.user_id !== userId ? (
+                <>
+                  <span className="row" style={{ marginLeft: '0.5rem', gap: '0.35rem' }}>
+                    {(['read', 'write', 'admin'] as const).map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        className="secondary"
+                        style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
+                        onClick={() => void setRole(m.user_id, r)}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary"
+                    style={{ marginLeft: '0.5rem' }}
+                    onClick={() => void removeMember(m.user_id)}
+                  >
+                    Retirer
+                  </button>
+                </>
               ) : null}
             </li>
           ))}
         </ul>
+        <button type="button" className="secondary" onClick={() => void leave()}>
+          Quitter ce dossier
+        </button>
+      </div>
+
+      <div className="card stack" style={{ boxShadow: 'none' }}>
+        <h3 style={{ margin: 0 }}>Export dossier</h3>
+        <ExportWorkspaceButton workspaceId={workspace.id} />
       </div>
 
       {workspace.replacement_enabled ? (

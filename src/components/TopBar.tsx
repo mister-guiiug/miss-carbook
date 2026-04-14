@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useTheme } from '../hooks/useTheme'
 import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents'
 
 const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
@@ -17,6 +19,8 @@ function initialsFromDisplayName(name: string) {
 
 export function TopBar() {
   const { user } = useAuth()
+  const { mode, toggle } = useTheme()
+  const online = useOnlineStatus()
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -68,11 +72,28 @@ export function TopBar() {
           />
           <span className="app-brand-title">Miss Carbook</span>
         </Link>
-        <div className="app-profile-chip" title={`Connecté : ${label}`}>
-          <span className="app-profile-avatar" aria-hidden="true">
-            {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
-          </span>
-          <span className="app-profile-name">{label}</span>
+        <div className="app-topbar-spacer" aria-hidden="true" />
+        <div className="app-topbar-right">
+          <div className="app-topbar-tools">
+            <span
+              className={`online-dot ${online ? 'on' : 'off'}`}
+              title={online ? 'En ligne' : 'Hors ligne'}
+            />
+            <button
+              type="button"
+              className="secondary theme-toggle"
+              onClick={toggle}
+              title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}
+            >
+              {mode === 'dark' ? 'Clair' : 'Sombre'}
+            </button>
+          </div>
+          <div className="app-profile-chip" title={`Connecté : ${label}`}>
+            <span className="app-profile-avatar" aria-hidden="true">
+              {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+            </span>
+            <span className="app-profile-name">{label}</span>
+          </div>
         </div>
       </div>
     </header>
