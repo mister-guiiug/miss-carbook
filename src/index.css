@@ -1358,6 +1358,77 @@ th {
   margin-top: 0;
 }
 
+.workspace-header-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+}
+
+.workspace-role-badge {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.workspace-role-badge--read {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.workspace-role-badge--write {
+  background: rgb(15 118 110 / 0.15);
+  color: var(--primary);
+}
+
+.workspace-role-badge--admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme='dark'] .workspace-role-badge--read {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .workspace-role-badge--admin {
+  background: #422006;
+  color: #fde68a;
+}
+
+.workspace-summary-card {
+  padding: 0.85rem 1rem;
+}
+
+.workspace-summary-title {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.workspace-summary-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.workspace-summary-list li {
+  margin-bottom: 0.35rem;
+}
+
+.activity-day-heading {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.activity-day-group.activity-day-group {
+  gap: 0.5rem;
+}
+
 .workspace-header-breadcrumb a {
   text-decoration: none;
 }

@@ -1,11 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
-import { formatCandidateListLabel } from '../lib/candidateLabel'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { useWorkspace } from '../hooks/useWorkspace'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useWorkspaceChrome } from '../contexts/WorkspaceChromeContext'
-import type { Database } from '../types/database'
 import { WorkspaceOnboarding } from '../components/WorkspaceOnboarding'
 import { WorkspaceSearchModal } from '../components/WorkspaceSearchModal'
 import { NotepadTab } from '../components/workspace/NotepadTab'
@@ -23,9 +21,7 @@ import {
 } from '../components/workspace/workspaceTabs'
 import { WorkspaceTabStrip } from '../components/workspace/WorkspaceTabStrip'
 import { WorkspaceJourneyCard } from '../components/workspace/WorkspaceJourneyCard'
-
-type Ws = Database['public']['Tables']['workspaces']['Row']
-type Role = Database['public']['Tables']['workspace_members']['Row']['role']
+import { WorkspaceDecisionSummaryCard } from '../components/workspace/WorkspaceDecisionSummaryCard'
 
 function WorkspacePageSkeleton() {
   return (
@@ -47,13 +43,16 @@ export function WorkspacePage() {
   const { user } = useAuth()
   const { setWorkspaceChrome } = useWorkspaceChrome()
   const { reportException, reportMessage } = useErrorDialog()
-  const [workspace, setWorkspace] = useState<Ws | null>(null)
-  const [role, setRole] = useState<Role | null>(null)
+  const {
+    workspace,
+    role,
+    decisionLabel,
+    loading,
+    accessBlocked,
+    refresh,
+  } = useWorkspace(workspaceId, user?.id, reportException, reportMessage)
   const tab = parseWorkspaceTabParam(searchParams.get('tab'))
-  const [accessBlocked, setAccessBlocked] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [decisionLabel, setDecisionLabel] = useState<string | null>(null)
   const [, bump] = useState(0)
   const panelRef = useRef<HTMLDivElement>(null)
   const panelFocusSkip = useRef(true)
@@ -97,86 +96,6 @@ export function WorkspacePage() {
       )
     }
   }, [searchParams, setSearchParams])
-
-  const refresh = async () => {
-    if (!workspaceId || !user) return
-    setLoading(true)
-    try {
-      setAccessBlocked(false)
-      const { data: ws, error: wErr } = await supabase
-        .from('workspaces')
-        .select('*')
-        .eq('id', workspaceId)
-        .maybeSingle()
-      if (wErr) {
-        reportException(wErr, 'Chargement du dossier (workspaces)')
-        setWorkspace(null)
-        setRole(null)
-        setAccessBlocked(true)
-        return
-      }
-      if (!ws) {
-        reportMessage(
-          'Ce dossier est introuvable. Il a peut-être été supprimé ou l’identifiant dans l’URL est incorrect.',
-          `workspaceId=${workspaceId} — requête sans ligne`
-        )
-        setWorkspace(null)
-        setRole(null)
-        setAccessBlocked(true)
-        return
-      }
-      setWorkspace(ws as Ws)
-      const sid = (ws as Ws).selected_candidate_id
-      if (sid) {
-        const { data: cand } = await supabase
-          .from('candidates')
-          .select('brand, model, trim, parent_candidate_id')
-          .eq('id', sid)
-          .maybeSingle()
-        setDecisionLabel(
-          cand
-            ? formatCandidateListLabel({
-                brand: cand.brand,
-                model: cand.model,
-                trim: cand.trim ?? '',
-                parent_candidate_id: cand.parent_candidate_id ?? null,
-              })
-            : null
-        )
-      } else setDecisionLabel(null)
-
-      const { data: mem, error: mErr } = await supabase
-        .from('workspace_members')
-        .select('role')
-        .eq('workspace_id', workspaceId)
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (mErr) {
-        reportException(mErr, 'Vérification du rôle (workspace_members)')
-        setRole(null)
-        setAccessBlocked(true)
-        return
-      }
-      if (!mem) {
-        reportMessage(
-          'Vous n’êtes pas membre de ce dossier, ou vous n’avez plus accès.',
-          `user_id=${user.id} workspace_id=${workspaceId} — aucune ligne membre`
-        )
-        setRole(null)
-        setAccessBlocked(true)
-        return
-      }
-      setRole(mem.role as Role)
-      setAccessBlocked(false)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    void refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaceId, user?.id])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -300,6 +219,12 @@ export function WorkspacePage() {
 
       <WorkspaceJourneyCard workspaceId={workspaceId} setTab={setTab} />
 
+      <WorkspaceDecisionSummaryCard
+        workspaceId={workspaceId}
+        hasRecordedDecision={Boolean(workspace.selected_candidate_id && decisionLabel)}
+        setTab={setTab}
+      />
+
       {isReadOnly ? (
         <div className="workspace-readonly-banner" role="status">
           <strong>Lecture seule</strong> — vous pouvez consulter ce dossier mais pas le modifier.
@@ -335,9 +260,21 @@ export function WorkspacePage() {
             <span aria-hidden="true"> · </span>
             <span className="workspace-breadcrumb-current">{workspace.name}</span>
           </nav>
-          <h1 className="workspace-header-title" id="workspace-title">
-            {workspace.name}
-          </h1>
+          <div className="workspace-header-title-row">
+            <h1 className="workspace-header-title" id="workspace-title">
+              {workspace.name}
+            </h1>
+            <span
+              className={`badge workspace-role-badge workspace-role-badge--${role}`}
+              title="Votre rôle dans ce dossier"
+            >
+              {role === 'admin'
+                ? 'Administrateur'
+                : role === 'write'
+                  ? 'Édition'
+                  : 'Lecture seule'}
+            </span>
+          </div>
           <p className="muted workspace-header-desc">
             {workspace.description?.trim() ? (
               workspace.description
