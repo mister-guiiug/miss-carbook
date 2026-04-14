@@ -311,6 +311,10 @@ export interface Database {
       }
     }
     Functions: {
+      create_workspace: {
+        Args: { p_name: string; p_description: string; p_replacement_enabled?: boolean }
+        Returns: string
+      }
       join_workspace: { Args: { p_code: string }; Returns: string }
     }
   }
