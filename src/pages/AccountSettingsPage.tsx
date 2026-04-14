@@ -167,12 +167,14 @@ export function AccountSettingsPage() {
         <Link to="/">← Retour à l’accueil</Link>
       </p>
       <header className="account-settings-header" style={{ marginBottom: '1rem' }}>
-        <span className="settings-scope-badge settings-scope-badge--global">Toute l’application</span>
+        <span className="settings-scope-badge settings-scope-badge--global">
+          Toute l’application
+        </span>
         <h1 style={{ margin: '0.35rem 0 0' }}>Paramètres généraux</h1>
         <p className="muted" style={{ marginBottom: 0, marginTop: '0.35rem' }}>
-          Compte Miss Carbook, apparence sur cet appareil et version de l’app. Rien ici ne modifie un
-          dossier de recherche véhicule ouvert depuis l’accueil — pour cela, ouvrez le dossier puis
-          l’onglet <strong>Réglages</strong>.
+          Compte Miss Carbook, apparence sur cet appareil et version de l’app. Rien ici ne modifie
+          un dossier de recherche véhicule ouvert depuis l’accueil — pour cela, ouvrez le dossier
+          puis l’onglet <strong>Réglages</strong>.
         </p>
       </header>
 
@@ -225,8 +227,8 @@ export function AccountSettingsPage() {
         <h2 style={{ marginTop: 0 }}>Application</h2>
         <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
           Après une mise en ligne du site, rechargez pour utiliser la dernière version (interface,
-          correctifs). Sur navigateur ou PWA, cela réapplique aussi le cache du service worker lorsque
-          c’est nécessaire.
+          correctifs). Sur navigateur ou PWA, cela réapplique aussi le cache du service worker
+          lorsque c’est nécessaire.
         </p>
         {needRefresh ? (
           <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
