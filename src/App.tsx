@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ErrorDialogProvider } from './contexts/ErrorDialogContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { WorkspaceChromeProvider } from './contexts/WorkspaceChromeContext'
 import { PseudoGate } from './components/PseudoGate'
 import { SiteFooter } from './components/SiteFooter'
 import { TrustBanner } from './components/TrustBanner'
@@ -21,7 +22,7 @@ export default function App() {
           <div className="app-main" id="contenu-principal" tabIndex={-1}>
             <TrustBanner />
             <PseudoGate>
-              <>
+              <WorkspaceChromeProvider>
                 <TopBar />
                 <Routes>
                   <Route path="/" element={<HomePage />} />
@@ -29,7 +30,7 @@ export default function App() {
                   <Route path="/w/:workspaceId" element={<WorkspacePage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-              </>
+              </WorkspaceChromeProvider>
             </PseudoGate>
           </div>
           <SiteFooter />
