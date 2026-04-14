@@ -8,6 +8,25 @@
   --primary: #0f766e;
   --primary-contrast: #ecfdf5;
   --danger: #b91c1c;
+  --input-bg: var(--surface);
+  --table-header-bg: #f1f5f9;
+  --badge-bg: #e2e8f0;
+  --badge-fg: #334155;
+  --badge-mandatory-bg: #fee2e2;
+  --badge-mandatory-fg: #991b1b;
+  --badge-discuss-bg: #fef9c3;
+  --badge-discuss-fg: #854d0e;
+  --danger-border-soft: rgb(254 202 202);
+  --danger-surface-soft: rgb(254 242 242);
+  --status-tried-bg: #dbeafe;
+  --status-tried-fg: #1e40af;
+  --status-shortlist-bg: #ccfbf1;
+  --status-shortlist-fg: #115e59;
+  --status-selected-bg: #dcfce7;
+  --status-selected-fg: #166534;
+  --status-rejected-bg: #fee2e2;
+  --status-rejected-fg: #991b1b;
+  --shadow-card: 0 8px 24px rgb(15 23 42 / 0.06);
   --radius: 10px;
   /* Cible tactile minimale (~44px) — mobile first / PWA */
   --touch-target: 2.75rem;
@@ -651,7 +670,7 @@ a.app-profile-chip-action {
   border-radius: var(--radius);
   padding: 0.875rem 1rem;
   margin-bottom: 1rem;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .row {
@@ -689,7 +708,7 @@ select {
   padding: 0.6rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--input-bg);
   /* ≥16px évite le zoom automatique iOS au focus (PWA) */
   font-size: 1rem;
 }
@@ -725,7 +744,7 @@ button,
 
 button.secondary,
 .btn.secondary {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   border-color: var(--border);
   font-size: 1rem;
@@ -762,7 +781,7 @@ button.icon-action-btn--primary:hover:not(:disabled) {
 }
 
 button.icon-action-btn--secondary {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   border-color: var(--border);
 }
@@ -773,13 +792,13 @@ button.icon-action-btn--secondary:hover:not(:disabled) {
 }
 
 button.icon-action-btn--danger {
-  background: #fff;
+  background: var(--surface);
   color: var(--danger);
-  border-color: rgb(254 202 202);
+  border-color: var(--danger-border-soft);
 }
 
 button.icon-action-btn--danger:hover:not(:disabled) {
-  background: rgb(254 242 242);
+  background: var(--danger-surface-soft);
   border-color: var(--danger);
 }
 
@@ -791,11 +810,11 @@ button.icon-action-btn--danger:hover:not(:disabled) {
 
 [data-theme='dark'] button.icon-action-btn--danger {
   background: var(--surface);
-  border-color: rgb(127 29 29 / 0.45);
+  border-color: var(--danger-border-soft);
 }
 
 [data-theme='dark'] button.icon-action-btn--danger:hover:not(:disabled) {
-  background: rgb(127 29 29 / 0.22);
+  background: var(--danger-surface-soft);
 }
 
 .icon-action-toolbar {
@@ -845,7 +864,7 @@ button:disabled {
 }
 
 .tabs button {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
   min-height: var(--touch-target);
@@ -879,7 +898,7 @@ td {
 }
 
 th {
-  background: #f1f5f9;
+  background: var(--table-header-bg);
 }
 
 .badge {
@@ -887,17 +906,44 @@ th {
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
   font-size: 0.75rem;
-  background: #e2e8f0;
+  font-weight: 600;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
 }
 
 .badge.mandatory {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--badge-mandatory-bg);
+  color: var(--badge-mandatory-fg);
 }
 
 .badge.discuss {
-  background: #fef9c3;
-  color: #854d0e;
+  background: var(--badge-discuss-bg);
+  color: var(--badge-discuss-fg);
+}
+
+.candidate-status-badge--to_see {
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+}
+
+.candidate-status-badge--tried {
+  background: var(--status-tried-bg);
+  color: var(--status-tried-fg);
+}
+
+.candidate-status-badge--shortlist {
+  background: var(--status-shortlist-bg);
+  color: var(--status-shortlist-fg);
+}
+
+.candidate-status-badge--selected {
+  background: var(--status-selected-bg);
+  color: var(--status-selected-fg);
+}
+
+.candidate-status-badge--rejected {
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-fg);
 }
 
 [data-theme='dark'] {
@@ -910,6 +956,25 @@ th {
   --primary: #2dd4bf;
   --primary-contrast: #042f2e;
   --danger: #f87171;
+  --input-bg: var(--surface);
+  --table-header-bg: #334155;
+  --badge-bg: #475569;
+  --badge-fg: #f1f5f9;
+  --badge-mandatory-bg: rgb(127 29 29 / 0.38);
+  --badge-mandatory-fg: #fecaca;
+  --badge-discuss-bg: rgb(113 63 18 / 0.45);
+  --badge-discuss-fg: #fde68a;
+  --danger-border-soft: rgb(248 113 113 / 0.4);
+  --danger-surface-soft: rgb(127 29 29 / 0.25);
+  --status-tried-bg: rgb(30 64 175 / 0.45);
+  --status-tried-fg: #bfdbfe;
+  --status-shortlist-bg: rgb(15 118 110 / 0.38);
+  --status-shortlist-fg: #99f6e4;
+  --status-selected-bg: rgb(22 101 52 / 0.42);
+  --status-selected-fg: #bbf7d0;
+  --status-rejected-bg: rgb(127 29 29 / 0.38);
+  --status-rejected-fg: #fecaca;
+  --shadow-card: 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
 [data-theme='dark'] .app-topbar {
@@ -934,10 +999,6 @@ th {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border);
-}
-
-[data-theme='dark'] th {
-  background: #334155;
 }
 
 .trust-banner {
