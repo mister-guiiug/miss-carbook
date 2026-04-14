@@ -16,6 +16,13 @@ import { uploadCandidateImage, signedUrlForPath } from '../../lib/storageUpload'
 import { renderMentions } from '../../lib/renderMentions'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import type { CandidateStatus, Json } from '../../types/database'
+import {
+  IconActionButton,
+  IconChevronDown,
+  IconChevronUp,
+  IconDuplicate,
+  IconSend,
+} from '../ui/IconActionButton'
 
 type CandidateRow = {
   id: string
@@ -296,17 +303,21 @@ export function CandidatesTab({
             {c.price != null ? ` · ${c.price} €` : ''}
           </div>
         </div>
-        <div className="candidate-card-toolbar row">
-          <button type="button" className="secondary" onClick={() => void duplicateOne(c)}>
-            Dupliquer
-          </button>
-          <button
-            type="button"
-            className="secondary"
+        <div className="candidate-card-toolbar row icon-action-toolbar">
+          <IconActionButton
+            variant="secondary"
+            label="Dupliquer ce modèle"
+            onClick={() => void duplicateOne(c)}
+          >
+            <IconDuplicate />
+          </IconActionButton>
+          <IconActionButton
+            variant="secondary"
+            label={open === c.id ? 'Fermer le détail' : 'Afficher le détail'}
             onClick={() => setOpen(open === c.id ? null : c.id)}
           >
-            {open === c.id ? 'Fermer' : 'Détail'}
-          </button>
+            {open === c.id ? <IconChevronUp /> : <IconChevronDown />}
+          </IconActionButton>
         </div>
       </div>
       {open === c.id ? (
@@ -993,13 +1004,19 @@ function CandidateDetail({
           ))}
         </ul>
         {canWrite ? (
-          <form onSubmit={sendComment} className="row">
+          <form onSubmit={sendComment} className="row icon-action-toolbar" style={{ alignItems: 'center' }}>
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               style={{ flex: 1 }}
             />
-            <button type="submit">Envoyer</button>
+            <IconActionButton
+              nativeType="submit"
+              variant="primary"
+              label="Envoyer le commentaire"
+            >
+              <IconSend />
+            </IconActionButton>
           </form>
         ) : null}
       </div>

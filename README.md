@@ -1,16 +1,77 @@
 # Miss Carbook
 
-Application **PWA** (React, Vite, TypeScript) pour collaborer sur le choix d’un véhicule : dossiers partagés, exigences, modèles candidats, comparaison multi-critères, photos (Supabase Storage), journal d’activité et commentaires en temps réel. Le front est **100 % statique** et peut être servi sur **GitHub Pages** ; la collaboration passe par **Supabase** (Auth, Postgres, Realtime, Storage) avec **RLS** obligatoire et **clé anon** uniquement côté client.
+**Choisir un véhicule à plusieurs, sans se perdre dans les tableaux et les messages.**
+
+Miss Carbook est un espace de travail partagé pour les personnes (famille, amis, collègues) qui veulent **structurer** leur décision d’achat ou de location : exigences communes, modèles à l’étude, comparaison équitable, avis et photos au même endroit — avec une **trace claire** de ce qui s’est dit et décidé.
+
+---
+
+## À qui s’adresse l’outil ?
+
+- **Couples ou familles** qui veulent aligner leurs critères (budget, sécurité, place, consommation…) avant d’aller en concession.
+- **Petits groupes** (amis, colocation) qui partagent un véhicule ou en choisissent un ensemble.
+- Toute situation où **plusieurs avis** doivent coexister sans noyer la discussion dans un fil de messages.
+
+---
+
+## Ce que vous y faites concrètement
+
+1. **Ouvrir un dossier** pour un projet véhicule (ex. « Deuxième voiture 2026 »).
+2. **Inviter** les autres avec un code ou un lien : chacun rejoint avec son e-mail, sans installation.
+3. **Lister ce qui compte vraiment** : vos exigences, avec des niveaux d’importance pour ne pas tout mettre au même plan.
+4. **Ajouter les modèles** que vous envisagez : fiche synthétique, photos, commentaires.
+5. **Comparer** plusieurs véhicules sur les critères qui vous importent, puis **exporter** la synthèse pour discussion hors ligne ou archivage.
+6. **Voir l’activité** du dossier : qui a ajouté quoi, quand — pour reprendre la discussion sans relire 200 messages.
+
+En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitrage, au lieu d’éparpiller notes, photos et liens.
+
+---
+
+## Principes d’usage
+
+- **Collaboration en direct** : les mises à jour et commentaires se synchronisent entre participants.
+- **Transparence** : exigences, candidats et échanges restent visibles pour les membres du dossier.
+- **Décision progressive** : vous pouvez faire évoluer les poids, les avis (par ex. ce qui est indispensable vs. souhaitable) et la short-list au fil des échanges.
+
+---
+
+## Guide rapide
+
+1. **Créer un dossier** depuis l’accueil (après connexion par e-mail) : nom, description éventuelle.
+2. **Inviter** depuis les paramètres du dossier : partager le **code** ou le **lien** ; les invités utilisent « Rejoindre avec un code ».
+3. **Exigences** : ajouter, filtrer par niveau, ajuster l’ordre d’importance.
+4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
+5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
+
+---
+
+## Limites à avoir en tête
+
+- L’outil est pensé pour **aider à la décision** entre personnes informées ; il ne remplace pas un essai routier, une expertise mécanique ou des conseils professionnels.
+- Hébergement type **site web classique** : ne placez pas d’informations hautement sensibles (données bancaires, pièces d’identité, etc.) dans les dossiers.
+
+---
+
+## Licence
+
+Voir le fichier `LICENSE` du dépôt.
+
+---
+
+<details>
+<summary><strong>Pour les développeurs (installation, base de données, déploiement)</strong></summary>
+
+Application **PWA** (React, Vite, TypeScript) ; front statique compatible **GitHub Pages** ; collaboration via **Supabase** (Auth, Postgres, Realtime, Storage) avec RLS et clé **anon** côté client uniquement.
 
 Référence déploiement Pages via Actions : [Configurer une source de publication GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow).
 
-## Prérequis
+### Prérequis
 
 - Node.js 22+ (voir `.github/workflows`)
 - Un projet Supabase (plan Free acceptable)
 - Compte GitHub (Pages + Actions)
 
-## Démarrage local
+### Démarrage local
 
 ```bash
 npm install
@@ -26,7 +87,7 @@ Scripts utiles :
 - `npm run lint` / `npm run format`
 - `npm run test` — tests Vitest (schémas Zod)
 
-## Variables d’environnement (front)
+### Variables d’environnement (front)
 
 | Variable                 | Description                                                   |
 | ------------------------ | ------------------------------------------------------------- |
@@ -36,9 +97,9 @@ Scripts utiles :
 
 **Ne jamais** exposer la clé `service_role` ni d’autres secrets dans le dépôt ou le bundle.
 
-## Configuration Supabase
+### Configuration Supabase
 
-### 1. Auth (e-mail uniquement)
+#### 1. Auth (e-mail uniquement)
 
 Dans **Authentication → Providers** :
 
@@ -47,7 +108,7 @@ Dans **Authentication → Providers** :
 
 Dans **Authentication → URL Configuration**, renseigner **Site URL** et **Redirect URLs** pour votre déploiement (ex. `https://<user>.github.io/<repo>/` et variantes avec / sans slash final, plus `http://localhost:5173/` en local).
 
-### 2. Schéma SQL
+#### 2. Schéma SQL
 
 Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https://supabase.com/docs/guides/cli)) :
 
@@ -65,11 +126,11 @@ Sans l’étape 3, l’application affichera des erreurs API sur les onglets Par
 
 **CI / `supabase db push`** : les fichiers du dossier `supabase/migrations/` sont rédigés pour être **ré-appliquables** si la base a déjà été créée via le SQL Editor (types / tables / policies déjà présents). Si le schéma distant est à jour mais que l’historique `supabase_migrations` ne l’est pas, on peut aussi marquer des versions comme déjà appliquées sans les ré-exécuter : `supabase migration repair --status applied <version>` (voir la doc CLI).
 
-### 3. Realtime
+#### 3. Realtime
 
 Les tables `notes`, `candidates`, `comments`, `activity_log`, `candidate_reviews` sont ajoutées à `supabase_realtime`. La migration fonctionnelle ajoute notamment `requirement_candidate_evaluations` (et d’autres selon le fichier). Vérifier dans le tableau de bord que la réplication est active si besoin.
 
-### 4. Exemples de requêtes (client)
+#### 4. Exemples de requêtes (client)
 
 ```ts
 // Liste des dossiers où l’utilisateur est membre
@@ -84,7 +145,7 @@ const { data: wsId, error } = await supabase.rpc('join_workspace', { p_code: 'AB
 
 Chemins Storage conseillés : `{workspace_id}/{candidate_id}/{uuid}-{nomfichier}`.
 
-## Déploiement GitHub Pages
+### Déploiement GitHub Pages
 
 1. **Réglages du dépôt** → **Pages** → Source : **GitHub Actions**.
 2. Ajouter les secrets du dépôt : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
@@ -92,34 +153,20 @@ Chemins Storage conseillés : `{workspace_id}/{candidate_id}/{uuid}-{nomfichier}
 
 Site utilisateur `https://<user>.github.io` à la racine : adapter le workflow (par ex. `VITE_BASE_PATH: /`) et la config du dépôt Pages.
 
-## PWA & cache
+### PWA & cache
 
 - **Manifest** et **icônes** : générés par `vite-plugin-pwa` (voir `vite.config.ts`).
 - **Service worker** : Workbox en mode `generateSW`, précache de l’app shell.
 - **API Supabase** : stratégie **NetworkFirst** (documentée dans `vite.config.ts` — délai réseau puis cache).
 - **Page offline** : `public/offline.html` (incluse dans les assets) ; la coque peut s’afficher hors ligne, les données live nécessitent le réseau.
 
-## Alternative backend gratuite
+### Alternative backend gratuite
 
 Si Supabase n’est pas disponible : **Firebase** (plan Spark) peut remplacer Auth + Firestore/Storage + règles de sécurité analogues ; ce dépôt ne l’intègre pas par défaut.
 
-## Guide utilisateur (court)
+### Dépannage
 
-1. **Créer un dossier** : écran de bienvenue → e-mail → lien magique → accueil → « Créer un dossier » (nom, description, option remplacement). Ajuster le pseudo si besoin.
-2. **Inviter** : onglet **Paramètres** → copier le **code** ou le **lien** ; les invités utilisent « Rejoindre avec un code ».
-3. **Exigences** : onglet **Exigences** → ajouter, filtrer par niveau, tri par poids.
-4. **Modèles** : onglet **Modèles** → ajouter un candidat, ouvrir le détail pour fiche technique (JSON structuré), avis, commentaires, photos.
-5. **Comparer** : onglet **Comparer** → cocher des modèles et critères → export JSON/CSV.
-6. **Photos** : dans le détail d’un modèle, upload (limite **5 Mo** côté client et bucket).
-
-## Limites & bonnes pratiques
-
-- GitHub Pages : pas de traitement serveur, pas de données hautement sensibles (CGU GitHub).
-- La sécurité repose sur **RLS** et sur la **clé anon** ; ne pas désactiver RLS en production.
-
-## Dépannage
-
-### Création de dossier en **403** / erreur **`42501`**
+#### Création de dossier en **403** / erreur **`42501`**
 
 **Message** `new row violates row-level security policy for table "workspaces"` : la policy `workspaces_insert_auth` exige `auth.uid() IS NOT NULL` et `created_by = auth.uid()`. Si la requête part **sans JWT utilisateur** (session expirée, mauvaise clé, onglet privé qui bloque le stockage de session), `auth.uid()` est nul et l’INSERT est refusé.
 
@@ -129,6 +176,4 @@ Si Supabase n’est pas disponible : **Firebase** (plan Spark) peut remplacer Au
 
 **Correctif membres** : exécuter `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` si ce n’est pas déjà fait.
 
-## Licence
-
-Voir le fichier `LICENSE` du dépôt.
+</details>

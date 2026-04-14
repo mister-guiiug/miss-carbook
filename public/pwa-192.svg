@@ -1,4 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="28" fill="#0f766e"/>
-  <path fill="#ecfdf5" d="M36 120h120v12H36v-12zm12-48 18-24h60l18 24v36H48V72zm24 0h48v-12H72v12z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="192" height="192" fill="none">
+  <defs>
+    <linearGradient id="mcb192" x1="4" y1="2" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f766e"/>
+      <stop offset="0.5" stop-color="#0d9488"/>
+      <stop offset="1" stop-color="#0891b2"/>
+    </linearGradient>
+    <linearGradient id="mcb192-hi" x1="16" y1="0" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#mcb192)"/>
+  <rect width="32" height="32" rx="8" fill="url(#mcb192-hi)"/>
+  <path
+    d="M7.5 8.5C7.5 7.67 8.17 7 9 7h3.1l1.25 1.4H21c.83 0 1.5.67 1.5 1.5V11H7.5V8.5Z"
+    fill="#ffffff"
+    fill-opacity="0.14"
+  />
+  <path
+    d="M7 11.5c0-.83.67-1.5 1.5-1.5h4.4l.95 1H21c.83 0 1.5.67 1.5 1.5v2.5H7v-3.5Z"
+    fill="#ffffff"
+    fill-opacity="0.1"
+  />
+  <rect x="5" y="18" width="2.85" height="9" rx="1.3" fill="#ecfdf5"/>
+  <rect x="8.85" y="14" width="2.85" height="13" rx="1.3" fill="#f0fdfa"/>
+  <rect x="12.7" y="16" width="2.85" height="11" rx="1.3" fill="#ccfbf1"/>
+  <circle cx="24.4" cy="8.6" r="1.55" fill="#99f6e4" fill-opacity="0.95"/>
+  <circle cx="27.5" cy="11.5" r="1.35" fill="#ccfbf1" fill-opacity="0.85"/>
+  <path
+    d="M25.5 10c.7.42 1.25.98 1.65 1.65"
+    stroke="#ecfeff"
+    stroke-opacity="0.55"
+    stroke-width="1.05"
+    stroke-linecap="round"
+  />
+  <path
+    fill="#f8fafc"
+    d="M15.6 18.35h10.2c.72 0 1.32.52 1.42 1.22l.32 1.65v2.05c0 .38-.3.68-.68.68h-.62a1.55 1.55 0 0 1-3.1 0h-3.1a1.55 1.55 0 0 1-3.1 0h-.52c-.38 0-.68-.3-.68-.68v-2.72c0-.78.48-1.48 1.22-1.72l.62-.2Z"
+  />
+  <path
+    fill="#ecfdf5"
+    d="M17 15.4h7.8c.42 0 .8.26.98.65l1.05 2.05H15l1.05-2.05c.18-.39.56-.65.98-.65Z"
+  />
+  <rect x="19.15" y="16.05" width="2.65" height="2.15" rx="0.45" fill="#0f766e" fill-opacity="0.28"/>
+  <rect x="22.25" y="16.05" width="2.65" height="2.15" rx="0.45" fill="#0f766e" fill-opacity="0.2"/>
+  <circle cx="19.1" cy="24.35" r="1.45" fill="#134e4a"/>
+  <circle cx="25.9" cy="24.35" r="1.45" fill="#134e4a"/>
+  <circle cx="19.1" cy="24.35" r="0.5" fill="#5eead4" fill-opacity="0.5"/>
+  <circle cx="25.9" cy="24.35" r="0.5" fill="#5eead4" fill-opacity="0.5"/>
 </svg>

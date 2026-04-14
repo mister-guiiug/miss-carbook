@@ -260,63 +260,104 @@ export function TopBar() {
               <div ref={mobileAccountRef} className="app-topbar-mobile-account">
                 <button
                   type="button"
-                  className="app-topbar-avatar-only-btn"
+                  className={`app-topbar-avatar-only-btn${mobileAccountOpen ? ' app-topbar-avatar-only-btn--open' : ''}`}
                   aria-expanded={mobileAccountOpen}
                   aria-haspopup="menu"
                   aria-controls="topbar-account-flyout"
                   aria-label={`Menu compte — ${label}`}
-                  title={`${label} — menu compte`}
+                  title={`${label} — ouvrir le menu compte`}
                   onClick={() => setMobileAccountOpen((o) => !o)}
                 >
-                  <span className="app-profile-avatar" aria-hidden="true">
+                  <span
+                    className="app-profile-avatar app-topbar-avatar-trigger-disc"
+                    aria-hidden="true"
+                  >
                     {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
+                  </span>
+                  <span className="app-topbar-avatar-chevron" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 9l6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </span>
                 </button>
                 {mobileAccountOpen ? (
                   <nav
                     id="topbar-account-flyout"
-                    className="app-topbar-account-flyout"
+                    className="app-topbar-account-flyout chrome-menu-panel"
                     role="menu"
                     aria-label="Compte"
                   >
                     <div className="app-topbar-flyout-meta">
-                      <span className="app-topbar-flyout-name">{label}</span>
-                      <span
-                        className={`online-dot ${online ? 'on' : 'off'}`}
+                      <div className="app-topbar-flyout-ident">
+                        <span className="app-topbar-flyout-name">{label}</span>
+                        <span className="app-topbar-flyout-hint muted">
+                          Compte sur cet appareil
+                        </span>
+                      </div>
+                      <div
+                        className="app-topbar-flyout-online"
                         title={online ? 'En ligne' : 'Hors ligne'}
-                        aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
-                      />
+                      >
+                        <span
+                          className={`online-dot ${online ? 'on' : 'off'}`}
+                          aria-hidden="true"
+                        />
+                        <span className="app-topbar-flyout-online-txt">
+                          {online ? 'En ligne' : 'Hors ligne'}
+                        </span>
+                      </div>
                     </div>
-                    <Link
-                      role="menuitem"
-                      to="/parametres"
-                      className="app-topbar-submenu-item"
-                      onClick={closeMobileAccount}
-                    >
-                      Options générales
-                    </Link>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="app-topbar-submenu-item"
-                      onClick={() => {
-                        toggle()
-                        closeMobileAccount()
-                      }}
-                    >
-                      {modeSubmenuLabel}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="app-topbar-submenu-item app-topbar-submenu-item--danger"
-                      onClick={() => {
-                        closeMobileAccount()
-                        signOut()
-                      }}
-                    >
-                      Déconnexion
-                    </button>
+                    <div className="app-topbar-flyout-list">
+                      <Link
+                        role="menuitem"
+                        to="/parametres"
+                        className="app-topbar-flyout-row"
+                        onClick={closeMobileAccount}
+                      >
+                        <span className="app-topbar-flyout-ic" aria-hidden="true">
+                          <IconGear className="app-topbar-flyout-svg" />
+                        </span>
+                        <span className="app-topbar-flyout-txt">Options générales</span>
+                      </Link>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="app-topbar-flyout-row"
+                        onClick={() => {
+                          toggle()
+                          closeMobileAccount()
+                        }}
+                      >
+                        <span className="app-topbar-flyout-ic" aria-hidden="true">
+                          {mode === 'dark' ? (
+                            <IconSun className="app-topbar-flyout-svg" />
+                          ) : (
+                            <IconMoon className="app-topbar-flyout-svg" />
+                          )}
+                        </span>
+                        <span className="app-topbar-flyout-txt">{modeSubmenuLabel}</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="app-topbar-flyout-row app-topbar-flyout-row--danger"
+                        onClick={() => {
+                          closeMobileAccount()
+                          signOut()
+                        }}
+                      >
+                        <span className="app-topbar-flyout-ic" aria-hidden="true">
+                          <IconLogOut className="app-topbar-flyout-svg" />
+                        </span>
+                        <span className="app-topbar-flyout-txt">Déconnexion</span>
+                      </button>
+                    </div>
                   </nav>
                 ) : null}
               </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { IconActionButton, IconArchiveDown } from '../ui/IconActionButton'
 
 const EXPORT_VERSION = '2'
 
@@ -119,9 +120,14 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
 
   return (
     <div className="stack">
-      <button type="button" className="secondary" disabled={busy} onClick={() => void run()}>
-        {busy ? 'Export…' : 'Exporter le dossier (ZIP JSON)'}
-      </button>
+      <IconActionButton
+        variant="secondary"
+        label={busy ? 'Export du dossier en cours…' : 'Exporter le dossier (archive ZIP JSON)'}
+        disabled={busy}
+        onClick={() => void run()}
+      >
+        <IconArchiveDown />
+      </IconActionButton>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
         Archive locale : données du dossier (exigences, modèles, matrice, votes, rappels,
         invitations, membres, presets, véhicule actuel, commentaires, avis, métadonnées des pièces

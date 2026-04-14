@@ -9,6 +9,13 @@ import { requirementSchema } from '../../lib/validation/schemas'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
+import {
+  IconActionButton,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from '../ui/IconActionButton'
 
 type Req = {
   id: string
@@ -250,9 +257,9 @@ export function RequirementsTab({
       </div>
 
       {canWrite && rows.length > 0 && !showAddForm ? (
-        <button type="button" className="secondary" onClick={() => setShowAddForm(true)}>
-          + Ajouter une exigence
-        </button>
+        <IconActionButton variant="secondary" label="Ajouter une exigence" onClick={() => setShowAddForm(true)}>
+          <IconPlus />
+        </IconActionButton>
       ) : null}
 
       {canWrite && showAddForm ? (
@@ -260,9 +267,13 @@ export function RequirementsTab({
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0 }}>Nouvelle exigence</h3>
             {rows.length > 0 ? (
-              <button type="button" className="secondary" onClick={() => setShowAddForm(false)}>
-                Fermer
-              </button>
+              <IconActionButton
+                variant="secondary"
+                label="Fermer le formulaire d’ajout"
+                onClick={() => setShowAddForm(false)}
+              >
+                <IconX />
+              </IconActionButton>
             ) : null}
           </div>
           <div>
@@ -414,18 +425,18 @@ export function RequirementsTab({
                         onChange={(e) => setEditTags(e.target.value)}
                       />
                     </div>
-                    <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
                       <button type="submit" disabled={editBusy}>
                         {editBusy ? 'Enregistrement…' : 'Enregistrer'}
                       </button>
-                      <button
-                        type="button"
-                        className="secondary"
+                      <IconActionButton
+                        variant="secondary"
+                        label="Annuler la modification"
                         onClick={cancelEdit}
                         disabled={editBusy}
                       >
-                        Annuler
-                      </button>
+                        <IconX />
+                      </IconActionButton>
                     </div>
                   </form>
                 ) : (
@@ -460,16 +471,20 @@ export function RequirementsTab({
                     </div>
                     {canWrite ? (
                       <div className="requirement-card-actions">
-                        <button type="button" onClick={() => startEdit(r)}>
-                          Modifier
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
+                        <IconActionButton
+                          variant="primary"
+                          label={`Modifier l’exigence « ${r.label} »`}
+                          onClick={() => startEdit(r)}
+                        >
+                          <IconPencil />
+                        </IconActionButton>
+                        <IconActionButton
+                          variant="danger"
+                          label={`Supprimer l’exigence « ${r.label} »`}
                           onClick={() => void remove(r.id)}
                         >
-                          Supprimer
-                        </button>
+                          <IconTrash />
+                        </IconActionButton>
                       </div>
                     ) : null}
                   </div>

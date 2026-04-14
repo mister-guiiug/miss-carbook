@@ -8,6 +8,17 @@ import type { Database } from '../../types/database'
 import { ExportWorkspaceButton } from './ExportWorkspaceButton'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
+import {
+  IconActionButton,
+  IconBan,
+  IconCopy,
+  IconEye,
+  IconLogOut,
+  IconPencil,
+  IconPlus,
+  IconShield,
+  IconUserMinus,
+} from '../ui/IconActionButton'
 
 type Ws = Database['public']['Tables']['workspaces']['Row']
 
@@ -405,9 +416,9 @@ export function SettingsTab({
         <p className="muted" style={{ wordBreak: 'break-all' }}>
           Lien d’invitation&nbsp;: {inviteUrl}
         </p>
-        <button type="button" className="secondary" onClick={() => void copy()}>
-          Copier le lien
-        </button>
+        <IconActionButton variant="secondary" label="Copier le lien d’invitation" onClick={() => void copy()}>
+          <IconCopy />
+        </IconActionButton>
       </div>
 
       {isAdmin ? (
@@ -434,9 +445,13 @@ export function SettingsTab({
               style={{ width: '5rem' }}
             />
             <span className="muted">jours</span>
-            <button type="button" onClick={() => void createInvite()}>
-              Créer invitation
-            </button>
+            <IconActionButton
+              variant="primary"
+              label="Créer une invitation avec rôle et expiration"
+              onClick={() => void createInvite()}
+            >
+              <IconPlus />
+            </IconActionButton>
           </div>
           {lastToken ? (
             <p className="muted" style={{ wordBreak: 'break-all' }}>
@@ -451,13 +466,13 @@ export function SettingsTab({
                 {new Date(i.expires_at).toLocaleDateString('fr-FR')}
                 {i.used_at ? ' — utilisée' : ''}
                 {!i.used_at ? (
-                  <button
-                    type="button"
-                    className="secondary"
+                  <IconActionButton
+                    variant="danger"
+                    label={`Révoquer l’invitation ${i.token.slice(0, 8)}…`}
                     onClick={() => void revokeInvite(i.id)}
                   >
-                    Révoquer
-                  </button>
+                    <IconBan />
+                  </IconActionButton>
                 ) : null}
               </li>
             ))}
@@ -473,35 +488,45 @@ export function SettingsTab({
               <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong> — {m.role}
               {isAdmin && m.user_id !== userId ? (
                 <>
-                  <span className="row" style={{ marginLeft: '0.5rem', gap: '0.35rem' }}>
-                    {(['read', 'write', 'admin'] as const).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        className="secondary"
-                        style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
-                        onClick={() => void setRole(m.user_id, r)}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                  <span className="row icon-action-toolbar" style={{ marginLeft: '0.5rem' }}>
+                    <IconActionButton
+                      variant="secondary"
+                      label={`Attribuer le rôle lecture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                      onClick={() => void setRole(m.user_id, 'read')}
+                    >
+                      <IconEye />
+                    </IconActionButton>
+                    <IconActionButton
+                      variant="secondary"
+                      label={`Attribuer le rôle écriture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                      onClick={() => void setRole(m.user_id, 'write')}
+                    >
+                      <IconPencil />
+                    </IconActionButton>
+                    <IconActionButton
+                      variant="secondary"
+                      label={`Attribuer le rôle administrateur à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                      onClick={() => void setRole(m.user_id, 'admin')}
+                    >
+                      <IconShield />
+                    </IconActionButton>
                   </span>
-                  <button
-                    type="button"
-                    className="secondary"
+                  <IconActionButton
+                    variant="danger"
+                    label={`Retirer ${m.display_name ?? m.user_id.slice(0, 8)} du dossier`}
                     style={{ marginLeft: '0.5rem' }}
                     onClick={() => void removeMember(m.user_id)}
                   >
-                    Retirer
-                  </button>
+                    <IconUserMinus />
+                  </IconActionButton>
                 </>
               ) : null}
             </li>
           ))}
         </ul>
-        <button type="button" className="secondary" onClick={() => void leave()}>
-          Quitter ce dossier
-        </button>
+        <IconActionButton variant="secondary" label="Quitter ce dossier" onClick={() => void leave()}>
+          <IconLogOut />
+        </IconActionButton>
       </div>
 
       <div className="card stack" style={{ boxShadow: 'none' }}>

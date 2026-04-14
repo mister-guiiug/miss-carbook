@@ -8,6 +8,12 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
+import {
+  IconActionButton,
+  IconCheck,
+  IconRotateCcw,
+  IconTrash,
+} from '../ui/IconActionButton'
 
 type Row = {
   id: string
@@ -183,15 +189,23 @@ export function RemindersTab({
                   ) : null}
                   {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
                 </div>
-                <div className="row">
+                <div className="row icon-action-toolbar">
                   {canWrite ? (
                     <>
-                      <button type="button" className="secondary" onClick={() => void toggle(r)}>
-                        {r.done ? 'Rouvrir' : 'Fait'}
-                      </button>
-                      <button type="button" className="secondary" onClick={() => void remove(r.id)}>
-                        Supprimer
-                      </button>
+                      <IconActionButton
+                        variant="secondary"
+                        label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
+                        onClick={() => void toggle(r)}
+                      >
+                        {r.done ? <IconRotateCcw /> : <IconCheck />}
+                      </IconActionButton>
+                      <IconActionButton
+                        variant="danger"
+                        label="Supprimer ce rappel"
+                        onClick={() => void remove(r.id)}
+                      >
+                        <IconTrash />
+                      </IconActionButton>
                     </>
                   ) : null}
                 </div>
