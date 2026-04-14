@@ -27,7 +27,9 @@ const empty = { data: [] as unknown[], error: null as null }
  * Charge tout le périmètre exportable d’un dossier + noms d’affichage des profils
  * pour les utilisateurs référencés dans les données.
  */
-export async function fetchWorkspaceExportBundle(workspaceId: string): Promise<WorkspaceExportBundle> {
+export async function fetchWorkspaceExportBundle(
+  workspaceId: string
+): Promise<WorkspaceExportBundle> {
   const [ws, req, cand, notes, act, reminders, invites, members, presets, currVehicle] =
     await Promise.all([
       supabase.from('workspaces').select('*').eq('id', workspaceId).single(),

@@ -9,13 +9,7 @@ import { requirementSchema } from '../../lib/validation/schemas'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
-import {
-  IconActionButton,
-  IconPencil,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from '../ui/IconActionButton'
+import { IconActionButton, IconPencil, IconPlus, IconTrash, IconX } from '../ui/IconActionButton'
 
 type Req = {
   id: string
@@ -257,7 +251,11 @@ export function RequirementsTab({
       </div>
 
       {canWrite && rows.length > 0 && !showAddForm ? (
-        <IconActionButton variant="secondary" label="Ajouter une exigence" onClick={() => setShowAddForm(true)}>
+        <IconActionButton
+          variant="secondary"
+          label="Ajouter une exigence"
+          onClick={() => setShowAddForm(true)}
+        >
           <IconPlus />
         </IconActionButton>
       ) : null}

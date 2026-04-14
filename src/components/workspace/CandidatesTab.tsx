@@ -1004,17 +1004,17 @@ function CandidateDetail({
           ))}
         </ul>
         {canWrite ? (
-          <form onSubmit={sendComment} className="row icon-action-toolbar" style={{ alignItems: 'center' }}>
+          <form
+            onSubmit={sendComment}
+            className="row icon-action-toolbar"
+            style={{ alignItems: 'center' }}
+          >
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               style={{ flex: 1 }}
             />
-            <IconActionButton
-              nativeType="submit"
-              variant="primary"
-              label="Envoyer le commentaire"
-            >
+            <IconActionButton nativeType="submit" variant="primary" label="Envoyer le commentaire">
               <IconSend />
             </IconActionButton>
           </form>

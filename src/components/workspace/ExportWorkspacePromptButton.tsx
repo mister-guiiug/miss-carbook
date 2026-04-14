@@ -35,9 +35,7 @@ export function ExportWorkspacePromptButton({ workspaceId }: { workspaceId: stri
       <IconActionButton
         variant="secondary"
         label={
-          busy
-            ? 'Préparation du fichier pour l’IA…'
-            : 'Exporter le contexte pour une IA (Markdown)'
+          busy ? 'Préparation du fichier pour l’IA…' : 'Exporter le contexte pour une IA (Markdown)'
         }
         disabled={busy}
         onClick={() => void run()}
@@ -45,9 +43,9 @@ export function ExportWorkspacePromptButton({ workspaceId }: { workspaceId: stri
         <IconPromptFile />
       </IconActionButton>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-        Un seul fichier <strong>.md</strong> : exigences, modèles, matrice, votes, avis, commentaires,
-        bloc-notes, rappels, journal (extrait), sans jetons d’invitation ni code de partage. Vérifiez
-        ce que vous collez dans des services tiers.
+        Un seul fichier <strong>.md</strong> : exigences, modèles, matrice, votes, avis,
+        commentaires, bloc-notes, rappels, journal (extrait), sans jetons d’invitation ni code de
+        partage. Vérifiez ce que vous collez dans des services tiers.
       </p>
     </div>
   )

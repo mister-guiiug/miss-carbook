@@ -8,12 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
-import {
-  IconActionButton,
-  IconCheck,
-  IconRotateCcw,
-  IconTrash,
-} from '../ui/IconActionButton'
+import { IconActionButton, IconCheck, IconRotateCcw, IconTrash } from '../ui/IconActionButton'
 
 type Row = {
   id: string

@@ -46,7 +46,10 @@ function isoDate(s: unknown): string {
   }
 }
 
-function userLabel(profileNames: Record<string, string>, userId: string | null | undefined): string {
+function userLabel(
+  profileNames: Record<string, string>,
+  userId: string | null | undefined
+): string {
   if (!userId) return '—'
   return profileNames[userId] ?? `Utilisateur ${userId.slice(0, 8)}…`
 }
@@ -90,7 +93,11 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
   push(
     `# Contexte dossier véhicule — ${name}`,
     '',
-    '> **Export Miss Carbook (mode prompt)** — généré le ' + isoDate(generated) + ' (UTC : ' + generated + ').',
+    '> **Export Miss Carbook (mode prompt)** — généré le ' +
+      isoDate(generated) +
+      ' (UTC : ' +
+      generated +
+      ').',
     '> Les jetons d’invitation, codes de partage et chemins Storage exacts sont **volontairement omis** pour limiter les fuites si vous collez ce texte dans un service tiers.',
     '',
     '## Rôle suggéré pour l’assistant',
@@ -183,7 +190,14 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         Object.entries(s).filter(([k, v]) => !known.has(k) && v != null && v !== '')
       )
       if (Object.keys(rest).length) {
-        push('', '**Autres données techniques (JSON)** :', '', '```json', JSON.stringify(rest, null, 2), '```')
+        push(
+          '',
+          '**Autres données techniques (JSON)** :',
+          '',
+          '```json',
+          JSON.stringify(rest, null, 2),
+          '```'
+        )
       }
     }
   }
@@ -231,7 +245,14 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
       )
       const specs = c.candidate_specs?.specs
       if (specs != null && typeof specs === 'object' && Object.keys(specs as object).length) {
-        push('**Données constructeur (extrait JSON)** :', '', '```json', JSON.stringify(specs, null, 2), '```', '')
+        push(
+          '**Données constructeur (extrait JSON)** :',
+          '',
+          '```json',
+          JSON.stringify(specs, null, 2),
+          '```',
+          ''
+        )
       }
     }
   }
@@ -415,7 +436,9 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
   } else {
     for (const a of actSlice) {
       const meta =
-        a.metadata != null && typeof a.metadata === 'object' && Object.keys(a.metadata as object).length
+        a.metadata != null &&
+        typeof a.metadata === 'object' &&
+        Object.keys(a.metadata as object).length
           ? JSON.stringify(a.metadata)
           : '{}'
       push(
