@@ -336,62 +336,95 @@ export function SettingsTab({
   }
 
   return (
-    <div className="stack settings-tab">
+    <div className="workspace-settings-page stack settings-tab">
       <SettingsScopeBanner workspaceName={workspace.name} />
-      <SettingsWorkspaceMetaCard
-        workspace={workspace}
-        isAdmin={isAdmin}
-        wsName={wsName}
-        setWsName={setWsName}
-        wsDesc={wsDesc}
-        setWsDesc={setWsDesc}
-        busyWorkspaceMeta={busyWorkspaceMeta}
-        onSave={saveWorkspaceMeta}
-      />
-      <SettingsDecisionCard
-        canWrite={canWrite}
-        candidates={candidates}
-        decisionCand={decisionCand}
-        setDecisionCand={setDecisionCand}
-        decisionNotes={decisionNotes}
-        setDecisionNotes={setDecisionNotes}
-        onSave={saveDecision}
-      />
-      <SettingsShareClassicCard workspace={workspace} inviteUrl={inviteUrl} onCopy={copy} />
-      {isAdmin ? (
-        <SettingsInvitesCard
-          origin={origin}
-          base={base}
-          inviteRole={inviteRole}
-          setInviteRole={setInviteRole}
-          inviteDays={inviteDays}
-          setInviteDays={setInviteDays}
-          lastToken={lastToken}
-          invites={invites}
-          onCreateInvite={createInvite}
-          onRevokeInvite={revokeInvite}
-        />
-      ) : null}
-      <SettingsParticipantsCard
-        members={members}
-        isAdmin={isAdmin}
-        userId={userId}
-        onSetRole={setRole}
-        onRemoveMember={removeMember}
-        onLeave={leave}
-      />
-      <SettingsExportCard workspaceId={workspace.id} />
-      {workspace.replacement_enabled ? (
-        <SettingsCurrentVehicleForm
-          canWrite={canWrite}
-          busy={busy}
-          vehicle={vehicle}
-          setVehicle={setVehicle}
-          setVehicleSpecNum={setVehicleSpecNum}
-          setVehicleSpecStr={setVehicleSpecStr}
-          onSubmit={saveVehicle}
-        />
-      ) : null}
+
+      <section
+        className="workspace-settings-section"
+        aria-labelledby="workspace-settings-fiche-heading"
+      >
+        <h2 className="workspace-settings-section-title" id="workspace-settings-fiche-heading">
+          Fiche du dossier
+        </h2>
+        <div className="workspace-settings-section-cards stack">
+          <SettingsWorkspaceMetaCard
+            workspace={workspace}
+            isAdmin={isAdmin}
+            wsName={wsName}
+            setWsName={setWsName}
+            wsDesc={wsDesc}
+            setWsDesc={setWsDesc}
+            busyWorkspaceMeta={busyWorkspaceMeta}
+            onSave={saveWorkspaceMeta}
+          />
+          <SettingsDecisionCard
+            canWrite={canWrite}
+            candidates={candidates}
+            decisionCand={decisionCand}
+            setDecisionCand={setDecisionCand}
+            decisionNotes={decisionNotes}
+            setDecisionNotes={setDecisionNotes}
+            onSave={saveDecision}
+          />
+        </div>
+      </section>
+
+      <section
+        className="workspace-settings-section"
+        aria-labelledby="workspace-settings-partage-heading"
+      >
+        <h2 className="workspace-settings-section-title" id="workspace-settings-partage-heading">
+          Partage et accès
+        </h2>
+        <div className="workspace-settings-section-cards stack">
+          <SettingsShareClassicCard workspace={workspace} inviteUrl={inviteUrl} onCopy={copy} />
+          {isAdmin ? (
+            <SettingsInvitesCard
+              origin={origin}
+              base={base}
+              inviteRole={inviteRole}
+              setInviteRole={setInviteRole}
+              inviteDays={inviteDays}
+              setInviteDays={setInviteDays}
+              lastToken={lastToken}
+              invites={invites}
+              onCreateInvite={createInvite}
+              onRevokeInvite={revokeInvite}
+            />
+          ) : null}
+          <SettingsParticipantsCard
+            members={members}
+            isAdmin={isAdmin}
+            userId={userId}
+            onSetRole={setRole}
+            onRemoveMember={removeMember}
+            onLeave={leave}
+          />
+        </div>
+      </section>
+
+      <section
+        className="workspace-settings-section"
+        aria-labelledby="workspace-settings-donnees-heading"
+      >
+        <h2 className="workspace-settings-section-title" id="workspace-settings-donnees-heading">
+          Données et export
+        </h2>
+        <div className="workspace-settings-section-cards stack">
+          <SettingsExportCard workspaceId={workspace.id} />
+          {workspace.replacement_enabled ? (
+            <SettingsCurrentVehicleForm
+              canWrite={canWrite}
+              busy={busy}
+              vehicle={vehicle}
+              setVehicle={setVehicle}
+              setVehicleSpecNum={setVehicleSpecNum}
+              setVehicleSpecStr={setVehicleSpecStr}
+              onSubmit={saveVehicle}
+            />
+          ) : null}
+        </div>
+      </section>
     </div>
   )
 }
