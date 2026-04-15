@@ -22,8 +22,8 @@ export const WORKSPACE_STRIP_TAB_ORDER = [
   'reminders',
 ] as const satisfies readonly TabId[]
 
-export const WORKSPACE_TABS_STRIP = WORKSPACE_STRIP_TAB_ORDER.map((id) =>
-  WORKSPACE_TABS.find((t) => t.id === id)!
+export const WORKSPACE_TABS_STRIP = WORKSPACE_STRIP_TAB_ORDER.map(
+  (id) => WORKSPACE_TABS.find((t) => t.id === id)!
 )
 
 export const WORKSPACE_SETTINGS_TAB_TITLE =

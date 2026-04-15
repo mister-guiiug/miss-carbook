@@ -277,11 +277,7 @@ export function AccountSettingsPage() {
           <p className="muted settings-hint">
             Thème enregistré localement sur cet appareil (clair ou sombre).
           </p>
-          <div
-            className="settings-theme-row"
-            role="group"
-            aria-label="Choix du thème"
-          >
+          <div className="settings-theme-row" role="group" aria-label="Choix du thème">
             <button
               type="button"
               className={mode === 'light' ? undefined : 'secondary'}
@@ -305,8 +301,8 @@ export function AccountSettingsPage() {
           <div className="settings-subsection">
             <h3 className="settings-subsection-title">Mise à jour</h3>
             <p className="muted settings-hint">
-              Après une mise en ligne du site, rechargez pour bénéficier de la dernière version.
-              Sur navigateur ou PWA, le cache du service worker est réappliqué si nécessaire.
+              Après une mise en ligne du site, rechargez pour bénéficier de la dernière version. Sur
+              navigateur ou PWA, le cache du service worker est réappliqué si nécessaire.
             </p>
             {needRefresh ? (
               <p className="muted settings-hint" role="status">

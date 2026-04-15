@@ -269,11 +269,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         links.length === 0
           ? '—'
           : links
-              .map((l) =>
-                l.label.trim()
-                  ? `${esc(l.label.trim())} (${esc(l.url)})`
-                  : esc(l.url)
-              )
+              .map((l) => (l.label.trim() ? `${esc(l.label.trim())} (${esc(l.url)})` : esc(l.url)))
               .join(' · ')
       push(
         `### ${esc(label)}`,

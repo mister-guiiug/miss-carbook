@@ -367,7 +367,11 @@ export function SettingsTab({
         <h2 className="workspace-settings-page-title" id="workspace-settings-main-heading">
           Réglages du dossier
         </h2>
-        <div className="workspace-settings-tablist" role="tablist" aria-label="Sections des réglages">
+        <div
+          className="workspace-settings-tablist"
+          role="tablist"
+          aria-label="Sections des réglages"
+        >
           {panels.map((p, index) => (
             <button
               key={p.id}

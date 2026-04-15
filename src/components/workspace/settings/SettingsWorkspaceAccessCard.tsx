@@ -45,14 +45,18 @@ export function SettingsWorkspaceAccessCard({
       <div className="settings-access-block stack">
         <h4 className="settings-access-subtitle">Lien permanent</h4>
         <p className="muted settings-access-lead" style={{ margin: 0 }}>
-          Code <code>{workspace.share_code}</code> — tout membre déjà connecté peut rejoindre avec ce
-          lien.
+          Code <code>{workspace.share_code}</code> — tout membre déjà connecté peut rejoindre avec
+          ce lien.
         </p>
         <p className="settings-access-url muted" title={inviteUrl}>
           {inviteUrl}
         </p>
         <div>
-          <IconActionButton variant="secondary" label="Copier le lien" onClick={() => void onCopy()}>
+          <IconActionButton
+            variant="secondary"
+            label="Copier le lien"
+            onClick={() => void onCopy()}
+          >
             <IconCopy />
           </IconActionButton>
         </div>
@@ -76,7 +80,10 @@ export function SettingsWorkspaceAccessCard({
                 <option value="write">Écriture</option>
                 <option value="admin">Admin</option>
               </select>
-              <div className="settings-invite-days row" style={{ alignItems: 'center', gap: '0.35rem' }}>
+              <div
+                className="settings-invite-days row"
+                style={{ alignItems: 'center', gap: '0.35rem' }}
+              >
                 <span className="muted" style={{ fontSize: '0.85rem' }}>
                   Expire dans
                 </span>

@@ -277,11 +277,7 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
     }
   }
 
-  const dragHandlers = (
-    m: Member,
-    ro: { siblingIds: string[] } | undefined,
-    canDrag: boolean
-  ) => ({
+  const dragHandlers = (m: Member, ro: { siblingIds: string[] } | undefined, canDrag: boolean) => ({
     onDragOver:
       canDrag && ro
         ? (e: DragEvent<HTMLDivElement>) => {
@@ -291,14 +287,13 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
             setDragOverId(m.user_id)
           }
         : undefined,
-    onDragLeave:
-      canDrag
-        ? (e: DragEvent<HTMLDivElement>) => {
-            const next = e.relatedTarget as Node | null
-            if (next && e.currentTarget.contains(next)) return
-            setDragOverId((cur) => (cur === m.user_id ? null : cur))
-          }
-        : undefined,
+    onDragLeave: canDrag
+      ? (e: DragEvent<HTMLDivElement>) => {
+          const next = e.relatedTarget as Node | null
+          if (next && e.currentTarget.contains(next)) return
+          setDragOverId((cur) => (cur === m.user_id ? null : cur))
+        }
+      : undefined,
     onDrop:
       canDrag && ro
         ? (e: DragEvent<HTMLDivElement>) => {
@@ -477,10 +472,10 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
   return (
     <div className="stack">
       <p className="muted">
-        Chaque participant a son propre bloc-notes. La vôtre reste <strong>en premier</strong> ;
-        les notes des autres sont affichées <strong>tout de suite</strong> en dessous. Avec
-        l’édition, vous pouvez <strong>réordonner les autres</strong> via la poignée (ordre
-        enregistré sur votre compte).
+        Chaque participant a son propre bloc-notes. La vôtre reste <strong>en premier</strong> ; les
+        notes des autres sont affichées <strong>tout de suite</strong> en dessous. Avec l’édition,
+        vous pouvez <strong>réordonner les autres</strong> via la poignée (ordre enregistré sur
+        votre compte).
       </p>
 
       <div className="stack notepad-tab-layout">
@@ -489,7 +484,9 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
           <div className="notepad-peers-block stack">
             <h3 className="notepad-peers-heading">Autres participants</h3>
             <div className="notepad-peers-list">
-              {orderedOthers.map((m) => renderPeerInline(m, { dragReorder: { siblingIds: otherIds } }))}
+              {orderedOthers.map((m) =>
+                renderPeerInline(m, { dragReorder: { siblingIds: otherIds } })
+              )}
             </div>
           </div>
         ) : null}

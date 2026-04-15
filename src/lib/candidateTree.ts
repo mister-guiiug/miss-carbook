@@ -48,7 +48,9 @@ export function listChildrenOf<T extends CandidateTreeRow>(parentId: string, can
 }
 
 export function listOrphanVariations<T extends CandidateTreeRow>(candidates: T[]): T[] {
-  return candidates.filter((c) => isOrphanVariation(c, candidates)).sort(compareCandidatesSiblingOrder)
+  return candidates
+    .filter((c) => isOrphanVariation(c, candidates))
+    .sort(compareCandidatesSiblingOrder)
 }
 
 export function countVariationsForRoot(rootId: string, candidates: CandidateTreeRow[]): number {
@@ -66,9 +68,7 @@ export function eligibleRootParentsForSelect<T extends CandidateTreeRow>(
   return roots.filter((r) => r.id !== candidateId)
 }
 
-export type ParentAssignmentValidation =
-  | { ok: true }
-  | { ok: false; message: string }
+export type ParentAssignmentValidation = { ok: true } | { ok: false; message: string }
 
 /** Contrôles UI alignés sur le trigger Postgres `candidates_enforce_parent`. */
 export function validateParentAssignment(

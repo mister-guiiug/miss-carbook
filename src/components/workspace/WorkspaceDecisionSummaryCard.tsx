@@ -55,7 +55,7 @@ export function WorkspaceDecisionSummaryCard({
           )}
         </li>
         <li>
-                   <strong>Rappels à faire</strong> :{' '}
+          <strong>Rappels à faire</strong> :{' '}
           {pendingReminders === null ? (
             <span className="muted">…</span>
           ) : (

@@ -3,16 +3,9 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import { logActivity } from '../../lib/activity'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
-import {
-  CANDIDATE_HIERARCHY_HELP_FR,
-  postOrderDeleteIds,
-} from '../../lib/candidateTree'
+import { CANDIDATE_HIERARCHY_HELP_FR, postOrderDeleteIds } from '../../lib/candidateTree'
 import { supabase } from '../../lib/supabase'
-import {
-  IconActionButton,
-  IconTrash,
-  IconX,
-} from '../ui/IconActionButton'
+import { IconActionButton, IconTrash, IconX } from '../ui/IconActionButton'
 import { CandidateCard } from './candidates/CandidateCard'
 import { CandidatesAddSection } from './candidates/CandidatesAddSection'
 import { useAddCandidateForm } from './candidates/useAddCandidateForm'
@@ -258,7 +251,8 @@ export function CandidatesTab({
       {orphanVariations.length ? (
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
           <strong>Attention :</strong> {orphanVariations.length} complément(s) référencent un parent
-          absent (supprimé ou incohérent). Rattachez-les à une racine depuis le détail ou supprimez-les.
+          absent (supprimé ou incohérent). Rattachez-les à une racine depuis le détail ou
+          supprimez-les.
         </p>
       ) : null}
 
@@ -313,7 +307,7 @@ export function CandidatesTab({
             ))}
           </Fragment>
         ))}
-               {orphanVariations.map((c) => (
+        {orphanVariations.map((c) => (
           <Fragment key={`orphan-${c.id}`}>
             <CandidateCard
               candidate={c}
@@ -359,13 +353,13 @@ export function CandidatesTab({
               Confirmer la suppression
             </h2>
             <p id="confirm-delete-candidate-desc" className="error-dialog-message">
-              Supprimer la fiche <strong>{formatCandidateListLabel(confirmingDelete)}</strong> ? Cette
-              action est définitive.
+              Supprimer la fiche <strong>{formatCandidateListLabel(confirmingDelete)}</strong> ?
+              Cette action est définitive.
             </p>
             {subtreeDeleteIds.length > 1 ? (
               <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                {subtreeDeleteIds.length} fiche(s) au total seront supprimées (compléments et sous-fiches
-                inclus).
+                {subtreeDeleteIds.length} fiche(s) au total seront supprimées (compléments et
+                sous-fiches inclus).
               </p>
             ) : null}
             <div className="error-dialog-actions">

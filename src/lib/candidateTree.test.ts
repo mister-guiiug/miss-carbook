@@ -65,18 +65,12 @@ describe('candidateTree', () => {
   })
 
   it('validateParentChange reflète racine avec compléments', () => {
-    expect(
-      validateParentChange('a', 'x', { isRoot: true, directVariationCount: 1 }).ok
-    ).toBe(false)
-    expect(validateParentChange('a', 'x', { isRoot: true, directVariationCount: 0 }).ok).toBe(
-      true
-    )
+    expect(validateParentChange('a', 'x', { isRoot: true, directVariationCount: 1 }).ok).toBe(false)
+    expect(validateParentChange('a', 'x', { isRoot: true, directVariationCount: 0 }).ok).toBe(true)
   })
 
   it('resolveIdentityForCandidateUpdate prend marque du parent choisi', () => {
-    const roots = [
-      { ...row('p', null), brand: 'Peugeot', model: '308', event_date: '2024' },
-    ]
+    const roots = [{ ...row('p', null), brand: 'Peugeot', model: '308', event_date: '2024' }]
     const r = resolveIdentityForCandidateUpdate({
       nextParentId: 'p',
       meta: { brand: 'X', model: 'Y', event_date: '1999' },
