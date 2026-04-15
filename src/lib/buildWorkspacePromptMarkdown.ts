@@ -365,6 +365,36 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
     push('_(Bloc-notes vide ou absent.)_')
   }
 
+  push('', '---', '', '## Visites', '')
+  const visits = bundle.visits as {
+    visit_at: string
+    location: string
+    notes: string
+    candidate_id: string | null
+  }[]
+  if (!visits?.length) {
+    push('_(Aucune visite.)_')
+  } else {
+    for (const v of visits) {
+      const link = v.candidate_id
+        ? formatCandidateListLabel(
+            candById.get(v.candidate_id) ?? {
+              brand: '?',
+              model: v.candidate_id.slice(0, 8),
+              trim: '',
+              parent_candidate_id: null,
+            }
+          )
+        : null
+      push(
+        `- **${isoDate(v.visit_at) || '—'}**`,
+        `  - Lieu : ${esc(v.location) || '—'}`,
+        `  - Notes : ${esc(v.notes) || '—'}`,
+        link ? `  - Modèle : ${esc(link)}` : ''
+      )
+    }
+  }
+
   push('', '---', '', '## Rappels', '')
   const reminders = bundle.reminders as {
     title: string
@@ -372,6 +402,8 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
     due_at: string | null
     done: boolean
     candidate_id: string | null
+    kind?: string | null
+    place?: string | null
   }[]
   if (!reminders.length) {
     push('_(Aucun rappel.)_')
@@ -389,7 +421,9 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         : null
       push(
         `- **${esc(r.title)}** ${r.done ? '_(fait)_' : ''}`,
+        `  - Type : ${esc(r.kind ?? 'other')}`,
         `  - Échéance : ${isoDate(r.due_at) || '—'}`,
+        `  - Lieu : ${esc((r.place ?? '').trim()) || '—'}`,
         `  - Détail : ${esc(r.body) || '—'}`,
         link ? `  - Lié au modèle : ${esc(link)}` : ''
       )
