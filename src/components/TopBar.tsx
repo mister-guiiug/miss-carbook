@@ -185,7 +185,7 @@ export function TopBar() {
           <div
             className={`app-topbar-right${showWorkspaceToolbar ? ' app-topbar-right--workspace' : ' app-topbar-right--minimal'}`}
             role={showWorkspaceToolbar ? 'toolbar' : undefined}
-            aria-label={showWorkspaceToolbar ? 'Actions dossier' : undefined}
+            aria-label={showWorkspaceToolbar ? 'Actions : ajouter, recherche, menu dossier et compte' : undefined}
           >
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}

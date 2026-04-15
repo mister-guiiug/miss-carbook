@@ -16,7 +16,6 @@ import { RemindersTab } from '../components/workspace/RemindersTab'
 import { SettingsTab } from '../components/workspace/SettingsTab'
 import {
   WORKSPACE_ACTIVITY_TAB_TITLE,
-  WORKSPACE_SETTINGS_TAB_TITLE,
   WORKSPACE_TABS,
   parseWorkspaceTabParam,
   type TabId,
@@ -265,23 +264,8 @@ export function WorkspacePage() {
             <div
               className="workspace-header-inline-tabs"
               role="toolbar"
-              aria-label="Réglages et activité du dossier"
+              aria-label="Raccourci activité du dossier"
             >
-              <button
-                type="button"
-                id="workspace-tab-btn-settings"
-                className={
-                  tab === 'settings'
-                    ? 'workspace-header-icon-tab workspace-header-icon-tab--active'
-                    : 'workspace-header-icon-tab'
-                }
-                title={WORKSPACE_SETTINGS_TAB_TITLE}
-                aria-label="Réglages du dossier"
-                aria-pressed={tab === 'settings'}
-                onClick={() => setTab('settings')}
-              >
-                <WorkspaceTabIcon tabId="settings" />
-              </button>
               <button
                 type="button"
                 id="workspace-tab-btn-activity"
@@ -322,9 +306,9 @@ export function WorkspacePage() {
           {headerHintVisible ? (
             <div className="workspace-header-hint card" style={{ boxShadow: 'none' }}>
               <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                Icônes <strong>réglages</strong> et <strong>activité</strong> à droite du titre : options
-                de <em>ce</em> dossier et journal. Compte, thème et mise à jour de l’app : menu compte
-                en haut à droite → paramètres généraux.
+                <strong>Réglages</strong> du dossier et <strong>recherche</strong> : menu en haut à
+                droite (icône compte) ou loupe. <strong>Activité</strong> : raccourci ici ou via ce
+                menu. Compte et thème : même menu → paramètres généraux.
               </p>
               <button
                 type="button"
@@ -356,7 +340,11 @@ export function WorkspacePage() {
         id="workspace-main-panel"
         role="tabpanel"
         tabIndex={0}
-        aria-labelledby={`workspace-tab-btn-${tab}`}
+        aria-labelledby={
+          tab === 'settings' || tab === 'activity'
+            ? 'workspace-tabs-heading'
+            : `workspace-tab-btn-${tab}`
+        }
         className="card workspace-tabpanel"
       >
         {tab === 'notepad' ? <NotepadTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
