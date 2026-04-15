@@ -5,11 +5,10 @@ export function SettingsScopeBanner({ workspaceName }: { workspaceName: string }
     <div className="settings-scope-banner stack" role="region" aria-label="Périmètre des réglages">
       <p style={{ margin: 0, fontWeight: 600 }}>
         <span className="settings-scope-badge settings-scope-badge--workspace">Ce dossier</span>{' '}
-        Tout ce qui suit ne concerne que le projet « {workspaceName} » (partage, membres, nom…).
+        Réglages du projet « {workspaceName} » uniquement (fiche, partage, membres…).
       </p>
       <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>
-        Pour votre pseudo, le thème sur cet appareil ou le rechargement de l’application :{' '}
-        <Link to="/parametres">paramètres généraux</Link>.
+        Compte, thème et mise à jour de l’app : <Link to="/parametres">paramètres généraux</Link>.
       </p>
     </div>
   )

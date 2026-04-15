@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { activityActionLabel, activityEntityLabel } from '../../lib/activityLogLabels'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 
 type Row = {
@@ -39,6 +40,8 @@ function formatActivityDayHeading(iso: string): string {
   })
 }
 
+const ACTIVITY_PAGE_LIMIT = 120
+
 export function ActivityTab({ workspaceId }: { workspaceId: string }) {
   const { reportException } = useErrorDialog()
   const [rows, setRows] = useState<Row[]>([])
@@ -52,7 +55,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false })
-        .limit(120)
+        .limit(ACTIVITY_PAGE_LIMIT)
       if (cancelled) return
       if (error) {
         reportException(error, 'Chargement du journal d’activité')
@@ -69,6 +72,8 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         const map: Record<string, string> = {}
         for (const p of profs ?? []) map[p.id] = p.display_name
         setNames(map)
+      } else {
+        setNames({})
       }
     })()
     const ch = supabase
@@ -83,7 +88,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         },
         (payload) => {
           const row = payload.new as Row
-          setRows((prev) => [row, ...prev].slice(0, 120))
+          setRows((prev) => [row, ...prev].slice(0, ACTIVITY_PAGE_LIMIT))
         }
       )
       .subscribe()
@@ -108,37 +113,60 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
   }, [rows])
 
   return (
-    <div className="stack">
-      <p className="muted">Journal des actions récentes (temps réel pour les nouvelles entrées).</p>
+    <div className="stack activity-tab-page">
+      <header className="activity-tab-header">
+        <h2 className="activity-tab-title">Activité et historique</h2>
+        <p className="muted activity-tab-lead">
+          Actions récentes sur ce dossier (créations, modifications, partage…). Les nouvelles
+          entrées s’affichent en temps réel.
+        </p>
+        {rows.length > 0 ? (
+          <p className="muted activity-tab-meta" role="status">
+            {rows.length} événement{rows.length > 1 ? 's' : ''} affiché{rows.length > 1 ? 's' : ''} — jusqu’à{' '}
+            {ACTIVITY_PAGE_LIMIT} au maximum.
+          </p>
+        ) : null}
+      </header>
+
       {rows.length === 0 ? (
-        <div className="empty-state">
-          <p className="muted" style={{ margin: 0 }}>
-            Aucune entrée pour l’instant. Les actions (ajouts, votes, invitations…) apparaîtront ici
-            au fil de l’usage du dossier.
+        <div className="empty-state activity-tab-empty">
+          <p className="muted activity-tab-empty-text">
+            Aucun événement pour l’instant. Dès que vous ou d’autres membres agirez dans le dossier,
+            le détail apparaîtra ici avec la date et l’auteur.
           </p>
         </div>
       ) : (
-        <ul className="activity-timeline" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        <ul className="activity-timeline">
           {groups.map(([dayKey, { heading, items }]) => (
-            <li key={dayKey} className="stack activity-day-group">
+            <li key={dayKey} className="activity-day-group stack">
               <h3 className="activity-day-heading">{heading}</h3>
-              <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              <ul className="activity-day-list stack">
                 {items.map((r) => (
-                  <li key={r.id} className="card" style={{ boxShadow: 'none' }}>
-                    <div className="muted">
-                      {new Date(r.created_at).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}{' '}
-                      ·{' '}
-                      <strong>
+                  <li key={r.id} className="activity-entry card">
+                    <div className="activity-entry-meta">
+                      <time dateTime={r.created_at}>
+                        {new Date(r.created_at).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </time>
+                      <span className="activity-entry-sep" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="activity-entry-who">
                         {r.user_id ? (names[r.user_id] ?? r.user_id.slice(0, 8)) : 'Système'}
-                      </strong>
+                      </span>
                     </div>
-                    <div>
-                      {r.action_type} · {r.entity_type}
-                      {r.entity_id ? ` · ${r.entity_id.slice(0, 8)}…` : null}
-                    </div>
+                    <p className="activity-entry-summary">
+                      <strong>{activityActionLabel(r.action_type)}</strong>
+                      <span className="activity-entry-entity muted">
+                        {' '}
+                        — {activityEntityLabel(r.entity_type)}
+                        {r.entity_id ? (
+                          <span className="activity-entry-id"> · {r.entity_id.slice(0, 8)}…</span>
+                        ) : null}
+                      </span>
+                    </p>
                   </li>
                 ))}
               </ul>
