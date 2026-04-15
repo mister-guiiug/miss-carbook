@@ -86,6 +86,8 @@ const candidateSpecsShape = z.object({
   /** Consommation extra-urbaine (L/100 km). */
   consumptionExtraUrbanL100: z.number().optional(),
   consumptionKwh100: z.number().optional(),
+  /** Consommation électrique mixte / cycle combiné (kWh/100 km), ex. PHEV / WLTP. */
+  consumptionKwh100Mixed: z.number().optional(),
   powerKw: z.number().optional(),
   powerHp: z.number().optional(),
   co2Gkm: z.number().optional(),
