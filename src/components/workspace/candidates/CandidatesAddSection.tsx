@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import type { CandidateStatus } from '../../../types/database'
@@ -22,6 +23,7 @@ export function CandidatesAddSection({
 }) {
   const isVariation = Boolean(form.parent_id)
   const parent = form.parent_id ? (candidates.find((x) => x.id === form.parent_id) ?? null) : null
+  const rootDraftRef = useRef<{ brand: string; model: string; event_date: string } | null>(null)
 
   return (
     <div className="candidates-panels row">
@@ -54,8 +56,21 @@ export function CandidatesAddSection({
               onChange={(e) => {
                 const pid = e.target.value
                 setForm((f) => {
-                  if (!pid) return { ...f, parent_id: '' }
+                  if (!pid) {
+                    const draft = rootDraftRef.current
+                    rootDraftRef.current = null
+                    return {
+                      ...f,
+                      parent_id: '',
+                      brand: draft?.brand ?? f.brand,
+                      model: draft?.model ?? f.model,
+                      event_date: draft?.event_date ?? f.event_date,
+                    }
+                  }
                   const p = candidates.find((x) => x.id === pid)
+                  if (!f.parent_id) {
+                    rootDraftRef.current = { brand: f.brand, model: f.model, event_date: f.event_date }
+                  }
                   return {
                     ...f,
                     parent_id: pid,

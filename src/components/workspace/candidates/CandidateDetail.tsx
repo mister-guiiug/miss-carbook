@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logActivity } from '../../../lib/activity'
 import {
@@ -100,6 +100,7 @@ export function CandidateDetail({
     garage_location: candidate.garage_location,
     manufacturer_url: candidate.manufacturer_url,
   })
+  const rootDraftRef = useRef<{ brand: string; model: string; event_date: string } | null>(null)
 
   useEffect(() => {
     setMeta({
@@ -116,6 +117,7 @@ export function CandidateDetail({
       garage_location: candidate.garage_location,
       manufacturer_url: candidate.manufacturer_url,
     })
+    rootDraftRef.current = null
   }, [candidate])
 
   const parentRow = useMemo(
@@ -401,8 +403,21 @@ export function CandidateDetail({
                 onChange={(e) => {
                   const pid = e.target.value
                   setMeta((m) => {
-                    if (!pid) return { ...m, parent_candidate_id: '' }
+                    if (!pid) {
+                      const draft = rootDraftRef.current
+                      rootDraftRef.current = null
+                      return {
+                        ...m,
+                        parent_candidate_id: '',
+                        brand: draft?.brand ?? candidate.brand,
+                        model: draft?.model ?? candidate.model,
+                        event_date: draft?.event_date ?? (candidate.event_date ?? ''),
+                      }
+                    }
                     const p = rootCandidates.find((x) => x.id === pid)
+                    if (!m.parent_candidate_id) {
+                      rootDraftRef.current = { brand: m.brand, model: m.model, event_date: m.event_date ?? '' }
+                    }
                     return {
                       ...m,
                       parent_candidate_id: pid,
