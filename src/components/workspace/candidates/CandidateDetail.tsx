@@ -212,6 +212,31 @@ export function CandidateDetail({
         rootCandidates,
       })
 
+      const savesAsRoot = !parentId
+      const vehiclePayload = savesAsRoot
+        ? {
+            engine: '',
+            price: null as number | null,
+            mileage_km: null as number | null,
+            first_registration: '',
+            gearbox: '',
+            energy: '',
+            options: '',
+            garage_location: '',
+            manufacturer_url: '',
+          }
+        : {
+            engine: parsed.data.engine,
+            price: parsed.data.price,
+            mileage_km: parsed.data.mileage_km ?? null,
+            first_registration: parsed.data.first_registration,
+            gearbox: parsed.data.gearbox,
+            energy: parsed.data.energy,
+            options: parsed.data.options,
+            garage_location: parsed.data.garage_location,
+            manufacturer_url: parsed.data.manufacturer_url,
+          }
+
       const { error } = await supabase
         .from('candidates')
         .update({
@@ -219,21 +244,22 @@ export function CandidateDetail({
           brand: identity.brand,
           model: identity.model,
           trim: parsed.data.trim,
-          engine: parsed.data.engine,
-          price: parsed.data.price,
-          mileage_km: parsed.data.mileage_km ?? null,
-          first_registration: parsed.data.first_registration,
-          gearbox: parsed.data.gearbox,
-          energy: parsed.data.energy,
-          options: parsed.data.options,
-          garage_location: parsed.data.garage_location,
-          manufacturer_url: parsed.data.manufacturer_url,
+          ...vehiclePayload,
           event_date: identity.event_date,
           status: parsed.data.status,
           reject_reason: parsed.data.reject_reason,
         })
         .eq('id', candidate.id)
       if (error) throw error
+
+      if (savesAsRoot) {
+        const { error: specErr } = await supabase
+          .from('candidate_specs')
+          .upsert({ candidate_id: candidate.id, specs: {} as Json })
+        if (specErr) throw specErr
+        setSpecs({})
+      }
+
       await logActivity(workspaceId, 'candidate.update_identity', 'candidate', candidate.id, {})
       await onChanged()
     } catch (err: unknown) {
@@ -264,6 +290,7 @@ export function CandidateDetail({
   )
   const [commentsAccordionOpen, setCommentsAccordionOpen] = useState(false)
   const [photosAccordionOpen, setPhotosAccordionOpen] = useState(false)
+  const [reviewAccordionOpen, setReviewAccordionOpen] = useState(false)
 
   useEffect(() => {
     setVehDetailsOpen(!isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate)))
@@ -316,7 +343,11 @@ export function CandidateDetail({
 
   useEffect(() => {
     void loadComments()
-    void loadPhotos()
+    if (!candidate.parent_candidate_id) {
+      setPhotos([])
+    } else {
+      void loadPhotos()
+    }
     const ch = supabase
       .channel(`comments-${candidate.id}`)
       .on(
@@ -341,17 +372,14 @@ export function CandidateDetail({
   }, [comments.length])
 
   useEffect(() => {
-    if (photos.length > 0) setPhotosAccordionOpen(true)
-  }, [photos.length])
-
-  useEffect(() => {
     setCommentsAccordionOpen(false)
     setPhotosAccordionOpen(false)
+    setReviewAccordionOpen(false)
   }, [candidate.id])
 
   const saveSpecs = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canWrite) return
+    if (!canWrite || !candidate.parent_candidate_id) return
     const parsed = candidateSpecsSchema.safeParse(specs)
     if (!parsed.success) {
       reportMessage(
@@ -418,7 +446,7 @@ export function CandidateDetail({
   }
 
   const onFile = async (file: File | null) => {
-    if (!file || !canWrite) return
+    if (!file || !canWrite || !candidate.parent_candidate_id) return
     try {
       await uploadCandidateImage(workspaceId, candidate.id, file, userId)
       await loadPhotos()
@@ -453,8 +481,11 @@ export function CandidateDetail({
   const identityIsRoot = !meta.parent_candidate_id
   const persistedIsRoot = !candidate.parent_candidate_id
   const hasMultipleVariants = variationCount >= 2
-  const showDetailFields = !identityIsRoot || !hasMultipleVariants
+  /** Détails véhicule (motorisation, prix, statut…) : uniquement pour une variation. */
+  const showVehicleDetailsSection = !identityIsRoot
   const showParentSelect = !identityIsRoot || variationCount === 0
+  /** Fiche racine : pas de données constructeur ni de photos dans l’UI. */
+  const showSpecsAndPhotos = !identityIsRoot
 
   return (
     <div className="stack" style={{ marginTop: '0.75rem' }}>
@@ -553,6 +584,32 @@ export function CandidateDetail({
                       value={meta.event_date}
                       onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
                       placeholder="ex. 2024, 2020-2023, printemps 2025"
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label htmlFor={`cand-meta-st-root-${candidate.id}`}>Statut</label>
+                    <select
+                      id={`cand-meta-st-root-${candidate.id}`}
+                      value={meta.status}
+                      onChange={(e) =>
+                        setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
+                      }
+                    >
+                      {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
+                        <option key={k} value={k}>
+                          {statusLabels[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label htmlFor={`cand-meta-rej-root-${candidate.id}`}>Raison si rejet</label>
+                    <input
+                      id={`cand-meta-rej-root-${candidate.id}`}
+                      value={meta.reject_reason}
+                      onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -675,12 +732,12 @@ export function CandidateDetail({
 
           {persistedIsRoot && hasMultipleVariants ? (
             <p className="muted" style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.45 }}>
-              Plusieurs variations : motorisation, prix, options, statut, etc. se renseignent sur
-              chaque ligne de variation.
+              Plusieurs variations : ouvrez chaque ligne complément pour renseigner détails véhicule,
+              données constructeur, photos et avis.
             </p>
           ) : null}
 
-          {showDetailFields ? (
+          {showVehicleDetailsSection ? (
             <details
               key={`veh-detail-${candidate.id}`}
               className="card home-accordion candidate-detail-accordion"
@@ -861,102 +918,113 @@ export function CandidateDetail({
         </form>
       ) : null}
 
-      <form onSubmit={saveSpecs} className="stack">
-        <details
-          key={`specs-${candidate.id}`}
-          className="card home-accordion candidate-detail-accordion"
-          style={{ boxShadow: 'none' }}
-          open={specsAccordionOpen}
-          onToggle={(e) => setSpecsAccordionOpen(e.currentTarget.open)}
-        >
-          <summary className="home-accordion-summary">
-            Données constructeur
-            {!hasCandidateSpecVisibleData(specs) ? (
-              <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
-                (vide)
-              </span>
-            ) : null}
-          </summary>
-          <div className="home-accordion-body stack">
-            <p className="muted" style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
-              Champs indicatifs (WLTP, NEDC ou données brochure). Les unités sont rappelées dans les
-              libellés.
-            </p>
-            {candidateSpecFieldGroups.map((g) => (
-              <div key={g.title} className="stack" style={{ gap: '0.5rem' }}>
-                <h5 className="candidate-fiche-subtitle" style={{ margin: 0 }}>
-                  {g.title}
-                </h5>
-                <div className="row" style={{ flexWrap: 'wrap' }}>
-                  {g.keys.map((k) => specNumInput(k, specs[k]))}
+      {showSpecsAndPhotos ? (
+        <form onSubmit={saveSpecs} className="stack">
+          <details
+            key={`specs-${candidate.id}`}
+            className="card home-accordion candidate-detail-accordion"
+            style={{ boxShadow: 'none' }}
+            open={specsAccordionOpen}
+            onToggle={(e) => setSpecsAccordionOpen(e.currentTarget.open)}
+          >
+            <summary className="home-accordion-summary">
+              Données constructeur
+              {!hasCandidateSpecVisibleData(specs) ? (
+                <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                  (vide)
+                </span>
+              ) : null}
+            </summary>
+            <div className="home-accordion-body stack">
+              <p className="muted" style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                Champs indicatifs (WLTP, NEDC ou données brochure). Les unités sont rappelées dans
+                les libellés.
+              </p>
+              {candidateSpecFieldGroups.map((g) => (
+                <div key={g.title} className="stack" style={{ gap: '0.5rem' }}>
+                  <h5 className="candidate-fiche-subtitle" style={{ margin: 0 }}>
+                    {g.title}
+                  </h5>
+                  <div className="row" style={{ flexWrap: 'wrap' }}>
+                    {g.keys.map((k) => specNumInput(k, specs[k]))}
+                  </div>
                 </div>
+              ))}
+              <div>
+                <label htmlFor={`cand-spec-notes-${candidate.id}`}>{candidateSpecLabels.notes}</label>
+                <textarea
+                  id={`cand-spec-notes-${candidate.id}`}
+                  value={typeof specs.notes === 'string' ? specs.notes : ''}
+                  onChange={(e) =>
+                    setSpecs((s) => ({
+                      ...s,
+                      notes: e.target.value === '' ? undefined : e.target.value,
+                    }))
+                  }
+                  disabled={!canWrite}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="Norme, cycle, options, lien fiche PDF…"
+                />
               </div>
-            ))}
-            <div>
-              <label htmlFor={`cand-spec-notes-${candidate.id}`}>{candidateSpecLabels.notes}</label>
-              <textarea
-                id={`cand-spec-notes-${candidate.id}`}
-                value={typeof specs.notes === 'string' ? specs.notes : ''}
-                onChange={(e) =>
-                  setSpecs((s) => ({
-                    ...s,
-                    notes: e.target.value === '' ? undefined : e.target.value,
-                  }))
-                }
-                disabled={!canWrite}
-                rows={3}
-                maxLength={2000}
-                placeholder="Norme, cycle, options, lien fiche PDF…"
-              />
+              {canWrite ? <button type="submit">Enregistrer les données constructeur</button> : null}
             </div>
-            {canWrite ? <button type="submit">Enregistrer les données constructeur</button> : null}
-          </div>
-        </details>
-      </form>
+          </details>
+        </form>
+      ) : null}
 
       <form onSubmit={saveReview} className="stack">
-        <h4 style={{ margin: 0 }}>Mon avis (0–10)</h4>
-        <div className="row">
-          <div style={{ flex: '0 0 120px' }}>
-            <label>Note</label>
-            <input
-              type="number"
-              step="0.1"
-              min={0}
-              max={10}
-              value={review.score}
-              onChange={(e) => setReview((r) => ({ ...r, score: e.target.value }))}
-              disabled={!canWrite}
-            />
+        <details
+          className="card home-accordion candidate-detail-accordion"
+          style={{ boxShadow: 'none' }}
+          open={reviewAccordionOpen}
+          onToggle={(e) => setReviewAccordionOpen(e.currentTarget.open)}
+        >
+          <summary className="home-accordion-summary">Mon avis (0–10)</summary>
+          <div className="home-accordion-body stack">
+            <div className="row">
+              <div style={{ flex: '0 0 120px' }}>
+                <label>Note</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  max={10}
+                  value={review.score}
+                  onChange={(e) => setReview((r) => ({ ...r, score: e.target.value }))}
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 200px' }}>
+                <label>Commentaire</label>
+                <input
+                  value={review.free_text}
+                  onChange={(e) => setReview((r) => ({ ...r, free_text: e.target.value }))}
+                  disabled={!canWrite}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div style={{ flex: '1 1 200px' }}>
+                <label>Points forts</label>
+                <input
+                  value={review.pros}
+                  onChange={(e) => setReview((r) => ({ ...r, pros: e.target.value }))}
+                  disabled={!canWrite}
+                />
+              </div>
+              <div style={{ flex: '1 1 200px' }}>
+                <label>Points faibles</label>
+                <input
+                  value={review.cons}
+                  onChange={(e) => setReview((r) => ({ ...r, cons: e.target.value }))}
+                  disabled={!canWrite}
+                />
+              </div>
+            </div>
+            {canWrite ? <button type="submit">Enregistrer mon avis</button> : null}
           </div>
-          <div style={{ flex: '1 1 200px' }}>
-            <label>Commentaire</label>
-            <input
-              value={review.free_text}
-              onChange={(e) => setReview((r) => ({ ...r, free_text: e.target.value }))}
-              disabled={!canWrite}
-            />
-          </div>
-        </div>
-        <div className="row">
-          <div style={{ flex: '1 1 200px' }}>
-            <label>Points forts</label>
-            <input
-              value={review.pros}
-              onChange={(e) => setReview((r) => ({ ...r, pros: e.target.value }))}
-              disabled={!canWrite}
-            />
-          </div>
-          <div style={{ flex: '1 1 200px' }}>
-            <label>Points faibles</label>
-            <input
-              value={review.cons}
-              onChange={(e) => setReview((r) => ({ ...r, cons: e.target.value }))}
-              disabled={!canWrite}
-            />
-          </div>
-        </div>
-        {canWrite ? <button type="submit">Enregistrer mon avis</button> : null}
+        </details>
       </form>
 
       <details
@@ -1004,50 +1072,52 @@ export function CandidateDetail({
         </div>
       </details>
 
-      <details
-        key={`photos-${candidate.id}`}
-        className="card home-accordion candidate-detail-accordion"
-        style={{ boxShadow: 'none' }}
-        open={photosAccordionOpen}
-        onToggle={(e) => setPhotosAccordionOpen(e.currentTarget.open)}
-      >
-        <summary className="home-accordion-summary">
-          Photos (max 5 Mo, JPEG/PNG/WebP/GIF)
-          {!photos.length ? (
-            <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
-              (vide)
-            </span>
-          ) : (
-            <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
-              ({photos.length})
-            </span>
-          )}
-        </summary>
-        <div className="home-accordion-body stack">
-          {canWrite ? (
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
-            />
-          ) : null}
-          <div className="row" style={{ flexWrap: 'wrap' }}>
-            {photos.map((p) => (
-              <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
-                <img
-                  src={p.url}
-                  alt=""
-                  width={120}
-                  height={80}
-                  loading="lazy"
-                  decoding="async"
-                  style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
-                />
-              </a>
-            ))}
+      {showSpecsAndPhotos ? (
+        <details
+          key={`photos-${candidate.id}`}
+          className="card home-accordion candidate-detail-accordion"
+          style={{ boxShadow: 'none' }}
+          open={photosAccordionOpen}
+          onToggle={(e) => setPhotosAccordionOpen(e.currentTarget.open)}
+        >
+          <summary className="home-accordion-summary">
+            Photos (max 5 Mo, JPEG/PNG/WebP/GIF)
+            {!photos.length ? (
+              <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                (vide)
+              </span>
+            ) : (
+              <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                ({photos.length})
+              </span>
+            )}
+          </summary>
+          <div className="home-accordion-body stack">
+            {canWrite ? (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
+              />
+            ) : null}
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              {photos.map((p) => (
+                <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                  <img
+                    src={p.url}
+                    alt=""
+                    width={120}
+                    height={80}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
+                  />
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-      </details>
+        </details>
+      ) : null}
     </div>
   )
 }
