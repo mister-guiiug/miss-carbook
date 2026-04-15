@@ -26,7 +26,10 @@ import {
   resolveIdentityForCandidateUpdate,
   validateParentChange,
 } from '../../../lib/candidateTree'
-import { formatGroupedIntegerFrDisplay, parseGroupedIntegerFrInput } from '../../../lib/formatGroupedIntegerFr'
+import {
+  formatGroupedIntegerFrDisplay,
+  parseGroupedIntegerFrInput,
+} from '../../../lib/formatGroupedIntegerFr'
 import { formatMileageKmDisplay, parseMileageKmInput } from '../../../lib/formatMileage'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconCheck, IconSend, IconX } from '../../ui/IconActionButton'
@@ -228,7 +231,9 @@ export function CandidateDetail({
       })
 
       const savesAsRoot = !parentId
-      const manufacturer_links: ManufacturerLink[] = savesAsRoot ? [] : parsed.data.manufacturer_links
+      const manufacturer_links: ManufacturerLink[] = savesAsRoot
+        ? []
+        : parsed.data.manufacturer_links
       const vehiclePayload = savesAsRoot
         ? {
             engine: '',
@@ -710,7 +715,9 @@ export function CandidateDetail({
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période / génération</label>
+                    <label htmlFor={`cand-meta-date-${candidate.id}`}>
+                      Année(s) / période / génération
+                    </label>
                     <input
                       id={`cand-meta-date-${candidate.id}`}
                       type="text"
@@ -866,8 +873,8 @@ export function CandidateDetail({
 
           {persistedIsRoot && hasMultipleVariants ? (
             <p className="muted" style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.45 }}>
-              Plusieurs variations : ouvrez chaque ligne complément pour renseigner détails véhicule,
-              données constructeur, photos et avis.
+              Plusieurs variations : ouvrez chaque ligne complément pour renseigner détails
+              véhicule, données constructeur, photos et avis.
             </p>
           ) : null}
 
@@ -1117,7 +1124,9 @@ export function CandidateDetail({
                 </div>
               ))}
               <div>
-                <label htmlFor={`cand-spec-notes-${candidate.id}`}>{candidateSpecLabels.notes}</label>
+                <label htmlFor={`cand-spec-notes-${candidate.id}`}>
+                  {candidateSpecLabels.notes}
+                </label>
                 <textarea
                   id={`cand-spec-notes-${candidate.id}`}
                   value={typeof specs.notes === 'string' ? specs.notes : ''}
@@ -1133,7 +1142,9 @@ export function CandidateDetail({
                   placeholder="Norme, cycle, options, lien fiche PDF…"
                 />
               </div>
-              {canWrite ? <button type="submit">Enregistrer les données constructeur</button> : null}
+              {canWrite ? (
+                <button type="submit">Enregistrer les données constructeur</button>
+              ) : null}
             </div>
           </details>
         </form>
@@ -1267,8 +1278,8 @@ export function CandidateDetail({
                   onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
                 />
                 <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
-                  Si le fichier dépasse 5 Mo, vous pourrez le compresser automatiquement (JPEG, taille
-                  et qualité ajustées) avant envoi.
+                  Si le fichier dépasse 5 Mo, vous pourrez le compresser automatiquement (JPEG,
+                  taille et qualité ajustées) avant envoi.
                 </p>
               </>
             ) : null}
@@ -1335,8 +1346,8 @@ export function CandidateDetail({
                 {(pendingOversizedPhoto.size / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo
               </strong>{' '}
               (limite {MAX_IMAGE_BYTES / 1024 / 1024} Mo). Vous pouvez le{' '}
-              <strong>compresser automatiquement</strong> (réduction des dimensions et qualité, export
-              JPEG) pour l’envoyer.
+              <strong>compresser automatiquement</strong> (réduction des dimensions et qualité,
+              export JPEG) pour l’envoyer.
             </p>
             <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
               Les GIF animés deviennent une image fixe. La transparence des PNG est remplacée par un

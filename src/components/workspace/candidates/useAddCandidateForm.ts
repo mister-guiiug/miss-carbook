@@ -79,7 +79,9 @@ export function useAddCandidateForm({
         const nextOrder = (prev == null ? -1 : prev) + 1
 
         const isRootRow = !parentId
-        const manufacturer_links: ManufacturerLink[] = isRootRow ? [] : parsed.data.manufacturer_links
+        const manufacturer_links: ManufacturerLink[] = isRootRow
+          ? []
+          : parsed.data.manufacturer_links
         const { data, error } = await supabase
           .from('candidates')
           .insert({

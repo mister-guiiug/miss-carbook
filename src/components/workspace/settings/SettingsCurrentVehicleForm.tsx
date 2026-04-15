@@ -1,6 +1,9 @@
 import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { candidateSpecDimensionKeys, candidateSpecLabels } from '../../../lib/candidateSpecsUi'
-import { formatGroupedIntegerFrDisplay, parseGroupedIntegerFrInput } from '../../../lib/formatGroupedIntegerFr'
+import {
+  formatGroupedIntegerFrDisplay,
+  parseGroupedIntegerFrInput,
+} from '../../../lib/formatGroupedIntegerFr'
 
 type VehicleState = {
   brand: string

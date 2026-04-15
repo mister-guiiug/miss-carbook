@@ -70,9 +70,7 @@ function htmlTrackingPlugin(): Plugin {
 
       const headBlocks = [metaGsc, gtmHead, ga4Head].filter(Boolean).join('\n')
 
-      return html
-        .replace('<head>', `<head>\n${headBlocks}`)
-        .replace('<body>', `<body>\n${gtmBody}`)
+      return html.replace('<head>', `<head>\n${headBlocks}`).replace('<body>', `<body>\n${gtmBody}`)
     },
   }
 }

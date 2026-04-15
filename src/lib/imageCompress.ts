@@ -24,7 +24,7 @@ export async function compressImageToMaxBytes(
     bitmap = await createImageBitmap(file)
   } catch {
     throw new Error(
-      "Impossible de lire cette image. Essayez un autre fichier (JPEG, PNG, WebP ou GIF)."
+      'Impossible de lire cette image. Essayez un autre fichier (JPEG, PNG, WebP ou GIF).'
     )
   }
 

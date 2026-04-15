@@ -122,8 +122,8 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         </p>
         {rows.length > 0 ? (
           <p className="muted activity-tab-meta" role="status">
-            {rows.length} événement{rows.length > 1 ? 's' : ''} affiché{rows.length > 1 ? 's' : ''} — jusqu’à{' '}
-            {ACTIVITY_PAGE_LIMIT} au maximum.
+            {rows.length} événement{rows.length > 1 ? 's' : ''} affiché{rows.length > 1 ? 's' : ''}{' '}
+            — jusqu’à {ACTIVITY_PAGE_LIMIT} au maximum.
           </p>
         ) : null}
       </header>
@@ -142,9 +142,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
               <h3 className="activity-day-heading">{heading}</h3>
               <ul className="activity-day-list">
                 {items.map((r) => {
-                  const who = r.user_id
-                    ? (names[r.user_id] ?? r.user_id.slice(0, 8))
-                    : 'Système'
+                  const who = r.user_id ? (names[r.user_id] ?? r.user_id.slice(0, 8)) : 'Système'
                   const timeStr = new Date(r.created_at).toLocaleTimeString('fr-FR', {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -169,9 +167,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
                             ·
                           </span>
                           {entity}
-                          {r.entity_id ? (
-                            <span className="activity-entry-id">{idBit}</span>
-                          ) : null}
+                          {r.entity_id ? <span className="activity-entry-id">{idBit}</span> : null}
                         </span>
                       </span>
                     </li>

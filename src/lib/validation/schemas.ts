@@ -167,13 +167,14 @@ export const candidateSchema = z.object({
         }))
         .filter((x) => x.url !== '')
     )
-    .refine(
-      (arr) => arr.every((x) => z.string().url().safeParse(x.url).success),
-      { message: 'Une ou plusieurs URL de liens sont invalides' }
-    ),
+    .refine((arr) => arr.every((x) => z.string().url().safeParse(x.url).success), {
+      message: 'Une ou plusieurs URL de liens sont invalides',
+    }),
   event_date: z.preprocess(
     (val) => (val === '' || val === undefined ? null : val),
-    z.union([z.string().max(200, 'Année / période / génération : 200 caractères max'), z.null()]).optional()
+    z
+      .union([z.string().max(200, 'Année / période / génération : 200 caractères max'), z.null()])
+      .optional()
   ),
   status: z
     .enum(['to_see', 'tried', 'shortlist', 'selected', 'rejected'])

@@ -493,7 +493,11 @@ export function WorkspaceHeaderToolbar({
                   }}
                 >
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
-                    {mode === 'dark' ? <IconSun className={flyoutSvg} /> : <IconMoon className={flyoutSvg} />}
+                    {mode === 'dark' ? (
+                      <IconSun className={flyoutSvg} />
+                    ) : (
+                      <IconMoon className={flyoutSvg} />
+                    )}
                   </span>
                   <span className="app-topbar-flyout-txt">{themeLabel}</span>
                 </button>

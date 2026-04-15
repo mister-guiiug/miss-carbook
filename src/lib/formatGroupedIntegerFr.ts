@@ -3,10 +3,7 @@
 const DEFAULT_MAX = 99_999_999
 
 /** Parse une saisie avec espaces / espaces insécables (entier). */
-export function parseGroupedIntegerFrInput(
-  raw: string,
-  options?: { max?: number }
-): number | null {
+export function parseGroupedIntegerFrInput(raw: string, options?: { max?: number }): number | null {
   if (raw == null) return null
   const t = String(raw).trim()
   if (t === '') return null
