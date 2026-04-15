@@ -76,6 +76,7 @@ export function useAddCandidateForm({
         const prev = (lastSort as { sort_order?: number } | null)?.sort_order
         const nextOrder = (prev == null ? -1 : prev) + 1
 
+        const isRootRow = !parentId
         const { data, error } = await supabase
           .from('candidates')
           .insert({
@@ -85,11 +86,11 @@ export function useAddCandidateForm({
             brand: parsed.data.brand,
             model: parsed.data.model,
             trim: parsed.data.trim,
-            engine: parsed.data.engine,
-            price: parsed.data.price,
-            options: parsed.data.options,
-            garage_location: parsed.data.garage_location,
-            manufacturer_url: parsed.data.manufacturer_url,
+            engine: isRootRow ? '' : parsed.data.engine,
+            price: isRootRow ? null : parsed.data.price,
+            options: isRootRow ? '' : parsed.data.options,
+            garage_location: isRootRow ? '' : parsed.data.garage_location,
+            manufacturer_url: isRootRow ? '' : parsed.data.manufacturer_url,
             event_date: parsed.data.event_date,
             status: parsed.data.status,
             reject_reason: parsed.data.reject_reason,

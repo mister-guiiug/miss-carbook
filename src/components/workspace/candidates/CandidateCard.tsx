@@ -60,8 +60,6 @@ export function CandidateCard({
 }) {
   const open = openId === c.id
   const childCount = variationCount ?? childrenOf(c.id).length
-  const isRoot = !c.parent_candidate_id
-  const rootMultiVariant = isRoot && childCount >= 2
   const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : ''
 
   const ro = reorder
@@ -159,18 +157,8 @@ export function CandidateCard({
                     .filter(Boolean)
                     .join(' · ')}
                 </>
-              ) : rootMultiVariant ? (
-                <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
               ) : (
-                <>
-                  {[
-                    displayVersionLabel(c),
-                    c.engine?.trim(),
-                    c.price != null ? formatPriceEur(c.price) : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </>
+                <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
               )}
             </div>
           </div>

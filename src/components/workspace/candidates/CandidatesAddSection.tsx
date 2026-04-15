@@ -305,68 +305,10 @@ export function CandidatesAddSection({
             </div>
           ) : (
             <div className="candidate-fiche-details-attached stack">
-              <h5 className="candidate-fiche-subtitle">Détails du véhicule</h5>
-              <div className="row">
-                <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-engine-root">Motorisation</label>
-                  <input
-                    id="cand-engine-root"
-                    value={form.engine}
-                    onChange={(e) => setForm((f) => ({ ...f, engine: e.target.value }))}
-                  />
-                </div>
-                <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-price-root">Prix</label>
-                  <input
-                    id="cand-price-root"
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    value={form.price}
-                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    onFocus={() => {
-                      const n = parsePriceInput(form.price)
-                      setForm((f) => ({
-                        ...f,
-                        price: n != null ? String(n).replace('.', ',') : '',
-                      }))
-                    }}
-                    onBlur={() => {
-                      const n = parsePriceInput(form.price)
-                      setForm((f) => ({
-                        ...f,
-                        price: n != null ? formatPriceInputDisplay(n) : '',
-                      }))
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <GarageLocationInput
-                  id="cand-garage-root"
-                  label="Garage / lieu"
-                  value={form.garage_location}
-                  onChange={(v) => setForm((f) => ({ ...f, garage_location: v }))}
-                  suggestions={garageSuggestions}
-                  placeholder="Saisie libre ou choix dans la liste"
-                />
-              </div>
-              <div>
-                <label htmlFor="cand-url-root">Lien constructeur</label>
-                <input
-                  id="cand-url-root"
-                  value={form.manufacturer_url}
-                  onChange={(e) => setForm((f) => ({ ...f, manufacturer_url: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label htmlFor="cand-opt-root">Options</label>
-                <textarea
-                  id="cand-opt-root"
-                  value={form.options}
-                  onChange={(e) => setForm((f) => ({ ...f, options: e.target.value }))}
-                />
-              </div>
+              <p className="muted" style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                Pour une racine : pas de détails véhicule ni données constructeur — ajoutez des
+                compléments pour motorisation, prix, fiche technique et photos.
+              </p>
               <div className="row">
                 <div style={{ flex: '1 1 200px' }}>
                   <label htmlFor="cand-st-root">Statut</label>
