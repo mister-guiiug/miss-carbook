@@ -38,6 +38,12 @@ export function CandidateCard({
   onChanged: () => void
 }) {
   const open = openId === c.id
+  const childCount = variationCount ?? childrenOf(c.id).length
+  const isRoot = !c.parent_candidate_id
+  const rootMultiVariant = isRoot && childCount >= 2
+  const yearShort =
+    c.event_date && String(c.event_date).trim() ? String(c.event_date).slice(0, 4) : ''
+
   return (
     <li
       className={`card candidate-card${nested ? ' candidate-tree-child' : ''}`}
@@ -55,9 +61,15 @@ export function CandidateCard({
             </span>
           ) : null}
           <div className="muted">
-            {c.trim ? `${c.trim} · ` : ''}
-            {c.engine}
-            {c.price != null ? ` · ${c.price} €` : ''}
+            {rootMultiVariant ? (
+              <>{[c.trim?.trim(), yearShort].filter(Boolean).join(' · ') || '—'}</>
+            ) : (
+              <>
+                {c.trim ? `${c.trim} · ` : ''}
+                {c.engine}
+                {c.price != null ? ` · ${c.price} €` : ''}
+              </>
+            )}
           </div>
         </div>
         <div className="candidate-card-toolbar row icon-action-toolbar">
@@ -81,7 +93,7 @@ export function CandidateCard({
         <CandidateDetail
           candidate={c}
           rootCandidates={rootCandidatesForParent}
-          variationCount={variationCount ?? childrenOf(c.id).length}
+          variationCount={childCount}
           workspaceId={workspaceId}
           canWrite={canWrite}
           userId={userId}

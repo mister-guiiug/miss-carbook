@@ -47,9 +47,10 @@ export function CandidatesTab({
   return (
     <div className="stack candidates-tab">
       <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-        Un <strong>modèle racine</strong> regroupe la marque et le modèle ; les{' '}
-        <strong>variations</strong> partagent la même base (ex. finitions, motorisation) et restent
-        liées pour la comparaison.
+        Le <strong>modèle racine</strong> s’identifie par marque, modèle et version / période. Tant
+        qu’il n’y a pas <strong>plusieurs variations</strong>, les détails (motorisation, prix, etc.)
+        restent sur la même fiche ; avec au moins deux variations, seules ces lignes portent les
+        détails comparables.
       </p>
 
       {canWrite ? (
