@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { CANDIDATE_HIERARCHY_HELP_FR } from '../../../lib/candidateTree'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import type { CandidateStatus } from '../../../types/database'
 import type { AddCandidateFormState } from './useAddCandidateForm'
@@ -96,8 +97,9 @@ export function CandidatesAddSection({
               ))}
             </select>
             <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.8rem' }}>
+              {CANDIDATE_HIERARCHY_HELP_FR}{' '}
               {isVariation
-                ? 'Variation : la marque et le modèle viennent du racine ; précisez la version, la motorisation et le prix pour cette ligne.'
+                ? 'Ici : la marque et le modèle viennent du racine ; précisez la version complémentaire, la motorisation et le prix pour cette ligne.'
                 : 'Le racine porte surtout marque, modèle et version / période ; le reste est regroupé sous « Détails » tant qu’il n’y a pas plusieurs variations.'}
             </p>
           </div>

@@ -3,6 +3,10 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import { logActivity } from '../../lib/activity'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
+import {
+  CANDIDATE_HIERARCHY_HELP_FR,
+  postOrderDeleteIds,
+} from '../../lib/candidateTree'
 import { supabase } from '../../lib/supabase'
 import {
   IconActionButton,
@@ -17,22 +21,6 @@ import { useCandidatesQuickAdd } from './candidates/useCandidatesQuickAdd'
 import { useWorkspaceCandidates } from './candidates/useWorkspaceCandidates'
 import type { CandidateRow } from './candidates/candidateTypes'
 
-/** Supprime d’abord les descendants (post-ordre), puis la cible. */
-function postOrderDeleteIds(target: CandidateRow, all: CandidateRow[]): string[] {
-  const children = all
-    .filter((x) => x.parent_candidate_id === target.id)
-    .sort((a, b) => {
-      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-      return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR')
-    })
-  const out: string[] = []
-  for (const ch of children) {
-    out.push(...postOrderDeleteIds(ch, all))
-  }
-  out.push(target.id)
-  return out
-}
-
 export function CandidatesTab({
   workspaceId,
   canWrite,
@@ -44,10 +32,8 @@ export function CandidatesTab({
 }) {
   const { reportException, reportMessage } = useErrorDialog()
   const { showToast } = useToast()
-  const { candidates, reviews, load, rootCandidates, childrenOf } = useWorkspaceCandidates(
-    workspaceId,
-    reportException
-  )
+  const { candidates, reviews, load, rootCandidates, childrenOf, orphanVariations } =
+    useWorkspaceCandidates(workspaceId, reportException)
   const [open, setOpen] = useState<string | null>(null)
   const [garageSuggestions, setGarageSuggestions] = useState<string[]>([])
   const [draggingId, setDraggingId] = useState<string | null>(null)
@@ -259,7 +245,7 @@ export function CandidatesTab({
         » si le champ est vide) ; chaque <strong>complément</strong> porte une version
         complémentaire. Tant qu’il n’y a pas <strong>plusieurs compléments</strong>, les détails
         (motorisation, prix, etc.) restent sur la même fiche ; avec au moins deux compléments,
-        seules ces lignes portent les détails comparables.
+        seules ces lignes portent les détails comparables. {CANDIDATE_HIERARCHY_HELP_FR}
         {canWrite ? (
           <>
             {' '}
@@ -268,6 +254,13 @@ export function CandidatesTab({
           </>
         ) : null}
       </p>
+
+      {orphanVariations.length ? (
+        <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+          <strong>Attention :</strong> {orphanVariations.length} complément(s) référencent un parent
+          absent (supprimé ou incohérent). Rattachez-les à une racine depuis le détail ou supprimez-les.
+        </p>
+      ) : null}
 
       {canWrite ? (
         <CandidatesAddSection
@@ -320,29 +313,26 @@ export function CandidatesTab({
             ))}
           </Fragment>
         ))}
-        {candidates
-          .filter(
-            (c) => c.parent_candidate_id && !candidates.some((p) => p.id === c.parent_candidate_id)
-          )
-          .map((c) => (
-            <Fragment key={`orphan-${c.id}`}>
-              <CandidateCard
-                candidate={c}
-                openId={open}
-                onToggleDetail={toggleDetail}
-                onDuplicate={duplicateOne}
-                onRequestDelete={canWrite ? (row) => setConfirmingDelete(row) : undefined}
-                rootCandidatesForParent={rootCandidates.filter((x) => x.id !== c.id)}
-                childrenOf={childrenOf}
-                workspaceId={workspaceId}
-                canWrite={canWrite}
-                userId={userId}
-                onChanged={load}
-                garageSuggestions={garageSuggestions}
-                reorder={reorderBundle(orphanSiblingsSorted(c).map((x) => x.id))}
-              />
-            </Fragment>
-          ))}
+               {orphanVariations.map((c) => (
+          <Fragment key={`orphan-${c.id}`}>
+            <CandidateCard
+              candidate={c}
+              hierarchyDetached
+              openId={open}
+              onToggleDetail={toggleDetail}
+              onDuplicate={duplicateOne}
+              onRequestDelete={canWrite ? (row) => setConfirmingDelete(row) : undefined}
+              rootCandidatesForParent={rootCandidates.filter((x) => x.id !== c.id)}
+              childrenOf={childrenOf}
+              workspaceId={workspaceId}
+              canWrite={canWrite}
+              userId={userId}
+              onChanged={load}
+              garageSuggestions={garageSuggestions}
+              reorder={reorderBundle(orphanSiblingsSorted(c).map((x) => x.id))}
+            />
+          </Fragment>
+        ))}
       </ul>
 
       <p className="muted">

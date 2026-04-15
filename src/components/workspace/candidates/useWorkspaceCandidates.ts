@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  listChildrenOf,
+  listOrphanVariations,
+  listRootCandidates,
+} from '../../../lib/candidateTree'
 import { supabase } from '../../../lib/supabase'
 import type { CandidateRow } from './candidateTypes'
 
@@ -50,21 +55,14 @@ export function useWorkspaceCandidates(
     void load()
   }, [load])
 
-  const rootCandidates = useMemo(
-    () => candidates.filter((c) => !c.parent_candidate_id),
-    [candidates]
-  )
+  const rootCandidates = useMemo(() => listRootCandidates(candidates), [candidates])
+
+  const orphanVariations = useMemo(() => listOrphanVariations(candidates), [candidates])
 
   const childrenOf = useCallback(
-    (parentId: string) =>
-      candidates
-        .filter((c) => c.parent_candidate_id === parentId)
-        .sort((a, b) => {
-          if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-          return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR')
-        }),
+    (parentId: string) => listChildrenOf(parentId, candidates),
     [candidates]
   )
 
-  return { candidates, reviews, load, rootCandidates, childrenOf }
+  return { candidates, reviews, load, rootCandidates, childrenOf, orphanVariations }
 }
