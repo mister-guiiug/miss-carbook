@@ -32,6 +32,7 @@ type Row = {
   due_at: string | null
   done: boolean
   candidate_id: string | null
+  place?: string | null
 }
 
 export function RemindersTab({
@@ -51,12 +52,14 @@ export function RemindersTab({
   const [body, setBody] = useState('')
   const [due, setDue] = useState('')
   const [candId, setCandId] = useState('')
+  const [place, setPlace] = useState('')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editBody, setEditBody] = useState('')
   const [editDue, setEditDue] = useState('')
   const [editCandId, setEditCandId] = useState('')
+  const [editPlace, setEditPlace] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
 
   const load = useCallback(async () => {
@@ -118,6 +121,7 @@ export function RemindersTab({
     setEditBody(r.body)
     setEditDue(isoToDatetimeLocal(r.due_at))
     setEditCandId(r.candidate_id ?? '')
+    setEditPlace((r.place ?? '').trim())
   }
 
   const add = async (e: FormEvent) => {
@@ -129,6 +133,7 @@ export function RemindersTab({
       body: body.trim(),
       due_at: due ? new Date(due).toISOString() : null,
       candidate_id: candId || null,
+      place: place.trim(),
     })
     if (error) reportException(error, 'Création d’un rappel')
     else {
@@ -136,6 +141,7 @@ export function RemindersTab({
       setBody('')
       setDue('')
       setCandId('')
+      setPlace('')
       await load()
       await logActivity(workspaceId, 'reminder.create', 'reminder', null, {})
       showToast('Rappel ajouté')
@@ -154,6 +160,7 @@ export function RemindersTab({
           body: editBody.trim(),
           due_at: editDue ? new Date(editDue).toISOString() : null,
           candidate_id: editCandId || null,
+          place: editPlace.trim(),
         })
         .eq('id', id)
       if (error) reportException(error, 'Mise à jour d’un rappel')
@@ -214,6 +221,15 @@ export function RemindersTab({
             <div style={{ flex: '1 1 160px' }}>
               <label>Échéance</label>
               <input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
+            </div>
+            <div style={{ flex: '1 1 220px' }}>
+              <label>Lieu (optionnel)</label>
+              <input
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                placeholder="ex. Nom du garage, ville…"
+                maxLength={200}
+              />
             </div>
             <div style={{ flex: '1 1 200px' }}>
               <label>Lié à un modèle (optionnel)</label>
@@ -293,6 +309,16 @@ export function RemindersTab({
                           onChange={(e) => setEditDue(e.target.value)}
                         />
                       </div>
+                      <div style={{ flex: '1 1 220px' }}>
+                        <label htmlFor={`rem-edit-place-${r.id}`}>Lieu</label>
+                        <input
+                          id={`rem-edit-place-${r.id}`}
+                          value={editPlace}
+                          onChange={(e) => setEditPlace(e.target.value)}
+                          placeholder="ex. Nom du garage, ville…"
+                          maxLength={200}
+                        />
+                      </div>
                       <div style={{ flex: '1 1 200px' }}>
                         <label htmlFor={`rem-edit-cand-${r.id}`}>Lié à un modèle</label>
                         <select
@@ -332,6 +358,11 @@ export function RemindersTab({
                       <strong>{r.title}</strong>
                       {r.due_at ? (
                         <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
+                      ) : null}
+                      {(r.place ?? '').trim() ? (
+                        <div className="muted" style={{ fontSize: '0.9rem' }}>
+                          Lieu : {(r.place ?? '').trim()}
+                        </div>
                       ) : null}
                       {linked ? (
                         <div className="muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>

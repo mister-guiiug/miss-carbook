@@ -5,6 +5,7 @@ import type { CandidateStatus } from '../../../types/database'
 import type { AddCandidateFormState } from './useAddCandidateForm'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
+import { GarageLocationInput } from './GarageLocationInput'
 
 export function CandidatesAddSection({
   form,
@@ -13,6 +14,7 @@ export function CandidatesAddSection({
   importCsv,
   rootCandidates,
   candidates,
+  garageSuggestions,
 }: {
   form: AddCandidateFormState
   setForm: React.Dispatch<React.SetStateAction<AddCandidateFormState>>
@@ -20,6 +22,7 @@ export function CandidatesAddSection({
   importCsv: (file: File | null) => void
   rootCandidates: CandidateRow[]
   candidates: CandidateRow[]
+  garageSuggestions: string[]
 }) {
   const isVariation = Boolean(form.parent_id)
   const parent = form.parent_id ? (candidates.find((x) => x.id === form.parent_id) ?? null) : null
@@ -69,7 +72,11 @@ export function CandidatesAddSection({
                   }
                   const p = candidates.find((x) => x.id === pid)
                   if (!f.parent_id) {
-                    rootDraftRef.current = { brand: f.brand, model: f.model, event_date: f.event_date }
+                    rootDraftRef.current = {
+                      brand: f.brand,
+                      model: f.model,
+                      event_date: f.event_date,
+                    }
                   }
                   return {
                     ...f,
@@ -242,11 +249,13 @@ export function CandidatesAddSection({
                 </div>
               </div>
               <div>
-                <label htmlFor="cand-garage">Garage / lieu</label>
-                <input
+                <GarageLocationInput
                   id="cand-garage"
+                  label="Garage / lieu"
                   value={form.garage_location}
-                  onChange={(e) => setForm((f) => ({ ...f, garage_location: e.target.value }))}
+                  onChange={(v) => setForm((f) => ({ ...f, garage_location: v }))}
+                  suggestions={garageSuggestions}
+                  placeholder="Saisie libre ou choix dans la liste"
                 />
               </div>
               <div>
@@ -331,11 +340,13 @@ export function CandidatesAddSection({
                 </div>
               </div>
               <div>
-                <label htmlFor="cand-garage-root">Garage / lieu</label>
-                <input
+                <GarageLocationInput
                   id="cand-garage-root"
+                  label="Garage / lieu"
                   value={form.garage_location}
-                  onChange={(e) => setForm((f) => ({ ...f, garage_location: e.target.value }))}
+                  onChange={(v) => setForm((f) => ({ ...f, garage_location: v }))}
+                  suggestions={garageSuggestions}
+                  placeholder="Saisie libre ou choix dans la liste"
                 />
               </div>
               <div>

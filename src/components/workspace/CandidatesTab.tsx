@@ -1,5 +1,6 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { supabase } from '../../lib/supabase'
 import { CandidateCard } from './candidates/CandidateCard'
 import { CandidatesAddSection } from './candidates/CandidatesAddSection'
 import { useAddCandidateForm } from './candidates/useAddCandidateForm'
@@ -22,6 +23,43 @@ export function CandidatesTab({
     reportException
   )
   const [open, setOpen] = useState<string | null>(null)
+  const [garageSuggestions, setGarageSuggestions] = useState<string[]>([])
+
+  const refreshGarageSuggestions = useMemo(() => {
+    return async () => {
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('place')
+        .eq('workspace_id', workspaceId)
+      if (error) return
+      const uniq = new Set<string>()
+      for (const r of data ?? []) {
+        const t = String((r as { place?: string | null }).place ?? '').trim()
+        if (t) uniq.add(t)
+      }
+      setGarageSuggestions([...uniq].sort((a, b) => a.localeCompare(b, 'fr-FR')))
+    }
+  }, [workspaceId])
+
+  useEffect(() => {
+    void refreshGarageSuggestions()
+    const ch = supabase
+      .channel(`reminders-places-${workspaceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reminders',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        () => void refreshGarageSuggestions()
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(ch)
+    }
+  }, [workspaceId, refreshGarageSuggestions])
 
   useCandidatesQuickAdd()
 
@@ -62,6 +100,7 @@ export function CandidatesTab({
           importCsv={importCsv}
           rootCandidates={rootCandidates}
           candidates={candidates}
+          garageSuggestions={garageSuggestions}
         />
       ) : null}
 
@@ -79,6 +118,7 @@ export function CandidatesTab({
               canWrite={canWrite}
               userId={userId}
               onChanged={load}
+              garageSuggestions={garageSuggestions}
             />
             {childrenOf(root.id).map((child) => (
               <CandidateCard
@@ -94,6 +134,7 @@ export function CandidatesTab({
                 canWrite={canWrite}
                 userId={userId}
                 onChanged={load}
+                garageSuggestions={garageSuggestions}
               />
             ))}
           </Fragment>
@@ -115,6 +156,7 @@ export function CandidatesTab({
                 canWrite={canWrite}
                 userId={userId}
                 onChanged={load}
+                garageSuggestions={garageSuggestions}
               />
             </Fragment>
           ))}
