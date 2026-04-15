@@ -283,145 +283,172 @@ export function CandidateDetail({
     </div>
   )
 
+  const isRoot = !candidate.parent_candidate_id
+  const hasMultipleVariants = variationCount >= 2
+  const showDetailFields = !isRoot || !hasMultipleVariants
+  const showParentSelect = !isRoot || variationCount === 0
+
   return (
     <div className="stack" style={{ marginTop: '0.75rem' }}>
       {canWrite ? (
         <form onSubmit={saveIdentity} className="card stack" style={{ boxShadow: 'none' }}>
           <h4 style={{ margin: 0 }}>Fiche modèle</h4>
-          <div>
-            <label htmlFor={`cand-meta-parent-${candidate.id}`}>Modèle racine</label>
-            <select
-              id={`cand-meta-parent-${candidate.id}`}
-              value={meta.parent_candidate_id}
-              onChange={(e) => {
-                const pid = e.target.value
-                setMeta((m) => {
-                  if (!pid) return { ...m, parent_candidate_id: '' }
-                  const p = rootCandidates.find((x) => x.id === pid)
-                  return {
-                    ...m,
-                    parent_candidate_id: pid,
-                    brand: p?.brand ?? m.brand,
-                    model: p?.model ?? m.model,
-                  }
-                })
-              }}
-            >
-              <option value="">— Racine (pas de parent) —</option>
-              {rootCandidates.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {formatCandidateListLabel(p)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="row">
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
-              <input
-                id={`cand-meta-brand-${candidate.id}`}
-                value={meta.brand}
-                onChange={(e) => setMeta((m) => ({ ...m, brand: e.target.value }))}
-              />
-            </div>
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
-              <input
-                id={`cand-meta-model-${candidate.id}`}
-                value={meta.model}
-                onChange={(e) => setMeta((m) => ({ ...m, model: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-trim-${candidate.id}`}>Finition</label>
-              <input
-                id={`cand-meta-trim-${candidate.id}`}
-                value={meta.trim}
-                onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
-              />
-            </div>
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-engine-${candidate.id}`}>Motorisation</label>
-              <input
-                id={`cand-meta-engine-${candidate.id}`}
-                value={meta.engine}
-                onChange={(e) => setMeta((m) => ({ ...m, engine: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
-              <input
-                id={`cand-meta-price-${candidate.id}`}
-                type="number"
-                step="0.01"
-                value={meta.price}
-                onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
-              />
-            </div>
-            <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor={`cand-meta-date-${candidate.id}`}>Date</label>
-              <input
-                id={`cand-meta-date-${candidate.id}`}
-                type="date"
-                value={meta.event_date}
-                onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
-            <input
-              id={`cand-meta-garage-${candidate.id}`}
-              value={meta.garage_location}
-              onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
-            <input
-              id={`cand-meta-url-${candidate.id}`}
-              value={meta.manufacturer_url}
-              onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
-            <textarea
-              id={`cand-meta-opt-${candidate.id}`}
-              value={meta.options}
-              onChange={(e) => setMeta((m) => ({ ...m, options: e.target.value }))}
-            />
-          </div>
-          <div className="row">
-            <div style={{ flex: '1 1 200px' }}>
-              <label htmlFor={`cand-meta-st-${candidate.id}`}>Statut</label>
+
+          {showParentSelect ? (
+            <div>
+              <label htmlFor={`cand-meta-parent-${candidate.id}`}>Rattaché au modèle racine</label>
               <select
-                id={`cand-meta-st-${candidate.id}`}
-                value={meta.status}
-                onChange={(e) =>
-                  setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
-                }
+                id={`cand-meta-parent-${candidate.id}`}
+                value={meta.parent_candidate_id}
+                onChange={(e) => {
+                  const pid = e.target.value
+                  setMeta((m) => {
+                    if (!pid) return { ...m, parent_candidate_id: '' }
+                    const p = rootCandidates.find((x) => x.id === pid)
+                    return {
+                      ...m,
+                      parent_candidate_id: pid,
+                      brand: p?.brand ?? m.brand,
+                      model: p?.model ?? m.model,
+                    }
+                  })
+                }}
               >
-                {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
-                  <option key={k} value={k}>
-                    {statusLabels[k]}
+                <option value="">— Racine (pas de parent) —</option>
+                {rootCandidates.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {formatCandidateListLabel(p)}
                   </option>
                 ))}
               </select>
             </div>
-            <div style={{ flex: '1 1 200px' }}>
-              <label htmlFor={`cand-meta-rej-${candidate.id}`}>Raison si rejet</label>
-              <input
-                id={`cand-meta-rej-${candidate.id}`}
-                value={meta.reject_reason}
-                onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
-              />
+          ) : null}
+
+          <div className="candidate-fiche-identity stack">
+            <h5 className="candidate-fiche-subtitle">Identité</h5>
+            <div className="row">
+              <div style={{ flex: '1 1 160px' }}>
+                <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
+                <input
+                  id={`cand-meta-brand-${candidate.id}`}
+                  value={meta.brand}
+                  onChange={(e) => setMeta((m) => ({ ...m, brand: e.target.value }))}
+                />
+              </div>
+              <div style={{ flex: '1 1 160px' }}>
+                <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
+                <input
+                  id={`cand-meta-model-${candidate.id}`}
+                  value={meta.model}
+                  onChange={(e) => setMeta((m) => ({ ...m, model: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div style={{ flex: '1 1 160px' }}>
+                <label htmlFor={`cand-meta-trim-${candidate.id}`}>Version</label>
+                <input
+                  id={`cand-meta-trim-${candidate.id}`}
+                  value={meta.trim}
+                  onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
+                  placeholder="ex. finition, millésime court"
+                />
+              </div>
+              <div style={{ flex: '1 1 160px' }}>
+                <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période</label>
+                <input
+                  id={`cand-meta-date-${candidate.id}`}
+                  type="date"
+                  value={meta.event_date}
+                  onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
+                />
+              </div>
             </div>
           </div>
+
+          {isRoot && hasMultipleVariants ? (
+            <p className="muted" style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.45 }}>
+              Plusieurs variations : motorisation, prix, options, statut, etc. se renseignent sur
+              chaque ligne de variation.
+            </p>
+          ) : null}
+
+          {showDetailFields ? (
+            <div className="candidate-fiche-details-attached stack">
+              <h5 className="candidate-fiche-subtitle">Détails du véhicule</h5>
+              <div className="row">
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor={`cand-meta-engine-${candidate.id}`}>Motorisation</label>
+                  <input
+                    id={`cand-meta-engine-${candidate.id}`}
+                    value={meta.engine}
+                    onChange={(e) => setMeta((m) => ({ ...m, engine: e.target.value }))}
+                  />
+                </div>
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
+                  <input
+                    id={`cand-meta-price-${candidate.id}`}
+                    type="number"
+                    step="0.01"
+                    value={meta.price}
+                    onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
+                <input
+                  id={`cand-meta-garage-${candidate.id}`}
+                  value={meta.garage_location}
+                  onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
+                <input
+                  id={`cand-meta-url-${candidate.id}`}
+                  value={meta.manufacturer_url}
+                  onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
+                <textarea
+                  id={`cand-meta-opt-${candidate.id}`}
+                  value={meta.options}
+                  onChange={(e) => setMeta((m) => ({ ...m, options: e.target.value }))}
+                />
+              </div>
+              <div className="row">
+                <div style={{ flex: '1 1 200px' }}>
+                  <label htmlFor={`cand-meta-st-${candidate.id}`}>Statut</label>
+                  <select
+                    id={`cand-meta-st-${candidate.id}`}
+                    value={meta.status}
+                    onChange={(e) =>
+                      setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
+                    }
+                  >
+                    {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
+                      <option key={k} value={k}>
+                        {statusLabels[k]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label htmlFor={`cand-meta-rej-${candidate.id}`}>Raison si rejet</label>
+                  <input
+                    id={`cand-meta-rej-${candidate.id}`}
+                    value={meta.reject_reason}
+                    onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <button type="submit">Enregistrer la fiche</button>
         </form>
       ) : null}
