@@ -1,7 +1,14 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
+import { logActivity } from '../../lib/activity'
+import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
+import {
+  IconActionButton,
+  IconTrash,
+  IconX,
+} from '../ui/IconActionButton'
 import { CandidateCard } from './candidates/CandidateCard'
 import { CandidatesAddSection } from './candidates/CandidatesAddSection'
 import { useAddCandidateForm } from './candidates/useAddCandidateForm'
@@ -9,6 +16,22 @@ import { useCandidateMutations } from './candidates/useCandidateMutations'
 import { useCandidatesQuickAdd } from './candidates/useCandidatesQuickAdd'
 import { useWorkspaceCandidates } from './candidates/useWorkspaceCandidates'
 import type { CandidateRow } from './candidates/candidateTypes'
+
+/** Supprime d’abord les descendants (post-ordre), puis la cible. */
+function postOrderDeleteIds(target: CandidateRow, all: CandidateRow[]): string[] {
+  const children = all
+    .filter((x) => x.parent_candidate_id === target.id)
+    .sort((a, b) => {
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+      return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR')
+    })
+  const out: string[] = []
+  for (const ch of children) {
+    out.push(...postOrderDeleteIds(ch, all))
+  }
+  out.push(target.id)
+  return out
+}
 
 export function CandidatesTab({
   workspaceId,
@@ -30,6 +53,9 @@ export function CandidatesTab({
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [reordering, setReordering] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState<CandidateRow | null>(null)
+  const [deletingCandidate, setDeletingCandidate] = useState(false)
+  const cancelDeleteRef = useRef<HTMLButtonElement | null>(null)
 
   const refreshGarageSuggestions = useMemo(() => {
     return async () => {
@@ -87,6 +113,68 @@ export function CandidatesTab({
   const toggleDetail = (id: string) => {
     setOpen((o) => (o === id ? null : id))
   }
+
+  const dismissDeleteConfirm = useCallback(() => {
+    if (deletingCandidate) return
+    setConfirmingDelete(null)
+  }, [deletingCandidate])
+
+  useEffect(() => {
+    if (!confirmingDelete) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissDeleteConfirm()
+    }
+    window.addEventListener('keydown', onKey)
+    window.setTimeout(() => cancelDeleteRef.current?.focus(), 0)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirmingDelete, dismissDeleteConfirm])
+
+  const subtreeDeleteIds = useMemo(() => {
+    if (!confirmingDelete) return []
+    return postOrderDeleteIds(confirmingDelete, candidates)
+  }, [confirmingDelete, candidates])
+
+  const confirmDeleteCandidate = useCallback(async () => {
+    if (!confirmingDelete || !canWrite || deletingCandidate) return
+    const root = confirmingDelete
+    const ids = postOrderDeleteIds(root, candidates)
+    setDeletingCandidate(true)
+    try {
+      for (const id of ids) {
+        const { error } = await supabase
+          .from('candidates')
+          .delete()
+          .eq('id', id)
+          .eq('workspace_id', workspaceId)
+        if (error) throw error
+      }
+      await logActivity(workspaceId, 'candidate.delete', 'candidate', root.id, {
+        subtree_count: ids.length,
+      })
+      await load()
+      showToast(
+        ids.length > 1
+          ? `Fiche et ${ids.length - 1} complément(s) supprimés`
+          : 'Fiche modèle supprimée'
+      )
+      setOpen((o) => (o && ids.includes(o) ? null : o))
+      setConfirmingDelete(null)
+    } catch (e: unknown) {
+      reportException(e, 'Suppression d’une fiche modèle')
+      await load()
+    } finally {
+      setDeletingCandidate(false)
+    }
+  }, [
+    confirmingDelete,
+    canWrite,
+    deletingCandidate,
+    candidates,
+    workspaceId,
+    load,
+    showToast,
+    reportException,
+  ])
 
   const persistCandidateOrder = useCallback(
     async (orderedIds: string[]) => {
@@ -201,6 +289,7 @@ export function CandidatesTab({
               openId={open}
               onToggleDetail={toggleDetail}
               onDuplicate={duplicateOne}
+              onRequestDelete={canWrite ? (c) => setConfirmingDelete(c) : undefined}
               rootCandidatesForParent={rootCandidates.filter((x) => x.id !== root.id)}
               childrenOf={childrenOf}
               workspaceId={workspaceId}
@@ -218,6 +307,7 @@ export function CandidatesTab({
                 openId={open}
                 onToggleDetail={toggleDetail}
                 onDuplicate={duplicateOne}
+                onRequestDelete={canWrite ? (c) => setConfirmingDelete(c) : undefined}
                 rootCandidatesForParent={rootCandidates.filter((x) => x.id !== child.id)}
                 childrenOf={childrenOf}
                 workspaceId={workspaceId}
@@ -241,6 +331,7 @@ export function CandidatesTab({
                 openId={open}
                 onToggleDetail={toggleDetail}
                 onDuplicate={duplicateOne}
+                onRequestDelete={canWrite ? (row) => setConfirmingDelete(row) : undefined}
                 rootCandidatesForParent={rootCandidates.filter((x) => x.id !== c.id)}
                 childrenOf={childrenOf}
                 workspaceId={workspaceId}
@@ -258,6 +349,57 @@ export function CandidatesTab({
         Les avis agrégés pour la comparaison proviennent des notes saisies ci-dessous (
         {reviews.length} entrées chargées).
       </p>
+
+      {confirmingDelete ? (
+        <div
+          className="error-dialog-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) dismissDeleteConfirm()
+          }}
+        >
+          <div
+            className="error-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-delete-candidate-title"
+            aria-describedby="confirm-delete-candidate-desc"
+          >
+            <h2 id="confirm-delete-candidate-title" className="error-dialog-title">
+              Confirmer la suppression
+            </h2>
+            <p id="confirm-delete-candidate-desc" className="error-dialog-message">
+              Supprimer la fiche <strong>{formatCandidateListLabel(confirmingDelete)}</strong> ? Cette
+              action est définitive.
+            </p>
+            {subtreeDeleteIds.length > 1 ? (
+              <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+                {subtreeDeleteIds.length} fiche(s) au total seront supprimées (compléments et sous-fiches
+                inclus).
+              </p>
+            ) : null}
+            <div className="error-dialog-actions">
+              <IconActionButton
+                variant="secondary"
+                label="Annuler"
+                onClick={dismissDeleteConfirm}
+                disabled={deletingCandidate}
+                ref={cancelDeleteRef}
+              >
+                <IconX />
+              </IconActionButton>
+              <IconActionButton
+                variant="danger"
+                label={deletingCandidate ? 'Suppression en cours' : 'Supprimer'}
+                onClick={() => void confirmDeleteCandidate()}
+                disabled={deletingCandidate}
+              >
+                <IconTrash />
+              </IconActionButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

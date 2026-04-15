@@ -7,6 +7,7 @@ import {
   IconChevronUp,
   IconDuplicate,
   IconGripVertical,
+  IconTrash,
 } from '../../ui/IconActionButton'
 import { CandidateDetail } from './CandidateDetail'
 import type { CandidateRow } from './candidateTypes'
@@ -18,6 +19,7 @@ export function CandidateCard({
   openId,
   onToggleDetail,
   onDuplicate,
+  onRequestDelete,
   rootCandidatesForParent,
   variationCount,
   childrenOf,
@@ -34,6 +36,8 @@ export function CandidateCard({
   /** Ouvre le détail de ce candidat ou le ferme s’il est déjà ouvert. */
   onToggleDetail: (id: string) => void
   onDuplicate: (c: CandidateRow) => void
+  /** Ouvre la confirmation de suppression (fiche + compléments le cas échéant). */
+  onRequestDelete?: (c: CandidateRow) => void
   rootCandidatesForParent: CandidateRow[]
   variationCount?: number
   childrenOf: (parentId: string) => CandidateRow[]
@@ -167,6 +171,15 @@ export function CandidateCard({
           >
             <IconDuplicate />
           </IconActionButton>
+          {canWrite && onRequestDelete ? (
+            <IconActionButton
+              variant="danger"
+              label={`Supprimer la fiche « ${formatCandidateListLabel(c)} »`}
+              onClick={() => onRequestDelete(c)}
+            >
+              <IconTrash />
+            </IconActionButton>
+          ) : null}
           <IconActionButton
             variant="secondary"
             label={open ? 'Fermer le détail' : 'Afficher le détail'}
