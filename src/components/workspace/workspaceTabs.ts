@@ -11,6 +11,25 @@ export const WORKSPACE_TABS = [
 
 export type TabId = (typeof WORKSPACE_TABS)[number]['id']
 
+/** Onglets de la bande « Sections » — réglages et activité : raccourcis à côté du titre du dossier. */
+export const WORKSPACE_STRIP_TAB_ORDER = [
+  'notepad',
+  'requirements',
+  'evaluations',
+  'candidates',
+  'compare',
+  'reminders',
+] as const satisfies readonly TabId[]
+
+export const WORKSPACE_TABS_STRIP = WORKSPACE_STRIP_TAB_ORDER.map((id) =>
+  WORKSPACE_TABS.find((t) => t.id === id)!
+)
+
+export const WORKSPACE_SETTINGS_TAB_TITLE =
+  'Nom du dossier, membres, invitations, partage — uniquement ce projet'
+
+export const WORKSPACE_ACTIVITY_TAB_TITLE = 'Activité et historique de ce dossier'
+
 export function parseWorkspaceTabParam(raw: string | null): TabId {
   if (raw && WORKSPACE_TABS.some((t) => t.id === raw)) return raw as TabId
   return 'notepad'

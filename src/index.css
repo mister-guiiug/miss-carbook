@@ -1484,8 +1484,59 @@ th {
 .workspace-header-title-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem 0.75rem;
+}
+
+.workspace-header-title-row .workspace-header-title {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.workspace-header-inline-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.workspace-header-icon-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.workspace-header-icon-tab:hover {
+  border-color: rgb(15 118 110 / 0.45);
+  color: var(--primary);
+  background: rgb(15 118 110 / 0.07);
+}
+
+.workspace-header-icon-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.workspace-header-icon-tab--active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgb(15 118 110 / 0.12);
+  box-shadow: 0 0 0 2px rgb(15 118 110 / 0.2);
 }
 
 .workspace-role-badge {
