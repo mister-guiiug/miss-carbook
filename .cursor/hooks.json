@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node .cursor/hooks/guard-supabase.mjs",
+        "timeout": 20,
+        "failClosed": false,
+        "matcher": "\\bsupabase\\b"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/check-migrations-order.mjs",
+        "timeout": 20,
+        "failClosed": false
+      },
+      {
+        "command": "node .cursor/hooks/quality-after-edit.mjs",
+        "timeout": 60,
+        "failClosed": false
+      }
+    ],
+    "afterTabFileEdit": [
+      {
+        "command": "node .cursor/hooks/check-migrations-order.mjs",
+        "timeout": 20,
+        "failClosed": false
+      },
+      {
+        "command": "node .cursor/hooks/quality-after-edit.mjs",
+        "timeout": 60,
+        "failClosed": false
+      }
+    ]
+  }
+}
