@@ -1,20 +1,19 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
 const ic = { width: 20, height: 20, viewBox: '0 0 24 24' as const, fill: 'none' as const }
 
-export function IconActionButton({
-  label,
-  variant = 'secondary',
-  nativeType = 'button',
-  className = '',
-  children,
-  ...rest
-}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'aria-label' | 'title' | 'children'> & {
-  label: string
-  variant?: 'primary' | 'secondary' | 'danger'
-  nativeType?: 'button' | 'submit'
-  children: ReactNode
-}) {
+export const IconActionButton = forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'aria-label' | 'title' | 'children'> & {
+    label: string
+    variant?: 'primary' | 'secondary' | 'danger'
+    nativeType?: 'button' | 'submit'
+    children: ReactNode
+  }
+>(function IconActionButton(
+  { label, variant = 'secondary', nativeType = 'button', className = '', children, ...rest },
+  ref
+) {
   const mods = ['icon-action-btn']
   if (variant === 'secondary') mods.push('icon-action-btn--secondary')
   else if (variant === 'danger') mods.push('icon-action-btn--danger')
@@ -22,6 +21,7 @@ export function IconActionButton({
   return (
     <button
       {...rest}
+      ref={ref}
       type={nativeType}
       className={[...mods, className].filter(Boolean).join(' ')}
       aria-label={label}
@@ -30,7 +30,7 @@ export function IconActionButton({
       {children}
     </button>
   )
-}
+})
 
 export function IconPlus() {
   return (
