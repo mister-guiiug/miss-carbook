@@ -55,7 +55,10 @@ export async function fetchWorkspaceExportBundle(
     supabase
       .from('candidates')
       .select('*, candidate_specs ( specs )')
-      .eq('workspace_id', workspaceId),
+      .eq('workspace_id', workspaceId)
+      .order('parent_candidate_id', { ascending: true, nullsFirst: true })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
     supabase.from('notes').select('*').eq('workspace_id', workspaceId).maybeSingle(),
     supabase.from('user_notes').select('*').eq('workspace_id', workspaceId),
     supabase

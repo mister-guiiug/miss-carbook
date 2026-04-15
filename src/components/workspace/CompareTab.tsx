@@ -75,7 +75,9 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         'id, brand, model, trim, parent_candidate_id, engine, price, status, candidate_specs ( specs )'
       )
       .eq('workspace_id', workspaceId)
-      .order('created_at', { ascending: false })
+      .order('parent_candidate_id', { ascending: true, nullsFirst: true })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
     if (error) {
       reportException(error, 'Chargement des modèles (comparer)')
       return

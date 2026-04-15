@@ -3,6 +3,7 @@ import type { CandidateStatus, Json } from '../../../types/database'
 export type CandidateRow = {
   id: string
   parent_candidate_id: string | null
+  sort_order: number
   brand: string
   model: string
   trim: string

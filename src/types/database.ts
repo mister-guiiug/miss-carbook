@@ -146,6 +146,7 @@ export interface Database {
           id: string
           workspace_id: string
           parent_candidate_id: string | null
+          sort_order: number
           brand: string
           model: string
           trim: string
@@ -164,6 +165,7 @@ export interface Database {
           id?: string
           workspace_id: string
           parent_candidate_id?: string | null
+          sort_order?: number
           brand?: string
           model?: string
           trim?: string
@@ -178,6 +180,7 @@ export interface Database {
         }
         Update: {
           parent_candidate_id?: string | null
+          sort_order?: number
           brand?: string
           model?: string
           trim?: string

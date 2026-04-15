@@ -65,11 +65,24 @@ export function useAddCandidateForm({
         return
       }
       try {
+        const parentId = parsed.data.parent_candidate_id
+        let q = supabase.from('candidates').select('sort_order').eq('workspace_id', workspaceId)
+        if (parentId)
+          q = q.eq('parent_candidate_id', parentId)
+        else q = q.is('parent_candidate_id', null)
+        const { data: lastSort } = await q
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const prev = (lastSort as { sort_order?: number } | null)?.sort_order
+        const nextOrder = (prev == null ? -1 : prev) + 1
+
         const { data, error } = await supabase
           .from('candidates')
           .insert({
             workspace_id: workspaceId,
             parent_candidate_id: parsed.data.parent_candidate_id,
+            sort_order: nextOrder,
             brand: parsed.data.brand,
             model: parsed.data.model,
             trim: parsed.data.trim,

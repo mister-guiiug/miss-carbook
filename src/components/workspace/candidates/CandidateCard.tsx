@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import { formatPriceEur } from '../../../lib/formatPrice'
 import {
@@ -5,6 +6,7 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconDuplicate,
+  IconGripVertical,
 } from '../../ui/IconActionButton'
 import { CandidateDetail } from './CandidateDetail'
 import type { CandidateRow } from './candidateTypes'
@@ -24,6 +26,7 @@ export function CandidateCard({
   userId,
   onChanged,
   garageSuggestions,
+  reorder,
 }: {
   candidate: CandidateRow
   nested?: boolean
@@ -39,6 +42,14 @@ export function CandidateCard({
   userId: string
   onChanged: () => void
   garageSuggestions: string[]
+  reorder?: {
+    canReorder: boolean
+    draggingId: string | null
+    dragOverId: string | null
+    setDraggingId: Dispatch<SetStateAction<string | null>>
+    setDragOverId: Dispatch<SetStateAction<string | null>>
+    onDrop: (targetId: string, draggedId: string) => void
+  }
 }) {
   const open = openId === c.id
   const childCount = variationCount ?? childrenOf(c.id).length
@@ -46,13 +57,71 @@ export function CandidateCard({
   const rootMultiVariant = isRoot && childCount >= 2
   const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : ''
 
+  const ro = reorder
+  const canReorder = ro?.canReorder ?? false
+
   return (
     <li
-      className={`card candidate-card${nested ? ' candidate-tree-child' : ''}`}
+      className={`card candidate-card${nested ? ' candidate-tree-child' : ''}${
+        ro && ro.draggingId === c.id ? ' candidate-card--dragging' : ''
+      }${ro && ro.dragOverId === c.id ? ' candidate-card--drag-target' : ''}`}
       style={{ boxShadow: 'none' }}
+      onDragOver={
+        ro && canReorder
+          ? (e) => {
+              if (![...e.dataTransfer.types].includes('text/plain')) return
+              e.preventDefault()
+              e.dataTransfer.dropEffect = 'move'
+              ro.setDragOverId(c.id)
+            }
+          : undefined
+      }
+      onDragLeave={
+        ro && canReorder
+          ? (e) => {
+              const next = e.relatedTarget as Node | null
+              if (next && e.currentTarget.contains(next)) return
+              ro.setDragOverId((cur) => (cur === c.id ? null : cur))
+            }
+          : undefined
+      }
+      onDrop={
+        ro && canReorder
+          ? (e) => {
+              e.preventDefault()
+              const draggedId = e.dataTransfer.getData('text/plain')
+              ro.setDragOverId(null)
+              if (draggedId) ro.onDrop(c.id, draggedId)
+            }
+          : undefined
+      }
     >
       <div className="candidate-card-head row">
-        <div className="candidate-card-title" style={{ flex: '1 1 200px', minWidth: 0 }}>
+        <div
+          className="requirement-card-view-with-handle"
+          style={{ flex: '1 1 200px', minWidth: 0 }}
+        >
+          {ro && canReorder ? (
+            <button
+              type="button"
+              className="reorder-drag-handle"
+              draggable
+              aria-label={`Réordonner : ${formatCandidateListLabel(c)}`}
+              title="Glisser pour réordonner"
+              onDragStart={(e) => {
+                ro.setDraggingId(c.id)
+                e.dataTransfer.setData('text/plain', c.id)
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              onDragEnd={() => {
+                ro.setDraggingId(null)
+                ro.setDragOverId(null)
+              }}
+            >
+              <IconGripVertical />
+            </button>
+          ) : null}
+          <div className="candidate-card-title requirement-card-body">
           <strong>{formatCandidateListLabel(c)}</strong>{' '}
           <span className={`badge candidate-status-badge candidate-status-badge--${c.status}`}>
             {statusLabels[c.status]}
@@ -87,6 +156,7 @@ export function CandidateCard({
                   .join(' · ')}
               </>
             )}
+          </div>
           </div>
         </div>
         <div className="candidate-card-toolbar row icon-action-toolbar">

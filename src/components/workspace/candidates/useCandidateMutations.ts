@@ -19,11 +19,23 @@ export function useCandidateMutations({
     async (c: CandidateRow) => {
       if (!canWrite) return
       try {
+        let q = supabase.from('candidates').select('sort_order').eq('workspace_id', workspaceId)
+        if (c.parent_candidate_id)
+          q = q.eq('parent_candidate_id', c.parent_candidate_id)
+        else q = q.is('parent_candidate_id', null)
+        const { data: lastSort } = await q
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const prev = (lastSort as { sort_order?: number } | null)?.sort_order
+        const nextOrder = (prev == null ? -1 : prev) + 1
+
         const { data, error } = await supabase
           .from('candidates')
           .insert({
             workspace_id: workspaceId,
             parent_candidate_id: c.parent_candidate_id,
+            sort_order: nextOrder,
             brand: c.brand,
             model: c.model ? `${c.model} (copie)` : '(copie)',
             trim: c.trim,
@@ -73,6 +85,16 @@ export function useCandidateMutations({
         const iEngine = col('engine', 'motorisation')
         const iPrice = col('price', 'prix')
         if (iBrand < 0 || iModel < 0) throw new Error('Colonnes brand et model requises')
+        const { data: lastRoot } = await supabase
+          .from('candidates')
+          .select('sort_order')
+          .eq('workspace_id', workspaceId)
+          .is('parent_candidate_id', null)
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const lastSo = (lastRoot as { sort_order?: number } | null)?.sort_order
+        let nextOrder = (lastSo == null ? -1 : lastSo) + 1
         for (let li = 1; li < lines.length; li++) {
           const cols = lines[li].split(',').map((s) => s.trim())
           const brand = cols[iBrand] ?? ''
@@ -84,6 +106,7 @@ export function useCandidateMutations({
             .from('candidates')
             .insert({
               workspace_id: workspaceId,
+              sort_order: nextOrder,
               brand,
               model,
               trim: iTrim >= 0 ? (cols[iTrim] ?? '') : '',
@@ -94,6 +117,7 @@ export function useCandidateMutations({
             .single()
           if (error) throw error
           await supabase.from('candidate_specs').insert({ candidate_id: data.id, specs: {} })
+          nextOrder += 1
         }
         await load()
         await logActivity(workspaceId, 'candidate.import_csv', 'workspace', workspaceId, {})

@@ -531,7 +531,7 @@ export function RequirementsTab({
                       {canWrite && !isEditing ? (
                         <button
                           type="button"
-                          className="requirement-card-drag-handle"
+                          className="reorder-drag-handle"
                           draggable={canReorder}
                           disabled={!canReorder}
                           aria-label={`Réordonner : ${r.label}`}
