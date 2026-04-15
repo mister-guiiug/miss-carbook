@@ -2,14 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logActivity } from '../../../lib/activity'
 import {
+  allowedImageMime,
   candidateSchema,
   candidateSpecsSchema,
   commentSchema,
+  MAX_IMAGE_BYTES,
   reviewSchema,
 } from '../../../lib/validation/schemas'
 import { uploadCandidateImage, signedUrlForPath } from '../../../lib/storageUpload'
+import { compressImageToMaxBytes } from '../../../lib/imageCompress'
 import { renderMentions } from '../../../lib/renderMentions'
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext'
+import { useToast } from '../../../contexts/ToastContext'
 import type { CandidateStatus, Json } from '../../../types/database'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import {
@@ -19,7 +23,7 @@ import {
 } from '../../../lib/candidateTree'
 import { formatMileageKmDisplay, parseMileageKmInput } from '../../../lib/formatMileage'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
-import { IconActionButton, IconSend } from '../../ui/IconActionButton'
+import { IconActionButton, IconCheck, IconSend, IconX } from '../../ui/IconActionButton'
 import { GarageLocationInput } from './GarageLocationInput'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
@@ -121,6 +125,7 @@ export function CandidateDetail({
   garageSuggestions: string[]
 }) {
   const { reportException, reportMessage } = useErrorDialog()
+  const { showToast } = useToast()
   const [meta, setMeta] = useState({
     parent_candidate_id: candidate.parent_candidate_id ?? '',
     brand: candidate.brand,
@@ -292,6 +297,9 @@ export function CandidateDetail({
   const [commentsAccordionOpen, setCommentsAccordionOpen] = useState(false)
   const [photosAccordionOpen, setPhotosAccordionOpen] = useState(false)
   const [reviewAccordionOpen, setReviewAccordionOpen] = useState(false)
+  const [pendingOversizedPhoto, setPendingOversizedPhoto] = useState<File | null>(null)
+  const [compressingPhoto, setCompressingPhoto] = useState(false)
+  const compressCancelRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     setVehDetailsOpen(!isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate)))
@@ -376,7 +384,18 @@ export function CandidateDetail({
     setCommentsAccordionOpen(false)
     setPhotosAccordionOpen(false)
     setReviewAccordionOpen(false)
+    setPendingOversizedPhoto(null)
   }, [candidate.id])
+
+  useEffect(() => {
+    if (!pendingOversizedPhoto) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !compressingPhoto) setPendingOversizedPhoto(null)
+    }
+    window.addEventListener('keydown', onKey)
+    window.setTimeout(() => compressCancelRef.current?.focus(), 0)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pendingOversizedPhoto, compressingPhoto])
 
   const saveSpecs = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -446,14 +465,48 @@ export function CandidateDetail({
     }
   }
 
+  const runPhotoUpload = async (file: File, compressedHint?: boolean) => {
+    await uploadCandidateImage(workspaceId, candidate.id, file, userId)
+    await loadPhotos()
+    await logActivity(workspaceId, 'candidate.photo.upload', 'candidate', candidate.id, {})
+    if (compressedHint) {
+      showToast('Photo envoyée (image compressée automatiquement)')
+    }
+  }
+
   const onFile = async (file: File | null) => {
     if (!file || !canWrite || !candidate.parent_candidate_id) return
+    if (!allowedImageMime.includes(file.type as (typeof allowedImageMime)[number])) {
+      reportMessage('Type non autorisé (JPEG, PNG, WebP, GIF)')
+      return
+    }
+    if (file.size <= MAX_IMAGE_BYTES) {
+      try {
+        await runPhotoUpload(file, false)
+      } catch (e: unknown) {
+        reportException(e, 'Upload d’une photo pour le modèle')
+      }
+      return
+    }
+    setPendingOversizedPhoto(file)
+  }
+
+  const dismissCompressOffer = () => {
+    if (compressingPhoto) return
+    setPendingOversizedPhoto(null)
+  }
+
+  const confirmCompressAndUpload = async () => {
+    if (!pendingOversizedPhoto || !canWrite) return
+    setCompressingPhoto(true)
     try {
-      await uploadCandidateImage(workspaceId, candidate.id, file, userId)
-      await loadPhotos()
-      await logActivity(workspaceId, 'candidate.photo.upload', 'candidate', candidate.id, {})
+      const compressed = await compressImageToMaxBytes(pendingOversizedPhoto, MAX_IMAGE_BYTES)
+      await runPhotoUpload(compressed, true)
+      setPendingOversizedPhoto(null)
     } catch (e: unknown) {
-      reportException(e, 'Upload d’une photo pour le modèle')
+      reportException(e, 'Compression ou envoi de la photo')
+    } finally {
+      setCompressingPhoto(false)
     }
   }
 
@@ -1096,7 +1149,7 @@ export function CandidateDetail({
           onToggle={(e) => setPhotosAccordionOpen(e.currentTarget.open)}
         >
           <summary className="home-accordion-summary">
-            Photos (max 5 Mo, JPEG/PNG/WebP/GIF)
+            Photos (max 5 Mo, JPEG/PNG/WebP/GIF — compression proposée si besoin)
             {!photos.length ? (
               <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
                 (vide)
@@ -1109,11 +1162,17 @@ export function CandidateDetail({
           </summary>
           <div className="home-accordion-body stack">
             {canWrite ? (
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
-              />
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
+                />
+                <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
+                  Si le fichier dépasse 5 Mo, vous pourrez le compresser automatiquement (JPEG, taille
+                  et qualité ajustées) avant envoi.
+                </p>
+              </>
             ) : null}
             <div className="row" style={{ flexWrap: 'wrap' }}>
               {photos.map((p) => (
@@ -1132,6 +1191,60 @@ export function CandidateDetail({
             </div>
           </div>
         </details>
+      ) : null}
+
+      {pendingOversizedPhoto ? (
+        <div
+          className="error-dialog-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) dismissCompressOffer()
+          }}
+        >
+          <div
+            className="error-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="compress-photo-title"
+            aria-describedby="compress-photo-desc"
+          >
+            <h2 id="compress-photo-title" className="error-dialog-title">
+              Image trop volumineuse
+            </h2>
+            <p id="compress-photo-desc" className="error-dialog-message">
+              Ce fichier fait environ{' '}
+              <strong>
+                {(pendingOversizedPhoto.size / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo
+              </strong>{' '}
+              (limite {MAX_IMAGE_BYTES / 1024 / 1024} Mo). Vous pouvez le{' '}
+              <strong>compresser automatiquement</strong> (réduction des dimensions et qualité, export
+              JPEG) pour l’envoyer.
+            </p>
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Les GIF animés deviennent une image fixe. La transparence des PNG est remplacée par un
+              fond.
+            </p>
+            <div className="error-dialog-actions">
+              <IconActionButton
+                variant="secondary"
+                label="Annuler"
+                onClick={dismissCompressOffer}
+                disabled={compressingPhoto}
+                ref={compressCancelRef}
+              >
+                <IconX />
+              </IconActionButton>
+              <IconActionButton
+                variant="primary"
+                label={compressingPhoto ? 'Compression…' : 'Compresser et envoyer'}
+                onClick={() => void confirmCompressAndUpload()}
+                disabled={compressingPhoto}
+              >
+                <IconCheck />
+              </IconActionButton>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   )
