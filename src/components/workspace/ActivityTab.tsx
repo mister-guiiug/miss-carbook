@@ -140,35 +140,43 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
           {groups.map(([dayKey, { heading, items }]) => (
             <li key={dayKey} className="activity-day-group stack">
               <h3 className="activity-day-heading">{heading}</h3>
-              <ul className="activity-day-list stack">
-                {items.map((r) => (
-                  <li key={r.id} className="activity-entry card">
-                    <div className="activity-entry-meta">
-                      <time dateTime={r.created_at}>
-                        {new Date(r.created_at).toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+              <ul className="activity-day-list">
+                {items.map((r) => {
+                  const who = r.user_id
+                    ? (names[r.user_id] ?? r.user_id.slice(0, 8))
+                    : 'Système'
+                  const timeStr = new Date(r.created_at).toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                  const action = activityActionLabel(r.action_type)
+                  const entity = activityEntityLabel(r.entity_type)
+                  const idBit = r.entity_id ? ` · ${r.entity_id.slice(0, 8)}…` : ''
+                  const titleTip = `${timeStr} · ${who} · ${action} — ${entity}${idBit}`
+                  return (
+                    <li key={r.id} className="activity-entry" title={titleTip}>
+                      <time className="activity-entry-time" dateTime={r.created_at}>
+                        {timeStr}
                       </time>
-                      <span className="activity-entry-sep" aria-hidden="true">
-                        ·
+                      <span className="activity-entry-main">
+                        <strong className="activity-entry-who">{who}</strong>
+                        <span className="activity-entry-sep" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="activity-entry-action">{action}</span>
+                        <span className="activity-entry-entity muted">
+                          <span className="activity-entry-sep" aria-hidden="true">
+                            ·
+                          </span>
+                          {entity}
+                          {r.entity_id ? (
+                            <span className="activity-entry-id">{idBit}</span>
+                          ) : null}
+                        </span>
                       </span>
-                      <span className="activity-entry-who">
-                        {r.user_id ? (names[r.user_id] ?? r.user_id.slice(0, 8)) : 'Système'}
-                      </span>
-                    </div>
-                    <p className="activity-entry-summary">
-                      <strong>{activityActionLabel(r.action_type)}</strong>
-                      <span className="activity-entry-entity muted">
-                        {' '}
-                        — {activityEntityLabel(r.entity_type)}
-                        {r.entity_id ? (
-                          <span className="activity-entry-id"> · {r.entity_id.slice(0, 8)}…</span>
-                        ) : null}
-                      </span>
-                    </p>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             </li>
           ))}
