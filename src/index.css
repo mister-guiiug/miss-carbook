@@ -1667,6 +1667,24 @@ th {
 }
 
 /* --- Bloc-notes (accordéon) --- */
+.notepad-accordion-head-row {
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.notepad-accordion-item--pinned {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.notepad-accordion-item--dragging {
+  opacity: 0.72;
+}
+
+.notepad-accordion-item--drag-target {
+  outline: 2px dashed color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .notepad-accordion-header {
   width: 100%;
   border: none;
