@@ -151,7 +151,7 @@ export const candidateSchema = z.object({
     .refine((s) => s.trim() === '' || z.string().url().safeParse(s.trim()).success, 'URL invalide'),
   event_date: z.preprocess(
     (val) => (val === '' || val === undefined ? null : val),
-    z.union([z.string().max(200, 'Année / période : 200 caractères max'), z.null()]).optional()
+    z.union([z.string().max(200, 'Année / période / génération : 200 caractères max'), z.null()]).optional()
   ),
   status: z
     .enum(['to_see', 'tried', 'shortlist', 'selected', 'rejected'])

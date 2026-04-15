@@ -147,7 +147,7 @@ export function CandidatesAddSection({
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor="cand-period-ro">Année(s) / période</label>
+                    <label htmlFor="cand-period-ro">Année(s) / période / génération</label>
                     <input
                       id="cand-period-ro"
                       className="candidate-field-readonly"
@@ -181,7 +181,7 @@ export function CandidatesAddSection({
                   />
                 </div>
                 <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-event-date">Année(s) / période</label>
+                  <label htmlFor="cand-event-date">Année(s) / période / génération</label>
                   <input
                     id="cand-event-date"
                     type="text"

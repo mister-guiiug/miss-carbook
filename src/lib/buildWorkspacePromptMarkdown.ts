@@ -247,7 +247,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         `- **Boîte de vitesses** : ${esc(c.gearbox) || '—'}`,
         `- **Lieu / garage** : ${esc(c.garage_location) || '—'}`,
         `- **Lien constructeur** : ${esc(c.manufacturer_url) || '—'}`,
-        `- **Année / période** : ${esc(c.event_date) || '—'}`,
+        `- **Année / période / génération** : ${esc(c.event_date) || '—'}`,
         `- **Options** : ${esc(c.options) || '_(vide)_'}`,
         `- **Motif si rejet** : ${esc(c.reject_reason) || '—'}`,
         ''
