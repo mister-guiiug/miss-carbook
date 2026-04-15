@@ -79,7 +79,12 @@ const candidateSpecsShape = z.object({
   wheelbaseMm: z.number().optional(),
   trunkLiters: z.number().optional(),
   trunkSeatsFoldedLiters: z.number().optional(),
+  /** Consommation mixte (cycle combiné), essence / diesel (L/100 km). */
   consumptionL100: z.number().optional(),
+  /** Consommation urbaine (L/100 km). */
+  consumptionUrbanL100: z.number().optional(),
+  /** Consommation extra-urbaine (L/100 km). */
+  consumptionExtraUrbanL100: z.number().optional(),
   consumptionKwh100: z.number().optional(),
   powerKw: z.number().optional(),
   powerHp: z.number().optional(),
