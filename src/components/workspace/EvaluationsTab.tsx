@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
-import type { RequirementLevel } from '../../types/database'
+import type { CandidateStatus, RequirementLevel } from '../../types/database'
 
 type Req = { id: string; label: string; level: RequirementLevel }
 type Cand = {
@@ -13,6 +13,7 @@ type Cand = {
   model: string
   trim: string
   parent_candidate_id: string | null
+  status: CandidateStatus
 }
 type EvalRow = {
   requirement_id: string
@@ -51,13 +52,19 @@ export function EvaluationsTab({
   const [cands, setCands] = useState<Cand[]>([])
   const [evals, setEvals] = useState<EvalRow[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
+  const [hide, setHide] = useState({
+    excluded: false,
+    toSee: false,
+    parents: false,
+    children: false,
+  })
 
   const load = useCallback(async () => {
     const [r, c, e, v] = await Promise.all([
       supabase.from('requirements').select('id, label, level').eq('workspace_id', workspaceId),
       supabase
         .from('candidates')
-        .select('id, brand, model, trim, parent_candidate_id')
+        .select('id, brand, model, trim, parent_candidate_id, status')
         .eq('workspace_id', workspaceId),
       supabase
         .from('requirement_candidate_evaluations')
@@ -72,6 +79,7 @@ export function EvaluationsTab({
       trim: (row as { trim?: string }).trim ?? '',
       parent_candidate_id:
         (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+      status: (row as { status?: CandidateStatus }).status ?? 'to_see',
     }))
     const reqIds = new Set(reqRows.map((x) => x.id))
     const candIds = new Set(candRows.map((x) => x.id))
@@ -106,6 +114,21 @@ export function EvaluationsTab({
     }
     return m
   }, [votes])
+
+  const filteredCands = useMemo(() => {
+    return cands.filter((cand) => {
+      const isChild = Boolean(cand.parent_candidate_id)
+      const isParent = !isChild
+      const isExcluded = cand.status === 'rejected'
+      const isToSee = cand.status === 'to_see'
+
+      if (hide.excluded && isExcluded) return false
+      if (hide.toSee && isToSee) return false
+      if (hide.parents && isParent) return false
+      if (hide.children && isChild) return false
+      return true
+    })
+  }, [cands, hide])
 
   const setStatus = async (requirementId: string, candidateId: string, status: string) => {
     if (!canWrite) return
@@ -186,6 +209,45 @@ export function EvaluationsTab({
         satisfaite.
       </p>
 
+      <div className="row" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+        <strong>Masquer</strong>
+        <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={hide.excluded}
+            onChange={(e) => setHide((h) => ({ ...h, excluded: e.target.checked }))}
+          />
+          Exclus
+        </label>
+        <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={hide.toSee}
+            onChange={(e) => setHide((h) => ({ ...h, toSee: e.target.checked }))}
+          />
+          À voir
+        </label>
+        <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={hide.parents}
+            onChange={(e) => setHide((h) => ({ ...h, parents: e.target.checked }))}
+          />
+          Modèles pères
+        </label>
+        <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={hide.children}
+            onChange={(e) => setHide((h) => ({ ...h, children: e.target.checked }))}
+          />
+          Modèles fils
+        </label>
+        <span className="muted" style={{ fontSize: '0.9rem' }}>
+          {filteredCands.length} / {cands.length} affichés
+        </span>
+      </div>
+
       <div className="table-wrap eval-table-wrap">
         <table className="eval-matrix">
           <thead>
@@ -193,7 +255,7 @@ export function EvaluationsTab({
               <th>Exigence</th>
               <th>MoSCoW (vous)</th>
               <th>Votes agrégés</th>
-              {cands.map((c) => (
+              {filteredCands.map((c) => (
                 <th key={c.id}>{formatCandidateListLabel(c)}</th>
               ))}
             </tr>
@@ -227,7 +289,7 @@ export function EvaluationsTab({
                 <td className="muted" style={{ fontSize: '0.8rem' }}>
                   {JSON.stringify(voteAgg.get(r.id) ?? {})}
                 </td>
-                {cands.map((c) => {
+                {filteredCands.map((c) => {
                   const cell = evalMap.get(evalKey(r.id, c.id))
                   return (
                     <td key={c.id}>
