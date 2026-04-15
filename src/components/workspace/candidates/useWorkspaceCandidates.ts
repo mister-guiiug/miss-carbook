@@ -4,6 +4,7 @@ import {
   listOrphanVariations,
   listRootCandidates,
 } from '../../../lib/candidateTree'
+import { parseManufacturerLinksFromDb } from '../../../lib/manufacturerLinks'
 import { supabase } from '../../../lib/supabase'
 import type { CandidateRow } from './candidateTypes'
 
@@ -25,21 +26,28 @@ export function useWorkspaceCandidates(
     if (error) reportException(error, 'Chargement des modèles candidats')
     else
       setCandidates(
-        (data ?? []).map((row) => ({
-          ...(row as unknown as CandidateRow),
-          parent_candidate_id:
-            (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
-          sort_order: Number((row as { sort_order?: number }).sort_order ?? 0),
-          mileage_km:
-            (row as { mileage_km?: number | null }).mileage_km != null
-              ? Number((row as { mileage_km?: number | null }).mileage_km)
-              : null,
-          first_registration: String(
-            (row as { first_registration?: string | null }).first_registration ?? ''
-          ),
-          gearbox: String((row as { gearbox?: string | null }).gearbox ?? ''),
-          energy: String((row as { energy?: string | null }).energy ?? ''),
-        }))
+        (data ?? []).map((row) => {
+          const r = row as Record<string, unknown>
+          return {
+            ...(row as unknown as CandidateRow),
+            parent_candidate_id:
+              (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+            sort_order: Number((row as { sort_order?: number }).sort_order ?? 0),
+            mileage_km:
+              (row as { mileage_km?: number | null }).mileage_km != null
+                ? Number((row as { mileage_km?: number | null }).mileage_km)
+                : null,
+            first_registration: String(
+              (row as { first_registration?: string | null }).first_registration ?? ''
+            ),
+            gearbox: String((row as { gearbox?: string | null }).gearbox ?? ''),
+            energy: String((row as { energy?: string | null }).energy ?? ''),
+            manufacturer_links: parseManufacturerLinksFromDb(
+              r.manufacturer_links,
+              String(r.manufacturer_url ?? '')
+            ),
+          }
+        })
       )
     const ids = (data ?? []).map((c: { id: string }) => c.id)
     if (ids.length) {

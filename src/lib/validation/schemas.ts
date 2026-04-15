@@ -147,12 +147,28 @@ export const candidateSchema = z.object({
   energy: z.string().max(120).optional().default(''),
   options: z.string().max(4000).optional().default(''),
   garage_location: z.string().max(200).optional().default(''),
-  manufacturer_url: z
-    .string()
-    .max(2000)
+  manufacturer_links: z
+    .array(
+      z.object({
+        url: z.string().max(2000),
+        label: z.string().max(120).optional().default(''),
+      })
+    )
+    .max(30)
     .optional()
-    .default('')
-    .refine((s) => s.trim() === '' || z.string().url().safeParse(s.trim()).success, 'URL invalide'),
+    .default([])
+    .transform((arr) =>
+      (arr ?? [])
+        .map((x) => ({
+          url: (x.url ?? '').trim(),
+          label: (x.label ?? '').trim(),
+        }))
+        .filter((x) => x.url !== '')
+    )
+    .refine(
+      (arr) => arr.every((x) => z.string().url().safeParse(x.url).success),
+      { message: 'Une ou plusieurs URL de liens sont invalides' }
+    ),
   event_date: z.preprocess(
     (val) => (val === '' || val === undefined ? null : val),
     z.union([z.string().max(200, 'Année / période / génération : 200 caractères max'), z.null()]).optional()

@@ -7,6 +7,7 @@ import type { AddCandidateFormState } from './useAddCandidateForm'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
 import { GarageLocationInput } from './GarageLocationInput'
+import { ManufacturerLinksEditor } from './ManufacturerLinksEditor'
 
 export function CandidatesAddSection({
   form,
@@ -260,14 +261,11 @@ export function CandidatesAddSection({
                   placeholder="Saisie libre ou choix dans la liste"
                 />
               </div>
-              <div>
-                <label htmlFor="cand-url">Lien constructeur</label>
-                <input
-                  id="cand-url"
-                  value={form.manufacturer_url}
-                  onChange={(e) => setForm((f) => ({ ...f, manufacturer_url: e.target.value }))}
-                />
-              </div>
+              <ManufacturerLinksEditor
+                idPrefix="cand-add-links"
+                value={form.manufacturer_links}
+                onChange={(manufacturer_links) => setForm((f) => ({ ...f, manufacturer_links }))}
+              />
               <div>
                 <label htmlFor="cand-opt">Options</label>
                 <textarea

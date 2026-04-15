@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logActivity } from '../../../lib/activity'
+import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks'
 import type { Json } from '../../../types/database'
 import type { CandidateRow } from './candidateTypes'
 
@@ -46,7 +47,8 @@ export function useCandidateMutations({
             energy: c.energy,
             options: c.options,
             garage_location: c.garage_location,
-            manufacturer_url: c.manufacturer_url,
+            manufacturer_links: c.manufacturer_links as unknown as Json,
+            manufacturer_url: legacyManufacturerUrlFromLinks(c.manufacturer_links),
             event_date: c.event_date,
             status: 'to_see',
             reject_reason: '',

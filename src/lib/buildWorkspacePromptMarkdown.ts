@@ -1,6 +1,7 @@
 import { formatCandidateListLabel } from './candidateLabel'
 import { formatMileageKmDisplay } from './formatMileage'
 import { formatPriceEur } from './formatPrice'
+import { parseManufacturerLinksFromDb } from './manufacturerLinks'
 import type { WorkspaceExportBundle } from './workspaceExportBundle'
 
 const REQ_LEVEL: Record<string, string> = {
@@ -71,6 +72,7 @@ type CandRow = {
   options: string
   garage_location: string
   manufacturer_url: string
+  manufacturer_links?: unknown
   event_date: string | null
   status: string
   reject_reason: string
@@ -236,6 +238,17 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
     for (const c of cands) {
       const label = formatCandidateListLabel(c)
       const st = CAND_STATUS[c.status] ?? c.status
+      const links = parseManufacturerLinksFromDb(c.manufacturer_links, c.manufacturer_url)
+      const linksLine =
+        links.length === 0
+          ? '—'
+          : links
+              .map((l) =>
+                l.label.trim()
+                  ? `${esc(l.label.trim())} (${esc(l.url)})`
+                  : esc(l.url)
+              )
+              .join(' · ')
       push(
         `### ${esc(label)}`,
         '',
@@ -249,7 +262,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         `- **Énergie** : ${esc(c.energy) || '—'}`,
         `- **Boîte de vitesses** : ${esc(c.gearbox) || '—'}`,
         `- **Lieu / garage** : ${esc(c.garage_location) || '—'}`,
-        `- **Lien constructeur** : ${esc(c.manufacturer_url) || '—'}`,
+        `- **Liens** : ${linksLine}`,
         `- **Année / période / génération** : ${esc(c.event_date) || '—'}`,
         `- **Options** : ${esc(c.options) || '_(vide)_'}`,
         `- **Motif si rejet** : ${esc(c.reject_reason) || '—'}`,

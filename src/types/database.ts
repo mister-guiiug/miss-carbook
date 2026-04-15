@@ -159,6 +159,7 @@ export interface Database {
           options: string
           garage_location: string
           manufacturer_url: string
+          manufacturer_links: Json
           event_date: string | null
           status: CandidateStatus
           reject_reason: string
@@ -182,6 +183,7 @@ export interface Database {
           options?: string
           garage_location?: string
           manufacturer_url?: string
+          manufacturer_links?: Json
           event_date?: string | null
           status?: CandidateStatus
           reject_reason?: string
@@ -201,6 +203,7 @@ export interface Database {
           options?: string
           garage_location?: string
           manufacturer_url?: string
+          manufacturer_links?: Json
           event_date?: string | null
           status?: CandidateStatus
           reject_reason?: string

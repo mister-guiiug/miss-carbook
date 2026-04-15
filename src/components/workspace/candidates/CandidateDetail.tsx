@@ -14,6 +14,11 @@ import { compressImageToMaxBytes } from '../../../lib/imageCompress'
 import { renderMentions } from '../../../lib/renderMentions'
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext'
 import { useToast } from '../../../contexts/ToastContext'
+import {
+  legacyManufacturerUrlFromLinks,
+  manufacturerLinksAreEmpty,
+  type ManufacturerLink,
+} from '../../../lib/manufacturerLinks'
 import type { CandidateStatus, Json } from '../../../types/database'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import {
@@ -26,6 +31,7 @@ import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPri
 import { IconActionButton, IconCheck, IconSend, IconX } from '../../ui/IconActionButton'
 import { ImageViewerCarousel } from '../../ui/ImageViewerCarousel'
 import { GarageLocationInput } from './GarageLocationInput'
+import { ManufacturerLinksEditor } from './ManufacturerLinksEditor'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
 import {
@@ -71,7 +77,7 @@ function isVehicleDetailMetaEmpty(m: {
   gearbox: string
   energy: string
   garage_location: string
-  manufacturer_url: string
+  manufacturer_links: ManufacturerLink[]
   options: string
   reject_reason: string
 }): boolean {
@@ -85,7 +91,7 @@ function isVehicleDetailMetaEmpty(m: {
     isBlank(m.gearbox) &&
     isBlank(m.energy) &&
     isBlank(m.garage_location) &&
-    isBlank(m.manufacturer_url) &&
+    manufacturerLinksAreEmpty(m.manufacturer_links) &&
     isBlank(m.options) &&
     isBlank(m.reject_reason)
   )
@@ -100,7 +106,7 @@ function vehicleDetailFromCandidate(c: CandidateRow) {
     gearbox: c.gearbox ?? '',
     energy: c.energy ?? '',
     garage_location: c.garage_location ?? '',
-    manufacturer_url: c.manufacturer_url ?? '',
+    manufacturer_links: [...c.manufacturer_links],
     options: c.options ?? '',
     reject_reason: c.reject_reason ?? '',
   }
@@ -143,7 +149,7 @@ export function CandidateDetail({
     reject_reason: candidate.reject_reason,
     options: candidate.options,
     garage_location: candidate.garage_location,
-    manufacturer_url: candidate.manufacturer_url,
+    manufacturer_links: [...candidate.manufacturer_links],
   })
   const rootDraftRef = useRef<{ brand: string; model: string; event_date: string } | null>(null)
 
@@ -164,7 +170,7 @@ export function CandidateDetail({
       reject_reason: candidate.reject_reason,
       options: candidate.options,
       garage_location: candidate.garage_location,
-      manufacturer_url: candidate.manufacturer_url,
+      manufacturer_links: [...candidate.manufacturer_links],
     })
     rootDraftRef.current = null
   }, [candidate])
@@ -220,6 +226,7 @@ export function CandidateDetail({
       })
 
       const savesAsRoot = !parentId
+      const manufacturer_links: ManufacturerLink[] = savesAsRoot ? [] : parsed.data.manufacturer_links
       const vehiclePayload = savesAsRoot
         ? {
             engine: '',
@@ -230,7 +237,6 @@ export function CandidateDetail({
             energy: '',
             options: '',
             garage_location: '',
-            manufacturer_url: '',
           }
         : {
             engine: parsed.data.engine,
@@ -241,7 +247,6 @@ export function CandidateDetail({
             energy: parsed.data.energy,
             options: parsed.data.options,
             garage_location: parsed.data.garage_location,
-            manufacturer_url: parsed.data.manufacturer_url,
           }
 
       const { error } = await supabase
@@ -252,6 +257,8 @@ export function CandidateDetail({
           model: identity.model,
           trim: parsed.data.trim,
           ...vehiclePayload,
+          manufacturer_links: manufacturer_links as unknown as Json,
+          manufacturer_url: legacyManufacturerUrlFromLinks(manufacturer_links),
           event_date: identity.event_date,
           status: parsed.data.status,
           reject_reason: parsed.data.reject_reason,
@@ -950,14 +957,11 @@ export function CandidateDetail({
                     placeholder="Saisie libre ou choix dans la liste"
                   />
                 </div>
-                <div>
-                  <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
-                  <input
-                    id={`cand-meta-url-${candidate.id}`}
-                    value={meta.manufacturer_url}
-                    onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
-                  />
-                </div>
+                <ManufacturerLinksEditor
+                  idPrefix={`cand-links-${candidate.id}`}
+                  value={meta.manufacturer_links}
+                  onChange={(manufacturer_links) => setMeta((m) => ({ ...m, manufacturer_links }))}
+                />
                 <div>
                   <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
                   <textarea
@@ -998,6 +1002,23 @@ export function CandidateDetail({
 
           <button type="submit">Enregistrer la fiche</button>
         </form>
+      ) : null}
+
+      {!canWrite &&
+      candidate.parent_candidate_id &&
+      !manufacturerLinksAreEmpty(candidate.manufacturer_links) ? (
+        <div className="card stack" style={{ boxShadow: 'none' }}>
+          <h4 style={{ margin: 0 }}>Liens</h4>
+          <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+            {candidate.manufacturer_links.map((l, i) => (
+              <li key={`${l.url}-${i}`}>
+                <a href={l.url.trim()} target="_blank" rel="noopener noreferrer">
+                  {l.label.trim() || l.url.trim()}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {showSpecsAndPhotos ? (

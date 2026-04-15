@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logActivity } from '../../../lib/activity'
+import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks'
+import type { ManufacturerLink } from '../../../lib/manufacturerLinks'
 import { candidateSchema } from '../../../lib/validation/schemas'
-import type { CandidateStatus } from '../../../types/database'
+import type { CandidateStatus, Json } from '../../../types/database'
 
 export type AddCandidateFormState = {
   parent_id: string
@@ -13,7 +15,7 @@ export type AddCandidateFormState = {
   price: string
   options: string
   garage_location: string
-  manufacturer_url: string
+  manufacturer_links: ManufacturerLink[]
   event_date: string
   status: CandidateStatus
   reject_reason: string
@@ -28,7 +30,7 @@ const emptyForm = (): AddCandidateFormState => ({
   price: '',
   options: '',
   garage_location: '',
-  manufacturer_url: '',
+  manufacturer_links: [],
   event_date: '',
   status: 'to_see' as CandidateStatus,
   reject_reason: '',
@@ -77,6 +79,7 @@ export function useAddCandidateForm({
         const nextOrder = (prev == null ? -1 : prev) + 1
 
         const isRootRow = !parentId
+        const manufacturer_links: ManufacturerLink[] = isRootRow ? [] : parsed.data.manufacturer_links
         const { data, error } = await supabase
           .from('candidates')
           .insert({
@@ -90,7 +93,8 @@ export function useAddCandidateForm({
             price: isRootRow ? null : parsed.data.price,
             options: isRootRow ? '' : parsed.data.options,
             garage_location: isRootRow ? '' : parsed.data.garage_location,
-            manufacturer_url: isRootRow ? '' : parsed.data.manufacturer_url,
+            manufacturer_links: manufacturer_links as unknown as Json,
+            manufacturer_url: legacyManufacturerUrlFromLinks(manufacturer_links),
             event_date: parsed.data.event_date,
             status: parsed.data.status,
             reject_reason: parsed.data.reject_reason,
