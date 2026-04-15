@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   WORKSPACE_QUICK_ADD_EVENT,
@@ -53,6 +53,29 @@ type VisitRow = {
   candidate_id: string | null
 }
 
+type View = 'open' | 'done' | 'visits'
+
+function fmtShortDateTimeFr(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('fr-FR', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function isOverdue(iso: string | null): boolean {
+  if (!iso) return false
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return false
+  return d.getTime() < Date.now()
+}
+
 export function RemindersTab({
   workspaceId,
   canWrite,
@@ -87,6 +110,13 @@ export function RemindersTab({
   const [editPlace, setEditPlace] = useState('')
   const [editKind, setEditKind] = useState<ReminderKind>('contact')
   const [savingEdit, setSavingEdit] = useState(false)
+
+  const [view, setView] = useState<View>('open')
+  const [query, setQuery] = useState('')
+  const [kindFilter, setKindFilter] = useState<ReminderKind | 'all'>('all')
+  const [candidateFilter, setCandidateFilter] = useState('all')
+  const [showAddReminder, setShowAddReminder] = useState(false)
+  const [showAddVisit, setShowAddVisit] = useState(false)
 
   const load = useCallback(async () => {
     const [rem, vs, cand] = await Promise.all([
@@ -135,6 +165,8 @@ export function RemindersTab({
     const onQuick = (ev: Event) => {
       const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
       if (d?.tab !== 'reminders') return
+      setView('open')
+      setShowAddReminder(true)
       requestAnimationFrame(() => {
         document.getElementById('reminder-title')?.focus()
       })
@@ -276,91 +308,342 @@ export function RemindersTab({
   const openReminders = rows.filter((r) => !r.done)
   const doneReminders = rows.filter((r) => r.done)
 
+  const counts = useMemo(
+    () => ({
+      open: openReminders.length,
+      done: doneReminders.length,
+      visits: visits.length,
+    }),
+    [openReminders.length, doneReminders.length, visits.length]
+  )
+
+  const candidateLabelById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const c of candidates) m.set(c.id, formatCandidateListLabel(c))
+    return m
+  }, [candidates])
+
+  const filteredOpen = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = openReminders.filter((r) => {
+      if (kindFilter !== 'all' && ((r.kind as ReminderKind | null) ?? 'other') !== kindFilter)
+        return false
+      if (candidateFilter !== 'all' && (r.candidate_id ?? '') !== candidateFilter) return false
+      if (!q) return true
+      const linked = r.candidate_id ? (candidateLabelById.get(r.candidate_id) ?? '') : ''
+      return (
+        (r.title ?? '').toLowerCase().includes(q) ||
+        (r.body ?? '').toLowerCase().includes(q) ||
+        (r.place ?? '').toLowerCase().includes(q) ||
+        linked.toLowerCase().includes(q)
+      )
+    })
+    return [...list].sort((a, b) => {
+      const ad = a.due_at ? new Date(a.due_at).getTime() : Number.POSITIVE_INFINITY
+      const bd = b.due_at ? new Date(b.due_at).getTime() : Number.POSITIVE_INFINITY
+      if (ad !== bd) return ad - bd
+      return String(a.title ?? '').localeCompare(String(b.title ?? ''), 'fr-FR')
+    })
+  }, [openReminders, query, kindFilter, candidateFilter, candidateLabelById])
+
+  const filteredDone = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = doneReminders.filter((r) => {
+      if (kindFilter !== 'all' && ((r.kind as ReminderKind | null) ?? 'other') !== kindFilter)
+        return false
+      if (candidateFilter !== 'all' && (r.candidate_id ?? '') !== candidateFilter) return false
+      if (!q) return true
+      const linked = r.candidate_id ? (candidateLabelById.get(r.candidate_id) ?? '') : ''
+      return (
+        (r.title ?? '').toLowerCase().includes(q) ||
+        (r.body ?? '').toLowerCase().includes(q) ||
+        (r.place ?? '').toLowerCase().includes(q) ||
+        linked.toLowerCase().includes(q)
+      )
+    })
+    // On garde un ordre stable : par échéance (si existe) puis par titre.
+    return [...list].sort((a, b) => {
+      const ad = a.due_at ? new Date(a.due_at).getTime() : Number.POSITIVE_INFINITY
+      const bd = b.due_at ? new Date(b.due_at).getTime() : Number.POSITIVE_INFINITY
+      if (ad !== bd) return ad - bd
+      return String(a.title ?? '').localeCompare(String(b.title ?? ''), 'fr-FR')
+    })
+  }, [doneReminders, query, kindFilter, candidateFilter, candidateLabelById])
+
+  const filteredVisits = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = visits.filter((v) => {
+      if (candidateFilter !== 'all' && (v.candidate_id ?? '') !== candidateFilter) return false
+      if (!q) return true
+      const linked = v.candidate_id ? (candidateLabelById.get(v.candidate_id) ?? '') : ''
+      return (
+        (v.location ?? '').toLowerCase().includes(q) ||
+        (v.notes ?? '').toLowerCase().includes(q) ||
+        linked.toLowerCase().includes(q)
+      )
+    })
+    return [...list].sort((a, b) => {
+      const ad = new Date(a.visit_at).getTime()
+      const bd = new Date(b.visit_at).getTime()
+      return bd - ad
+    })
+  }, [visits, query, candidateFilter, candidateLabelById])
+
   return (
-    <div className="stack">
-      <p className="muted">
+    <div className="stack reminders-tab">
+      <p className="muted" style={{ margin: 0 }}>
         Saisissez vos visites (historique) et vos rappels (à faire / faits) — visibles par tous les
         membres.
       </p>
 
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Visites</h3>
+      <div className="card stack reminders-toolbar" style={{ boxShadow: 'none' }}>
+        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div className="tabs" role="tablist" aria-label="Sections rappels">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'open'}
+              className={view === 'open' ? 'active' : ''}
+              onClick={() => setView('open')}
+            >
+              À faire <span className="muted">({counts.open})</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'done'}
+              className={view === 'done' ? 'active' : ''}
+              onClick={() => setView('done')}
+            >
+              Faits <span className="muted">({counts.done})</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'visits'}
+              className={view === 'visits' ? 'active' : ''}
+              onClick={() => setView('visits')}
+            >
+              Visites <span className="muted">({counts.visits})</span>
+            </button>
+          </div>
 
-        {canWrite ? (
-          <form onSubmit={addVisit} className="stack" aria-label="Nouvelle visite">
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 180px' }}>
-                <label>Date / heure</label>
-                <input
-                  type="datetime-local"
-                  value={visitAt}
-                  onChange={(e) => setVisitAt(e.target.value)}
-                  required
-                />
-              </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label>Lieu</label>
-                <input
-                  value={visitLocation}
-                  onChange={(e) => setVisitLocation(e.target.value)}
-                  placeholder="ex. Nom du garage, ville…"
-                  maxLength={500}
-                />
-              </div>
-              <div style={{ flex: '1 1 220px' }}>
-                <label>Modèle (optionnel)</label>
-                <select value={visitCandId} onChange={(e) => setVisitCandId(e.target.value)}>
-                  <option value="">—</option>
-                  {candidates.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {formatCandidateListLabel(c)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {canWrite ? (
+            <div className="row icon-action-toolbar" style={{ gap: '0.35rem' }}>
+              {view !== 'visits' ? (
+                <IconActionButton
+                  variant="secondary"
+                  label={showAddReminder ? 'Fermer le formulaire de rappel' : 'Ajouter un rappel'}
+                  onClick={() => setShowAddReminder((v) => !v)}
+                >
+                  {showAddReminder ? <IconX /> : <IconPencil />}
+                </IconActionButton>
+              ) : (
+                <IconActionButton
+                  variant="secondary"
+                  label={showAddVisit ? 'Fermer le formulaire de visite' : 'Ajouter une visite'}
+                  onClick={() => setShowAddVisit((v) => !v)}
+                >
+                  {showAddVisit ? <IconX /> : <IconPencil />}
+                </IconActionButton>
+              )}
             </div>
-            <div>
-              <label>Notes</label>
-              <textarea
-                value={visitNotes}
-                onChange={(e) => setVisitNotes(e.target.value)}
-                placeholder="Impressions, points à vérifier, résultat…"
-                maxLength={4000}
-                rows={3}
+          ) : null}
+        </div>
+
+        <div className="row reminders-filters" style={{ flexWrap: 'wrap' }}>
+          <div style={{ flex: '2 1 220px' }}>
+            <label htmlFor="rem-q">Recherche</label>
+            <input
+              id="rem-q"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Titre, détail, lieu, modèle…"
+              maxLength={200}
+            />
+          </div>
+          <div style={{ flex: '1 1 180px' }}>
+            <label htmlFor="rem-kind">Type</label>
+            <select
+              id="rem-kind"
+              value={kindFilter}
+              onChange={(e) => setKindFilter(e.target.value as ReminderKind | 'all')}
+              disabled={view === 'visits'}
+            >
+              <option value="all">Tous</option>
+              <option value="contact">{reminderKindLabel.contact}</option>
+              <option value="visit">{reminderKindLabel.visit}</option>
+              <option value="appointment">{reminderKindLabel.appointment}</option>
+              <option value="other">{reminderKindLabel.other}</option>
+            </select>
+          </div>
+          <div style={{ flex: '1 1 220px' }}>
+            <label htmlFor="rem-cand">Modèle</label>
+            <select
+              id="rem-cand"
+              value={candidateFilter}
+              onChange={(e) => setCandidateFilter(e.target.value)}
+            >
+              <option value="all">Tous</option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {formatCandidateListLabel(c)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {canWrite && showAddReminder && view !== 'visits' ? (
+        <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
+          <h3 style={{ margin: 0 }}>Nouveau rappel</h3>
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 180px' }}>
+              <label>Type</label>
+              <select value={kind} onChange={(e) => setKind(e.target.value as ReminderKind)}>
+                <option value="contact">{reminderKindLabel.contact}</option>
+                <option value="visit">{reminderKindLabel.visit}</option>
+                <option value="appointment">{reminderKindLabel.appointment}</option>
+                <option value="other">{reminderKindLabel.other}</option>
+              </select>
+            </div>
+          </div>
+          <input
+            id="reminder-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Titre"
+            required
+            maxLength={200}
+          />
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Détail (optionnel)"
+            maxLength={2000}
+            rows={3}
+          />
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 160px' }}>
+              <label>Échéance</label>
+              <input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
+            </div>
+            <div style={{ flex: '1 1 220px' }}>
+              <label>Lieu (optionnel)</label>
+              <input
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                placeholder="ex. Nom du garage, ville…"
+                maxLength={200}
               />
             </div>
-            <button type="submit">Ajouter la visite</button>
-          </form>
-        ) : null}
+            <div style={{ flex: '1 1 220px' }}>
+              <label>Lié à un modèle (optionnel)</label>
+              <select value={candId} onChange={(e) => setCandId(e.target.value)}>
+                <option value="">—</option>
+                {candidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {formatCandidateListLabel(c)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
+            <button type="submit">Ajouter le rappel</button>
+            <IconActionButton
+              variant="secondary"
+              label="Fermer le formulaire"
+              onClick={() => setShowAddReminder(false)}
+            >
+              <IconX />
+            </IconActionButton>
+          </div>
+        </form>
+      ) : null}
 
-        {visits.length === 0 ? (
+      {canWrite && showAddVisit && view === 'visits' ? (
+        <form onSubmit={addVisit} className="card stack" style={{ boxShadow: 'none' }}>
+          <h3 style={{ margin: 0 }}>Nouvelle visite</h3>
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 180px' }}>
+              <label>Date / heure</label>
+              <input
+                type="datetime-local"
+                value={visitAt}
+                onChange={(e) => setVisitAt(e.target.value)}
+                required
+              />
+            </div>
+            <div style={{ flex: '1 1 220px' }}>
+              <label>Lieu</label>
+              <input
+                value={visitLocation}
+                onChange={(e) => setVisitLocation(e.target.value)}
+                placeholder="ex. Nom du garage, ville…"
+                maxLength={500}
+              />
+            </div>
+            <div style={{ flex: '1 1 220px' }}>
+              <label>Modèle (optionnel)</label>
+              <select value={visitCandId} onChange={(e) => setVisitCandId(e.target.value)}>
+                <option value="">—</option>
+                {candidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {formatCandidateListLabel(c)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Notes</label>
+            <textarea
+              value={visitNotes}
+              onChange={(e) => setVisitNotes(e.target.value)}
+              placeholder="Impressions, points à vérifier, résultat…"
+              maxLength={4000}
+              rows={3}
+            />
+          </div>
+          <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
+            <button type="submit">Ajouter la visite</button>
+            <IconActionButton
+              variant="secondary"
+              label="Fermer le formulaire"
+              onClick={() => setShowAddVisit(false)}
+            >
+              <IconX />
+            </IconActionButton>
+          </div>
+        </form>
+      ) : null}
+
+      {view === 'visits' ? (
+        filteredVisits.length === 0 ? (
           <div className="empty-state">
             <p className="muted" style={{ margin: 0 }}>
-              Aucune visite enregistrée.
+              Aucune visite.
             </p>
           </div>
         ) : (
           <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {visits.map((v) => {
-              const linked = v.candidate_id
-                ? candidates.find((c) => c.id === v.candidate_id)
-                : undefined
+            {filteredVisits.map((v) => {
+              const linkedLabel = v.candidate_id ? candidateLabelById.get(v.candidate_id) : null
               return (
                 <li key={v.id} className="card" style={{ boxShadow: 'none' }}>
-                  <div
-                    className="row"
-                    style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
-                  >
+                  <div className="row" style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
                     <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                      <strong>{new Date(v.visit_at).toLocaleString('fr-FR')}</strong>
+                      <strong>{fmtShortDateTimeFr(v.visit_at)}</strong>
                       {(v.location ?? '').trim() ? (
                         <div className="muted" style={{ fontSize: '0.9rem' }}>
                           Lieu : {(v.location ?? '').trim()}
                         </div>
                       ) : null}
-                      {linked ? (
+                      {linkedLabel ? (
                         <div className="muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                          Modèle : {formatCandidateListLabel(linked)}
+                          Modèle : {linkedLabel}
                         </div>
                       ) : null}
                       {(v.notes ?? '').trim() ? (
@@ -383,434 +666,187 @@ export function RemindersTab({
               )
             })}
           </ul>
-        )}
-      </div>
-
-      {canWrite ? (
-        <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
-          <h3 style={{ margin: 0 }}>Rappels</h3>
-          <div className="row" style={{ flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 180px' }}>
-              <label>Type</label>
-              <select value={kind} onChange={(e) => setKind(e.target.value as ReminderKind)}>
-                <option value="contact">{reminderKindLabel.contact}</option>
-                <option value="visit">{reminderKindLabel.visit}</option>
-                <option value="appointment">{reminderKindLabel.appointment}</option>
-                <option value="other">{reminderKindLabel.other}</option>
-              </select>
-            </div>
-          </div>
-          <input
-            id="reminder-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Titre"
-            required
-          />
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Détail (optionnel)"
-          />
-          <div className="row">
-            <div style={{ flex: '1 1 160px' }}>
-              <label>Échéance</label>
-              <input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
-            </div>
-            <div style={{ flex: '1 1 220px' }}>
-              <label>Lieu (optionnel)</label>
-              <input
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                placeholder="ex. Nom du garage, ville…"
-                maxLength={200}
-              />
-            </div>
-            <div style={{ flex: '1 1 200px' }}>
-              <label>Lié à un modèle (optionnel)</label>
-              <select value={candId} onChange={(e) => setCandId(e.target.value)}>
-                <option value="">—</option>
-                {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {formatCandidateListLabel(c)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <button type="submit">Ajouter le rappel</button>
-        </form>
-      ) : null}
-
-      {rows.length === 0 ? (
+        )
+      ) : rows.length === 0 ? (
         <div className="empty-state">
           <p className="muted" style={{ margin: 0 }}>
             Aucun rappel pour ce dossier.
           </p>
         </div>
       ) : (
-        <div className="stack">
-          <div className="card stack" style={{ boxShadow: 'none' }}>
-            <h4 style={{ margin: 0 }}>À faire</h4>
-            {openReminders.length === 0 ? (
-              <p className="muted" style={{ margin: 0 }}>
-                Aucun rappel ouvert.
-              </p>
-            ) : (
-              <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {openReminders.map((r) => {
-                  const isEditing = editingId === r.id
-                  const linked = r.candidate_id
-                    ? candidates.find((c) => c.id === r.candidate_id)
-                    : undefined
-                  const k = ((r.kind as ReminderKind | null) ?? 'other') as ReminderKind
-                  return (
-                    <li
-                      key={r.id}
-                      className="card"
-                      style={{
-                        boxShadow: 'none',
-                        opacity: r.done && !isEditing ? 0.65 : 1,
-                      }}
-                    >
-                      {isEditing ? (
-                        <form
-                          className="stack"
-                          onSubmit={(e) => void saveEdit(e, r.id)}
-                          aria-label={`Modifier le rappel « ${r.title} »`}
-                        >
-                          <span className="muted" style={{ fontSize: '0.85rem' }}>
-                            Modification · <kbd>Échap</kbd> pour annuler
-                          </span>
-                          <div className="row" style={{ flexWrap: 'wrap' }}>
-                            <div style={{ flex: '1 1 180px' }}>
-                              <label htmlFor={`rem-edit-kind-${r.id}`}>Type</label>
-                              <select
-                                id={`rem-edit-kind-${r.id}`}
-                                value={editKind}
-                                onChange={(e) => setEditKind(e.target.value as ReminderKind)}
-                              >
-                                <option value="contact">{reminderKindLabel.contact}</option>
-                                <option value="visit">{reminderKindLabel.visit}</option>
-                                <option value="appointment">{reminderKindLabel.appointment}</option>
-                                <option value="other">{reminderKindLabel.other}</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div>
-                            <label htmlFor={`rem-edit-title-${r.id}`}>Titre</label>
-                            <input
-                              id={`rem-edit-title-${r.id}`}
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              required
-                              maxLength={200}
-                              autoFocus
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor={`rem-edit-body-${r.id}`}>Détail</label>
-                            <textarea
-                              id={`rem-edit-body-${r.id}`}
-                              value={editBody}
-                              onChange={(e) => setEditBody(e.target.value)}
-                              maxLength={2000}
-                            />
-                          </div>
-                          <div className="row">
-                            <div style={{ flex: '1 1 160px' }}>
-                              <label htmlFor={`rem-edit-due-${r.id}`}>Échéance</label>
-                              <input
-                                id={`rem-edit-due-${r.id}`}
-                                type="datetime-local"
-                                value={editDue}
-                                onChange={(e) => setEditDue(e.target.value)}
-                              />
-                            </div>
-                            <div style={{ flex: '1 1 220px' }}>
-                              <label htmlFor={`rem-edit-place-${r.id}`}>Lieu</label>
-                              <input
-                                id={`rem-edit-place-${r.id}`}
-                                value={editPlace}
-                                onChange={(e) => setEditPlace(e.target.value)}
-                                placeholder="ex. Nom du garage, ville…"
-                                maxLength={200}
-                              />
-                            </div>
-                            <div style={{ flex: '1 1 200px' }}>
-                              <label htmlFor={`rem-edit-cand-${r.id}`}>Lié à un modèle</label>
-                              <select
-                                id={`rem-edit-cand-${r.id}`}
-                                value={editCandId}
-                                onChange={(e) => setEditCandId(e.target.value)}
-                              >
-                                <option value="">—</option>
-                                {candidates.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {formatCandidateListLabel(c)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
-                            <button type="submit" disabled={savingEdit}>
-                              {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
-                            </button>
-                            <IconActionButton
-                              variant="secondary"
-                              label="Annuler la modification"
-                              onClick={cancelEdit}
-                              disabled={savingEdit}
+        <div className="card stack" style={{ boxShadow: 'none' }}>
+          <h4 style={{ margin: 0 }}>{view === 'open' ? 'À faire' : 'Faits'}</h4>
+          {(view === 'open' ? filteredOpen : filteredDone).length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>
+              Aucun résultat pour ces filtres.
+            </p>
+          ) : (
+            <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {(view === 'open' ? filteredOpen : filteredDone).map((r) => {
+                const isEditing = editingId === r.id
+                const linkedLabel = r.candidate_id ? candidateLabelById.get(r.candidate_id) : null
+                const k = ((r.kind as ReminderKind | null) ?? 'other') as ReminderKind
+                const overdue = !r.done && isOverdue(r.due_at)
+                return (
+                  <li
+                    key={r.id}
+                    className="card"
+                    style={{
+                      boxShadow: 'none',
+                      opacity: r.done && !isEditing ? 0.65 : 1,
+                      borderColor: overdue ? 'var(--danger)' : undefined,
+                    }}
+                  >
+                    {isEditing ? (
+                      <form
+                        className="stack"
+                        onSubmit={(e) => void saveEdit(e, r.id)}
+                        aria-label={`Modifier le rappel « ${r.title} »`}
+                      >
+                        <span className="muted" style={{ fontSize: '0.85rem' }}>
+                          Modification · <kbd>Échap</kbd> pour annuler
+                        </span>
+                        <div className="row" style={{ flexWrap: 'wrap' }}>
+                          <div style={{ flex: '1 1 180px' }}>
+                            <label htmlFor={`rem-edit-kind-${r.id}`}>Type</label>
+                            <select
+                              id={`rem-edit-kind-${r.id}`}
+                              value={editKind}
+                              onChange={(e) => setEditKind(e.target.value as ReminderKind)}
                             >
-                              <IconX />
-                            </IconActionButton>
-                          </div>
-                        </form>
-                      ) : (
-                        <div
-                          className="row"
-                          style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
-                        >
-                          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                            <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>{' '}
-                            <strong>{r.title}</strong>
-                            {r.due_at ? (
-                              <div className="muted">
-                                {new Date(r.due_at).toLocaleString('fr-FR')}
-                              </div>
-                            ) : null}
-                            {(r.place ?? '').trim() ? (
-                              <div className="muted" style={{ fontSize: '0.9rem' }}>
-                                Lieu : {(r.place ?? '').trim()}
-                              </div>
-                            ) : null}
-                            {linked ? (
-                              <div
-                                className="muted"
-                                style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}
-                              >
-                                Modèle : {formatCandidateListLabel(linked)}
-                              </div>
-                            ) : null}
-                            {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
-                          </div>
-                          <div className="row icon-action-toolbar">
-                            {canWrite ? (
-                              <>
-                                <IconActionButton
-                                  variant="primary"
-                                  label={`Modifier le rappel « ${r.title} »`}
-                                  onClick={() => startEdit(r)}
-                                >
-                                  <IconPencil />
-                                </IconActionButton>
-                                <IconActionButton
-                                  variant="secondary"
-                                  label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
-                                  onClick={() => void toggle(r)}
-                                >
-                                  {r.done ? <IconRotateCcw /> : <IconCheck />}
-                                </IconActionButton>
-                                <IconActionButton
-                                  variant="danger"
-                                  label="Supprimer ce rappel"
-                                  onClick={() => void remove(r.id)}
-                                >
-                                  <IconTrash />
-                                </IconActionButton>
-                              </>
-                            ) : null}
+                              <option value="contact">{reminderKindLabel.contact}</option>
+                              <option value="visit">{reminderKindLabel.visit}</option>
+                              <option value="appointment">{reminderKindLabel.appointment}</option>
+                              <option value="other">{reminderKindLabel.other}</option>
+                            </select>
                           </div>
                         </div>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
-
-          <div className="card stack" style={{ boxShadow: 'none' }}>
-            <h4 style={{ margin: 0 }}>Faits</h4>
-            {doneReminders.length === 0 ? (
-              <p className="muted" style={{ margin: 0 }}>
-                Aucun rappel terminé.
-              </p>
-            ) : (
-              <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {doneReminders.map((r) => {
-                  const isEditing = editingId === r.id
-                  const linked = r.candidate_id
-                    ? candidates.find((c) => c.id === r.candidate_id)
-                    : undefined
-                  const k = ((r.kind as ReminderKind | null) ?? 'other') as ReminderKind
-                  return (
-                    <li
-                      key={r.id}
-                      className="card"
-                      style={{
-                        boxShadow: 'none',
-                        opacity: r.done && !isEditing ? 0.65 : 1,
-                      }}
-                    >
-                      {isEditing ? (
-                        <form
-                          className="stack"
-                          onSubmit={(e) => void saveEdit(e, r.id)}
-                          aria-label={`Modifier le rappel « ${r.title} »`}
-                        >
-                          <span className="muted" style={{ fontSize: '0.85rem' }}>
-                            Modification · <kbd>Échap</kbd> pour annuler
-                          </span>
-                          <div className="row" style={{ flexWrap: 'wrap' }}>
-                            <div style={{ flex: '1 1 180px' }}>
-                              <label htmlFor={`rem-edit-kind-${r.id}`}>Type</label>
-                              <select
-                                id={`rem-edit-kind-${r.id}`}
-                                value={editKind}
-                                onChange={(e) => setEditKind(e.target.value as ReminderKind)}
-                              >
-                                <option value="contact">{reminderKindLabel.contact}</option>
-                                <option value="visit">{reminderKindLabel.visit}</option>
-                                <option value="appointment">{reminderKindLabel.appointment}</option>
-                                <option value="other">{reminderKindLabel.other}</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div>
-                            <label htmlFor={`rem-edit-title-${r.id}`}>Titre</label>
+                        <div>
+                          <label htmlFor={`rem-edit-title-${r.id}`}>Titre</label>
+                          <input
+                            id={`rem-edit-title-${r.id}`}
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            required
+                            maxLength={200}
+                            autoFocus
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor={`rem-edit-body-${r.id}`}>Détail</label>
+                          <textarea
+                            id={`rem-edit-body-${r.id}`}
+                            value={editBody}
+                            onChange={(e) => setEditBody(e.target.value)}
+                            maxLength={2000}
+                            rows={3}
+                          />
+                        </div>
+                        <div className="row" style={{ flexWrap: 'wrap' }}>
+                          <div style={{ flex: '1 1 160px' }}>
+                            <label htmlFor={`rem-edit-due-${r.id}`}>Échéance</label>
                             <input
-                              id={`rem-edit-title-${r.id}`}
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              required
+                              id={`rem-edit-due-${r.id}`}
+                              type="datetime-local"
+                              value={editDue}
+                              onChange={(e) => setEditDue(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ flex: '1 1 220px' }}>
+                            <label htmlFor={`rem-edit-place-${r.id}`}>Lieu</label>
+                            <input
+                              id={`rem-edit-place-${r.id}`}
+                              value={editPlace}
+                              onChange={(e) => setEditPlace(e.target.value)}
+                              placeholder="ex. Nom du garage, ville…"
                               maxLength={200}
-                              autoFocus
                             />
                           </div>
-                          <div>
-                            <label htmlFor={`rem-edit-body-${r.id}`}>Détail</label>
-                            <textarea
-                              id={`rem-edit-body-${r.id}`}
-                              value={editBody}
-                              onChange={(e) => setEditBody(e.target.value)}
-                              maxLength={2000}
-                            />
-                          </div>
-                          <div className="row">
-                            <div style={{ flex: '1 1 160px' }}>
-                              <label htmlFor={`rem-edit-due-${r.id}`}>Échéance</label>
-                              <input
-                                id={`rem-edit-due-${r.id}`}
-                                type="datetime-local"
-                                value={editDue}
-                                onChange={(e) => setEditDue(e.target.value)}
-                              />
-                            </div>
-                            <div style={{ flex: '1 1 220px' }}>
-                              <label htmlFor={`rem-edit-place-${r.id}`}>Lieu</label>
-                              <input
-                                id={`rem-edit-place-${r.id}`}
-                                value={editPlace}
-                                onChange={(e) => setEditPlace(e.target.value)}
-                                placeholder="ex. Nom du garage, ville…"
-                                maxLength={200}
-                              />
-                            </div>
-                            <div style={{ flex: '1 1 200px' }}>
-                              <label htmlFor={`rem-edit-cand-${r.id}`}>Lié à un modèle</label>
-                              <select
-                                id={`rem-edit-cand-${r.id}`}
-                                value={editCandId}
-                                onChange={(e) => setEditCandId(e.target.value)}
-                              >
-                                <option value="">—</option>
-                                {candidates.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {formatCandidateListLabel(c)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                          <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
-                            <button type="submit" disabled={savingEdit}>
-                              {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
-                            </button>
-                            <IconActionButton
-                              variant="secondary"
-                              label="Annuler la modification"
-                              onClick={cancelEdit}
-                              disabled={savingEdit}
+                          <div style={{ flex: '1 1 220px' }}>
+                            <label htmlFor={`rem-edit-cand-${r.id}`}>Lié à un modèle</label>
+                            <select
+                              id={`rem-edit-cand-${r.id}`}
+                              value={editCandId}
+                              onChange={(e) => setEditCandId(e.target.value)}
                             >
-                              <IconX />
-                            </IconActionButton>
-                          </div>
-                        </form>
-                      ) : (
-                        <div
-                          className="row"
-                          style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
-                        >
-                          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                            <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>{' '}
-                            <strong>{r.title}</strong>
-                            {r.due_at ? (
-                              <div className="muted">
-                                {new Date(r.due_at).toLocaleString('fr-FR')}
-                              </div>
-                            ) : null}
-                            {(r.place ?? '').trim() ? (
-                              <div className="muted" style={{ fontSize: '0.9rem' }}>
-                                Lieu : {(r.place ?? '').trim()}
-                              </div>
-                            ) : null}
-                            {linked ? (
-                              <div
-                                className="muted"
-                                style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}
-                              >
-                                Modèle : {formatCandidateListLabel(linked)}
-                              </div>
-                            ) : null}
-                            {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
-                          </div>
-                          <div className="row icon-action-toolbar">
-                            {canWrite ? (
-                              <>
-                                <IconActionButton
-                                  variant="primary"
-                                  label={`Modifier le rappel « ${r.title} »`}
-                                  onClick={() => startEdit(r)}
-                                >
-                                  <IconPencil />
-                                </IconActionButton>
-                                <IconActionButton
-                                  variant="secondary"
-                                  label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
-                                  onClick={() => void toggle(r)}
-                                >
-                                  {r.done ? <IconRotateCcw /> : <IconCheck />}
-                                </IconActionButton>
-                                <IconActionButton
-                                  variant="danger"
-                                  label="Supprimer ce rappel"
-                                  onClick={() => void remove(r.id)}
-                                >
-                                  <IconTrash />
-                                </IconActionButton>
-                              </>
-                            ) : null}
+                              <option value="">—</option>
+                              {candidates.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {formatCandidateListLabel(c)}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
+                        <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
+                          <button type="submit" disabled={savingEdit}>
+                            {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+                          </button>
+                          <IconActionButton
+                            variant="secondary"
+                            label="Annuler la modification"
+                            onClick={cancelEdit}
+                            disabled={savingEdit}
+                          >
+                            <IconX />
+                          </IconActionButton>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="row" style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
+                        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                          <div className="row" style={{ gap: '0.35rem', flexWrap: 'wrap' }}>
+                            <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>
+                            {overdue ? <span className="badge danger">En retard</span> : null}
+                          </div>
+                          <strong>{r.title}</strong>
+                          {r.due_at ? <div className="muted">{fmtShortDateTimeFr(r.due_at)}</div> : null}
+                          {(r.place ?? '').trim() ? (
+                            <div className="muted" style={{ fontSize: '0.9rem' }}>
+                              Lieu : {(r.place ?? '').trim()}
+                            </div>
+                          ) : null}
+                          {linkedLabel ? (
+                            <div className="muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                              Modèle : {linkedLabel}
+                            </div>
+                          ) : null}
+                          {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
+                        </div>
+                        <div className="row icon-action-toolbar">
+                          {canWrite ? (
+                            <>
+                              <IconActionButton
+                                variant="primary"
+                                label={`Modifier le rappel « ${r.title} »`}
+                                onClick={() => startEdit(r)}
+                              >
+                                <IconPencil />
+                              </IconActionButton>
+                              <IconActionButton
+                                variant="secondary"
+                                label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
+                                onClick={() => void toggle(r)}
+                              >
+                                {r.done ? <IconRotateCcw /> : <IconCheck />}
+                              </IconActionButton>
+                              <IconActionButton
+                                variant="danger"
+                                label="Supprimer ce rappel"
+                                onClick={() => void remove(r.id)}
+                              >
+                                <IconTrash />
+                              </IconActionButton>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
       )}
     </div>
