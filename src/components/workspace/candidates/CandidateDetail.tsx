@@ -17,6 +17,7 @@ import {
   resolveIdentityForCandidateUpdate,
   validateParentChange,
 } from '../../../lib/candidateTree'
+import { formatMileageKmDisplay, parseMileageKmInput } from '../../../lib/formatMileage'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconSend } from '../../ui/IconActionButton'
 import { GarageLocationInput } from './GarageLocationInput'
@@ -70,7 +71,7 @@ function isVehicleDetailMetaEmpty(m: {
   reject_reason: string
 }): boolean {
   const priceEmpty = m.price === '' || m.price === undefined
-  const mileageEmpty = m.mileage_km === '' || m.mileage_km === undefined
+  const mileageEmpty = parseMileageKmInput(String(m.mileage_km ?? '')) == null
   return (
     isBlank(m.engine) &&
     priceEmpty &&
@@ -89,7 +90,7 @@ function vehicleDetailFromCandidate(c: CandidateRow) {
   return {
     engine: c.engine ?? '',
     price: c.price != null ? formatPriceInputDisplay(c.price) : '',
-    mileage_km: c.mileage_km != null ? String(c.mileage_km) : '',
+    mileage_km: formatMileageKmDisplay(c.mileage_km),
     first_registration: c.first_registration ?? '',
     gearbox: c.gearbox ?? '',
     energy: c.energy ?? '',
@@ -127,7 +128,7 @@ export function CandidateDetail({
     trim: candidate.trim,
     engine: candidate.engine,
     price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
-    mileage_km: candidate.mileage_km != null ? String(candidate.mileage_km) : '',
+    mileage_km: formatMileageKmDisplay(candidate.mileage_km),
     first_registration: candidate.first_registration ?? '',
     gearbox: candidate.gearbox ?? '',
     energy: candidate.energy ?? '',
@@ -148,7 +149,7 @@ export function CandidateDetail({
       trim: candidate.trim,
       engine: candidate.engine,
       price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
-      mileage_km: candidate.mileage_km != null ? String(candidate.mileage_km) : '',
+      mileage_km: formatMileageKmDisplay(candidate.mileage_km),
       first_registration: candidate.first_registration ?? '',
       gearbox: candidate.gearbox ?? '',
       energy: candidate.energy ?? '',
@@ -800,9 +801,23 @@ export function CandidateDetail({
                       onChange={(e) =>
                         setMeta((m) => ({
                           ...m,
-                          mileage_km: e.target.value.replace(/[^\d\s,]/g, ''),
+                          mileage_km: e.target.value.replace(/[^\d\s\u00a0\u202f,]/g, ''),
                         }))
                       }
+                      onFocus={() => {
+                        const n = parseMileageKmInput(meta.mileage_km)
+                        setMeta((m) => ({
+                          ...m,
+                          mileage_km: n != null ? String(n) : '',
+                        }))
+                      }}
+                      onBlur={() => {
+                        const n = parseMileageKmInput(meta.mileage_km)
+                        setMeta((m) => ({
+                          ...m,
+                          mileage_km: n != null ? formatMileageKmDisplay(n) : '',
+                        }))
+                      }}
                     />
                   </div>
                 </div>

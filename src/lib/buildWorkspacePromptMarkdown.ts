@@ -1,4 +1,5 @@
 import { formatCandidateListLabel } from './candidateLabel'
+import { formatMileageKmDisplay } from './formatMileage'
 import { formatPriceEur } from './formatPrice'
 import type { WorkspaceExportBundle } from './workspaceExportBundle'
 
@@ -241,7 +242,9 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         `- **Statut** : ${st}`,
         `- **Motorisation** : ${esc(c.engine) || '—'}`,
         `- **Prix** : ${c.price != null ? esc(formatPriceEur(c.price)) : '—'}`,
-        `- **Kilométrage** : ${c.mileage_km != null ? `${esc(String(c.mileage_km))} km` : '—'}`,
+        `- **Kilométrage** : ${
+          c.mileage_km != null ? `${esc(formatMileageKmDisplay(c.mileage_km))} km` : '—'
+        }`,
         `- **Mise en circulation** : ${esc(c.first_registration) || '—'}`,
         `- **Énergie** : ${esc(c.energy) || '—'}`,
         `- **Boîte de vitesses** : ${esc(c.gearbox) || '—'}`,

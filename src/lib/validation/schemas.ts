@@ -131,7 +131,11 @@ export const candidateSchema = z.object({
       if (val === '' || val === null) return null
       if (typeof val === 'number' && Number.isFinite(val))
         return Math.min(9_999_999, Math.max(0, Math.floor(val)))
-      const s = String(val).replace(/\s/g, '').replace(',', '.')
+      const s = String(val)
+        .replace(/\u202f/g, '')
+        .replace(/\u00a0/g, '')
+        .replace(/ /g, '')
+        .replace(',', '.')
       const n = Number(s)
       if (!Number.isFinite(n)) return null
       return Math.min(9_999_999, Math.max(0, Math.floor(n)))
