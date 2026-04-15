@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useUpdatePrompt } from '../hooks/useUpdatePrompt'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -53,6 +53,15 @@ export function AccountSettingsPage() {
   useEffect(() => {
     setEmailDraft(user?.email ?? '')
   }, [user?.email])
+
+  const pseudoDirty = useMemo(() => {
+    return pseudoDraft.trim() !== (displayName?.trim() ?? '')
+  }, [pseudoDraft, displayName])
+
+  const emailUnchanged = useMemo(() => {
+    const cur = (user?.email ?? '').trim()
+    return (emailDraft.trim() || '') === cur
+  }, [emailDraft, user?.email])
 
   const savePseudo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -164,162 +173,182 @@ export function AccountSettingsPage() {
   }
 
   return (
-    <div className="shell">
-      <p style={{ marginTop: 0 }}>
+    <div className="shell settings-page">
+      <nav className="settings-back" aria-label="Navigation">
         <Link to="/">← Retour à l’accueil</Link>
-      </p>
-      <header className="account-settings-header" style={{ marginBottom: '1rem' }}>
+      </nav>
+
+      <header className="account-settings-header">
         <span className="settings-scope-badge settings-scope-badge--global">
           Toute l’application
         </span>
-        <h1 style={{ margin: '0.35rem 0 0' }}>Paramètres généraux</h1>
-        <p className="muted" style={{ marginBottom: 0, marginTop: '0.35rem' }}>
-          Compte Miss Carbook, apparence sur cet appareil et version de l’app. Rien ici ne modifie
-          un dossier de recherche véhicule ouvert depuis l’accueil — pour cela, ouvrez le dossier
-          puis l’onglet <strong>Réglages</strong>.
+        <h1>Paramètres généraux</h1>
+        <p className="muted settings-lead">
+          Compte, affichage sur cet appareil et outils d’application. Les dossiers de recherche se
+          configurent dans chaque dossier, onglet <strong>Réglages</strong>.
         </p>
       </header>
 
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Visite guidée (mobile / PWA)</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Réinitialise les écrans « déjà vus » (accueil, arrivée par invitation, premier passage
-          dans un nouveau dossier sur petit écran). Ensuite, rouvrez l’accueil sur téléphone ou
-          lancez la visite ci-dessous.
-        </p>
-        <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              resetAllAssistantFlags()
-              try {
-                sessionStorage.removeItem('mc_invite_welcome')
-              } catch {
-                /* ignore */
-              }
-              showToast('Visite guidée réinitialisée.')
-            }}
-          >
-            Réinitialiser les indicateurs
-          </button>
-          <button type="button" onClick={() => navigate('/assistant')}>
-            Lancer la visite d’accueil
-          </button>
-        </div>
-      </div>
+      <div className="settings-page-stack">
+        <section className="card stack settings-card" aria-labelledby="settings-account-heading">
+          <h2 id="settings-account-heading">Compte</h2>
 
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Pseudo</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Actuellement&nbsp;: <strong>{displayName?.trim() || '—'}</strong>. {displayNameRules}
-        </p>
-        <form onSubmit={savePseudo} className="stack">
-          <div>
-            <label htmlFor="settings-pseudo">Pseudo affiché</label>
-            <input
-              id="settings-pseudo"
-              value={pseudoDraft}
-              onChange={(e) => setPseudoDraft(e.target.value)}
-              autoComplete="nickname"
-              maxLength={30}
-            />
-          </div>
-          <button type="submit" disabled={pseudoBusy}>
-            {pseudoBusy ? 'Enregistrement…' : 'Enregistrer le pseudo'}
-          </button>
-        </form>
-      </div>
-
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Apparence</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Choix enregistré sur cet appareil (stockage local).
-        </p>
-        <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-          <button
-            type="button"
-            className={mode === 'light' ? undefined : 'secondary'}
-            onClick={() => applyTheme('light')}
-          >
-            Clair
-          </button>
-          <button
-            type="button"
-            className={mode === 'dark' ? undefined : 'secondary'}
-            onClick={() => applyTheme('dark')}
-          >
-            Sombre
-          </button>
-        </div>
-      </div>
-
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Application</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Après une mise en ligne du site, rechargez pour utiliser la dernière version (interface,
-          correctifs). Sur navigateur ou PWA, cela réapplique aussi le cache du service worker
-          lorsque c’est nécessaire.
-        </p>
-        {needRefresh ? (
-          <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-            <strong>Mise à jour disponible</strong> — le bouton ci-dessous installera la nouvelle
-            version puis rechargera la page.
-          </p>
-        ) : null}
-        <button type="button" disabled={reloadBusy} onClick={onReloadLatest}>
-          {reloadBusy ? 'Rechargement…' : 'Recharger vers la dernière version'}
-        </button>
-      </div>
-
-      <div className="card stack">
-        <h2 style={{ marginTop: 0 }}>Adresse e-mail</h2>
-        <p className="muted" style={{ marginTop: 0, fontSize: '0.9rem' }}>
-          Compte Supabase Auth. Identifiant actuel&nbsp;:{' '}
-          {user.email ? (
-            <code>{user.email}</code>
-          ) : (
-            <span>non renseigné (session sans e-mail)</span>
-          )}
-        </p>
-        {user.email ? (
-          <>
-            <p className="muted" style={{ marginTop: 0, fontSize: '0.85rem' }}>
-              Pour vous reconnecter sur un autre appareil sans mot de passe, vous pouvez renvoyer un
-              lien magique sur l’adresse actuelle.
+          <div className="settings-subsection">
+            <h3 className="settings-subsection-title" id="settings-pseudo-title">
+              Pseudo
+            </h3>
+            <p className="muted settings-hint">
+              Visible dans les dossiers et les commentaires. {displayNameRules}
             </p>
-            <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+            <form onSubmit={savePseudo} className="stack" aria-labelledby="settings-pseudo-title">
+              <div>
+                <label htmlFor="settings-pseudo">Pseudo affiché</label>
+                <input
+                  id="settings-pseudo"
+                  value={pseudoDraft}
+                  onChange={(e) => setPseudoDraft(e.target.value)}
+                  autoComplete="nickname"
+                  maxLength={30}
+                />
+              </div>
+              <button type="submit" disabled={pseudoBusy || !pseudoDirty}>
+                {pseudoBusy ? 'Enregistrement…' : 'Enregistrer le pseudo'}
+              </button>
+            </form>
+          </div>
+
+          <hr className="settings-divider" />
+
+          <div className="settings-subsection">
+            <h3 className="settings-subsection-title" id="settings-email-title">
+              E-mail et connexion
+            </h3>
+            <p className="muted settings-hint">
+              Identifiant du compte&nbsp;:{' '}
+              {user.email ? <code>{user.email}</code> : <span>non renseigné</span>}
+            </p>
+            {user.email ? (
+              <div className="settings-actions-row">
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busyMagic}
+                  onClick={() => void resendMagicLink()}
+                >
+                  {busyMagic ? 'Envoi…' : 'Renvoyer un lien magique'}
+                </button>
+              </div>
+            ) : null}
+            <form onSubmit={saveEmail} className="stack" aria-labelledby="settings-email-title">
+              <div>
+                <label htmlFor="settings-email">Nouvelle adresse e-mail</label>
+                <input
+                  id="settings-email"
+                  type="email"
+                  value={emailDraft}
+                  onChange={(e) => {
+                    setEmailDraft(e.target.value)
+                    setEmailFeedback(null)
+                  }}
+                  autoComplete="email"
+                />
+              </div>
+              {emailFeedback ? (
+                <p
+                  role="status"
+                  className={
+                    emailFeedback.variant === 'error'
+                      ? 'settings-feedback error'
+                      : 'settings-feedback muted'
+                  }
+                >
+                  {emailFeedback.text}
+                </p>
+              ) : null}
+              <button type="submit" disabled={emailBusy || emailUnchanged}>
+                {emailBusy ? 'Envoi…' : 'Demander le changement d’e-mail'}
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section className="card stack settings-card" aria-labelledby="settings-display-heading">
+          <h2 id="settings-display-heading">Affichage</h2>
+          <p className="muted settings-hint">
+            Thème enregistré localement sur cet appareil (clair ou sombre).
+          </p>
+          <div
+            className="settings-theme-row"
+            role="group"
+            aria-label="Choix du thème"
+          >
+            <button
+              type="button"
+              className={mode === 'light' ? undefined : 'secondary'}
+              onClick={() => applyTheme('light')}
+            >
+              Clair
+            </button>
+            <button
+              type="button"
+              className={mode === 'dark' ? undefined : 'secondary'}
+              onClick={() => applyTheme('dark')}
+            >
+              Sombre
+            </button>
+          </div>
+        </section>
+
+        <section className="card stack settings-card" aria-labelledby="settings-app-heading">
+          <h2 id="settings-app-heading">Application</h2>
+
+          <div className="settings-subsection">
+            <h3 className="settings-subsection-title">Mise à jour</h3>
+            <p className="muted settings-hint">
+              Après une mise en ligne du site, rechargez pour bénéficier de la dernière version.
+              Sur navigateur ou PWA, le cache du service worker est réappliqué si nécessaire.
+            </p>
+            {needRefresh ? (
+              <p className="muted settings-hint" role="status">
+                <strong>Mise à jour disponible</strong> — le bouton ci-dessous installera la
+                nouvelle version puis rechargera la page.
+              </p>
+            ) : null}
+            <button type="button" disabled={reloadBusy} onClick={onReloadLatest}>
+              {reloadBusy ? 'Rechargement…' : 'Recharger vers la dernière version'}
+            </button>
+          </div>
+
+          <hr className="settings-divider" />
+
+          <div className="settings-subsection">
+            <h3 className="settings-subsection-title">Visite guidée</h3>
+            <p className="muted settings-hint">
+              Réinitialise les écrans « déjà vus » (accueil, invitation, premier passage dans un
+              dossier sur petit écran). Puis rouvrez l’accueil ou lancez la visite ci-dessous.
+            </p>
+            <div className="settings-actions-row">
               <button
                 type="button"
                 className="secondary"
-                disabled={busyMagic}
-                onClick={() => void resendMagicLink()}
+                onClick={() => {
+                  resetAllAssistantFlags()
+                  try {
+                    sessionStorage.removeItem('mc_invite_welcome')
+                  } catch {
+                    /* ignore */
+                  }
+                  showToast('Visite guidée réinitialisée.')
+                }}
               >
-                {busyMagic ? 'Envoi…' : 'Renvoyer un lien magique'}
+                Réinitialiser les indicateurs
+              </button>
+              <button type="button" onClick={() => navigate('/assistant')}>
+                Lancer la visite d’accueil
               </button>
             </div>
-          </>
-        ) : null}
-        <form onSubmit={saveEmail} className="stack" style={{ marginTop: '0.75rem' }}>
-          <div>
-            <label htmlFor="settings-email">Nouvelle adresse e-mail</label>
-            <input
-              id="settings-email"
-              type="email"
-              value={emailDraft}
-              onChange={(e) => setEmailDraft(e.target.value)}
-              autoComplete="email"
-            />
           </div>
-          {emailFeedback ? (
-            <p className={emailFeedback.variant === 'error' ? 'error' : 'muted'}>
-              {emailFeedback.text}
-            </p>
-          ) : null}
-          <button type="submit" disabled={emailBusy}>
-            {emailBusy ? 'Envoi…' : 'Demander le changement d’e-mail'}
-          </button>
-        </form>
+        </section>
       </div>
     </div>
   )
