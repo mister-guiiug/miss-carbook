@@ -24,6 +24,7 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
       folder.file('candidates.json', JSON.stringify(b.candidates, null, 2))
       folder.file('notes.json', JSON.stringify(b.notes ?? {}, null, 2))
       folder.file('activity_log.json', JSON.stringify(b.activityLog, null, 2))
+      folder.file('visits.json', JSON.stringify(b.visits, null, 2))
       folder.file('reminders.json', JSON.stringify(b.reminders, null, 2))
       folder.file('workspace_invites.json', JSON.stringify(b.invites, null, 2))
       folder.file('workspace_members.json', JSON.stringify(b.members, null, 2))
@@ -44,7 +45,7 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
           `generated_at=${generatedAt}`,
           `workspace_id=${workspaceId}`,
           '',
-          'Contenu : workspace, exigences, modèles (+ specs), notes, journal, rappels, invitations,',
+          'Contenu : workspace, exigences, modèles (+ specs), notes, journal, visites, rappels, invitations,',
           'membres, presets de comparaison, véhicule actuel, évaluations matrice, votes MoSCoW,',
           'commentaires, avis modèles, pièces jointes (métadonnées uniquement, pas de fichiers binaires).',
         ].join('\n')
@@ -75,7 +76,7 @@ export function ExportWorkspaceButton({ workspaceId }: { workspaceId: string }) 
         <IconArchiveDown />
       </IconActionButton>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-        Archive locale : données du dossier (exigences, modèles, matrice, votes, rappels,
+        Archive locale : données du dossier (exigences, modèles, matrice, votes, visites, rappels,
         invitations, membres, presets, véhicule actuel, commentaires, avis, métadonnées des pièces
         jointes). Pas de photos binaires.
       </p>

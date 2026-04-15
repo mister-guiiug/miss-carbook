@@ -7,6 +7,7 @@ export type WorkspaceExportBundle = {
   candidates: unknown[]
   notes: Record<string, unknown> | null
   activityLog: unknown[]
+  visits: unknown[]
   reminders: unknown[]
   invites: unknown[]
   members: unknown[]
@@ -30,7 +31,7 @@ const empty = { data: [] as unknown[], error: null as null }
 export async function fetchWorkspaceExportBundle(
   workspaceId: string
 ): Promise<WorkspaceExportBundle> {
-  const [ws, req, cand, notes, act, reminders, invites, members, presets, currVehicle] =
+  const [ws, req, cand, notes, act, visits, reminders, invites, members, presets, currVehicle] =
     await Promise.all([
       supabase.from('workspaces').select('*').eq('id', workspaceId).single(),
       supabase.from('requirements').select('*').eq('workspace_id', workspaceId),
@@ -45,6 +46,11 @@ export async function fetchWorkspaceExportBundle(
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false })
         .limit(500),
+      supabase
+        .from('visits')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('visit_at', { ascending: false }),
       supabase.from('reminders').select('*').eq('workspace_id', workspaceId),
       supabase.from('workspace_invites').select('*').eq('workspace_id', workspaceId),
       supabase.from('workspace_members').select('*').eq('workspace_id', workspaceId),
@@ -105,6 +111,10 @@ export async function fetchWorkspaceExportBundle(
     const u = (row as { created_by?: string }).created_by
     if (u) userIds.add(u)
   }
+  for (const row of visits.data ?? []) {
+    const u = (row as { created_by?: string }).created_by
+    if (u) userIds.add(u)
+  }
 
   const ids = [...userIds]
   const profileNames: Record<string, string> = {}
@@ -121,6 +131,7 @@ export async function fetchWorkspaceExportBundle(
     candidates: cand.data ?? [],
     notes: (notes.data ?? null) as Record<string, unknown> | null,
     activityLog: act.data ?? [],
+    visits: visits.data ?? [],
     reminders: reminders.data ?? [],
     invites: invites.data ?? [],
     members: members.data ?? [],
