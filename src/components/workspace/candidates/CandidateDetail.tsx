@@ -12,6 +12,7 @@ import { renderMentions } from '../../../lib/renderMentions'
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext'
 import type { CandidateStatus, Json } from '../../../types/database'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconSend } from '../../ui/IconActionButton'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
@@ -59,7 +60,7 @@ function hasAnySpecData(specs: Record<string, unknown>): boolean {
 function vehicleDetailFromCandidate(c: CandidateRow) {
   return {
     engine: c.engine ?? '',
-    price: c.price != null ? String(c.price) : '',
+    price: c.price != null ? formatPriceInputDisplay(c.price) : '',
     garage_location: c.garage_location ?? '',
     manufacturer_url: c.manufacturer_url ?? '',
     options: c.options ?? '',
@@ -91,7 +92,8 @@ export function CandidateDetail({
     model: candidate.model,
     trim: candidate.trim,
     engine: candidate.engine,
-    price: candidate.price != null ? String(candidate.price) : '',
+    price:
+      candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
     event_date: candidate.event_date ?? '',
     status: candidate.status,
     reject_reason: candidate.reject_reason,
@@ -107,7 +109,8 @@ export function CandidateDetail({
       model: candidate.model,
       trim: candidate.trim,
       engine: candidate.engine,
-      price: candidate.price != null ? String(candidate.price) : '',
+      price:
+        candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
       event_date: candidate.event_date ?? '',
       status: candidate.status,
       reject_reason: candidate.reject_reason,
@@ -616,10 +619,25 @@ export function CandidateDetail({
                     <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
                     <input
                       id={`cand-meta-price-${candidate.id}`}
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
                       value={meta.price}
                       onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
+                      onFocus={() => {
+                        const n = parsePriceInput(meta.price)
+                        setMeta((m) => ({
+                          ...m,
+                          price: n != null ? String(n).replace('.', ',') : '',
+                        }))
+                      }}
+                      onBlur={() => {
+                        const n = parsePriceInput(meta.price)
+                        setMeta((m) => ({
+                          ...m,
+                          price: n != null ? formatPriceInputDisplay(n) : '',
+                        }))
+                      }}
                     />
                   </div>
                 </div>

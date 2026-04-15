@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parsePriceInput } from '../formatPrice'
 
 const authEmailField = z.string().trim().email('Adresse e-mail invalide')
 
@@ -111,9 +112,12 @@ export const candidateSchema = z.object({
     .optional()
     .transform((v) => (v === '' || v === undefined || v === null ? null : v)),
   price: z
-    .union([z.coerce.number().min(0), z.nan()])
-    .optional()
-    .transform((v) => (typeof v === 'number' && !Number.isNaN(v) ? v : null)),
+    .preprocess((val) => {
+      if (val === undefined) return undefined
+      if (val === '' || val === null) return null
+      if (typeof val === 'number' && !Number.isNaN(val)) return val
+      return parsePriceInput(String(val))
+    }, z.union([z.number().min(0), z.null()]).optional()),
   options: z.string().max(4000).optional().default(''),
   garage_location: z.string().max(200).optional().default(''),
   manufacturer_url: z

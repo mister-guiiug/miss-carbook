@@ -115,4 +115,9 @@ describe('candidateSchema', () => {
   it('refuse parent_candidate_id non UUID', () => {
     expect(candidateSchema.safeParse({ parent_candidate_id: 'nope' }).success).toBe(false)
   })
+  it('parse le prix avec espaces et virgule (fr-FR)', () => {
+    const r = candidateSchema.safeParse({ price: '12 345,67' })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.price).toBe(12345.67)
+  })
 })

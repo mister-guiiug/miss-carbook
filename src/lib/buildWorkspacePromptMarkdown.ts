@@ -1,4 +1,5 @@
 import { formatCandidateListLabel } from './candidateLabel'
+import { formatPriceEur } from './formatPrice'
 import type { WorkspaceExportBundle } from './workspaceExportBundle'
 
 const REQ_LEVEL: Record<string, string> = {
@@ -235,7 +236,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         '',
         `- **Statut** : ${st}`,
         `- **Motorisation** : ${esc(c.engine) || '—'}`,
-        `- **Prix (€)** : ${c.price != null ? esc(c.price) : '—'}`,
+        `- **Prix** : ${c.price != null ? esc(formatPriceEur(c.price)) : '—'}`,
         `- **Lieu / garage** : ${esc(c.garage_location) || '—'}`,
         `- **Lien constructeur** : ${esc(c.manufacturer_url) || '—'}`,
         `- **Année / période** : ${esc(c.event_date) || '—'}`,
