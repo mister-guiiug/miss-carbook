@@ -1,4 +1,5 @@
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { formatPriceEur } from '../../../lib/formatPrice'
 import {
   IconActionButton,
   IconChevronDown,
@@ -66,7 +67,7 @@ export function CandidateCard({
                 {[
                   displayVersionLabel(c),
                   c.engine?.trim(),
-                  c.price != null ? `${c.price} €` : null,
+                  c.price != null ? formatPriceEur(c.price) : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')}
@@ -78,7 +79,7 @@ export function CandidateCard({
                 {[
                   displayVersionLabel(c),
                   c.engine?.trim(),
-                  c.price != null ? `${c.price} €` : null,
+                  c.price != null ? formatPriceEur(c.price) : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')}

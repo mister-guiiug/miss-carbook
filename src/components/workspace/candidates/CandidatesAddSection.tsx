@@ -1,4 +1,5 @@
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import type { CandidateStatus } from '../../../types/database'
 import type { AddCandidateFormState } from './useAddCandidateForm'
 import type { CandidateRow } from './candidateTypes'
@@ -204,10 +205,25 @@ export function CandidatesAddSection({
                   <label htmlFor="cand-price">Prix</label>
                   <input
                     id="cand-price"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                    onFocus={() => {
+                      const n = parsePriceInput(form.price)
+                      setForm((f) => ({
+                        ...f,
+                        price: n != null ? String(n).replace('.', ',') : '',
+                      }))
+                    }}
+                    onBlur={() => {
+                      const n = parsePriceInput(form.price)
+                      setForm((f) => ({
+                        ...f,
+                        price: n != null ? formatPriceInputDisplay(n) : '',
+                      }))
+                    }}
                   />
                 </div>
               </div>
@@ -278,10 +294,25 @@ export function CandidatesAddSection({
                   <label htmlFor="cand-price-root">Prix</label>
                   <input
                     id="cand-price-root"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                    onFocus={() => {
+                      const n = parsePriceInput(form.price)
+                      setForm((f) => ({
+                        ...f,
+                        price: n != null ? String(n).replace('.', ',') : '',
+                      }))
+                    }}
+                    onBlur={() => {
+                      const n = parsePriceInput(form.price)
+                      setForm((f) => ({
+                        ...f,
+                        price: n != null ? formatPriceInputDisplay(n) : '',
+                      }))
+                    }}
                   />
                 </div>
               </div>
