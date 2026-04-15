@@ -43,6 +43,7 @@ type Row = {
   candidate_id: string | null
   place?: string | null
   kind?: ReminderKind | null
+  created_at?: string | null
 }
 
 type VisitRow = {
@@ -53,7 +54,44 @@ type VisitRow = {
   candidate_id: string | null
 }
 
-type View = 'open' | 'done' | 'visits'
+type View = 'open' | 'done' | 'visits' | 'timeline'
+
+type TimelineEvent =
+  | { kind: 'visit'; sortIso: string; visit: VisitRow }
+  | { kind: 'reminder'; sortIso: string; reminder: Row }
+
+function localDayKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function dayKeyFromIso(iso: string): string {
+  return localDayKey(new Date(iso))
+}
+
+function formatTimelineDayHeading(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const k = dayKeyFromIso(iso)
+  if (k === localDayKey(today)) return "Aujourd'hui"
+  if (k === localDayKey(yesterday)) return 'Hier'
+  return d.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function reminderTimelineSortIso(r: Row): string {
+  if (r.due_at) return r.due_at
+  if (r.created_at) return r.created_at
+  return new Date(0).toISOString()
+}
 
 type ConfirmState = null | {
   kind: 'reminder' | 'visit'
@@ -373,8 +411,9 @@ export function RemindersTab({
       open: openReminders.length,
       done: doneReminders.length,
       visits: visits.length,
+      timeline: rows.length + visits.length,
     }),
-    [openReminders.length, doneReminders.length, visits.length]
+    [openReminders.length, doneReminders.length, visits.length, rows.length]
   )
 
   const candidateLabelById = useMemo(() => {
@@ -449,16 +488,64 @@ export function RemindersTab({
     })
   }, [visits, query, candidateFilter, candidateLabelById])
 
+  const filteredTimelineGroups = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const events: TimelineEvent[] = []
+    const includeVisits = kindFilter === 'all' || kindFilter === 'visit'
+
+    if (includeVisits) {
+      for (const v of visits) {
+        if (candidateFilter !== 'all' && (v.candidate_id ?? '') !== candidateFilter) continue
+        if (q) {
+          const linked = v.candidate_id ? (candidateLabelById.get(v.candidate_id) ?? '') : ''
+          const ok =
+            (v.location ?? '').toLowerCase().includes(q) ||
+            (v.notes ?? '').toLowerCase().includes(q) ||
+            linked.toLowerCase().includes(q)
+          if (!ok) continue
+        }
+        events.push({ kind: 'visit', sortIso: v.visit_at, visit: v })
+      }
+    }
+
+    for (const r of rows) {
+      if (kindFilter !== 'all' && ((r.kind as ReminderKind | null) ?? 'other') !== kindFilter)
+        continue
+      if (candidateFilter !== 'all' && (r.candidate_id ?? '') !== candidateFilter) continue
+      if (q) {
+        const linked = r.candidate_id ? (candidateLabelById.get(r.candidate_id) ?? '') : ''
+        const ok =
+          (r.title ?? '').toLowerCase().includes(q) ||
+          (r.body ?? '').toLowerCase().includes(q) ||
+          (r.place ?? '').toLowerCase().includes(q) ||
+          linked.toLowerCase().includes(q)
+        if (!ok) continue
+      }
+      events.push({ kind: 'reminder', sortIso: reminderTimelineSortIso(r), reminder: r })
+    }
+
+    events.sort((a, b) => new Date(b.sortIso).getTime() - new Date(a.sortIso).getTime())
+
+    const dayMap = new Map<string, { heading: string; items: TimelineEvent[] }>()
+    for (const ev of events) {
+      const key = dayKeyFromIso(ev.sortIso)
+      const cur = dayMap.get(key)
+      if (cur) cur.items.push(ev)
+      else dayMap.set(key, { heading: formatTimelineDayHeading(ev.sortIso), items: [ev] })
+    }
+    return [...dayMap.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+  }, [visits, rows, query, kindFilter, candidateFilter, candidateLabelById])
+
   return (
     <div className="stack reminders-tab">
       <p className="muted" style={{ margin: 0 }}>
         Saisissez vos visites (historique) et vos rappels (à faire / faits) — visibles par tous les
-        membres.
+        membres. L’onglet <strong>Chronologie</strong> regroupe tout sur une frise temporelle.
       </p>
 
       <div className="card stack reminders-toolbar" style={{ boxShadow: 'none' }}>
         <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <div className="tabs" role="tablist" aria-label="Sections rappels">
+          <div className="tabs" role="tablist" aria-label="Visites et rappels — sous-sections">
             <button
               type="button"
               role="tab"
@@ -486,11 +573,21 @@ export function RemindersTab({
             >
               Visites <span className="muted">({counts.visits})</span>
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'timeline'}
+              className={view === 'timeline' ? 'active' : ''}
+              onClick={() => setView('timeline')}
+              title="Tous les rappels et visites, du plus récent au plus ancien"
+            >
+              Chronologie <span className="muted">({counts.timeline})</span>
+            </button>
           </div>
 
           {canWrite ? (
             <div className="row icon-action-toolbar" style={{ gap: '0.35rem' }}>
-              {view !== 'visits' ? (
+              {view !== 'visits' && view !== 'timeline' ? (
                 <IconActionButton
                   variant="secondary"
                   label={showAddReminder ? 'Fermer le formulaire de rappel' : 'Ajouter un rappel'}
@@ -529,6 +626,11 @@ export function RemindersTab({
               value={kindFilter}
               onChange={(e) => setKindFilter(e.target.value as ReminderKind | 'all')}
               disabled={view === 'visits'}
+              title={
+                view === 'timeline'
+                  ? 'Filtre les rappels ; « Visite » inclut aussi les entrées du carnet de visites'
+                  : undefined
+              }
             >
               <option value="all">Tous</option>
               <option value="contact">{reminderKindLabel.contact}</option>
@@ -555,7 +657,7 @@ export function RemindersTab({
         </div>
       </div>
 
-      {canWrite && showAddReminder && view !== 'visits' ? (
+      {canWrite && showAddReminder && view !== 'visits' && view !== 'timeline' ? (
         <form onSubmit={add} className="card stack" style={{ boxShadow: 'none' }}>
           <h3 style={{ margin: 0 }}>Nouveau rappel</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>
@@ -680,7 +782,152 @@ export function RemindersTab({
         </form>
       ) : null}
 
-      {view === 'visits' ? (
+      {view === 'timeline' ? (
+        filteredTimelineGroups.length === 0 ? (
+          <div className="empty-state">
+            <p className="muted" style={{ margin: 0 }}>
+              Aucun événement pour ces filtres. Ajoutez des rappels (À faire) ou des visites (onglet
+              Visites).
+            </p>
+          </div>
+        ) : (
+          <div className="stack reminders-timeline-wrap">
+            <p className="muted reminders-timeline-hint" style={{ margin: 0, fontSize: '0.88rem' }}>
+              Frise unifiée : date de la visite, ou échéance du rappel, ou à défaut date de création
+              du rappel — du <strong>plus récent</strong> au plus ancien.
+            </p>
+            <ul className="reminders-timeline">
+              {filteredTimelineGroups.map(([dayKey, { heading, items }]) => (
+                <li key={dayKey} className="reminders-timeline-day stack">
+                  <h3 className="reminders-timeline-day-heading">{heading}</h3>
+                  <ul className="reminders-timeline-day-list">
+                    {items.map((ev) => {
+                      const t = new Date(ev.sortIso)
+                      const timeStr = t.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                      if (ev.kind === 'visit') {
+                        const v = ev.visit
+                        const linkedLabel = v.candidate_id
+                          ? candidateLabelById.get(v.candidate_id)
+                          : null
+                        const loc = (v.location ?? '').trim()
+                        const main = [loc, linkedLabel].filter(Boolean).join(' · ') || 'Visite'
+                        const note = (v.notes ?? '').trim()
+                        return (
+                          <li
+                            key={`v-${v.id}`}
+                            className="reminders-timeline-row"
+                            title={`${timeStr} — Visite — ${main}${note ? ` — ${note}` : ''}`}
+                          >
+                            <time className="reminders-timeline-time" dateTime={ev.sortIso}>
+                              {timeStr}
+                            </time>
+                            <span className="reminders-timeline-main">
+                              <span className="badge reminders-timeline-badge">Visite</span>
+                              <span className="reminders-timeline-text">
+                                <strong>{main}</strong>
+                                {note ? (
+                                  <span className="muted reminders-timeline-note"> · {note}</span>
+                                ) : null}
+                              </span>
+                            </span>
+                            <div className="reminders-timeline-actions">
+                              {canWrite ? (
+                                <IconActionButton
+                                  variant="danger"
+                                  label="Supprimer la visite"
+                                  onClick={() => void removeVisit(v.id)}
+                                >
+                                  <IconTrash />
+                                </IconActionButton>
+                              ) : null}
+                            </div>
+                          </li>
+                        )
+                      }
+                      const r = ev.reminder
+                      const k = ((r.kind as ReminderKind | null) ?? 'other') as ReminderKind
+                      const linkedLabel = r.candidate_id
+                        ? candidateLabelById.get(r.candidate_id)
+                        : null
+                      const overdue = !r.done && isOverdue(r.due_at)
+                      const status = r.done ? 'Fait' : 'À faire'
+                      const sub = [
+                        status,
+                        linkedLabel ? linkedLabel : null,
+                        (r.place ?? '').trim() || null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')
+                      return (
+                        <li
+                          key={`r-${r.id}`}
+                          className={`reminders-timeline-row${overdue ? ' reminders-timeline-row--overdue' : ''}`}
+                          title={`${r.title}${r.due_at ? ` — ${fmtShortDateTimeFr(r.due_at)}` : ''}`}
+                        >
+                          <time className="reminders-timeline-time" dateTime={ev.sortIso}>
+                            {timeStr}
+                          </time>
+                          <span className="reminders-timeline-main">
+                            <span className="badge reminders-timeline-badge">
+                              {reminderKindLabel[k]}
+                            </span>
+                            {r.done ? (
+                              <span className="badge reminders-timeline-badge reminders-timeline-badge--done">
+                                Fait
+                              </span>
+                            ) : overdue ? (
+                              <span className="badge danger">Retard</span>
+                            ) : null}
+                            <span className="reminders-timeline-text">
+                              <strong>{r.title}</strong>
+                              {sub ? (
+                                <span className="muted reminders-timeline-note"> · {sub}</span>
+                              ) : null}
+                            </span>
+                          </span>
+                          <div className="reminders-timeline-actions">
+                            {canWrite ? (
+                              <>
+                                <IconActionButton
+                                  variant="primary"
+                                  label={`Modifier le rappel « ${r.title} »`}
+                                  onClick={() => {
+                                    setView(r.done ? 'done' : 'open')
+                                    startEdit(r)
+                                  }}
+                                >
+                                  <IconPencil />
+                                </IconActionButton>
+                                <IconActionButton
+                                  variant="secondary"
+                                  label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
+                                  onClick={() => void toggle(r)}
+                                >
+                                  {r.done ? <IconRotateCcw /> : <IconCheck />}
+                                </IconActionButton>
+                                <IconActionButton
+                                  variant="danger"
+                                  label="Supprimer ce rappel"
+                                  onClick={() => void remove(r.id)}
+                                >
+                                  <IconTrash />
+                                </IconActionButton>
+                              </>
+                            ) : null}
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      ) : view === 'visits' ? (
         filteredVisits.length === 0 ? (
           <div className="empty-state">
             <p className="muted" style={{ margin: 0 }}>

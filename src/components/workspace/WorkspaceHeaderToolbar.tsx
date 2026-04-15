@@ -346,7 +346,7 @@ export function WorkspaceHeaderToolbar({
                 <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   <IconBell />
                 </span>
-                <span>Rappel</span>
+                <span>Visites et rappels</span>
               </button>
               <button
                 type="button"
