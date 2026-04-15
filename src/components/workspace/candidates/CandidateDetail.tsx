@@ -24,6 +24,7 @@ import {
 import { formatMileageKmDisplay, parseMileageKmInput } from '../../../lib/formatMileage'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconCheck, IconSend, IconX } from '../../ui/IconActionButton'
+import { ImageViewerCarousel } from '../../ui/ImageViewerCarousel'
 import { GarageLocationInput } from './GarageLocationInput'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
@@ -300,6 +301,7 @@ export function CandidateDetail({
   const [pendingOversizedPhoto, setPendingOversizedPhoto] = useState<File | null>(null)
   const [compressingPhoto, setCompressingPhoto] = useState(false)
   const compressCancelRef = useRef<HTMLButtonElement | null>(null)
+  const [photoViewerIndex, setPhotoViewerIndex] = useState<number | null>(null)
 
   useEffect(() => {
     setVehDetailsOpen(!isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate)))
@@ -385,7 +387,19 @@ export function CandidateDetail({
     setPhotosAccordionOpen(false)
     setReviewAccordionOpen(false)
     setPendingOversizedPhoto(null)
+    setPhotoViewerIndex(null)
   }, [candidate.id])
+
+  useEffect(() => {
+    if (photoViewerIndex === null) return
+    if (photos.length === 0) {
+      setPhotoViewerIndex(null)
+      return
+    }
+    if (photoViewerIndex >= photos.length) {
+      setPhotoViewerIndex(photos.length - 1)
+    }
+  }, [photos, photoViewerIndex])
 
   useEffect(() => {
     if (!pendingOversizedPhoto) return
@@ -1174,9 +1188,22 @@ export function CandidateDetail({
                 </p>
               </>
             ) : null}
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              {photos.map((p) => (
-                <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+            <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+              {photos.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPhotoViewerIndex(i)}
+                  aria-label={`Agrandir la photo ${i + 1} sur ${photos.length}`}
+                  style={{
+                    padding: 0,
+                    border: '1px solid var(--border, #333)',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    overflow: 'hidden',
+                  }}
+                >
                   <img
                     src={p.url}
                     alt=""
@@ -1184,14 +1211,21 @@ export function CandidateDetail({
                     height={80}
                     loading="lazy"
                     decoding="async"
-                    style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
+                    style={{ width: 120, height: 80, objectFit: 'cover', display: 'block' }}
                   />
-                </a>
+                </button>
               ))}
             </div>
           </div>
         </details>
       ) : null}
+
+      <ImageViewerCarousel
+        items={photos}
+        index={photoViewerIndex}
+        onClose={() => setPhotoViewerIndex(null)}
+        onNavigate={setPhotoViewerIndex}
+      />
 
       {pendingOversizedPhoto ? (
         <div
