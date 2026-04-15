@@ -1,4 +1,4 @@
-import { formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import type { CandidateStatus } from '../../../types/database'
 import type { AddCandidateFormState } from './useAddCandidateForm'
 import type { CandidateRow } from './candidateTypes'
@@ -20,6 +20,8 @@ export function CandidatesAddSection({
   candidates: CandidateRow[]
 }) {
   const isVariation = Boolean(form.parent_id)
+  const parent =
+    form.parent_id ? candidates.find((x) => x.id === form.parent_id) ?? null : null
 
   return (
     <div className="candidates-panels row">
@@ -59,6 +61,7 @@ export function CandidatesAddSection({
                     parent_id: pid,
                     brand: p?.brand ?? f.brand,
                     model: p?.model ?? f.model,
+                    event_date: p?.event_date ?? '',
                   }
                 })
               }}
@@ -103,26 +106,86 @@ export function CandidatesAddSection({
                 />
               </div>
             </div>
-            <div className="row">
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor="cand-trim">Version</label>
-                <input
-                  id="cand-trim"
-                  value={form.trim}
-                  onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
-                  placeholder="ex. finition"
-                />
+            {isVariation && parent ? (
+              <>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor="cand-base-ver">Version de base</label>
+                    <input
+                      id="cand-base-ver"
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={displayVersionLabel({
+                        trim: parent.trim,
+                        parent_candidate_id: null,
+                      })}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor="cand-period-ro">Année(s) / période</label>
+                    <input
+                      id="cand-period-ro"
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={parent.event_date ?? ''}
+                      tabIndex={-1}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 100%' }}>
+                    <label htmlFor="cand-trim">Version complémentaire</label>
+                    <input
+                      id="cand-trim"
+                      value={form.trim}
+                      onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
+                      placeholder="ex. finition, pack, motorisation…"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : !isVariation ? (
+              <div className="row">
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor="cand-trim">Version de base</label>
+                  <input
+                    id="cand-trim"
+                    value={form.trim}
+                    onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
+                    placeholder='Vide = « Générique » (version de base)'
+                  />
+                </div>
+                <div style={{ flex: '1 1 160px' }}>
+                  <label htmlFor="cand-event-date">Année(s) / période</label>
+                  <input
+                    id="cand-event-date"
+                    type="text"
+                    autoComplete="off"
+                    value={form.event_date}
+                    onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
+                    placeholder="ex. 2024, 2020-2023, printemps 2025"
+                  />
+                </div>
               </div>
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor="cand-event-date">Année(s) / période</label>
-                <input
-                  id="cand-event-date"
-                  type="date"
-                  value={form.event_date}
-                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
-                />
-              </div>
-            </div>
+            ) : (
+              <>
+                <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+                  Parent introuvable dans la liste : indiquez au moins la version complémentaire.
+                </p>
+                <div className="row">
+                  <div style={{ flex: '1 1 100%' }}>
+                    <label htmlFor="cand-trim-orphan">Version complémentaire</label>
+                    <input
+                      id="cand-trim-orphan"
+                      value={form.trim}
+                      onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
+                      placeholder="ex. finition, pack, motorisation…"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {isVariation ? (

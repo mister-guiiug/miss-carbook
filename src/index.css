@@ -1709,6 +1709,35 @@ th {
   margin-bottom: 0.15rem;
 }
 
+/* Accordéons dans le détail d’un modèle (père ou variation) */
+.candidates-tab .candidate-detail-accordion {
+  overflow: hidden;
+}
+
+.candidates-tab .candidate-detail-accordion > .home-accordion-summary {
+  font-size: 0.95rem;
+}
+
+.candidate-version-line-prefix {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.candidate-fiche-identity input.candidate-field-readonly,
+.candidates-tab input.candidate-field-readonly {
+  background: var(--bg);
+  color: var(--text);
+  cursor: default;
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .candidate-fiche-identity input.candidate-field-readonly,
+[data-theme='dark'] .candidates-tab input.candidate-field-readonly {
+  background: rgb(15 23 42 / 0.45);
+}
+
 .candidate-card-head {
   align-items: flex-start;
   gap: 0.5rem;

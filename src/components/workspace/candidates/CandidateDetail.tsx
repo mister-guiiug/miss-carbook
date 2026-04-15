@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { logActivity } from '../../../lib/activity'
 import {
@@ -11,10 +11,61 @@ import { uploadCandidateImage, signedUrlForPath } from '../../../lib/storageUplo
 import { renderMentions } from '../../../lib/renderMentions'
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext'
 import type { CandidateStatus, Json } from '../../../types/database'
-import { formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import { IconActionButton, IconSend } from '../../ui/IconActionButton'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
+
+function isBlank(s: string | null | undefined): boolean {
+  return !s || String(s).trim() === ''
+}
+
+/** Détails « véhicule » sans identité : tout est vide côté saisie. */
+function isVehicleDetailMetaEmpty(m: {
+  engine: string
+  price: string
+  garage_location: string
+  manufacturer_url: string
+  options: string
+  reject_reason: string
+}): boolean {
+  const priceEmpty = m.price === '' || m.price === undefined
+  return (
+    isBlank(m.engine) &&
+    priceEmpty &&
+    isBlank(m.garage_location) &&
+    isBlank(m.manufacturer_url) &&
+    isBlank(m.options) &&
+    isBlank(m.reject_reason)
+  )
+}
+
+const SPEC_NUM_KEYS = [
+  'lengthMm',
+  'trunkLiters',
+  'consumptionL100',
+  'consumptionKwh100',
+  'powerKw',
+  'co2Gkm',
+] as const
+
+function hasAnySpecData(specs: Record<string, unknown>): boolean {
+  return SPEC_NUM_KEYS.some((k) => {
+    const v = specs[k]
+    return typeof v === 'number' && !Number.isNaN(v)
+  })
+}
+
+function vehicleDetailFromCandidate(c: CandidateRow) {
+  return {
+    engine: c.engine ?? '',
+    price: c.price != null ? String(c.price) : '',
+    garage_location: c.garage_location ?? '',
+    manufacturer_url: c.manufacturer_url ?? '',
+    options: c.options ?? '',
+    reject_reason: c.reject_reason ?? '',
+  }
+}
 
 export function CandidateDetail({
   candidate,
@@ -66,6 +117,14 @@ export function CandidateDetail({
     })
   }, [candidate])
 
+  const parentRow = useMemo(
+    () =>
+      candidate.parent_candidate_id
+        ? rootCandidates.find((p) => p.id === candidate.parent_candidate_id) ?? null
+        : null,
+    [candidate.parent_candidate_id, rootCandidates]
+  )
+
   const saveIdentity = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canWrite) return
@@ -73,7 +132,7 @@ export function CandidateDetail({
       ...meta,
       parent_candidate_id: meta.parent_candidate_id || null,
       price: meta.price,
-      event_date: meta.event_date || null,
+      event_date: meta.event_date?.trim() || null,
     })
     if (!parsed.success) {
       const msg = parsed.error.errors[0]?.message ?? 'Invalide'
@@ -87,20 +146,27 @@ export function CandidateDetail({
       )
       return
     }
+    const isChild = Boolean(candidate.parent_candidate_id)
+
     try {
+      const brand = isChild && parentRow ? parentRow.brand : parsed.data.brand
+      const model = isChild && parentRow ? parentRow.model : parsed.data.model
+      const eventDate =
+        isChild && parentRow ? parentRow.event_date : parsed.data.event_date
+
       const { error } = await supabase
         .from('candidates')
         .update({
           parent_candidate_id: parsed.data.parent_candidate_id,
-          brand: parsed.data.brand,
-          model: parsed.data.model,
+          brand,
+          model,
           trim: parsed.data.trim,
           engine: parsed.data.engine,
           price: parsed.data.price,
           options: parsed.data.options,
           garage_location: parsed.data.garage_location,
           manufacturer_url: parsed.data.manufacturer_url,
-          event_date: parsed.data.event_date,
+          event_date: eventDate,
           status: parsed.data.status,
           reject_reason: parsed.data.reject_reason,
         })
@@ -126,6 +192,25 @@ export function CandidateDetail({
 
   useEffect(() => {
     setSpecs((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+  }, [candidate])
+
+  const [vehDetailsOpen, setVehDetailsOpen] = useState(() =>
+    !isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate))
+  )
+  const [specsAccordionOpen, setSpecsAccordionOpen] = useState(() =>
+    hasAnySpecData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+  )
+  const [commentsAccordionOpen, setCommentsAccordionOpen] = useState(false)
+  const [photosAccordionOpen, setPhotosAccordionOpen] = useState(false)
+
+  useEffect(() => {
+    setVehDetailsOpen(!isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate)))
+  }, [candidate])
+
+  useEffect(() => {
+    setSpecsAccordionOpen(
+      hasAnySpecData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+    )
   }, [candidate])
 
   const loadComments = async () => {
@@ -185,6 +270,19 @@ export function CandidateDetail({
       void supabase.removeChannel(ch)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate.id])
+
+  useEffect(() => {
+    if (comments.length > 0) setCommentsAccordionOpen(true)
+  }, [comments.length])
+
+  useEffect(() => {
+    if (photos.length > 0) setPhotosAccordionOpen(true)
+  }, [photos.length])
+
+  useEffect(() => {
+    setCommentsAccordionOpen(false)
+    setPhotosAccordionOpen(false)
   }, [candidate.id])
 
   const saveSpecs = async (e: React.FormEvent) => {
@@ -326,44 +424,159 @@ export function CandidateDetail({
 
           <div className="candidate-fiche-identity stack">
             <h5 className="candidate-fiche-subtitle">Identité</h5>
-            <div className="row">
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
-                <input
-                  id={`cand-meta-brand-${candidate.id}`}
-                  value={meta.brand}
-                  onChange={(e) => setMeta((m) => ({ ...m, brand: e.target.value }))}
-                />
-              </div>
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
-                <input
-                  id={`cand-meta-model-${candidate.id}`}
-                  value={meta.model}
-                  onChange={(e) => setMeta((m) => ({ ...m, model: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="row">
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor={`cand-meta-trim-${candidate.id}`}>Version</label>
-                <input
-                  id={`cand-meta-trim-${candidate.id}`}
-                  value={meta.trim}
-                  onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
-                  placeholder="ex. finition, millésime court"
-                />
-              </div>
-              <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période</label>
-                <input
-                  id={`cand-meta-date-${candidate.id}`}
-                  type="date"
-                  value={meta.event_date}
-                  onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
-                />
-              </div>
-            </div>
+            {isRoot ? (
+              <>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
+                    <input
+                      id={`cand-meta-brand-${candidate.id}`}
+                      value={meta.brand}
+                      onChange={(e) => setMeta((m) => ({ ...m, brand: e.target.value }))}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
+                    <input
+                      id={`cand-meta-model-${candidate.id}`}
+                      value={meta.model}
+                      onChange={(e) => setMeta((m) => ({ ...m, model: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-trim-${candidate.id}`}>Version de base</label>
+                    <input
+                      id={`cand-meta-trim-${candidate.id}`}
+                      value={meta.trim}
+                      onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
+                      placeholder='Vide = « Générique » (version de base)'
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période</label>
+                    <input
+                      id={`cand-meta-date-${candidate.id}`}
+                      type="text"
+                      autoComplete="off"
+                      value={meta.event_date}
+                      onChange={(e) => setMeta((m) => ({ ...m, event_date: e.target.value }))}
+                      placeholder="ex. 2024, 2020-2023, printemps 2025"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : parentRow ? (
+              <>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
+                    <input
+                      id={`cand-meta-brand-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={parentRow.brand}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
+                    <input
+                      id={`cand-meta-model-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={parentRow.model}
+                      tabIndex={-1}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-basever-${candidate.id}`}>Version de base</label>
+                    <input
+                      id={`cand-meta-basever-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={displayVersionLabel({
+                        trim: parentRow.trim,
+                        parent_candidate_id: null,
+                      })}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>Année(s) / période</label>
+                    <input
+                      id={`cand-meta-period-ro-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={parentRow.event_date ?? ''}
+                      tabIndex={-1}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 100%' }}>
+                    <label htmlFor={`cand-meta-trim-${candidate.id}`}>Version complémentaire</label>
+                    <input
+                      id={`cand-meta-trim-${candidate.id}`}
+                      value={meta.trim}
+                      onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
+                      placeholder="ex. finition, pack, motorisation…"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+                  Parent introuvable : identité en lecture seule depuis cette ligne.
+                </p>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-brand-${candidate.id}`}>Marque</label>
+                    <input
+                      id={`cand-meta-brand-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={meta.brand}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-model-${candidate.id}`}>Modèle</label>
+                    <input
+                      id={`cand-meta-model-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={meta.model}
+                      tabIndex={-1}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>Année(s) / période</label>
+                    <input
+                      id={`cand-meta-period-ro-${candidate.id}`}
+                      className="candidate-field-readonly"
+                      readOnly
+                      value={meta.event_date ?? ''}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-trim-${candidate.id}`}>Version complémentaire</label>
+                    <input
+                      id={`cand-meta-trim-${candidate.id}`}
+                      value={meta.trim}
+                      onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {isRoot && hasMultipleVariants ? (
@@ -374,79 +587,94 @@ export function CandidateDetail({
           ) : null}
 
           {showDetailFields ? (
-            <div className="candidate-fiche-details-attached stack">
-              <h5 className="candidate-fiche-subtitle">Détails du véhicule</h5>
-              <div className="row">
-                <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor={`cand-meta-engine-${candidate.id}`}>Motorisation</label>
+            <details
+              key={`veh-detail-${candidate.id}`}
+              className="card home-accordion candidate-detail-accordion"
+              style={{ boxShadow: 'none' }}
+              open={vehDetailsOpen}
+              onToggle={(e) => setVehDetailsOpen(e.currentTarget.open)}
+            >
+              <summary className="home-accordion-summary">
+                Détails du véhicule
+                {isVehicleDetailMetaEmpty(meta) ? (
+                  <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                    (vide)
+                  </span>
+                ) : null}
+              </summary>
+              <div className="home-accordion-body stack">
+                <div className="row">
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-engine-${candidate.id}`}>Motorisation</label>
+                    <input
+                      id={`cand-meta-engine-${candidate.id}`}
+                      value={meta.engine}
+                      onChange={(e) => setMeta((m) => ({ ...m, engine: e.target.value }))}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
+                    <input
+                      id={`cand-meta-price-${candidate.id}`}
+                      type="number"
+                      step="0.01"
+                      value={meta.price}
+                      onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
                   <input
-                    id={`cand-meta-engine-${candidate.id}`}
-                    value={meta.engine}
-                    onChange={(e) => setMeta((m) => ({ ...m, engine: e.target.value }))}
+                    id={`cand-meta-garage-${candidate.id}`}
+                    value={meta.garage_location}
+                    onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
                   />
                 </div>
-                <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor={`cand-meta-price-${candidate.id}`}>Prix</label>
+                <div>
+                  <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
                   <input
-                    id={`cand-meta-price-${candidate.id}`}
-                    type="number"
-                    step="0.01"
-                    value={meta.price}
-                    onChange={(e) => setMeta((m) => ({ ...m, price: e.target.value }))}
+                    id={`cand-meta-url-${candidate.id}`}
+                    value={meta.manufacturer_url}
+                    onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
                   />
                 </div>
-              </div>
-              <div>
-                <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
-                <input
-                  id={`cand-meta-garage-${candidate.id}`}
-                  value={meta.garage_location}
-                  onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label htmlFor={`cand-meta-url-${candidate.id}`}>Lien constructeur</label>
-                <input
-                  id={`cand-meta-url-${candidate.id}`}
-                  value={meta.manufacturer_url}
-                  onChange={(e) => setMeta((m) => ({ ...m, manufacturer_url: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
-                <textarea
-                  id={`cand-meta-opt-${candidate.id}`}
-                  value={meta.options}
-                  onChange={(e) => setMeta((m) => ({ ...m, options: e.target.value }))}
-                />
-              </div>
-              <div className="row">
-                <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor={`cand-meta-st-${candidate.id}`}>Statut</label>
-                  <select
-                    id={`cand-meta-st-${candidate.id}`}
-                    value={meta.status}
-                    onChange={(e) =>
-                      setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
-                    }
-                  >
-                    {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
-                      <option key={k} value={k}>
-                        {statusLabels[k]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor={`cand-meta-rej-${candidate.id}`}>Raison si rejet</label>
-                  <input
-                    id={`cand-meta-rej-${candidate.id}`}
-                    value={meta.reject_reason}
-                    onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
+                <div>
+                  <label htmlFor={`cand-meta-opt-${candidate.id}`}>Options</label>
+                  <textarea
+                    id={`cand-meta-opt-${candidate.id}`}
+                    value={meta.options}
+                    onChange={(e) => setMeta((m) => ({ ...m, options: e.target.value }))}
                   />
                 </div>
+                <div className="row">
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label htmlFor={`cand-meta-st-${candidate.id}`}>Statut</label>
+                    <select
+                      id={`cand-meta-st-${candidate.id}`}
+                      value={meta.status}
+                      onChange={(e) =>
+                        setMeta((m) => ({ ...m, status: e.target.value as CandidateStatus }))
+                      }
+                    >
+                      {(Object.keys(statusLabels) as CandidateStatus[]).map((k) => (
+                        <option key={k} value={k}>
+                          {statusLabels[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label htmlFor={`cand-meta-rej-${candidate.id}`}>Raison si rejet</label>
+                    <input
+                      id={`cand-meta-rej-${candidate.id}`}
+                      value={meta.reject_reason}
+                      onChange={(e) => setMeta((m) => ({ ...m, reject_reason: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </details>
           ) : null}
 
           <button type="submit">Enregistrer la fiche</button>
@@ -454,16 +682,33 @@ export function CandidateDetail({
       ) : null}
 
       <form onSubmit={saveSpecs} className="stack">
-        <h4 style={{ margin: 0 }}>Données constructeur (flexibles)</h4>
-        <div className="row" style={{ flexWrap: 'wrap' }}>
-          {num('lengthMm', specs.lengthMm)}
-          {num('trunkLiters', specs.trunkLiters)}
-          {num('consumptionL100', specs.consumptionL100)}
-          {num('consumptionKwh100', specs.consumptionKwh100)}
-          {num('powerKw', specs.powerKw)}
-          {num('co2Gkm', specs.co2Gkm)}
-        </div>
-        {canWrite ? <button type="submit">Enregistrer fiche technique</button> : null}
+        <details
+          key={`specs-${candidate.id}`}
+          className="card home-accordion candidate-detail-accordion"
+          style={{ boxShadow: 'none' }}
+          open={specsAccordionOpen}
+          onToggle={(e) => setSpecsAccordionOpen(e.currentTarget.open)}
+        >
+          <summary className="home-accordion-summary">
+            Données constructeur (flexibles)
+            {!hasAnySpecData(specs) ? (
+              <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+                (vide)
+              </span>
+            ) : null}
+          </summary>
+          <div className="home-accordion-body stack">
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              {num('lengthMm', specs.lengthMm)}
+              {num('trunkLiters', specs.trunkLiters)}
+              {num('consumptionL100', specs.consumptionL100)}
+              {num('consumptionKwh100', specs.consumptionKwh100)}
+              {num('powerKw', specs.powerKw)}
+              {num('co2Gkm', specs.co2Gkm)}
+            </div>
+            {canWrite ? <button type="submit">Enregistrer fiche technique</button> : null}
+          </div>
+        </details>
       </form>
 
       <form onSubmit={saveReview} className="stack">
@@ -511,59 +756,92 @@ export function CandidateDetail({
         {canWrite ? <button type="submit">Enregistrer mon avis</button> : null}
       </form>
 
-      <div className="stack">
-        <h4 style={{ margin: 0 }}>Commentaires</h4>
-        <ul style={{ paddingLeft: '1.1rem' }}>
-          {comments.map((c) => (
-            <li key={c.id}>
-              <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> —{' '}
-              {renderMentions(c.body)}
-            </li>
-          ))}
-        </ul>
-        {canWrite ? (
-          <form
-            onSubmit={sendComment}
-            className="row icon-action-toolbar"
-            style={{ alignItems: 'center' }}
-          >
-            <input
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <IconActionButton nativeType="submit" variant="primary" label="Envoyer le commentaire">
-              <IconSend />
-            </IconActionButton>
-          </form>
-        ) : null}
-      </div>
-
-      <div className="stack">
-        <h4 style={{ margin: 0 }}>Photos (max 5 Mo, JPEG/PNG/WebP/GIF)</h4>
-        {canWrite ? (
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
-          />
-        ) : null}
-        <div className="row" style={{ flexWrap: 'wrap' }}>
-          {photos.map((p) => (
-            <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
-              <img
-                src={p.url}
-                alt=""
-                width={120}
-                height={80}
-                loading="lazy"
-                decoding="async"
-                style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
+      <details
+        key={`comments-${candidate.id}`}
+        className="card home-accordion candidate-detail-accordion"
+        style={{ boxShadow: 'none' }}
+        open={commentsAccordionOpen}
+        onToggle={(e) => setCommentsAccordionOpen(e.currentTarget.open)}
+      >
+        <summary className="home-accordion-summary">
+          Commentaires
+          <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+            ({comments.length})
+            {comments.length === 0 ? ' — vide' : ''}
+          </span>
+        </summary>
+        <div className="home-accordion-body stack">
+          <ul style={{ paddingLeft: '1.1rem', margin: 0 }}>
+            {comments.map((c) => (
+              <li key={c.id}>
+                <strong>{names[c.user_id] ?? c.user_id.slice(0, 6)}</strong> —{' '}
+                {renderMentions(c.body)}
+              </li>
+            ))}
+          </ul>
+          {canWrite ? (
+            <form
+              onSubmit={sendComment}
+              className="row icon-action-toolbar"
+              style={{ alignItems: 'center' }}
+            >
+              <input
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                style={{ flex: 1 }}
               />
-            </a>
-          ))}
+              <IconActionButton nativeType="submit" variant="primary" label="Envoyer le commentaire">
+                <IconSend />
+              </IconActionButton>
+            </form>
+          ) : null}
         </div>
-      </div>
+      </details>
+
+      <details
+        key={`photos-${candidate.id}`}
+        className="card home-accordion candidate-detail-accordion"
+        style={{ boxShadow: 'none' }}
+        open={photosAccordionOpen}
+        onToggle={(e) => setPhotosAccordionOpen(e.currentTarget.open)}
+      >
+        <summary className="home-accordion-summary">
+          Photos (max 5 Mo, JPEG/PNG/WebP/GIF)
+          {!photos.length ? (
+            <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+              (vide)
+            </span>
+          ) : (
+            <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
+              ({photos.length})
+            </span>
+          )}
+        </summary>
+        <div className="home-accordion-body stack">
+          {canWrite ? (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
+            />
+          ) : null}
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            {photos.map((p) => (
+              <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                <img
+                  src={p.url}
+                  alt=""
+                  width={120}
+                  height={80}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }}
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      </details>
     </div>
   )
 }

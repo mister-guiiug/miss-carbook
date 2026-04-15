@@ -1,4 +1,4 @@
-import { formatCandidateListLabel } from '../../../lib/candidateLabel'
+import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import {
   IconActionButton,
   IconChevronDown,
@@ -41,8 +41,7 @@ export function CandidateCard({
   const childCount = variationCount ?? childrenOf(c.id).length
   const isRoot = !c.parent_candidate_id
   const rootMultiVariant = isRoot && childCount >= 2
-  const yearShort =
-    c.event_date && String(c.event_date).trim() ? String(c.event_date).slice(0, 4) : ''
+  const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : ''
 
   return (
     <li
@@ -57,17 +56,32 @@ export function CandidateCard({
           </span>
           {c.parent_candidate_id ? (
             <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
-              variation
+              complément
             </span>
           ) : null}
           <div className="muted">
-            {rootMultiVariant ? (
-              <>{[c.trim?.trim(), yearShort].filter(Boolean).join(' · ') || '—'}</>
+            {nested ? (
+              <>
+                <span className="candidate-version-line-prefix">Complément · </span>
+                {[
+                  displayVersionLabel(c),
+                  c.engine?.trim(),
+                  c.price != null ? `${c.price} €` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </>
+            ) : rootMultiVariant ? (
+              <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
             ) : (
               <>
-                {c.trim ? `${c.trim} · ` : ''}
-                {c.engine}
-                {c.price != null ? ` · ${c.price} €` : ''}
+                {[
+                  displayVersionLabel(c),
+                  c.engine?.trim(),
+                  c.price != null ? `${c.price} €` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </>
             )}
           </div>
