@@ -2311,6 +2311,105 @@ th {
   font-weight: 500;
 }
 
+/* Page paramètres généraux (/parametres) */
+.settings-page {
+  padding-bottom: 2rem;
+}
+
+.settings-back {
+  margin: 0 0 0.75rem;
+}
+
+.settings-back a {
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--primary);
+}
+
+.settings-back a:hover {
+  text-decoration: underline;
+}
+
+.account-settings-header {
+  margin-bottom: 1.25rem;
+}
+
+.account-settings-header h1 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  letter-spacing: -0.02em;
+}
+
+.settings-lead {
+  margin: 0.5rem 0 0;
+  max-width: 52rem;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.settings-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.settings-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.settings-card > .settings-subsection:first-of-type {
+  margin-top: 0.65rem;
+}
+
+.settings-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.settings-subsection-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.settings-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.settings-hint code {
+  font-size: 0.85em;
+  word-break: break-all;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.5rem 0;
+}
+
+.settings-theme-row,
+.settings-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.settings-feedback {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 /* ——— Dossier (workspace) : navigation, onglets, chargement ——— */
 .sr-only {
   position: absolute;
