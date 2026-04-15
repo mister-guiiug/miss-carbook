@@ -1,4 +1,13 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { formatPriceEur } from '../../lib/formatPrice'
 import { supabase } from '../../lib/supabase'
@@ -45,15 +54,72 @@ function download(filename: string, mime: string, text: string) {
   URL.revokeObjectURL(url)
 }
 
-function toCsv(rows: Record<string, string | number | null>[]) {
+type ColDef = { key: string; header: string; align: 'left' | 'right' }
+
+const COMPARE_STATIC_COLS: ColDef[] = [
+  { key: 'libellé', header: 'Libellé', align: 'left' },
+  { key: 'marque', header: 'Marque', align: 'left' },
+  { key: 'modele', header: 'Modèle', align: 'left' },
+  { key: 'finition', header: 'Finition', align: 'left' },
+  { key: 'motorisation', header: 'Motorisation', align: 'left' },
+  { key: 'statut', header: 'Statut', align: 'left' },
+]
+
+function toCsv(columnOrder: string[], rows: Record<string, string | number | null>[]) {
   if (!rows.length) return ''
-  const keys = Object.keys(rows[0])
   const esc = (v: string | number | null | undefined) => {
     const s = v == null ? '' : String(v)
     if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
     return s
   }
-  return [keys.join(','), ...rows.map((r) => keys.map((k) => esc(r[k])).join(','))].join('\n')
+  return [
+    columnOrder.join(','),
+    ...rows.map((r) => columnOrder.map((k) => esc(r[k])).join(',')),
+  ].join('\n')
+}
+
+function candidateHasCriterionValue(
+  c: Candidate,
+  def: (typeof CRITERIA)[number],
+  avgByCand: Record<string, number | null>
+): boolean {
+  if (def.key === 'price') return c.price != null && Number.isFinite(Number(c.price))
+  if (def.key === 'scoreAvg') {
+    const v = avgByCand[c.id]
+    return v != null && Number.isFinite(v)
+  }
+  if (def.path === 'spec') {
+    const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
+    const v = spec[def.key]
+    if (v == null || v === '') return false
+    if (typeof v === 'number') return !Number.isNaN(v)
+    return String(v).trim() !== ''
+  }
+  return false
+}
+
+/** Critères cochés par défaut : d’abord ceux renseignés partout ; sinon au moins 2 lignes ; sinon tout. */
+function computeDefaultCriteria(
+  picked: Candidate[],
+  avgByCand: Record<string, number | null>
+): Record<string, boolean> {
+  const all = () => Object.fromEntries(CRITERIA.map((c) => [c.key, true]))
+  if (picked.length === 0) return all()
+
+  const next: Record<string, boolean> = Object.fromEntries(CRITERIA.map((c) => [c.key, false]))
+  for (const def of CRITERIA) {
+    next[def.key] = picked.every((c) => candidateHasCriterionValue(c, def, avgByCand))
+  }
+  if (Object.values(next).some(Boolean)) return next
+
+  const threshold = picked.length <= 1 ? 1 : 2
+  for (const def of CRITERIA) {
+    next[def.key] =
+      picked.filter((c) => candidateHasCriterionValue(c, def, avgByCand)).length >= threshold
+  }
+  if (Object.values(next).some(Boolean)) return next
+
+  return all()
 }
 
 export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
@@ -69,6 +135,11 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   const [presets, setPresets] = useState<Preset[]>([])
   const [presetName, setPresetName] = useState('')
   const printRef = useRef<HTMLDivElement>(null)
+  const compareCriteriaBootstrappedWs = useRef<string | null>(null)
+
+  useEffect(() => {
+    compareCriteriaBootstrappedWs.current = null
+  }, [workspaceId])
 
   const loadCandidates = useCallback(async () => {
     const { data, error } = await supabase
@@ -173,11 +244,26 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
     return list
   }, [candidates, currentVehicle, selected])
 
-  const rows = useMemo(() => {
+  useLayoutEffect(() => {
+    if (picked.length === 0) return
+    if (compareCriteriaBootstrappedWs.current === workspaceId) return
+    compareCriteriaBootstrappedWs.current = workspaceId
+    setCriteria(computeDefaultCriteria(picked, avgByCand))
+  }, [workspaceId, picked, avgByCand])
+
+  const tableColumns = useMemo((): ColDef[] => {
+    const crit: ColDef[] = CRITERIA.filter((c) => criteria[c.key]).map((c) => ({
+      key: c.label,
+      header: c.label,
+      align: c.numeric ? 'right' : 'left',
+    }))
+    return [...COMPARE_STATIC_COLS, ...crit]
+  }, [criteria])
+
+  const tableRows = useMemo(() => {
     return picked.map((c) => {
       const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
       const row: Record<string, string | number | null> = {
-        id: c.id,
         libellé: c.is_current ? 'Véhicule actuel' : formatCandidateListLabel(c),
         marque: c.brand,
         modele: c.model,
@@ -202,6 +288,8 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       return row
     })
   }, [picked, criteria, avgByCand])
+
+  const csvColumnOrder = useMemo(() => tableColumns.map((c) => c.key), [tableColumns])
 
   const radarData = useMemo(() => {
     const keys = CRITERIA.filter((c) => criteria[c.key] && c.numeric).map((c) => c.key)
@@ -237,12 +325,14 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   const toggleCand = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }))
   const toggleCrit = (key: string) => setCriteria((s) => ({ ...s, [key]: !s[key] }))
 
+  const selectedCount = useMemo(() => Object.values(selected).filter(Boolean).length, [selected])
+
   const exportJson = () => {
-    download('comparaison.json', 'application/json', JSON.stringify(rows, null, 2))
+    download('comparaison.json', 'application/json', JSON.stringify(tableRows, null, 2))
     showToast('Export JSON téléchargé')
   }
   const exportCsv = () => {
-    download('comparaison.csv', 'text/csv;charset=utf-8', toCsv(rows))
+    download('comparaison.csv', 'text/csv;charset=utf-8', toCsv(csvColumnOrder, tableRows))
     showToast('Export CSV téléchargé')
   }
 
@@ -314,8 +404,18 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         ) : null}
       </div>
 
-      <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Modèles</h3>
+      <div className="card stack compare-pick-card-wrap" style={{ boxShadow: 'none' }}>
+        <div className="compare-pick-heading row" style={{ justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0 }}>Modèles</h3>
+          {candidates.length > 0 || currentVehicle ? (
+            <span className="compare-pick-count muted" aria-live="polite">
+              <strong className="compare-pick-count-num">{selectedCount}</strong> dans le tableau
+            </span>
+          ) : null}
+        </div>
+        <p className="muted compare-pick-hint" style={{ margin: 0, fontSize: '0.88rem' }}>
+          Cartes surlignées = inclus dans la comparaison. Cochez au moins les modèles à comparer.
+        </p>
         {candidates.length === 0 && !currentVehicle ? (
           <div className="empty-state">
             <p className="muted" style={{ margin: 0 }}>
@@ -324,27 +424,53 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
             </p>
           </div>
         ) : (
-          <div className="stack">
-            {currentVehicle && (
-              <label key={currentVehicle.id} className="row" style={{ gap: '0.5rem' }}>
+          <div className="compare-pick-grid">
+            {currentVehicle ? (
+              <label
+                key={currentVehicle.id}
+                className={`compare-pick-card${selected[currentVehicle.id] ? ' compare-pick-card--selected' : ''}`}
+              >
                 <input
                   type="checkbox"
+                  className="compare-pick-input"
                   checked={!!selected[currentVehicle.id]}
                   onChange={() => toggleCand(currentVehicle.id)}
                 />
-                <strong>Véhicule actuel</strong> (référence)
+                <span className="compare-pick-card-main">
+                  <span className="compare-pick-title">Véhicule actuel</span>
+                  <span className="compare-pick-sub muted">Référence dossier</span>
+                </span>
+                <span className="compare-pick-tick" aria-hidden="true">
+                  {selected[currentVehicle.id] ? '✓' : ''}
+                </span>
               </label>
-            )}
-            {candidates.map((c) => (
-              <label key={c.id} className="row" style={{ gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={!!selected[c.id]}
-                  onChange={() => toggleCand(c.id)}
-                />
-                <span>{formatCandidateListLabel(c)}</span>
-              </label>
-            ))}
+            ) : null}
+            {candidates.map((c) => {
+              const on = !!selected[c.id]
+              return (
+                <label
+                  key={c.id}
+                  className={`compare-pick-card${on ? ' compare-pick-card--selected' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="compare-pick-input"
+                    checked={on}
+                    onChange={() => toggleCand(c.id)}
+                  />
+                  <span className="compare-pick-card-main">
+                    <span className="compare-pick-title">{formatCandidateListLabel(c)}</span>
+                    <span className="compare-pick-sub muted">
+                      {c.engine ? `${c.engine}` : '—'}
+                      {c.price != null ? ` · ${formatPriceEur(c.price)}` : ''}
+                    </span>
+                  </span>
+                  <span className="compare-pick-tick" aria-hidden="true">
+                    {on ? '✓' : ''}
+                  </span>
+                </label>
+              )
+            })}
           </div>
         )}
       </div>
@@ -370,7 +496,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           variant="secondary"
           label="Exporter la comparaison en JSON"
           onClick={exportJson}
-          disabled={!rows.length}
+          disabled={!tableRows.length}
         >
           <IconJson />
         </IconActionButton>
@@ -378,7 +504,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           variant="secondary"
           label="Exporter la comparaison en CSV"
           onClick={exportCsv}
-          disabled={!rows.length}
+          disabled={!tableRows.length}
         >
           <IconTable />
         </IconActionButton>
@@ -386,7 +512,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           variant="secondary"
           label="Imprimer ou enregistrer en PDF"
           onClick={printCompare}
-          disabled={!rows.length}
+          disabled={!tableRows.length}
         >
           <IconPrinter />
         </IconActionButton>
@@ -395,16 +521,34 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       <div ref={printRef} className="print-area">
         <h2 className="print-only">Comparaison Miss Carbook</h2>
         <div className="table-wrap compare-table-wrap">
-          <table>
+          <table className="compare-table">
             <thead>
-              <tr>{rows[0] ? Object.keys(rows[0]).map((k) => <th key={k}>{k}</th>) : null}</tr>
+              <tr>
+                {tableColumns.map((col) => (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    className={col.align === 'right' ? 'compare-table-num' : undefined}
+                  >
+                    {col.header}
+                  </th>
+                ))}
+              </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={String(r.id)}>
-                  {Object.values(r).map((v, i) => (
-                    <td key={i}>{v == null ? '' : String(v)}</td>
-                  ))}
+              {tableRows.map((r, ri) => (
+                <tr key={picked[ri]?.id ?? ri}>
+                  {tableColumns.map((col) => {
+                    const v = r[col.key]
+                    return (
+                      <td
+                        key={col.key}
+                        className={col.align === 'right' ? 'compare-table-num' : undefined}
+                      >
+                        {v == null ? '' : String(v)}
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
