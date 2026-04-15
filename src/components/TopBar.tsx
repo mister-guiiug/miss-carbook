@@ -96,8 +96,8 @@ export function TopBar() {
   const { reportException } = useErrorDialog()
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [mobileAccountOpen, setMobileAccountOpen] = useState(false)
-  const mobileAccountRef = useRef<HTMLDivElement>(null)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     if (!user) {
@@ -131,17 +131,17 @@ export function TopBar() {
   }, [load])
 
   useEffect(() => {
-    setMobileAccountOpen(false)
+    setAccountMenuOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
-    if (!mobileAccountOpen) return
+    if (!accountMenuOpen) return
     const onDoc = (e: MouseEvent) => {
-      const el = mobileAccountRef.current
-      if (el && !el.contains(e.target as Node)) setMobileAccountOpen(false)
+      const el = accountMenuRef.current
+      if (el && !el.contains(e.target as Node)) setAccountMenuOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileAccountOpen(false)
+      if (e.key === 'Escape') setAccountMenuOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
@@ -149,19 +149,19 @@ export function TopBar() {
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onKey)
     }
-  }, [mobileAccountOpen])
+  }, [accountMenuOpen])
 
   const signOut = () => {
     void supabase.auth.signOut().then(() => navigate('/', { replace: true }))
   }
 
-  const closeMobileAccount = () => setMobileAccountOpen(false)
+  const closeAccountMenu = () => setAccountMenuOpen(false)
 
   if (!user) return null
 
   const label = loading ? '…' : displayName?.trim() || 'Profil'
-  const themeNextLabel = mode === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'
-  const modeSubmenuLabel = mode === 'dark' ? 'Mode · passer en clair' : 'Mode · passer en sombre'
+  /** Libellé d’action (aligné barre dossier) : ce qui s’applique au clic. */
+  const themeActionLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre'
   const onWorkspace = isWorkspacePath(location.pathname)
   const hideAccountCluster = onWorkspace
   const showWorkspaceToolbar = onWorkspace && workspaceChrome
@@ -202,165 +202,106 @@ export function TopBar() {
           </div>
         ) : (
           <div className="app-topbar-right app-topbar-right--account">
-            <div className="app-topbar-tools" role="toolbar" aria-label="Actions du compte">
-              <span
-                className={`online-dot ${online ? 'on' : 'off'}`}
-                title={online ? 'En ligne' : 'Hors ligne'}
-                aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
-              />
+            <span
+              className={`online-dot ${online ? 'on' : 'off'}`}
+              title={online ? 'En ligne' : 'Hors ligne'}
+              aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
+            />
+            <div ref={accountMenuRef} className="app-topbar-account-menu">
               <button
                 type="button"
-                className="app-topbar-icon-btn app-topbar-tool-desktop"
-                onClick={toggle}
-                title={themeNextLabel}
-                aria-label={themeNextLabel}
+                className={`app-home-account-btn${accountMenuOpen ? ' app-home-account-btn--open' : ''}`}
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+                aria-controls="topbar-account-menu"
+                title={`${label} — menu compte`}
+                onClick={() => setAccountMenuOpen((o) => !o)}
               >
-                {mode === 'dark' ? <IconSun /> : <IconMoon />}
-              </button>
-              <Link
-                to="/parametres"
-                className="app-topbar-icon-btn app-topbar-tool-desktop"
-                title="Paramètres généraux — compte, thème, application"
-                aria-label="Paramètres généraux"
-              >
-                <IconGear />
-              </Link>
-              <button
-                type="button"
-                className="app-topbar-icon-btn app-topbar-icon-btn-danger app-topbar-tool-desktop"
-                onClick={signOut}
-                title="Déconnexion"
-                aria-label="Déconnexion"
-              >
-                <IconLogOut />
-              </button>
-            </div>
-            <div className="app-topbar-account-block">
-              <Link
-                to="/parametres"
-                className="app-profile-chip app-profile-chip-action app-topbar-profile-desktop"
-                title={`${label} — paramètres généraux`}
-              >
-                <span className="app-profile-avatar" aria-hidden="true">
+                <span className="app-profile-avatar app-home-account-btn-avatar" aria-hidden="true">
                   {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
                 </span>
-                <span className="app-profile-name">{label}</span>
-                <span className="app-profile-chevron" aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <span className="app-home-account-btn-name">{label}</span>
+                <span className="app-home-account-btn-chevron" aria-hidden="true">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M6 9l6 6 6-6"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="2.2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
                 </span>
-              </Link>
-              <div ref={mobileAccountRef} className="app-topbar-mobile-account">
-                <button
-                  type="button"
-                  className={`app-topbar-avatar-only-btn${mobileAccountOpen ? ' app-topbar-avatar-only-btn--open' : ''}`}
-                  aria-expanded={mobileAccountOpen}
-                  aria-haspopup="menu"
-                  aria-controls="topbar-account-flyout"
-                  aria-label={`Menu compte — ${label}`}
-                  title={`${label} — ouvrir le menu compte`}
-                  onClick={() => setMobileAccountOpen((o) => !o)}
+              </button>
+              {accountMenuOpen ? (
+                <nav
+                  id="topbar-account-menu"
+                  className="app-topbar-account-flyout chrome-menu-panel"
+                  role="menu"
+                  aria-label="Compte et paramètres"
                 >
-                  <span
-                    className="app-profile-avatar app-topbar-avatar-trigger-disc"
-                    aria-hidden="true"
-                  >
-                    {loading ? '…' : initialsFromDisplayName(displayName ?? '')}
-                  </span>
-                  <span className="app-topbar-avatar-chevron" aria-hidden="true">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 9l6 6 6-6"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                </button>
-                {mobileAccountOpen ? (
-                  <nav
-                    id="topbar-account-flyout"
-                    className="app-topbar-account-flyout chrome-menu-panel"
-                    role="menu"
-                    aria-label="Compte"
-                  >
-                    <div className="app-topbar-flyout-meta">
-                      <div className="app-topbar-flyout-ident">
-                        <span className="app-topbar-flyout-name">{label}</span>
-                        <span className="app-topbar-flyout-hint muted">
-                          Compte sur cet appareil
-                        </span>
-                      </div>
-                      <div
-                        className="app-topbar-flyout-online"
-                        title={online ? 'En ligne' : 'Hors ligne'}
-                      >
-                        <span
-                          className={`online-dot ${online ? 'on' : 'off'}`}
-                          aria-hidden="true"
-                        />
-                        <span className="app-topbar-flyout-online-txt">
-                          {online ? 'En ligne' : 'Hors ligne'}
-                        </span>
-                      </div>
+                  <div className="app-topbar-flyout-meta">
+                    <div className="app-topbar-flyout-ident">
+                      <span className="app-topbar-flyout-name">{label}</span>
+                      <span className="app-topbar-flyout-hint muted">Compte sur cet appareil</span>
                     </div>
-                    <div className="app-topbar-flyout-list">
-                      <Link
-                        role="menuitem"
-                        to="/parametres"
-                        className="app-topbar-flyout-row"
-                        onClick={closeMobileAccount}
-                      >
-                        <span className="app-topbar-flyout-ic" aria-hidden="true">
-                          <IconGear className="app-topbar-flyout-svg" />
-                        </span>
-                        <span className="app-topbar-flyout-txt">Options générales</span>
-                      </Link>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="app-topbar-flyout-row"
-                        onClick={() => {
-                          toggle()
-                          closeMobileAccount()
-                        }}
-                      >
-                        <span className="app-topbar-flyout-ic" aria-hidden="true">
-                          {mode === 'dark' ? (
-                            <IconSun className="app-topbar-flyout-svg" />
-                          ) : (
-                            <IconMoon className="app-topbar-flyout-svg" />
-                          )}
-                        </span>
-                        <span className="app-topbar-flyout-txt">{modeSubmenuLabel}</span>
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="app-topbar-flyout-row app-topbar-flyout-row--danger"
-                        onClick={() => {
-                          closeMobileAccount()
-                          signOut()
-                        }}
-                      >
-                        <span className="app-topbar-flyout-ic" aria-hidden="true">
-                          <IconLogOut className="app-topbar-flyout-svg" />
-                        </span>
-                        <span className="app-topbar-flyout-txt">Déconnexion</span>
-                      </button>
+                    <div
+                      className="app-topbar-flyout-online"
+                      title={online ? 'En ligne' : 'Hors ligne'}
+                    >
+                      <span className={`online-dot ${online ? 'on' : 'off'}`} aria-hidden="true" />
+                      <span className="app-topbar-flyout-online-txt">
+                        {online ? 'En ligne' : 'Hors ligne'}
+                      </span>
                     </div>
-                  </nav>
-                ) : null}
-              </div>
+                  </div>
+                  <div className="app-topbar-flyout-list">
+                    <Link
+                      role="menuitem"
+                      to="/parametres"
+                      className="app-topbar-flyout-row"
+                      onClick={closeAccountMenu}
+                    >
+                      <span className="app-topbar-flyout-ic" aria-hidden="true">
+                        <IconGear className="app-topbar-flyout-svg" />
+                      </span>
+                      <span className="app-topbar-flyout-txt">Paramètres généraux</span>
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="app-topbar-flyout-row"
+                      onClick={() => {
+                        toggle()
+                        closeAccountMenu()
+                      }}
+                    >
+                      <span className="app-topbar-flyout-ic" aria-hidden="true">
+                        {mode === 'dark' ? (
+                          <IconSun className="app-topbar-flyout-svg" />
+                        ) : (
+                          <IconMoon className="app-topbar-flyout-svg" />
+                        )}
+                      </span>
+                      <span className="app-topbar-flyout-txt">{themeActionLabel}</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="app-topbar-flyout-row app-topbar-flyout-row--danger"
+                      onClick={() => {
+                        closeAccountMenu()
+                        signOut()
+                      }}
+                    >
+                      <span className="app-topbar-flyout-ic" aria-hidden="true">
+                        <IconLogOut className="app-topbar-flyout-svg" />
+                      </span>
+                      <span className="app-topbar-flyout-txt">Déconnexion</span>
+                    </button>
+                  </div>
+                </nav>
+              ) : null}
             </div>
           </div>
         )}

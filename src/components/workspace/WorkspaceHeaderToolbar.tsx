@@ -454,7 +454,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'user'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
-            title={`${profileLabel} — paramètres généraux et déconnexion`}
+            title={`${profileLabel} — menu compte`}
             onClick={() => setOpen((m) => (m === 'user' ? null : 'user'))}
           >
             <span className="workspace-toolbar-avatar" aria-hidden="true">
@@ -506,6 +506,20 @@ export function WorkspaceHeaderToolbar({
                   </span>
                   <span className="app-topbar-flyout-txt">Paramètres généraux</span>
                 </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-topbar-flyout-row"
+                  onClick={() => {
+                    toggle()
+                    close()
+                  }}
+                >
+                  <span className="app-topbar-flyout-ic" aria-hidden="true">
+                    {mode === 'dark' ? <IconSun className={flyoutSvg} /> : <IconMoon className={flyoutSvg} />}
+                  </span>
+                  <span className="app-topbar-flyout-txt">{themeLabel}</span>
+                </button>
                 <button
                   type="button"
                   role="menuitem"
