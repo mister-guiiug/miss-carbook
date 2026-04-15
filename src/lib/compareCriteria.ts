@@ -37,6 +37,9 @@ export const CRITERIA: { key: string; label: string; path: 'root' | 'spec'; nume
   },
   { key: 'powerKw', label: candidateSpecLabels.powerKw, path: 'spec', numeric: true },
   { key: 'lengthMm', label: candidateSpecLabels.lengthMm, path: 'spec', numeric: true },
+  { key: 'widthMm', label: candidateSpecLabels.widthMm, path: 'spec', numeric: true },
+  { key: 'heightMm', label: candidateSpecLabels.heightMm, path: 'spec', numeric: true },
+  { key: 'wheelbaseMm', label: candidateSpecLabels.wheelbaseMm, path: 'spec', numeric: true },
   { key: 'co2Gkm', label: candidateSpecLabels.co2Gkm, path: 'spec', numeric: true },
 ]
 

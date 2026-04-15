@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { currentVehicleSchema, workspaceMetaUpdateSchema } from '../../lib/validation/schemas'
@@ -8,12 +9,13 @@ import { useToast } from '../../contexts/ToastContext'
 import { SettingsCurrentVehicleForm } from './settings/SettingsCurrentVehicleForm'
 import { SettingsDecisionCard } from './settings/SettingsDecisionCard'
 import { SettingsExportCard } from './settings/SettingsExportCard'
-import { SettingsInvitesCard } from './settings/SettingsInvitesCard'
 import { SettingsParticipantsCard } from './settings/SettingsParticipantsCard'
 import { SettingsScopeBanner } from './settings/SettingsScopeBanner'
-import { SettingsShareClassicCard } from './settings/SettingsShareClassicCard'
+import { SettingsWorkspaceAccessCard } from './settings/SettingsWorkspaceAccessCard'
 import { SettingsWorkspaceMetaCard } from './settings/SettingsWorkspaceMetaCard'
 import type { CandidateOption, InviteRow, Member, Ws } from './settings/settingsTypes'
+
+type SettingsPanel = 'general' | 'access' | 'data'
 
 export function SettingsTab({
   workspace,
@@ -30,6 +32,7 @@ export function SettingsTab({
 }) {
   const { reportException, reportMessage } = useErrorDialog()
   const { showToast } = useToast()
+  const location = useLocation()
   const [members, setMembers] = useState<(Member & { display_name?: string })[]>([])
   const [invites, setInvites] = useState<InviteRow[]>([])
   const [vehicle, setVehicle] = useState({
@@ -52,6 +55,7 @@ export function SettingsTab({
   const [wsName, setWsName] = useState(workspace.name)
   const [wsDesc, setWsDesc] = useState(workspace.description ?? '')
   const [busyWorkspaceMeta, setBusyWorkspaceMeta] = useState(false)
+  const [panel, setPanel] = useState<SettingsPanel>('general')
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const base = import.meta.env.BASE_URL
@@ -136,6 +140,20 @@ export function SettingsTab({
     setWsName(workspace.name)
     setWsDesc(workspace.description ?? '')
   }, [workspace.id, workspace.name, workspace.description])
+
+  useEffect(() => {
+    if (location.hash === '#workspace-settings-decision') setPanel('general')
+  }, [location.hash])
+
+  useEffect(() => {
+    if (panel !== 'general') return
+    if (location.hash !== '#workspace-settings-decision') return
+    requestAnimationFrame(() => {
+      document
+        .getElementById('workspace-settings-decision')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [panel, location.hash])
 
   useEffect(() => {
     if (!workspace.replacement_enabled) return
@@ -335,51 +353,91 @@ export function SettingsTab({
     }
   }
 
+  const panels: { id: SettingsPanel; label: string }[] = [
+    { id: 'general', label: 'Général' },
+    { id: 'access', label: 'Partage' },
+    { id: 'data', label: 'Données' },
+  ]
+
   return (
     <div className="workspace-settings-page stack settings-tab">
       <SettingsScopeBanner workspaceName={workspace.name} />
 
-      <section
-        className="workspace-settings-section"
-        aria-labelledby="workspace-settings-fiche-heading"
-      >
-        <h2 className="workspace-settings-section-title" id="workspace-settings-fiche-heading">
-          Fiche du dossier
+      <div className="workspace-settings-shell card stack" style={{ boxShadow: 'none' }}>
+        <h2 className="workspace-settings-page-title" id="workspace-settings-main-heading">
+          Réglages du dossier
         </h2>
-        <div className="workspace-settings-section-cards stack">
-          <SettingsWorkspaceMetaCard
-            workspace={workspace}
-            isAdmin={isAdmin}
-            wsName={wsName}
-            setWsName={setWsName}
-            wsDesc={wsDesc}
-            setWsDesc={setWsDesc}
-            busyWorkspaceMeta={busyWorkspaceMeta}
-            onSave={saveWorkspaceMeta}
-          />
-          <SettingsDecisionCard
-            canWrite={canWrite}
-            candidates={candidates}
-            decisionCand={decisionCand}
-            setDecisionCand={setDecisionCand}
-            decisionNotes={decisionNotes}
-            setDecisionNotes={setDecisionNotes}
-            onSave={saveDecision}
-          />
+        <div className="workspace-settings-tablist" role="tablist" aria-label="Sections des réglages">
+          {panels.map((p, index) => (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              id={`workspace-settings-tab-${p.id}`}
+              aria-selected={panel === p.id}
+              aria-controls={`workspace-settings-panel-${p.id}`}
+              tabIndex={panel === p.id ? 0 : -1}
+              className={panel === p.id ? 'active' : ''}
+              onClick={() => setPanel(p.id)}
+              onKeyDown={(e) => {
+                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
+                e.preventDefault()
+                const dir = e.key === 'ArrowRight' ? 1 : -1
+                const next = (index + dir + panels.length) % panels.length
+                setPanel(panels[next].id)
+                const root = e.currentTarget.closest('[role="tablist"]')
+                requestAnimationFrame(() => {
+                  const buttons = root?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                  buttons?.[next]?.focus()
+                })
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-      </section>
 
-      <section
-        className="workspace-settings-section"
-        aria-labelledby="workspace-settings-partage-heading"
-      >
-        <h2 className="workspace-settings-section-title" id="workspace-settings-partage-heading">
-          Partage et accès
-        </h2>
-        <div className="workspace-settings-section-cards stack">
-          <SettingsShareClassicCard workspace={workspace} inviteUrl={inviteUrl} onCopy={copy} />
-          {isAdmin ? (
-            <SettingsInvitesCard
+        {panel === 'general' ? (
+          <div
+            id="workspace-settings-panel-general"
+            role="tabpanel"
+            aria-labelledby="workspace-settings-tab-general"
+            className="workspace-settings-panel workspace-settings-panel--general stack"
+          >
+            <SettingsWorkspaceMetaCard
+              workspace={workspace}
+              isAdmin={isAdmin}
+              wsName={wsName}
+              setWsName={setWsName}
+              wsDesc={wsDesc}
+              setWsDesc={setWsDesc}
+              busyWorkspaceMeta={busyWorkspaceMeta}
+              onSave={saveWorkspaceMeta}
+            />
+            <SettingsDecisionCard
+              canWrite={canWrite}
+              candidates={candidates}
+              decisionCand={decisionCand}
+              setDecisionCand={setDecisionCand}
+              decisionNotes={decisionNotes}
+              setDecisionNotes={setDecisionNotes}
+              onSave={saveDecision}
+            />
+          </div>
+        ) : null}
+
+        {panel === 'access' ? (
+          <div
+            id="workspace-settings-panel-access"
+            role="tabpanel"
+            aria-labelledby="workspace-settings-tab-access"
+            className="workspace-settings-panel stack"
+          >
+            <SettingsWorkspaceAccessCard
+              workspace={workspace}
+              inviteUrl={inviteUrl}
+              onCopy={copy}
+              isAdmin={isAdmin}
               origin={origin}
               base={base}
               inviteRole={inviteRole}
@@ -391,40 +449,39 @@ export function SettingsTab({
               onCreateInvite={createInvite}
               onRevokeInvite={revokeInvite}
             />
-          ) : null}
-          <SettingsParticipantsCard
-            members={members}
-            isAdmin={isAdmin}
-            userId={userId}
-            onSetRole={setRole}
-            onRemoveMember={removeMember}
-            onLeave={leave}
-          />
-        </div>
-      </section>
-
-      <section
-        className="workspace-settings-section"
-        aria-labelledby="workspace-settings-donnees-heading"
-      >
-        <h2 className="workspace-settings-section-title" id="workspace-settings-donnees-heading">
-          Données et export
-        </h2>
-        <div className="workspace-settings-section-cards stack">
-          <SettingsExportCard workspaceId={workspace.id} />
-          {workspace.replacement_enabled ? (
-            <SettingsCurrentVehicleForm
-              canWrite={canWrite}
-              busy={busy}
-              vehicle={vehicle}
-              setVehicle={setVehicle}
-              setVehicleSpecNum={setVehicleSpecNum}
-              setVehicleSpecStr={setVehicleSpecStr}
-              onSubmit={saveVehicle}
+            <SettingsParticipantsCard
+              members={members}
+              isAdmin={isAdmin}
+              userId={userId}
+              onSetRole={setRole}
+              onRemoveMember={removeMember}
+              onLeave={leave}
             />
-          ) : null}
-        </div>
-      </section>
+          </div>
+        ) : null}
+
+        {panel === 'data' ? (
+          <div
+            id="workspace-settings-panel-data"
+            role="tabpanel"
+            aria-labelledby="workspace-settings-tab-data"
+            className="workspace-settings-panel stack"
+          >
+            <SettingsExportCard workspaceId={workspace.id} />
+            {workspace.replacement_enabled ? (
+              <SettingsCurrentVehicleForm
+                canWrite={canWrite}
+                busy={busy}
+                vehicle={vehicle}
+                setVehicle={setVehicle}
+                setVehicleSpecNum={setVehicleSpecNum}
+                setVehicleSpecStr={setVehicleSpecStr}
+                onSubmit={saveVehicle}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

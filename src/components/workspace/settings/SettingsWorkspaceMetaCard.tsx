@@ -21,10 +21,9 @@ export function SettingsWorkspaceMetaCard({
 }) {
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
-      <h3 style={{ margin: 0 }}>Nom et description du dossier</h3>
-      <p className="muted">
-        Visibles dans l’en-tête du dossier et sur l’accueil. Seuls les administrateurs peuvent les
-        modifier (règles de sécurité de la base).
+      <h3 style={{ margin: 0 }}>Identité</h3>
+      <p className="muted settings-card-lead" style={{ margin: 0 }}>
+        En-tête et accueil — modification réservée aux administrateurs.
       </p>
       {isAdmin ? (
         <form onSubmit={onSave} className="stack">
@@ -49,7 +48,7 @@ export function SettingsWorkspaceMetaCard({
             />
           </div>
           <button type="submit" disabled={busyWorkspaceMeta}>
-            {busyWorkspaceMeta ? 'Enregistrement…' : 'Enregistrer nom et description'}
+            {busyWorkspaceMeta ? 'Enregistrement…' : 'Enregistrer'}
           </button>
         </form>
       ) : (
