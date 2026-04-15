@@ -1680,8 +1680,10 @@ th {
 }
 
 .candidate-tree-child {
-  margin-left: min(1.25rem, 4vw);
-  padding-left: 0.65rem;
+  /* Les variations (sous-modèles) doivent rester lisibles : on limite l'indentation
+     pour privilégier la largeur de contenu. */
+  margin-left: min(0.75rem, 3vw);
+  padding-left: 0.6rem;
   border-left: 2px solid var(--border);
 }
 
@@ -1757,6 +1759,22 @@ th {
 .candidate-card-toolbar button {
   min-height: var(--touch-target);
   touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  /* Sur desktop, on évite que la toolbar mange une ligne entière :
+     le titre garde un maximum de largeur (important pour les sous-modèles). */
+  .candidate-card-head {
+    flex-wrap: nowrap;
+  }
+
+  .candidate-card-toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .candidate-tree-child .candidate-card-title {
+    flex: 1 1 420px;
+  }
 }
 
 /* Barre dossier (sticky TopBar) : +, roue, avatar */
