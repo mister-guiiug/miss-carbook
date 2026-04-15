@@ -576,7 +576,7 @@ export function CandidateDetail({
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période</label>
+                    <label htmlFor={`cand-meta-date-${candidate.id}`}>Année(s) / période / génération</label>
                     <input
                       id={`cand-meta-date-${candidate.id}`}
                       type="text"
@@ -654,7 +654,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
-                      Année(s) / période
+                      Année(s) / période / génération
                     </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
@@ -707,7 +707,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
-                      Année(s) / période
+                      Année(s) / période / génération
                     </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
