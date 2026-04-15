@@ -619,6 +619,22 @@ a.app-profile-chip-action {
   display: block;
 }
 
+.workspace-toolbar-flyout-group-label {
+  margin: 0;
+  padding: 0.35rem 0.85rem 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.workspace-toolbar-flyout-tab-ic svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
+
 .app-topbar-flyout-txt {
   flex: 1;
   min-width: 0;
@@ -2243,6 +2259,100 @@ th {
   font-size: 0.88rem;
 }
 
+/* Notes des autres : affichage inline (sans accordéon) */
+.notepad-tab-layout {
+  gap: 1rem;
+}
+
+.notepad-peers-heading {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.notepad-peers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.notepad-peer-inline {
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgb(148 163 184 / 0.35);
+  background: rgb(148 163 184 / 0.07);
+}
+
+.notepad-peer-inline-head {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.notepad-peer-inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.notepad-peer-inline-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notepad-peer-inline-sep {
+  user-select: none;
+}
+
+.notepad-peer-inline-date {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.notepad-peer-inline-ro {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+.notepad-peer-inline-body {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid rgb(148 163 184 / 0.22);
+  min-height: 2.75rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.notepad-peer-inline-empty {
+  font-style: italic;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 520px) {
+  .notepad-peer-inline-ro {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
 @media (min-width: 640px) {
   .shell {
     padding-top: 1rem;
@@ -2416,7 +2526,7 @@ th {
   }
 }
 
-/* Barre dossier (sticky TopBar) : +, roue, avatar */
+/* Barre dossier (sticky TopBar) : +, recherche, avatar */
 .workspace-chrome-toolbar {
   flex-shrink: 0;
 }

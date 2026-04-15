@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import {
   WORKSPACE_QUICK_ADD_EVENT,
   type WorkspaceQuickAddDetail,
@@ -277,58 +277,64 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
     }
   }
 
-  const renderAccordion = (
+  const dragHandlers = (
+    m: Member,
+    ro: { siblingIds: string[] } | undefined,
+    canDrag: boolean
+  ) => ({
+    onDragOver:
+      canDrag && ro
+        ? (e: DragEvent<HTMLDivElement>) => {
+            if (![...e.dataTransfer.types].includes('text/plain')) return
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+            setDragOverId(m.user_id)
+          }
+        : undefined,
+    onDragLeave:
+      canDrag
+        ? (e: DragEvent<HTMLDivElement>) => {
+            const next = e.relatedTarget as Node | null
+            if (next && e.currentTarget.contains(next)) return
+            setDragOverId((cur) => (cur === m.user_id ? null : cur))
+          }
+        : undefined,
+    onDrop:
+      canDrag && ro
+        ? (e: DragEvent<HTMLDivElement>) => {
+            e.preventDefault()
+            const draggedId = e.dataTransfer.getData('text/plain')
+            setDragOverId(null)
+            if (draggedId) onDropReorderOthers(m.user_id, draggedId, ro.siblingIds)
+          }
+        : undefined,
+  })
+
+  const renderPeerInline = (
     m: Member,
     opts: {
-      pinned: boolean
       dragReorder?: { siblingIds: string[] }
     }
   ) => {
-    const isMe = myId === m.user_id
-    const isOpen = Boolean(open[m.user_id])
     const value = bodies[m.user_id] ?? rowsByUser.get(m.user_id)?.body ?? ''
     const updatedAt = rowsByUser.get(m.user_id)?.updated_at ?? null
     const ro = opts.dragReorder
     const canDrag = Boolean(ro && canReorderOthers)
+    const trimmed = value.trim()
+    const dateLabel = updatedAt
+      ? new Date(updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+      : null
 
     return (
       <div
         key={m.user_id}
-        className={`card stack notepad-accordion-item${opts.pinned ? ' notepad-accordion-item--pinned' : ''}${
+        className={`card stack notepad-peer-inline${
           canDrag && draggingId === m.user_id ? ' notepad-accordion-item--dragging' : ''
         }${canDrag && dragOverId === m.user_id ? ' notepad-accordion-item--drag-target' : ''}`}
         style={{ boxShadow: 'none' }}
-        onDragOver={
-          canDrag
-            ? (e) => {
-                if (![...e.dataTransfer.types].includes('text/plain')) return
-                e.preventDefault()
-                e.dataTransfer.dropEffect = 'move'
-                setDragOverId(m.user_id)
-              }
-            : undefined
-        }
-        onDragLeave={
-          canDrag
-            ? (e) => {
-                const next = e.relatedTarget as Node | null
-                if (next && e.currentTarget.contains(next)) return
-                setDragOverId((cur) => (cur === m.user_id ? null : cur))
-              }
-            : undefined
-        }
-        onDrop={
-          canDrag && ro
-            ? (e) => {
-                e.preventDefault()
-                const draggedId = e.dataTransfer.getData('text/plain')
-                setDragOverId(null)
-                if (draggedId) onDropReorderOthers(m.user_id, draggedId, ro.siblingIds)
-              }
-            : undefined
-        }
+        {...dragHandlers(m, ro, canDrag)}
       >
-        <div className="row notepad-accordion-head-row">
+        <div className="row notepad-peer-inline-head">
           {canDrag ? (
             <button
               type="button"
@@ -349,6 +355,58 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
               <IconGripVertical />
             </button>
           ) : null}
+          <div
+            className="notepad-peer-inline-meta"
+            role="group"
+            aria-label={`Note partagée de ${m.display_name}`}
+          >
+            <span className="notepad-peer-inline-name">{m.display_name}</span>
+            {dateLabel ? (
+              <>
+                <span className="notepad-peer-inline-sep muted" aria-hidden="true">
+                  ·
+                </span>
+                <time className="notepad-peer-inline-date muted" dateTime={updatedAt ?? undefined}>
+                  {dateLabel}
+                </time>
+              </>
+            ) : null}
+            <span className="notepad-peer-inline-ro muted">Lecture seule</span>
+          </div>
+        </div>
+        <div
+          className="notepad-peer-inline-body"
+          tabIndex={0}
+          role="region"
+          aria-label={trimmed ? `Contenu de la note de ${m.display_name}` : 'Note vide'}
+        >
+          {trimmed ? (
+            value
+          ) : (
+            <span className="notepad-peer-inline-empty muted">Pas encore de note</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const renderMyAccordion = (
+    m: Member,
+    opts: {
+      pinned: boolean
+    }
+  ) => {
+    const isOpen = Boolean(open[m.user_id])
+    const value = bodies[m.user_id] ?? rowsByUser.get(m.user_id)?.body ?? ''
+    const updatedAt = rowsByUser.get(m.user_id)?.updated_at ?? null
+
+    return (
+      <div
+        key={m.user_id}
+        className={`card stack notepad-accordion-item${opts.pinned ? ' notepad-accordion-item--pinned' : ''}`}
+        style={{ boxShadow: 'none' }}
+      >
+        <div className="row notepad-accordion-head-row">
           <button
             type="button"
             className="row notepad-accordion-header"
@@ -358,9 +416,7 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
           >
             <span className="notepad-accordion-header-text">
               <strong className="notepad-accordion-name">{m.display_name}</strong>
-              {isMe ? (
-                <span className="badge notepad-accordion-badge-moi">Moi</span>
-              ) : null}
+              <span className="badge notepad-accordion-badge-moi">Moi</span>
               {opts.pinned ? (
                 <span
                   className="muted notepad-accordion-pinned-hint"
@@ -390,30 +446,26 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
         {isOpen ? (
           <div className="stack">
             <textarea
-              ref={isMe ? (el) => (focusRef.current = el) : undefined}
-              data-workspace-focus={isMe ? 'notepad-body' : undefined}
+              ref={(el) => {
+                focusRef.current = el
+              }}
+              data-workspace-focus="notepad-body"
               value={value}
               onChange={(e) => setBodies((b) => ({ ...b, [m.user_id]: e.target.value }))}
-              disabled={!canWrite || !isMe}
-              placeholder={isMe ? 'Votre note…' : '—'}
+              disabled={!canWrite}
+              placeholder="Votre note…"
             />
-            {isMe ? (
-              <div className="row icon-action-toolbar">
-                <IconActionButton
-                  variant="primary"
-                  label={busyUserId ? 'Enregistrement en cours…' : 'Enregistrer ma note'}
-                  disabled={!canWrite || busyUserId !== null}
-                  onClick={() => void saveMyNote()}
-                >
-                  <IconSave />
-                </IconActionButton>
-                {!canWrite ? <span className="muted">Lecture seule</span> : null}
-              </div>
-            ) : (
-              <div className="muted" style={{ fontSize: '0.85rem' }}>
-                Lecture seule
-              </div>
-            )}
+            <div className="row icon-action-toolbar">
+              <IconActionButton
+                variant="primary"
+                label={busyUserId ? 'Enregistrement en cours…' : 'Enregistrer ma note'}
+                disabled={!canWrite || busyUserId !== null}
+                onClick={() => void saveMyNote()}
+              >
+                <IconSave />
+              </IconActionButton>
+              {!canWrite ? <span className="muted">Lecture seule</span> : null}
+            </div>
           </div>
         ) : null}
       </div>
@@ -425,16 +477,22 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
   return (
     <div className="stack">
       <p className="muted">
-        Chaque participant a son propre bloc-notes. Votre section reste <strong>en premier</strong>{' '}
-        ; vous pouvez <strong>réordonner les autres</strong> avec la poignée (ordre enregistré sur
-        votre compte).
+        Chaque participant a son propre bloc-notes. La vôtre reste <strong>en premier</strong> ;
+        les notes des autres sont affichées <strong>tout de suite</strong> en dessous. Avec
+        l’édition, vous pouvez <strong>réordonner les autres</strong> via la poignée (ordre
+        enregistré sur votre compte).
       </p>
 
-      <div className="stack">
-        {myMember ? renderAccordion(myMember, { pinned: true }) : null}
-        {orderedOthers.map((m) =>
-          renderAccordion(m, { pinned: false, dragReorder: { siblingIds: otherIds } })
-        )}
+      <div className="stack notepad-tab-layout">
+        {myMember ? renderMyAccordion(myMember, { pinned: true }) : null}
+        {orderedOthers.length ? (
+          <div className="notepad-peers-block stack">
+            <h3 className="notepad-peers-heading">Autres participants</h3>
+            <div className="notepad-peers-list">
+              {orderedOthers.map((m) => renderPeerInline(m, { dragReorder: { siblingIds: otherIds } }))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

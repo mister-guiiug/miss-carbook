@@ -6,7 +6,12 @@ import { useTheme } from '../../hooks/useTheme'
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { emitWorkspaceQuickAdd, type WorkspaceQuickAddTab } from '../../lib/workspaceHeaderEvents'
-import type { TabId } from './workspaceTabs'
+import { WorkspaceTabIcon } from './WorkspaceTabIcons'
+import {
+  WORKSPACE_ACTIVITY_TAB_TITLE,
+  WORKSPACE_SETTINGS_TAB_TITLE,
+  type TabId,
+} from './workspaceTabs'
 
 function IconPlus() {
   return (
@@ -193,7 +198,7 @@ function initialsFromDisplayName(name: string) {
   return t.slice(0, 2).toUpperCase()
 }
 
-type Menu = 'plus' | 'gear' | 'user' | null
+type Menu = 'plus' | 'user' | null
 
 export function WorkspaceHeaderToolbar({
   canWrite,
@@ -368,83 +373,13 @@ export function WorkspaceHeaderToolbar({
         <div className="workspace-chrome-toolbar-group">
           <button
             type="button"
-            className={`workspace-toolbar-btn${open === 'gear' ? ' workspace-toolbar-btn--open' : ''}`}
-            aria-expanded={open === 'gear'}
-            aria-haspopup="menu"
-            aria-controls="workspace-menu-gear"
-            title="Réglages du dossier, recherche, navigation"
-            onClick={() => setOpen((m) => (m === 'gear' ? null : 'gear'))}
+            className="workspace-toolbar-btn"
+            title="Recherche — Ctrl+K ou ⌘K"
+            aria-label="Ouvrir la recherche dans ce dossier"
+            onClick={() => void onOpenSearch()}
           >
-            <IconGear />
+            <IconSearch />
           </button>
-          {open === 'gear' ? (
-            <div
-              id="workspace-menu-gear"
-              className="workspace-toolbar-menu workspace-toolbar-menu--right chrome-menu-panel"
-              role="menu"
-              aria-label="Menu dossier et navigation"
-            >
-              <div className="workspace-toolbar-menu-label">Dossier</div>
-              <button
-                type="button"
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                onClick={() => {
-                  onOpenSearch()
-                  close()
-                }}
-              >
-                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
-                  <IconSearch />
-                </span>
-                <span>Recherche (Ctrl+K)</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                onClick={() => {
-                  onOpenTab('settings')
-                  close()
-                }}
-              >
-                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
-                  <IconFolderSettings />
-                </span>
-                <span>Réglages de ce dossier</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                onClick={toggle}
-              >
-                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
-                  {mode === 'dark' ? <IconSun /> : <IconMoon />}
-                </span>
-                <span>{themeLabel}</span>
-              </button>
-              <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
-              <div className="workspace-toolbar-menu-label">Navigation</div>
-              <Link role="menuitem" className="workspace-toolbar-menu-item" to="/" onClick={close}>
-                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
-                  <IconHome />
-                </span>
-                <span>Accueil Miss Carbook</span>
-              </Link>
-              <Link
-                role="menuitem"
-                className="workspace-toolbar-menu-item"
-                to="/parametres"
-                onClick={close}
-              >
-                <span className="workspace-toolbar-menu-ic" aria-hidden="true">
-                  <IconGear />
-                </span>
-                <span>Paramètres généraux (compte et appli)</span>
-              </Link>
-            </div>
-          ) : null}
         </div>
 
         <div className="workspace-chrome-toolbar-group">
@@ -454,7 +389,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'user'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
-            title={`${profileLabel} — menu compte`}
+            title={`${profileLabel} — dossier, compte et navigation`}
             onClick={() => setOpen((m) => (m === 'user' ? null : 'user'))}
           >
             <span className="workspace-toolbar-avatar" aria-hidden="true">
@@ -477,7 +412,7 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-user"
               className="app-topbar-account-flyout chrome-menu-panel workspace-toolbar-menu--right"
               role="menu"
-              aria-label="Compte et paramètres généraux"
+              aria-label="Menu dossier et compte"
             >
               <div className="app-topbar-flyout-meta">
                 <div className="app-topbar-flyout-ident">
@@ -495,6 +430,48 @@ export function WorkspaceHeaderToolbar({
                 </div>
               </div>
               <div className="app-topbar-flyout-list">
+                <div className="workspace-toolbar-flyout-group-label">Ce dossier</div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-topbar-flyout-row"
+                  title={WORKSPACE_SETTINGS_TAB_TITLE}
+                  onClick={() => {
+                    onOpenTab('settings')
+                    close()
+                  }}
+                >
+                  <span className="app-topbar-flyout-ic" aria-hidden="true">
+                    <IconFolderSettings className={flyoutSvg} />
+                  </span>
+                  <span className="app-topbar-flyout-txt">Réglages du dossier</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="app-topbar-flyout-row"
+                  title={WORKSPACE_ACTIVITY_TAB_TITLE}
+                  onClick={() => {
+                    onOpenTab('activity')
+                    close()
+                  }}
+                >
+                  <span
+                    className="app-topbar-flyout-ic workspace-toolbar-flyout-tab-ic"
+                    aria-hidden="true"
+                  >
+                    <WorkspaceTabIcon tabId="activity" />
+                  </span>
+                  <span className="app-topbar-flyout-txt">Activité du dossier</span>
+                </button>
+                <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
+                <Link role="menuitem" className="app-topbar-flyout-row" to="/" onClick={close}>
+                  <span className="app-topbar-flyout-ic" aria-hidden="true">
+                    <IconHome className={flyoutSvg} />
+                  </span>
+                  <span className="app-topbar-flyout-txt">Accueil Miss Carbook</span>
+                </Link>
+                <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
                 <Link
                   role="menuitem"
                   to="/parametres"
