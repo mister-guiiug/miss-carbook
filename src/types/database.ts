@@ -152,6 +152,10 @@ export interface Database {
           trim: string
           engine: string
           price: number | null
+          mileage_km: number | null
+          first_registration: string
+          gearbox: string
+          energy: string
           options: string
           garage_location: string
           manufacturer_url: string
@@ -171,6 +175,10 @@ export interface Database {
           trim?: string
           engine?: string
           price?: number | null
+          mileage_km?: number | null
+          first_registration?: string
+          gearbox?: string
+          energy?: string
           options?: string
           garage_location?: string
           manufacturer_url?: string
@@ -186,6 +194,10 @@ export interface Database {
           trim?: string
           engine?: string
           price?: number | null
+          mileage_km?: number | null
+          first_registration?: string
+          gearbox?: string
+          energy?: string
           options?: string
           garage_location?: string
           manufacturer_url?: string

@@ -63,6 +63,10 @@ type CandRow = {
   trim: string
   engine: string
   price: number | null
+  mileage_km?: number | null
+  first_registration?: string
+  gearbox?: string
+  energy?: string
   options: string
   garage_location: string
   manufacturer_url: string
@@ -237,6 +241,10 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         `- **Statut** : ${st}`,
         `- **Motorisation** : ${esc(c.engine) || '—'}`,
         `- **Prix** : ${c.price != null ? esc(formatPriceEur(c.price)) : '—'}`,
+        `- **Kilométrage** : ${c.mileage_km != null ? `${esc(String(c.mileage_km))} km` : '—'}`,
+        `- **Mise en circulation** : ${esc(c.first_registration) || '—'}`,
+        `- **Énergie** : ${esc(c.energy) || '—'}`,
+        `- **Boîte de vitesses** : ${esc(c.gearbox) || '—'}`,
         `- **Lieu / garage** : ${esc(c.garage_location) || '—'}`,
         `- **Lien constructeur** : ${esc(c.manufacturer_url) || '—'}`,
         `- **Année / période** : ${esc(c.event_date) || '—'}`,
