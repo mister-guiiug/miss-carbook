@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useWorkspace } from '../hooks/useWorkspace'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
@@ -42,7 +42,6 @@ function WorkspacePageSkeleton() {
 
 export function WorkspacePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
-  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const { setWorkspaceChrome } = useWorkspaceChrome()
@@ -109,16 +108,6 @@ export function WorkspacePage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
-
-  useEffect(() => {
-    if (tab !== 'settings') return
-    if (location.hash !== '#workspace-settings-decision') return
-    requestAnimationFrame(() => {
-      document
-        .getElementById('workspace-settings-decision')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [tab, location.hash])
 
   useEffect(() => {
     if (panelFocusSkip.current) {

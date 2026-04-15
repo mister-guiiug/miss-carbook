@@ -1,4 +1,6 @@
-import type { Dispatch, FormEvent, SetStateAction } from 'react'
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
+import { candidateSpecDimensionKeys, candidateSpecLabels } from '../../../lib/candidateSpecsUi'
+import { formatGroupedIntegerFrDisplay, parseGroupedIntegerFrInput } from '../../../lib/formatGroupedIntegerFr'
 
 type VehicleState = {
   brand: string
@@ -26,6 +28,9 @@ export function SettingsCurrentVehicleForm({
   setVehicleSpecStr: (key: string, value: string) => void
   onSubmit: (e: FormEvent) => void
 }) {
+  const [dimFocus, setDimFocus] = useState<string | null>(null)
+  const [dimDraft, setDimDraft] = useState<Record<string, string>>({})
+
   return (
     <form onSubmit={onSubmit} className="card stack" style={{ boxShadow: 'none' }}>
       <h3 style={{ margin: 0 }}>Véhicule actuel (remplacement)</h3>
@@ -70,8 +75,65 @@ export function SettingsCurrentVehicleForm({
       <div className="stack" style={{ gap: '0.35rem' }}>
         <h4 style={{ margin: 0, fontSize: '1rem' }}>Données techniques (flexibles)</h4>
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Même principe que les fiches modèles : champs optionnels, stockés en JSON.
+          Même principe que les fiches modèles : champs optionnels, stockés en JSON. Les dimensions
+          reprennent les valeurs catalogue (millimètres), comme sur une fiche constructeur.
         </p>
+        <h5 style={{ margin: '0.35rem 0 0', fontSize: '0.95rem', fontWeight: 600 }}>
+          Dimensions (constructeur, mm)
+        </h5>
+        <div className="row" style={{ flexWrap: 'wrap' }}>
+          {candidateSpecDimensionKeys.map((k) => {
+            const v = vehicle.specs[k]
+            const num = typeof v === 'number' && !Number.isNaN(v) ? v : undefined
+            const focused = dimFocus === k
+            const display = focused
+              ? (dimDraft[k] ?? '')
+              : num != null
+                ? formatGroupedIntegerFrDisplay(num)
+                : ''
+            return (
+              <div key={k} style={{ flex: '1 1 140px' }}>
+                <label htmlFor={`cv-spec-${k}`}>{candidateSpecLabels[k]}</label>
+                <input
+                  id={`cv-spec-${k}`}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="ex. 4 620"
+                  value={display}
+                  onFocus={() => {
+                    setDimFocus(k)
+                    setDimDraft((d) => ({
+                      ...d,
+                      [k]: num != null ? String(Math.floor(num)) : '',
+                    }))
+                  }}
+                  onChange={(e) =>
+                    setDimDraft((d) => ({
+                      ...d,
+                      [k]: e.target.value.replace(/[^\d\s\u00a0\u202f]/g, ''),
+                    }))
+                  }
+                  onBlur={() => {
+                    const raw = dimDraft[k] ?? ''
+                    const n = parseGroupedIntegerFrInput(raw, { max: 99_999 })
+                    setVehicle((prev) => ({
+                      ...prev,
+                      specs: { ...prev.specs, [k]: n ?? undefined },
+                    }))
+                    setDimFocus(null)
+                    setDimDraft((d) => {
+                      const next = { ...d }
+                      delete next[k]
+                      return next
+                    })
+                  }}
+                  disabled={!canWrite}
+                />
+              </div>
+            )
+          })}
+        </div>
         <div className="row" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 140px' }}>
             <label htmlFor="cv-spec-doors">Nombre de portes</label>

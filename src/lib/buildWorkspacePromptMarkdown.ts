@@ -1,4 +1,6 @@
+import { candidateSpecLabels } from './candidateSpecsUi'
 import { formatCandidateListLabel } from './candidateLabel'
+import { formatGroupedIntegerFrDisplay } from './formatGroupedIntegerFr'
 import { formatMileageKmDisplay } from './formatMileage'
 import { formatPriceEur } from './formatPrice'
 import { parseManufacturerLinksFromDb } from './manufacturerLinks'
@@ -180,6 +182,26 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
       const box = s.gearbox
       const col = s.exteriorColor
       const trunk = s.trunkLiters
+      const lengthMm = s.lengthMm
+      const widthMm = s.widthMm
+      const heightMm = s.heightMm
+      const wheelbaseMm = s.wheelbaseMm
+      if (typeof lengthMm === 'number' && !Number.isNaN(lengthMm)) {
+        const d = formatGroupedIntegerFrDisplay(lengthMm)
+        if (d) push(`- **${candidateSpecLabels.lengthMm}** : ${esc(d)}`)
+      }
+      if (typeof widthMm === 'number' && !Number.isNaN(widthMm)) {
+        const d = formatGroupedIntegerFrDisplay(widthMm)
+        if (d) push(`- **${candidateSpecLabels.widthMm}** : ${esc(d)}`)
+      }
+      if (typeof heightMm === 'number' && !Number.isNaN(heightMm)) {
+        const d = formatGroupedIntegerFrDisplay(heightMm)
+        if (d) push(`- **${candidateSpecLabels.heightMm}** : ${esc(d)}`)
+      }
+      if (typeof wheelbaseMm === 'number' && !Number.isNaN(wheelbaseMm)) {
+        const d = formatGroupedIntegerFrDisplay(wheelbaseMm)
+        if (d) push(`- **${candidateSpecLabels.wheelbaseMm}** : ${esc(d)}`)
+      }
       if (door != null && door !== '') push(`- **Nombre de portes** : ${esc(door)}`)
       if (hp != null && hp !== '') push(`- **Puissance (ch)** : ${esc(hp)}`)
       if (fiscal != null && fiscal !== '') push(`- **Puissance fiscale (CV)** : ${esc(fiscal)}`)
@@ -187,6 +209,10 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
       if (box != null && String(box).trim() !== '') push(`- **Boîte de vitesses** : ${esc(box)}`)
       if (col != null && String(col).trim() !== '') push(`- **Couleur extérieure** : ${esc(col)}`)
       const known = new Set([
+        'lengthMm',
+        'widthMm',
+        'heightMm',
+        'wheelbaseMm',
         'doorCount',
         'powerHp',
         'fiscalCv',

@@ -25,45 +25,45 @@ export function SettingsParticipantsCard({
 }) {
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
-      <h3 style={{ margin: 0 }}>Participants</h3>
-      <ul style={{ paddingLeft: '1.1rem' }}>
+      <h3 style={{ margin: 0 }}>Membres</h3>
+      <ul className="settings-participants-list">
         {members.map((m) => (
-          <li key={m.user_id}>
-            <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong> — {m.role}
+          <li key={m.user_id} className="settings-participants-row">
+            <div className="settings-participants-identity">
+              <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong>
+              <span className="muted settings-participants-role">{m.role}</span>
+            </div>
             {isAdmin && m.user_id !== userId ? (
-              <>
-                <span className="row icon-action-toolbar" style={{ marginLeft: '0.5rem' }}>
-                  <IconActionButton
-                    variant="secondary"
-                    label={`Attribuer le rôle lecture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                    onClick={() => void onSetRole(m.user_id, 'read')}
-                  >
-                    <IconEye />
-                  </IconActionButton>
-                  <IconActionButton
-                    variant="secondary"
-                    label={`Attribuer le rôle écriture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                    onClick={() => void onSetRole(m.user_id, 'write')}
-                  >
-                    <IconPencil />
-                  </IconActionButton>
-                  <IconActionButton
-                    variant="secondary"
-                    label={`Attribuer le rôle administrateur à ${m.display_name ?? m.user_id.slice(0, 8)}`}
-                    onClick={() => void onSetRole(m.user_id, 'admin')}
-                  >
-                    <IconShield />
-                  </IconActionButton>
-                </span>
+              <div className="settings-participants-actions row icon-action-toolbar">
+                <IconActionButton
+                  variant="secondary"
+                  label={`Attribuer le rôle lecture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  onClick={() => void onSetRole(m.user_id, 'read')}
+                >
+                  <IconEye />
+                </IconActionButton>
+                <IconActionButton
+                  variant="secondary"
+                  label={`Attribuer le rôle écriture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  onClick={() => void onSetRole(m.user_id, 'write')}
+                >
+                  <IconPencil />
+                </IconActionButton>
+                <IconActionButton
+                  variant="secondary"
+                  label={`Attribuer le rôle administrateur à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  onClick={() => void onSetRole(m.user_id, 'admin')}
+                >
+                  <IconShield />
+                </IconActionButton>
                 <IconActionButton
                   variant="danger"
                   label={`Retirer ${m.display_name ?? m.user_id.slice(0, 8)} du dossier`}
-                  style={{ marginLeft: '0.5rem' }}
                   onClick={() => void onRemoveMember(m.user_id)}
                 >
                   <IconUserMinus />
                 </IconActionButton>
-              </>
+              </div>
             ) : null}
           </li>
         ))}
