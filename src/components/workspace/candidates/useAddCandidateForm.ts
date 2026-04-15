@@ -67,8 +67,7 @@ export function useAddCandidateForm({
       try {
         const parentId = parsed.data.parent_candidate_id
         let q = supabase.from('candidates').select('sort_order').eq('workspace_id', workspaceId)
-        if (parentId)
-          q = q.eq('parent_candidate_id', parentId)
+        if (parentId) q = q.eq('parent_candidate_id', parentId)
         else q = q.is('parent_candidate_id', null)
         const { data: lastSort } = await q
           .order('sort_order', { ascending: false })

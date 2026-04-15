@@ -357,8 +357,7 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
             onClick={() => setOpen((o) => ({ ...o, [m.user_id]: !isOpen }))}
           >
             <div style={{ minWidth: 0 }}>
-              <strong>{m.display_name}</strong>{' '}
-              {isMe ? <span className="badge">Moi</span> : null}
+              <strong>{m.display_name}</strong> {isMe ? <span className="badge">Moi</span> : null}
               {opts.pinned ? (
                 <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
                   (toujours en premier)
@@ -416,9 +415,9 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
   return (
     <div className="stack">
       <p className="muted">
-        Chaque participant a son propre bloc-notes. Votre section reste <strong>en premier</strong> ;
-        vous pouvez <strong>réordonner les autres</strong> avec la poignée (ordre enregistré sur votre
-        compte).
+        Chaque participant a son propre bloc-notes. Votre section reste <strong>en premier</strong>{' '}
+        ; vous pouvez <strong>réordonner les autres</strong> avec la poignée (ordre enregistré sur
+        votre compte).
       </p>
 
       <div className="stack">

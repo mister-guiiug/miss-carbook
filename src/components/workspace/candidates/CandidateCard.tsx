@@ -122,41 +122,41 @@ export function CandidateCard({
             </button>
           ) : null}
           <div className="candidate-card-title requirement-card-body">
-          <strong>{formatCandidateListLabel(c)}</strong>{' '}
-          <span className={`badge candidate-status-badge candidate-status-badge--${c.status}`}>
-            {statusLabels[c.status]}
-          </span>
-          {c.parent_candidate_id ? (
-            <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
-              complément
+            <strong>{formatCandidateListLabel(c)}</strong>{' '}
+            <span className={`badge candidate-status-badge candidate-status-badge--${c.status}`}>
+              {statusLabels[c.status]}
             </span>
-          ) : null}
-          <div className="muted">
-            {nested ? (
-              <>
-                <span className="candidate-version-line-prefix">Complément · </span>
-                {[
-                  displayVersionLabel(c),
-                  c.engine?.trim(),
-                  c.price != null ? formatPriceEur(c.price) : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </>
-            ) : rootMultiVariant ? (
-              <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
-            ) : (
-              <>
-                {[
-                  displayVersionLabel(c),
-                  c.engine?.trim(),
-                  c.price != null ? formatPriceEur(c.price) : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </>
-            )}
-          </div>
+            {c.parent_candidate_id ? (
+              <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
+                complément
+              </span>
+            ) : null}
+            <div className="muted">
+              {nested ? (
+                <>
+                  <span className="candidate-version-line-prefix">Complément · </span>
+                  {[
+                    displayVersionLabel(c),
+                    c.engine?.trim(),
+                    c.price != null ? formatPriceEur(c.price) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </>
+              ) : rootMultiVariant ? (
+                <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
+              ) : (
+                <>
+                  {[
+                    displayVersionLabel(c),
+                    c.engine?.trim(),
+                    c.price != null ? formatPriceEur(c.price) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="candidate-card-toolbar row icon-action-toolbar">

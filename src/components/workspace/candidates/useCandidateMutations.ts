@@ -20,8 +20,7 @@ export function useCandidateMutations({
       if (!canWrite) return
       try {
         let q = supabase.from('candidates').select('sort_order').eq('workspace_id', workspaceId)
-        if (c.parent_candidate_id)
-          q = q.eq('parent_candidate_id', c.parent_candidate_id)
+        if (c.parent_candidate_id) q = q.eq('parent_candidate_id', c.parent_candidate_id)
         else q = q.is('parent_candidate_id', null)
         const { data: lastSort } = await q
           .order('sort_order', { ascending: false })
