@@ -357,12 +357,32 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
     }
   }
 
-  push('', '---', '', '## Bloc-notes partagé', '')
-  const note = bundle.notes
-  if (note?.body != null && String(note.body).trim()) {
-    push(esc(String(note.body)))
+  push('', '---', '', '## Bloc-notes (par utilisateur)', '')
+  const userNotes = bundle.userNotes as {
+    user_id: string
+    body: string
+    updated_at?: string | null
+  }[]
+  if (!userNotes?.length) {
+    push('_(Aucune note utilisateur.)_')
   } else {
-    push('_(Bloc-notes vide ou absent.)_')
+    const sorted = [...userNotes].sort((a, b) => {
+      const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0
+      const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0
+      return tb - ta
+    })
+    for (const n of sorted) {
+      push(
+        `- **${esc(userLabel(profileNames, n.user_id))}**${n.updated_at ? ` — ${isoDate(n.updated_at)}` : ''}`,
+        `  ${esc(String(n.body ?? '')).replace(/\n/g, '\n  ') || '_(vide)_'}`
+      )
+    }
+  }
+
+  // Bloc-notes partagé historique (legacy)
+  const legacy = bundle.notes
+  if (legacy?.body != null && String(legacy.body).trim()) {
+    push('', '_Bloc-notes partagé (historique) :_', '', esc(String(legacy.body)))
   }
 
   push('', '---', '', '## Visites', '')

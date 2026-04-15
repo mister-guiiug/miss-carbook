@@ -1651,6 +1651,23 @@ th {
   font-family: inherit;
 }
 
+/* --- Bloc-notes (accordéon) --- */
+.notepad-accordion-header {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notepad-accordion-header:hover strong {
+  text-decoration: underline;
+}
+
 @media (min-width: 640px) {
   .shell {
     padding-top: 1rem;
