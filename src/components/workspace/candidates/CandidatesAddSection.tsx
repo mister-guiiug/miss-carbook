@@ -21,8 +21,7 @@ export function CandidatesAddSection({
   candidates: CandidateRow[]
 }) {
   const isVariation = Boolean(form.parent_id)
-  const parent =
-    form.parent_id ? candidates.find((x) => x.id === form.parent_id) ?? null : null
+  const parent = form.parent_id ? (candidates.find((x) => x.id === form.parent_id) ?? null) : null
 
   return (
     <div className="candidates-panels row">
@@ -154,7 +153,7 @@ export function CandidatesAddSection({
                     id="cand-trim"
                     value={form.trim}
                     onChange={(e) => setForm((f) => ({ ...f, trim: e.target.value }))}
-                    placeholder='Vide = « Générique » (version de base)'
+                    placeholder="Vide = « Générique » (version de base)"
                   />
                 </div>
                 <div style={{ flex: '1 1 160px' }}>

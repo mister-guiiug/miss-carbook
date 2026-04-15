@@ -324,7 +324,10 @@ export function RemindersTab({
                     </div>
                   </form>
                 ) : (
-                  <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div
+                    className="row"
+                    style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+                  >
                     <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                       <strong>{r.title}</strong>
                       {r.due_at ? (
