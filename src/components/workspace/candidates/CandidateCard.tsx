@@ -16,6 +16,8 @@ import { statusLabels } from './candidateTypes'
 export function CandidateCard({
   candidate: c,
   nested,
+  /** Complément dont le parent n’existe plus dans le dossier (à rattacher). */
+  hierarchyDetached,
   openId,
   onToggleDetail,
   onDuplicate,
@@ -32,6 +34,7 @@ export function CandidateCard({
 }: {
   candidate: CandidateRow
   nested?: boolean
+  hierarchyDetached?: boolean
   openId: string | null
   /** Ouvre le détail de ce candidat ou le ferme s’il est déjà ouvert. */
   onToggleDetail: (id: string) => void
@@ -132,7 +135,16 @@ export function CandidateCard({
             </span>
             {c.parent_candidate_id ? (
               <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
-                complément
+                {hierarchyDetached ? 'complément orphelin' : 'complément'}
+              </span>
+            ) : null}
+            {hierarchyDetached ? (
+              <span
+                className="badge candidate-status-badge"
+                style={{ marginLeft: '0.35rem', background: 'var(--warn-bg, #4a3a00)' }}
+                title="Le parent référencé est absent : rattachez cette fiche à une racine dans le détail."
+              >
+                Parent manquant
               </span>
             ) : null}
             <div className="muted">

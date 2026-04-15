@@ -12,6 +12,11 @@ import { renderMentions } from '../../../lib/renderMentions'
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext'
 import type { CandidateStatus, Json } from '../../../types/database'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
+import {
+  CANDIDATE_HIERARCHY_HELP_FR,
+  resolveIdentityForCandidateUpdate,
+  validateParentChange,
+} from '../../../lib/candidateTree'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconSend } from '../../ui/IconActionButton'
 import { GarageLocationInput } from './GarageLocationInput'
@@ -157,12 +162,12 @@ export function CandidateDetail({
     rootDraftRef.current = null
   }, [candidate])
 
-  const parentRow = useMemo(
+  const draftParentRow = useMemo(
     () =>
-      candidate.parent_candidate_id
-        ? (rootCandidates.find((p) => p.id === candidate.parent_candidate_id) ?? null)
+      meta.parent_candidate_id
+        ? (rootCandidates.find((p) => p.id === meta.parent_candidate_id) ?? null)
         : null,
-    [candidate.parent_candidate_id, rootCandidates]
+    [meta.parent_candidate_id, rootCandidates]
   )
 
   const saveIdentity = async (e: React.FormEvent) => {
@@ -179,26 +184,40 @@ export function CandidateDetail({
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
       return
     }
-    if (parsed.data.parent_candidate_id && variationCount > 0) {
+    const parentId = parsed.data.parent_candidate_id
+    const assignCheck = validateParentChange(candidate.id, parentId, {
+      isRoot: !candidate.parent_candidate_id,
+      directVariationCount: variationCount,
+    })
+    if (!assignCheck.ok) {
+      reportMessage(assignCheck.message, 'validateParentChange')
+      return
+    }
+    if (parentId && !rootCandidates.some((r) => r.id === parentId)) {
       reportMessage(
-        'Ce modèle a des variations : vous ne pouvez pas le rattacher à un parent tant qu’elles existent. Supprimez ou détachez les variations d’abord.',
-        'variationCount > 0'
+        'Le modèle racine choisi est introuvable dans ce dossier. Enregistrez d’abord la racine ou choisissez une autre fiche.',
+        'parent not in roots'
       )
       return
     }
-    const isChild = Boolean(candidate.parent_candidate_id)
 
     try {
-      const brand = isChild && parentRow ? parentRow.brand : parsed.data.brand
-      const model = isChild && parentRow ? parentRow.model : parsed.data.model
-      const eventDate = isChild && parentRow ? parentRow.event_date : parsed.data.event_date
+      const identity = resolveIdentityForCandidateUpdate({
+        nextParentId: parentId,
+        meta: {
+          brand: meta.brand,
+          model: meta.model,
+          event_date: meta.event_date,
+        },
+        rootCandidates,
+      })
 
       const { error } = await supabase
         .from('candidates')
         .update({
-          parent_candidate_id: parsed.data.parent_candidate_id,
-          brand,
-          model,
+          parent_candidate_id: parentId,
+          brand: identity.brand,
+          model: identity.model,
           trim: parsed.data.trim,
           engine: parsed.data.engine,
           price: parsed.data.price,
@@ -209,7 +228,7 @@ export function CandidateDetail({
           options: parsed.data.options,
           garage_location: parsed.data.garage_location,
           manufacturer_url: parsed.data.manufacturer_url,
-          event_date: eventDate,
+          event_date: identity.event_date,
           status: parsed.data.status,
           reject_reason: parsed.data.reject_reason,
         })
@@ -431,10 +450,11 @@ export function CandidateDetail({
     </div>
   )
 
-  const isRoot = !candidate.parent_candidate_id
+  const identityIsRoot = !meta.parent_candidate_id
+  const persistedIsRoot = !candidate.parent_candidate_id
   const hasMultipleVariants = variationCount >= 2
-  const showDetailFields = !isRoot || !hasMultipleVariants
-  const showParentSelect = !isRoot || variationCount === 0
+  const showDetailFields = !identityIsRoot || !hasMultipleVariants
+  const showParentSelect = !identityIsRoot || variationCount === 0
 
   return (
     <div className="stack" style={{ marginTop: '0.75rem' }}>
@@ -445,6 +465,9 @@ export function CandidateDetail({
           {showParentSelect ? (
             <div>
               <label htmlFor={`cand-meta-parent-${candidate.id}`}>Rattaché au modèle racine</label>
+              <p className="muted" style={{ margin: '0.25rem 0 0.35rem', fontSize: '0.8rem' }}>
+                {CANDIDATE_HIERARCHY_HELP_FR}
+              </p>
               <select
                 id={`cand-meta-parent-${candidate.id}`}
                 value={meta.parent_candidate_id}
@@ -491,7 +514,7 @@ export function CandidateDetail({
 
           <div className="candidate-fiche-identity stack">
             <h5 className="candidate-fiche-subtitle">Identité</h5>
-            {isRoot ? (
+            {identityIsRoot ? (
               <>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
@@ -534,7 +557,7 @@ export function CandidateDetail({
                   </div>
                 </div>
               </>
-            ) : parentRow ? (
+            ) : draftParentRow ? (
               <>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
@@ -543,7 +566,7 @@ export function CandidateDetail({
                       id={`cand-meta-brand-${candidate.id}`}
                       className="candidate-field-readonly"
                       readOnly
-                      value={parentRow.brand}
+                      value={draftParentRow.brand}
                       tabIndex={-1}
                     />
                   </div>
@@ -553,7 +576,7 @@ export function CandidateDetail({
                       id={`cand-meta-model-${candidate.id}`}
                       className="candidate-field-readonly"
                       readOnly
-                      value={parentRow.model}
+                      value={draftParentRow.model}
                       tabIndex={-1}
                     />
                   </div>
@@ -566,7 +589,7 @@ export function CandidateDetail({
                       className="candidate-field-readonly"
                       readOnly
                       value={displayVersionLabel({
-                        trim: parentRow.trim,
+                        trim: draftParentRow.trim,
                         parent_candidate_id: null,
                       })}
                       tabIndex={-1}
@@ -580,7 +603,7 @@ export function CandidateDetail({
                       id={`cand-meta-period-ro-${candidate.id}`}
                       className="candidate-field-readonly"
                       readOnly
-                      value={parentRow.event_date ?? ''}
+                      value={draftParentRow.event_date ?? ''}
                       tabIndex={-1}
                     />
                   </div>
@@ -650,7 +673,7 @@ export function CandidateDetail({
             )}
           </div>
 
-          {isRoot && hasMultipleVariants ? (
+          {persistedIsRoot && hasMultipleVariants ? (
             <p className="muted" style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.45 }}>
               Plusieurs variations : motorisation, prix, options, statut, etc. se renseignent sur
               chaque ligne de variation.
