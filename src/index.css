@@ -973,6 +973,12 @@ button:disabled {
   border-color: var(--primary);
 }
 
+/* Compteurs « (n) » : .muted écrasait la couleur sur fond primary (illisible). */
+.tabs button.active .muted {
+  color: var(--primary-contrast);
+  opacity: 0.92;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
