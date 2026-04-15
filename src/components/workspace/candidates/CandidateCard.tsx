@@ -23,6 +23,7 @@ export function CandidateCard({
   canWrite,
   userId,
   onChanged,
+  garageSuggestions,
 }: {
   candidate: CandidateRow
   nested?: boolean
@@ -37,6 +38,7 @@ export function CandidateCard({
   canWrite: boolean
   userId: string
   onChanged: () => void
+  garageSuggestions: string[]
 }) {
   const open = openId === c.id
   const childCount = variationCount ?? childrenOf(c.id).length
@@ -113,6 +115,7 @@ export function CandidateCard({
           canWrite={canWrite}
           userId={userId}
           onChanged={onChanged}
+          garageSuggestions={garageSuggestions}
         />
       ) : null}
     </li>

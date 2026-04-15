@@ -14,6 +14,7 @@ import type { CandidateStatus, Json } from '../../../types/database'
 import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconSend } from '../../ui/IconActionButton'
+import { GarageLocationInput } from './GarageLocationInput'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
 
@@ -76,6 +77,7 @@ export function CandidateDetail({
   canWrite,
   userId,
   onChanged,
+  garageSuggestions,
 }: {
   candidate: CandidateRow
   rootCandidates: CandidateRow[]
@@ -84,6 +86,7 @@ export function CandidateDetail({
   canWrite: boolean
   userId: string
   onChanged: () => void
+  garageSuggestions: string[]
 }) {
   const { reportException, reportMessage } = useErrorDialog()
   const [meta, setMeta] = useState({
@@ -411,12 +414,16 @@ export function CandidateDetail({
                         parent_candidate_id: '',
                         brand: draft?.brand ?? candidate.brand,
                         model: draft?.model ?? candidate.model,
-                        event_date: draft?.event_date ?? (candidate.event_date ?? ''),
+                        event_date: draft?.event_date ?? candidate.event_date ?? '',
                       }
                     }
                     const p = rootCandidates.find((x) => x.id === pid)
                     if (!m.parent_candidate_id) {
-                      rootDraftRef.current = { brand: m.brand, model: m.model, event_date: m.event_date ?? '' }
+                      rootDraftRef.current = {
+                        brand: m.brand,
+                        model: m.model,
+                        event_date: m.event_date ?? '',
+                      }
                     }
                     return {
                       ...m,
@@ -658,11 +665,13 @@ export function CandidateDetail({
                   </div>
                 </div>
                 <div>
-                  <label htmlFor={`cand-meta-garage-${candidate.id}`}>Garage / lieu</label>
-                  <input
+                  <GarageLocationInput
                     id={`cand-meta-garage-${candidate.id}`}
+                    label="Garage / lieu"
                     value={meta.garage_location}
-                    onChange={(e) => setMeta((m) => ({ ...m, garage_location: e.target.value }))}
+                    onChange={(v) => setMeta((m) => ({ ...m, garage_location: v }))}
+                    suggestions={garageSuggestions}
+                    placeholder="Saisie libre ou choix dans la liste"
                   />
                 </div>
                 <div>
