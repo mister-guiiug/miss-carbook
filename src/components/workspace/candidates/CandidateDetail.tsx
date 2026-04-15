@@ -17,6 +17,11 @@ import { IconActionButton, IconSend } from '../../ui/IconActionButton'
 import { GarageLocationInput } from './GarageLocationInput'
 import type { CandidateRow } from './candidateTypes'
 import { statusLabels } from './candidateTypes'
+import {
+  candidateSpecFieldGroups,
+  candidateSpecLabels,
+  hasCandidateSpecVisibleData,
+} from '../../../lib/candidateSpecsUi'
 
 function isBlank(s: string | null | undefined): boolean {
   return !s || String(s).trim() === ''
@@ -40,22 +45,6 @@ function isVehicleDetailMetaEmpty(m: {
     isBlank(m.options) &&
     isBlank(m.reject_reason)
   )
-}
-
-const SPEC_NUM_KEYS = [
-  'lengthMm',
-  'trunkLiters',
-  'consumptionL100',
-  'consumptionKwh100',
-  'powerKw',
-  'co2Gkm',
-] as const
-
-function hasAnySpecData(specs: Record<string, unknown>): boolean {
-  return SPEC_NUM_KEYS.some((k) => {
-    const v = specs[k]
-    return typeof v === 'number' && !Number.isNaN(v)
-  })
 }
 
 function vehicleDetailFromCandidate(c: CandidateRow) {
@@ -203,7 +192,7 @@ export function CandidateDetail({
     () => !isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate))
   )
   const [specsAccordionOpen, setSpecsAccordionOpen] = useState(() =>
-    hasAnySpecData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+    hasCandidateSpecVisibleData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
   )
   const [commentsAccordionOpen, setCommentsAccordionOpen] = useState(false)
   const [photosAccordionOpen, setPhotosAccordionOpen] = useState(false)
@@ -214,7 +203,9 @@ export function CandidateDetail({
 
   useEffect(() => {
     setSpecsAccordionOpen(
-      hasAnySpecData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+      hasCandidateSpecVisibleData(
+        (candidate.candidate_specs?.specs as Record<string, unknown>) ?? {}
+      )
     )
   }, [candidate])
 
@@ -369,11 +360,16 @@ export function CandidateDetail({
     }
   }
 
-  const num = (k: string, v: unknown) => (
+  const specNumInput = (k: string, v: unknown) => (
     <div key={k} style={{ flex: '1 1 140px' }}>
-      <label>{k}</label>
+      <label htmlFor={`cand-spec-${candidate.id}-${k}`}>
+        {candidateSpecLabels[k as keyof typeof candidateSpecLabels] ?? k}
+      </label>
       <input
+        id={`cand-spec-${candidate.id}-${k}`}
         type="number"
+        inputMode="decimal"
+        step="any"
         value={typeof v === 'number' ? v : ''}
         onChange={(e) =>
           setSpecs((s) => ({
@@ -733,23 +729,46 @@ export function CandidateDetail({
           onToggle={(e) => setSpecsAccordionOpen(e.currentTarget.open)}
         >
           <summary className="home-accordion-summary">
-            Données constructeur (flexibles)
-            {!hasAnySpecData(specs) ? (
+            Données constructeur
+            {!hasCandidateSpecVisibleData(specs) ? (
               <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
                 (vide)
               </span>
             ) : null}
           </summary>
           <div className="home-accordion-body stack">
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              {num('lengthMm', specs.lengthMm)}
-              {num('trunkLiters', specs.trunkLiters)}
-              {num('consumptionL100', specs.consumptionL100)}
-              {num('consumptionKwh100', specs.consumptionKwh100)}
-              {num('powerKw', specs.powerKw)}
-              {num('co2Gkm', specs.co2Gkm)}
+            <p className="muted" style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+              Champs indicatifs (WLTP, NEDC ou données brochure). Les unités sont rappelées dans les
+              libellés.
+            </p>
+            {candidateSpecFieldGroups.map((g) => (
+              <div key={g.title} className="stack" style={{ gap: '0.5rem' }}>
+                <h5 className="candidate-fiche-subtitle" style={{ margin: 0 }}>
+                  {g.title}
+                </h5>
+                <div className="row" style={{ flexWrap: 'wrap' }}>
+                  {g.keys.map((k) => specNumInput(k, specs[k]))}
+                </div>
+              </div>
+            ))}
+            <div>
+              <label htmlFor={`cand-spec-notes-${candidate.id}`}>{candidateSpecLabels.notes}</label>
+              <textarea
+                id={`cand-spec-notes-${candidate.id}`}
+                value={typeof specs.notes === 'string' ? specs.notes : ''}
+                onChange={(e) =>
+                  setSpecs((s) => ({
+                    ...s,
+                    notes: e.target.value === '' ? undefined : e.target.value,
+                  }))
+                }
+                disabled={!canWrite}
+                rows={3}
+                maxLength={2000}
+                placeholder="Norme, cycle, options, lien fiche PDF…"
+              />
             </div>
-            {canWrite ? <button type="submit">Enregistrer fiche technique</button> : null}
+            {canWrite ? <button type="submit">Enregistrer les données constructeur</button> : null}
           </div>
         </details>
       </form>
