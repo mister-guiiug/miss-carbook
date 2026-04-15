@@ -2,6 +2,20 @@
  * Libellés FR et ordre d’affichage des champs « données constructeur » (candidate_specs).
  * Aligné sur `candidateSpecsShape` dans validation/schemas.ts.
  */
+/** Champs dimensions (mm) : affichage / saisie avec séparateurs de milliers. */
+export const candidateSpecDimensionKeys = [
+  'lengthMm',
+  'widthMm',
+  'heightMm',
+  'wheelbaseMm',
+] as const
+
+export type CandidateSpecDimensionKey = (typeof candidateSpecDimensionKeys)[number]
+
+export function isCandidateSpecDimensionKey(k: string): k is CandidateSpecDimensionKey {
+  return (candidateSpecDimensionKeys as readonly string[]).includes(k)
+}
+
 export const candidateSpecNumericKeys = [
   'lengthMm',
   'widthMm',
@@ -13,6 +27,7 @@ export const candidateSpecNumericKeys = [
   'consumptionUrbanL100',
   'consumptionExtraUrbanL100',
   'consumptionKwh100',
+  'consumptionKwh100Mixed',
   'powerKw',
   'powerHp',
   'co2Gkm',
@@ -32,6 +47,7 @@ export const candidateSpecLabels: Record<CandidateSpecNumericKey | 'notes', stri
   consumptionUrbanL100: 'Consommation urbaine (L/100 km)',
   consumptionExtraUrbanL100: 'Consommation extra-urbaine (L/100 km)',
   consumptionKwh100: 'Consommation électrique (kWh/100 km)',
+  consumptionKwh100Mixed: 'Consommation électrique mixte (kWh/100 km)',
   powerKw: 'Puissance (kW)',
   powerHp: 'Puissance (ch)',
   co2Gkm: 'Émissions CO₂ (g/km)',
@@ -59,6 +75,7 @@ export const candidateSpecFieldGroups: {
       'consumptionUrbanL100',
       'consumptionExtraUrbanL100',
       'consumptionKwh100',
+      'consumptionKwh100Mixed',
     ],
   },
   {

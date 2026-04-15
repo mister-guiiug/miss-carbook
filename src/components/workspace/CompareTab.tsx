@@ -3,6 +3,8 @@ import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { formatPriceEur } from '../../lib/formatPrice'
 import { supabase } from '../../lib/supabase'
 import { CRITERIA } from '../../lib/compareCriteria'
+import { isCandidateSpecDimensionKey } from '../../lib/candidateSpecsUi'
+import { formatGroupedIntegerFrDisplay } from '../../lib/formatGroupedIntegerFr'
 import type { CandidateStatus, Json } from '../../types/database'
 import { useToast } from '../../contexts/ToastContext'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
@@ -189,7 +191,12 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         else if (def.key === 'scoreAvg') row[def.label] = avgByCand[c.id] ?? null
         else if (def.path === 'spec') {
           const v = spec[def.key]
-          row[def.label] = typeof v === 'number' ? v : v != null ? String(v) : null
+          if (typeof v === 'number' && isCandidateSpecDimensionKey(def.key)) {
+            const s = formatGroupedIntegerFrDisplay(v)
+            row[def.label] = s !== '' ? s : null
+          } else {
+            row[def.label] = typeof v === 'number' ? v : v != null ? String(v) : null
+          }
         }
       }
       return row

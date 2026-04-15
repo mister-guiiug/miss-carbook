@@ -26,6 +26,7 @@ import {
   resolveIdentityForCandidateUpdate,
   validateParentChange,
 } from '../../../lib/candidateTree'
+import { formatGroupedIntegerFrDisplay, parseGroupedIntegerFrInput } from '../../../lib/formatGroupedIntegerFr'
 import { formatMileageKmDisplay, parseMileageKmInput } from '../../../lib/formatMileage'
 import { formatPriceInputDisplay, parsePriceInput } from '../../../lib/formatPrice'
 import { IconActionButton, IconCheck, IconSend, IconX } from '../../ui/IconActionButton'
@@ -38,6 +39,7 @@ import {
   candidateSpecFieldGroups,
   candidateSpecLabels,
   hasCandidateSpecVisibleData,
+  isCandidateSpecDimensionKey,
 } from '../../../lib/candidateSpecsUi'
 
 /** Suggestions boîte de vitesses (saisie libre via liste). */
@@ -284,6 +286,8 @@ export function CandidateDetail({
   const [specs, setSpecs] = useState<Record<string, unknown>>(
     () => (candidate.candidate_specs?.specs as Record<string, unknown>) ?? {}
   )
+  const [specDimFocus, setSpecDimFocus] = useState<string | null>(null)
+  const [specDimDraft, setSpecDimDraft] = useState<Record<string, string>>({})
   const [review, setReview] = useState({ score: '8', free_text: '', pros: '', cons: '' })
   const [comment, setComment] = useState('')
   const [comments, setComments] = useState<
@@ -294,6 +298,8 @@ export function CandidateDetail({
 
   useEffect(() => {
     setSpecs((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
+    setSpecDimFocus(null)
+    setSpecDimDraft({})
   }, [candidate])
 
   const [vehDetailsOpen, setVehDetailsOpen] = useState(
@@ -552,6 +558,59 @@ export function CandidateDetail({
       />
     </div>
   )
+
+  const specDimensionMmInput = (k: string, v: unknown) => {
+    const num = typeof v === 'number' && !Number.isNaN(v) ? v : undefined
+    const focused = specDimFocus === k
+    const value = focused
+      ? (specDimDraft[k] ?? '')
+      : num != null
+        ? formatGroupedIntegerFrDisplay(num)
+        : ''
+    return (
+      <div key={k} style={{ flex: '1 1 140px' }}>
+        <label htmlFor={`cand-spec-${candidate.id}-${k}`}>
+          {candidateSpecLabels[k as keyof typeof candidateSpecLabels] ?? k}
+        </label>
+        <input
+          id={`cand-spec-${candidate.id}-${k}`}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="ex. 4 620"
+          value={value}
+          onFocus={() => {
+            setSpecDimFocus(k)
+            setSpecDimDraft((d) => ({
+              ...d,
+              [k]: num != null ? String(Math.floor(num)) : '',
+            }))
+          }}
+          onChange={(e) =>
+            setSpecDimDraft((d) => ({
+              ...d,
+              [k]: e.target.value.replace(/[^\d\s\u00a0\u202f]/g, ''),
+            }))
+          }
+          onBlur={() => {
+            const raw = specDimDraft[k] ?? ''
+            const n = parseGroupedIntegerFrInput(raw)
+            setSpecs((s) => ({
+              ...s,
+              [k]: n ?? undefined,
+            }))
+            setSpecDimFocus(null)
+            setSpecDimDraft((d) => {
+              const next = { ...d }
+              delete next[k]
+              return next
+            })
+          }}
+          disabled={!canWrite}
+        />
+      </div>
+    )
+  }
 
   const identityIsRoot = !meta.parent_candidate_id
   const persistedIsRoot = !candidate.parent_candidate_id
@@ -1049,7 +1108,11 @@ export function CandidateDetail({
                     {g.title}
                   </h5>
                   <div className="row" style={{ flexWrap: 'wrap' }}>
-                    {g.keys.map((k) => specNumInput(k, specs[k]))}
+                    {g.keys.map((k) =>
+                      isCandidateSpecDimensionKey(k)
+                        ? specDimensionMmInput(k, specs[k])
+                        : specNumInput(k, specs[k])
+                    )}
                   </div>
                 </div>
               ))}

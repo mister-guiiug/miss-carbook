@@ -29,6 +29,12 @@ export const CRITERIA: { key: string; label: string; path: 'root' | 'spec'; nume
     path: 'spec',
     numeric: true,
   },
+  {
+    key: 'consumptionKwh100Mixed',
+    label: candidateSpecLabels.consumptionKwh100Mixed,
+    path: 'spec',
+    numeric: true,
+  },
   { key: 'powerKw', label: candidateSpecLabels.powerKw, path: 'spec', numeric: true },
   { key: 'lengthMm', label: candidateSpecLabels.lengthMm, path: 'spec', numeric: true },
   { key: 'co2Gkm', label: candidateSpecLabels.co2Gkm, path: 'spec', numeric: true },
