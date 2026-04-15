@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   WORKSPACE_QUICK_ADD_EVENT,
@@ -55,6 +55,15 @@ type VisitRow = {
 
 type View = 'open' | 'done' | 'visits'
 
+type ConfirmState =
+  | null
+  | {
+      kind: 'reminder' | 'visit'
+      id: string
+      title: string
+      subtitle?: string
+    }
+
 function fmtShortDateTimeFr(iso: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
@@ -110,6 +119,10 @@ export function RemindersTab({
   const [editPlace, setEditPlace] = useState('')
   const [editKind, setEditKind] = useState<ReminderKind>('contact')
   const [savingEdit, setSavingEdit] = useState(false)
+
+  const [confirming, setConfirming] = useState<ConfirmState>(null)
+  const [deleting, setDeleting] = useState(false)
+  const cancelBtnRef = useRef<HTMLButtonElement>(null)
 
   const [view, setView] = useState<View>('open')
   const [query, setQuery] = useState('')
@@ -187,6 +200,22 @@ export function RemindersTab({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [editingId, cancelEdit])
+
+  const dismissConfirm = useCallback(() => {
+    if (deleting) return
+    setConfirming(null)
+  }, [deleting])
+
+  useEffect(() => {
+    if (!confirming) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissConfirm()
+    }
+    window.addEventListener('keydown', onKey)
+    // Focus par défaut sur “Annuler” (évite la suppression accidentelle au clavier).
+    window.setTimeout(() => cancelBtnRef.current?.focus(), 0)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirming, dismissConfirm])
 
   const startEdit = (r: Row) => {
     setEditingId(r.id)
@@ -285,25 +314,56 @@ export function RemindersTab({
   }
 
   const remove = async (id: string) => {
-    if (!canWrite || !confirm('Supprimer ce rappel ?')) return
-    const { error } = await supabase.from('reminders').delete().eq('id', id)
-    if (error) reportException(error, 'Suppression d’un rappel')
-    else {
-      if (editingId === id) cancelEdit()
-      await load()
-      showToast('Rappel supprimé')
-    }
+    if (!canWrite) return
+    const r = rows.find((x) => x.id === id)
+    setConfirming({
+      kind: 'reminder',
+      id,
+      title: r?.title?.trim() ? r.title.trim() : 'ce rappel',
+      subtitle: r?.due_at ? `Échéance : ${fmtShortDateTimeFr(r.due_at)}` : undefined,
+    })
   }
 
   const removeVisit = async (id: string) => {
-    if (!canWrite || !confirm('Supprimer cette visite ?')) return
-    const { error } = await supabase.from('visits').delete().eq('id', id)
-    if (error) reportException(error, 'Suppression d’une visite')
-    else {
-      await load()
-      showToast('Visite supprimée')
-    }
+    if (!canWrite) return
+    const v = visits.find((x) => x.id === id)
+    const when = v?.visit_at ? fmtShortDateTimeFr(v.visit_at) : ''
+    const where = (v?.location ?? '').trim()
+    const title = [when, where].filter(Boolean).join(' · ') || 'cette visite'
+    setConfirming({
+      kind: 'visit',
+      id,
+      title,
+      subtitle: v?.candidate_id ? `Modèle : ${candidateLabelById.get(v.candidate_id) ?? '—'}` : undefined,
+    })
   }
+
+  const confirmDelete = useCallback(async () => {
+    if (!confirming || !canWrite || deleting) return
+    setDeleting(true)
+    try {
+      if (confirming.kind === 'reminder') {
+        const { error } = await supabase.from('reminders').delete().eq('id', confirming.id)
+        if (error) throw error
+        if (editingId === confirming.id) cancelEdit()
+        await load()
+        showToast('Rappel supprimé')
+      } else {
+        const { error } = await supabase.from('visits').delete().eq('id', confirming.id)
+        if (error) throw error
+        await load()
+        showToast('Visite supprimée')
+      }
+      setConfirming(null)
+    } catch (e: unknown) {
+      reportException(
+        e,
+        confirming.kind === 'reminder' ? 'Suppression d’un rappel' : 'Suppression d’une visite'
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }, [confirming, canWrite, deleting, reportException, load, showToast, editingId, cancelEdit])
 
   const openReminders = rows.filter((r) => !r.done)
   const doneReminders = rows.filter((r) => r.done)
@@ -849,6 +909,55 @@ export function RemindersTab({
           )}
         </div>
       )}
+
+      {confirming ? (
+        <div
+          className="error-dialog-backdrop"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) dismissConfirm()
+          }}
+        >
+          <div
+            className="error-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-dialog-title"
+            aria-describedby="confirm-dialog-desc"
+          >
+            <h2 id="confirm-dialog-title" className="error-dialog-title">
+              Confirmer la suppression
+            </h2>
+            <p id="confirm-dialog-desc" className="error-dialog-message">
+              Supprimer <strong>{confirming.title}</strong> ? Cette action est définitive.
+            </p>
+            {confirming.subtitle ? (
+              <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+                {confirming.subtitle}
+              </p>
+            ) : null}
+            <div className="error-dialog-actions">
+              <IconActionButton
+                variant="secondary"
+                label="Annuler"
+                onClick={dismissConfirm}
+                disabled={deleting}
+                ref={cancelBtnRef}
+              >
+                <IconX />
+              </IconActionButton>
+              <IconActionButton
+                variant="danger"
+                label={deleting ? 'Suppression en cours' : 'Supprimer'}
+                onClick={() => void confirmDelete()}
+                disabled={deleting}
+              >
+                <IconTrash />
+              </IconActionButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
