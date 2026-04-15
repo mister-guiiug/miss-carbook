@@ -15,7 +15,8 @@ export function useWorkspaceCandidates(
       .select('*, candidate_specs ( specs )')
       .eq('workspace_id', workspaceId)
       .order('parent_candidate_id', { ascending: true, nullsFirst: true })
-      .order('created_at', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
     if (error) reportException(error, 'Chargement des modèles candidats')
     else
       setCandidates(
@@ -23,6 +24,7 @@ export function useWorkspaceCandidates(
           ...(row as unknown as CandidateRow),
           parent_candidate_id:
             (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
+          sort_order: Number((row as { sort_order?: number }).sort_order ?? 0),
         }))
       )
     const ids = (data ?? []).map((c: { id: string }) => c.id)
@@ -48,7 +50,10 @@ export function useWorkspaceCandidates(
     (parentId: string) =>
       candidates
         .filter((c) => c.parent_candidate_id === parentId)
-        .sort((a, b) => String(a.trim).localeCompare(String(b.trim))),
+        .sort((a, b) => {
+          if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+          return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR')
+        }),
     [candidates]
   )
 

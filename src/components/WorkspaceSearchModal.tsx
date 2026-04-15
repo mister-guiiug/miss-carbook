@@ -35,7 +35,10 @@ export function WorkspaceSearchModal({
         supabase
           .from('candidates')
           .select('id, brand, model, trim, parent_candidate_id')
-          .eq('workspace_id', workspaceId),
+          .eq('workspace_id', workspaceId)
+          .order('parent_candidate_id', { ascending: true, nullsFirst: true })
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true }),
         supabase
           .from('reminders')
           .select('id, title')

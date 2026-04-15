@@ -112,6 +112,9 @@ export function SettingsTab({
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id')
         .eq('workspace_id', workspace.id)
+        .order('parent_candidate_id', { ascending: true, nullsFirst: true })
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
       setCandidates(
         (cand ?? []).map((c) => ({
           id: c.id,

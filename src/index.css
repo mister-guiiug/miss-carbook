@@ -1550,7 +1550,16 @@ th {
   outline-offset: 2px;
 }
 
-.requirement-card-drag-handle {
+.candidate-card--dragging {
+  opacity: 0.65;
+}
+
+.candidate-card--drag-target {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+}
+
+.reorder-drag-handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1565,11 +1574,11 @@ th {
   touch-action: none;
 }
 
-.requirement-card-drag-handle:active {
+.reorder-drag-handle:active {
   cursor: grabbing;
 }
 
-.requirement-card-drag-handle:disabled {
+.reorder-drag-handle:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }

@@ -103,7 +103,10 @@ export function RemindersTab({
       supabase
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id')
-        .eq('workspace_id', workspaceId),
+        .eq('workspace_id', workspaceId)
+        .order('parent_candidate_id', { ascending: true, nullsFirst: true })
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true }),
     ])
 
     if (rem.error) reportException(rem.error, 'Chargement des rappels')
