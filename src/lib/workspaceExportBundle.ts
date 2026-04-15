@@ -34,7 +34,11 @@ export async function fetchWorkspaceExportBundle(
   const [ws, req, cand, notes, act, visits, reminders, invites, members, presets, currVehicle] =
     await Promise.all([
       supabase.from('workspaces').select('*').eq('id', workspaceId).single(),
-      supabase.from('requirements').select('*').eq('workspace_id', workspaceId),
+      supabase
+        .from('requirements')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('sort_order', { ascending: true }),
       supabase
         .from('candidates')
         .select('*, candidate_specs ( specs )')

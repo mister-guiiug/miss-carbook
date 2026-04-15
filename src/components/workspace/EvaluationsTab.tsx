@@ -61,7 +61,11 @@ export function EvaluationsTab({
 
   const load = useCallback(async () => {
     const [r, c, e, v] = await Promise.all([
-      supabase.from('requirements').select('id, label, level').eq('workspace_id', workspaceId),
+      supabase
+        .from('requirements')
+        .select('id, label, level')
+        .eq('workspace_id', workspaceId)
+        .order('sort_order', { ascending: true }),
       supabase
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id, status')

@@ -74,6 +74,20 @@ export function IconPencil() {
   )
 }
 
+/** Poignée de glisser-déposer (liste réordonnable). */
+export function IconGripVertical() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M10 6h4M10 12h4M10 18h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function IconTrash() {
   return (
     <svg {...ic} aria-hidden>

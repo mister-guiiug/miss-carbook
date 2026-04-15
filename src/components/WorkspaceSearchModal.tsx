@@ -27,7 +27,11 @@ export function WorkspaceSearchModal({
     let cancelled = false
     void (async () => {
       const [req, cand, rem, visits] = await Promise.all([
-        supabase.from('requirements').select('id, label').eq('workspace_id', workspaceId),
+        supabase
+          .from('requirements')
+          .select('id, label')
+          .eq('workspace_id', workspaceId)
+          .order('sort_order', { ascending: true }),
         supabase
           .from('candidates')
           .select('id, brand, model, trim, parent_candidate_id')
@@ -65,8 +69,15 @@ export function WorkspaceSearchModal({
       for (const v of visits.data ?? []) {
         const dt = (v as { visit_at: string }).visit_at
         const loc = ((v as { location?: string | null }).location ?? '').trim()
-        const label = loc ? `${loc} · ${new Date(dt).toLocaleDateString('fr-FR')}` : new Date(dt).toLocaleDateString('fr-FR')
-        list.push({ type: 'Visite', label, tab: 'reminders', hint: (v as { id: string }).id.slice(0, 8) })
+        const label = loc
+          ? `${loc} · ${new Date(dt).toLocaleDateString('fr-FR')}`
+          : new Date(dt).toLocaleDateString('fr-FR')
+        list.push({
+          type: 'Visite',
+          label,
+          tab: 'reminders',
+          hint: (v as { id: string }).id.slice(0, 8),
+        })
       }
       setItems(list)
     })()

@@ -339,7 +339,9 @@ export function RemindersTab({
         ) : (
           <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {visits.map((v) => {
-              const linked = v.candidate_id ? candidates.find((c) => c.id === v.candidate_id) : undefined
+              const linked = v.candidate_id
+                ? candidates.find((c) => c.id === v.candidate_id)
+                : undefined
               return (
                 <li key={v.id} className="card" style={{ boxShadow: 'none' }}>
                   <div
@@ -571,7 +573,9 @@ export function RemindersTab({
                             <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>{' '}
                             <strong>{r.title}</strong>
                             {r.due_at ? (
-                              <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
+                              <div className="muted">
+                                {new Date(r.due_at).toLocaleString('fr-FR')}
+                              </div>
                             ) : null}
                             {(r.place ?? '').trim() ? (
                               <div className="muted" style={{ fontSize: '0.9rem' }}>
@@ -750,7 +754,9 @@ export function RemindersTab({
                             <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>{' '}
                             <strong>{r.title}</strong>
                             {r.due_at ? (
-                              <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
+                              <div className="muted">
+                                {new Date(r.due_at).toLocaleString('fr-FR')}
+                              </div>
                             ) : null}
                             {(r.place ?? '').trim() ? (
                               <div className="muted" style={{ fontSize: '0.9rem' }}>

@@ -9,7 +9,14 @@ import { requirementSchema } from '../../lib/validation/schemas'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { RequirementLevel } from '../../types/database'
-import { IconActionButton, IconPencil, IconPlus, IconTrash, IconX } from '../ui/IconActionButton'
+import {
+  IconActionButton,
+  IconGripVertical,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from '../ui/IconActionButton'
 
 type Req = {
   id: string
@@ -49,6 +56,10 @@ export function RequirementsTab({
   const [editLevel, setEditLevel] = useState<RequirementLevel>('discuss')
   const [editWeight, setEditWeight] = useState('')
   const [editTags, setEditTags] = useState('')
+
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [reordering, setReordering] = useState(false)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -97,12 +108,60 @@ export function RequirementsTab({
   const filtered = useMemo(() => {
     const list = filter === 'all' ? rows : rows.filter((r) => r.level === filter)
     return [...list].sort((a, b) => {
-      const wa = a.weight ?? -1
-      const wb = b.weight ?? -1
-      if (wb !== wa) return wb - wa
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
       return a.label.localeCompare(b.label)
     })
   }, [rows, filter])
+
+  const canReorder = canWrite && filter === 'all' && !editingId && !reordering
+
+  const applyReorder = useCallback(
+    async (orderedIds: string[]) => {
+      if (!canWrite) return
+      setReordering(true)
+      try {
+        const results = await Promise.all(
+          orderedIds.map((id, sort_order) =>
+            supabase
+              .from('requirements')
+              .update({ sort_order })
+              .eq('id', id)
+              .eq('workspace_id', workspaceId)
+          )
+        )
+        const failed = results.find((x) => x.error)
+        if (failed?.error) throw failed.error
+        setRows((prev) => {
+          const m = new Map(prev.map((r) => [r.id, r]))
+          return orderedIds.map((id, i) => ({ ...(m.get(id) as Req), sort_order: i }))
+        })
+        showToast('Ordre des exigences mis à jour')
+      } catch (e: unknown) {
+        reportException(e, 'Réordonnancement des exigences')
+        await load()
+      } finally {
+        setReordering(false)
+        setDraggingId(null)
+        setDragOverId(null)
+      }
+    },
+    [canWrite, workspaceId, load, reportException, showToast]
+  )
+
+  const onDropReorder = useCallback(
+    (targetId: string, draggedId: string) => {
+      if (!canReorder || draggedId === targetId) return
+      const ids = filtered.map((r) => r.id)
+      const from = ids.indexOf(draggedId)
+      const to = ids.indexOf(targetId)
+      if (from === -1 || to === -1) return
+      const next = [...ids]
+      next.splice(from, 1)
+      next.splice(to, 0, draggedId)
+      void applyReorder(next)
+    },
+    [applyReorder, canReorder, filtered]
+  )
 
   const counts = useMemo(() => {
     const mandatory = rows.filter((r) => r.level === 'mandatory').length
@@ -250,6 +309,12 @@ export function RequirementsTab({
         </div>
       </div>
 
+      {canWrite && filter !== 'all' && rows.length > 0 ? (
+        <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+          Glisser-déposer pour réordonner : affichez <strong>Toutes</strong> les exigences.
+        </p>
+      ) : null}
+
       {canWrite && rows.length > 0 && !showAddForm ? (
         <IconActionButton
           variant="secondary"
@@ -350,8 +415,30 @@ export function RequirementsTab({
             return (
               <li
                 key={r.id}
-                className={`card requirement-card${isEditing ? ' requirement-card--editing' : ''}`}
+                className={`card requirement-card${isEditing ? ' requirement-card--editing' : ''}${
+                  draggingId === r.id ? ' requirement-card--dragging' : ''
+                }${dragOverId === r.id ? ' requirement-card--drag-target' : ''}`}
                 style={{ boxShadow: 'none' }}
+                onDragOver={(e) => {
+                  if (!canReorder) return
+                  if (![...e.dataTransfer.types].includes('text/plain')) return
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = 'move'
+                  setDragOverId(r.id)
+                }}
+                onDragLeave={(e) => {
+                  if (!canReorder) return
+                  const next = e.relatedTarget as Node | null
+                  if (next && e.currentTarget.contains(next)) return
+                  setDragOverId((cur) => (cur === r.id ? null : cur))
+                }}
+                onDrop={(e) => {
+                  if (!canReorder) return
+                  e.preventDefault()
+                  const draggedId = e.dataTransfer.getData('text/plain')
+                  setDragOverId(null)
+                  if (draggedId) onDropReorder(r.id, draggedId)
+                }}
               >
                 {isEditing ? (
                   <form
@@ -446,26 +533,65 @@ export function RequirementsTab({
                       flexWrap: 'wrap',
                     }}
                   >
-                    <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                      <span className={`badge ${r.level}`}>
-                        {r.level === 'mandatory' ? 'Obligatoire' : 'À discuter'}
-                      </span>{' '}
-                      <strong>{r.label}</strong>
-                      {r.weight != null ? <span className="muted"> · poids {r.weight}</span> : null}
-                      {r.tags?.length ? (
-                        <div className="muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
-                          Tags : {r.tags.join(', ')}
-                        </div>
+                    <div className="requirement-card-view-with-handle">
+                      {canWrite && !isEditing ? (
+                        <button
+                          type="button"
+                          className="requirement-card-drag-handle"
+                          draggable={canReorder}
+                          disabled={!canReorder}
+                          aria-label={`Réordonner : ${r.label}`}
+                          title={
+                            canReorder
+                              ? 'Glisser pour réordonner'
+                              : 'Réordonner : affichez « Toutes » les exigences'
+                          }
+                          onDragStart={(e) => {
+                            if (!canReorder) {
+                              e.preventDefault()
+                              return
+                            }
+                            setDraggingId(r.id)
+                            e.dataTransfer.setData('text/plain', r.id)
+                            e.dataTransfer.effectAllowed = 'move'
+                          }}
+                          onDragEnd={() => {
+                            setDraggingId(null)
+                            setDragOverId(null)
+                          }}
+                        >
+                          <IconGripVertical />
+                        </button>
                       ) : null}
-                      {r.description ? (
-                        <p className="requirement-desc" style={{ margin: '0.5rem 0 0' }}>
-                          {r.description}
-                        </p>
-                      ) : (
-                        <p className="muted" style={{ margin: '0.35rem 0 0', fontSize: '0.85rem' }}>
-                          Sans description
-                        </p>
-                      )}
+                      <div className="requirement-card-body">
+                        <span className={`badge ${r.level}`}>
+                          {r.level === 'mandatory' ? 'Obligatoire' : 'À discuter'}
+                        </span>{' '}
+                        <strong>{r.label}</strong>
+                        {r.weight != null ? (
+                          <span className="muted"> · poids {r.weight}</span>
+                        ) : null}
+                        {r.tags?.length ? (
+                          <div
+                            className="muted"
+                            style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}
+                          >
+                            Tags : {r.tags.join(', ')}
+                          </div>
+                        ) : null}
+                        {r.description ? (
+                          <p className="requirement-desc" style={{ margin: '0.5rem 0 0' }}>
+                            {r.description}
+                          </p>
+                        ) : (
+                          <p
+                            className="muted"
+                            style={{ margin: '0.35rem 0 0', fontSize: '0.85rem' }}
+                          >
+                            Sans description
+                          </p>
+                        )}
+                      </div>
                     </div>
                     {canWrite ? (
                       <div className="requirement-card-actions">

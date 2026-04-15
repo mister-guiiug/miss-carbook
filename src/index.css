@@ -1541,6 +1541,53 @@ th {
   box-shadow: 0 0 0 1px rgb(15 118 110 / 0.2);
 }
 
+.requirement-card--dragging {
+  opacity: 0.65;
+}
+
+.requirement-card--drag-target {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+}
+
+.requirement-card-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  margin-right: 0.35rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.requirement-card-drag-handle:active {
+  cursor: grabbing;
+}
+
+.requirement-card-drag-handle:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.requirement-card-view-with-handle {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.25rem;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.requirement-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .req-summary-bar {
   gap: 0.75rem;
 }
