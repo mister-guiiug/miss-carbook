@@ -1,10 +1,8 @@
 import { useCallback, type KeyboardEvent } from 'react'
-import { WORKSPACE_TABS, type TabId } from './workspaceTabs'
+import { WORKSPACE_TABS, WORKSPACE_TABS_STRIP, type TabId } from './workspaceTabs'
 import { WorkspaceTabIcon } from './WorkspaceTabIcons'
 
-const TAB_IDS = WORKSPACE_TABS.map((t) => t.id)
-
-const settingsTitle = 'Nom du dossier, membres, invitations, partage — uniquement ce projet'
+const TAB_IDS = WORKSPACE_TABS_STRIP.map((t) => t.id)
 
 export function WorkspaceTabStrip({
   tab,
@@ -67,11 +65,19 @@ export function WorkspaceTabStrip({
           aria-labelledby={tabListLabelId}
           onChange={(e) => setTab(e.target.value as TabId)}
         >
-          {WORKSPACE_TABS.map((t) => (
+          {WORKSPACE_TABS_STRIP.map((t) => (
             <option key={t.id} value={t.id}>
               {t.label}
             </option>
           ))}
+          {WORKSPACE_TABS.filter((t) => t.id === 'settings' || t.id === 'activity')
+            .slice()
+            .sort((a, b) => (a.id === 'settings' ? -1 : b.id === 'settings' ? 1 : 0))
+            .map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
         </select>
       </div>
 
@@ -81,7 +87,7 @@ export function WorkspaceTabStrip({
         aria-labelledby={tabListLabelId}
         onKeyDown={onKeyDown}
       >
-        {WORKSPACE_TABS.map((t) => (
+        {WORKSPACE_TABS_STRIP.map((t) => (
           <li key={t.id} role="presentation">
             <button
               type="button"
@@ -91,7 +97,6 @@ export function WorkspaceTabStrip({
               aria-controls="workspace-main-panel"
               tabIndex={tab === t.id ? 0 : -1}
               className={tab === t.id ? 'active workspace-tab-btn' : 'workspace-tab-btn'}
-              title={t.id === 'settings' ? settingsTitle : undefined}
               onClick={() => setTab(t.id)}
             >
               <span className="workspace-tab-btn-inner" aria-hidden="true">
