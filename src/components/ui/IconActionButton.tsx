@@ -74,16 +74,17 @@ export function IconPencil() {
   )
 }
 
-/** Poignée de glisser-déposer (liste réordonnable). */
+/** Poignée de glisser-déposer (grille 2×3, style “drag handle” moderne). */
 export function IconGripVertical() {
+  const r = 1.65
   return (
     <svg {...ic} aria-hidden>
-      <path
-        d="M10 6h4M10 12h4M10 18h4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <circle cx="9" cy="7" r={r} fill="currentColor" />
+      <circle cx="15" cy="7" r={r} fill="currentColor" />
+      <circle cx="9" cy="12" r={r} fill="currentColor" />
+      <circle cx="15" cy="12" r={r} fill="currentColor" />
+      <circle cx="9" cy="17" r={r} fill="currentColor" />
+      <circle cx="15" cy="17" r={r} fill="currentColor" />
     </svg>
   )
 }

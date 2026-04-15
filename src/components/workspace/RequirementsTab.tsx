@@ -76,10 +76,6 @@ export function RequirementsTab({
   }, [load])
 
   useEffect(() => {
-    if (rows.length === 0) setShowAddForm(true)
-  }, [rows.length])
-
-  useEffect(() => {
     const onQuick = (ev: Event) => {
       const d = (ev as CustomEvent<WorkspaceQuickAddDetail>).detail
       if (d?.tab !== 'requirements') return
@@ -315,7 +311,7 @@ export function RequirementsTab({
         </p>
       ) : null}
 
-      {canWrite && rows.length > 0 && !showAddForm ? (
+      {canWrite && !showAddForm ? (
         <IconActionButton
           variant="secondary"
           label="Ajouter une exigence"
@@ -329,15 +325,13 @@ export function RequirementsTab({
         <form onSubmit={add} className="card stack rq-add-form" style={{ boxShadow: 'none' }}>
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0 }}>Nouvelle exigence</h3>
-            {rows.length > 0 ? (
-              <IconActionButton
-                variant="secondary"
-                label="Fermer le formulaire d’ajout"
-                onClick={() => setShowAddForm(false)}
-              >
-                <IconX />
-              </IconActionButton>
-            ) : null}
+            <IconActionButton
+              variant="secondary"
+              label="Fermer le formulaire d’ajout"
+              onClick={() => setShowAddForm(false)}
+            >
+              <IconX />
+            </IconActionButton>
           </div>
           <div>
             <label htmlFor="rq-label">Libellé</label>
@@ -397,8 +391,8 @@ export function RequirementsTab({
       {rows.length === 0 ? (
         <div className="empty-state">
           <p className="muted" style={{ margin: 0 }}>
-            Aucune exigence encore. Utilisez le formulaire ci-dessus pour ajouter des critères
-            (obligatoires ou à discuter) et structurer la comparaison des modèles.
+            Aucune exigence encore. Utilisez le bouton « Ajouter une exigence » pour créer des
+            critères (obligatoires ou à discuter) et structurer la comparaison des modèles.
           </p>
         </div>
       ) : filtered.length === 0 ? (
