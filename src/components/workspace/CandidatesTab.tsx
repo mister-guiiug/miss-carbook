@@ -47,10 +47,11 @@ export function CandidatesTab({
   return (
     <div className="stack candidates-tab">
       <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-        Le <strong>modèle racine</strong> s’identifie par marque, modèle et version / période. Tant
-        qu’il n’y a pas <strong>plusieurs variations</strong>, les détails (motorisation, prix, etc.)
-        restent sur la même fiche ; avec au moins deux variations, seules ces lignes portent les
-        détails comparables.
+        Le <strong>modèle racine</strong> affiche une <strong>version de base</strong> (« Générique »
+        si le champ est vide) ; chaque <strong>complément</strong> porte une version complémentaire.
+        Tant qu’il n’y a pas <strong>plusieurs compléments</strong>, les détails (motorisation, prix,
+        etc.) restent sur la même fiche ; avec au moins deux compléments, seules ces lignes portent
+        les détails comparables.
       </p>
 
       {canWrite ? (

@@ -238,7 +238,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
         `- **Prix (€)** : ${c.price != null ? esc(c.price) : '—'}`,
         `- **Lieu / garage** : ${esc(c.garage_location) || '—'}`,
         `- **Lien constructeur** : ${esc(c.manufacturer_url) || '—'}`,
-        `- **Date d’événement** : ${isoDate(c.event_date) || '—'}`,
+        `- **Année / période** : ${esc(c.event_date) || '—'}`,
         `- **Options** : ${esc(c.options) || '_(vide)_'}`,
         `- **Motif si rejet** : ${esc(c.reject_reason) || '—'}`,
         ''

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import {
   WORKSPACE_QUICK_ADD_EVENT,
   type WorkspaceQuickAddDetail,
@@ -8,7 +9,21 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
-import { IconActionButton, IconCheck, IconRotateCcw, IconTrash } from '../ui/IconActionButton'
+import {
+  IconActionButton,
+  IconCheck,
+  IconPencil,
+  IconRotateCcw,
+  IconTrash,
+  IconX,
+} from '../ui/IconActionButton'
+
+function isoToDatetimeLocal(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 type Row = {
   id: string
@@ -36,6 +51,13 @@ export function RemindersTab({
   const [body, setBody] = useState('')
   const [due, setDue] = useState('')
   const [candId, setCandId] = useState('')
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [editDue, setEditDue] = useState('')
+  const [editCandId, setEditCandId] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -77,7 +99,28 @@ export function RemindersTab({
     return () => window.removeEventListener(WORKSPACE_QUICK_ADD_EVENT, onQuick)
   }, [])
 
-  const add = async (e: React.FormEvent) => {
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+  }, [])
+
+  useEffect(() => {
+    if (!editingId) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancelEdit()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [editingId, cancelEdit])
+
+  const startEdit = (r: Row) => {
+    setEditingId(r.id)
+    setEditTitle(r.title)
+    setEditBody(r.body)
+    setEditDue(isoToDatetimeLocal(r.due_at))
+    setEditCandId(r.candidate_id ?? '')
+  }
+
+  const add = async (e: FormEvent) => {
     e.preventDefault()
     if (!canWrite || !title.trim()) return
     const { error } = await supabase.from('reminders').insert({
@@ -99,6 +142,32 @@ export function RemindersTab({
     }
   }
 
+  const saveEdit = async (e: FormEvent, id: string) => {
+    e.preventDefault()
+    if (!canWrite || !editTitle.trim()) return
+    setSavingEdit(true)
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({
+          title: editTitle.trim(),
+          body: editBody.trim(),
+          due_at: editDue ? new Date(editDue).toISOString() : null,
+          candidate_id: editCandId || null,
+        })
+        .eq('id', id)
+      if (error) reportException(error, 'Mise à jour d’un rappel')
+      else {
+        cancelEdit()
+        await load()
+        await logActivity(workspaceId, 'reminder.update', 'reminder', id, {})
+        showToast('Rappel mis à jour')
+      }
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
   const toggle = async (r: Row) => {
     if (!canWrite) return
     const { error } = await supabase.from('reminders').update({ done: !r.done }).eq('id', r.id)
@@ -114,6 +183,7 @@ export function RemindersTab({
     const { error } = await supabase.from('reminders').delete().eq('id', id)
     if (error) reportException(error, 'Suppression d’un rappel')
     else {
+      if (editingId === id) cancelEdit()
       await load()
       showToast('Rappel supprimé')
     }
@@ -170,43 +240,135 @@ export function RemindersTab({
         </div>
       ) : (
         <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {rows.map((r) => (
-            <li
-              key={r.id}
-              className="card"
-              style={{ boxShadow: 'none', opacity: r.done ? 0.65 : 1 }}
-            >
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <div>
-                  <strong>{r.title}</strong>
-                  {r.due_at ? (
-                    <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
-                  ) : null}
-                  {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
-                </div>
-                <div className="row icon-action-toolbar">
-                  {canWrite ? (
-                    <>
+          {rows.map((r) => {
+            const isEditing = editingId === r.id
+            const linked = r.candidate_id
+              ? candidates.find((c) => c.id === r.candidate_id)
+              : undefined
+            return (
+              <li
+                key={r.id}
+                className="card"
+                style={{
+                  boxShadow: 'none',
+                  opacity: r.done && !isEditing ? 0.65 : 1,
+                }}
+              >
+                {isEditing ? (
+                  <form
+                    className="stack"
+                    onSubmit={(e) => void saveEdit(e, r.id)}
+                    aria-label={`Modifier le rappel « ${r.title} »`}
+                  >
+                    <span className="muted" style={{ fontSize: '0.85rem' }}>
+                      Modification · <kbd>Échap</kbd> pour annuler
+                    </span>
+                    <div>
+                      <label htmlFor={`rem-edit-title-${r.id}`}>Titre</label>
+                      <input
+                        id={`rem-edit-title-${r.id}`}
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        required
+                        maxLength={200}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor={`rem-edit-body-${r.id}`}>Détail</label>
+                      <textarea
+                        id={`rem-edit-body-${r.id}`}
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        maxLength={2000}
+                      />
+                    </div>
+                    <div className="row">
+                      <div style={{ flex: '1 1 160px' }}>
+                        <label htmlFor={`rem-edit-due-${r.id}`}>Échéance</label>
+                        <input
+                          id={`rem-edit-due-${r.id}`}
+                          type="datetime-local"
+                          value={editDue}
+                          onChange={(e) => setEditDue(e.target.value)}
+                        />
+                      </div>
+                      <div style={{ flex: '1 1 200px' }}>
+                        <label htmlFor={`rem-edit-cand-${r.id}`}>Lié à un modèle</label>
+                        <select
+                          id={`rem-edit-cand-${r.id}`}
+                          value={editCandId}
+                          onChange={(e) => setEditCandId(e.target.value)}
+                        >
+                          <option value="">—</option>
+                          {candidates.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {formatCandidateListLabel(c)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
+                      <button type="submit" disabled={savingEdit}>
+                        {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+                      </button>
                       <IconActionButton
                         variant="secondary"
-                        label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
-                        onClick={() => void toggle(r)}
+                        label="Annuler la modification"
+                        onClick={cancelEdit}
+                        disabled={savingEdit}
                       >
-                        {r.done ? <IconRotateCcw /> : <IconCheck />}
+                        <IconX />
                       </IconActionButton>
-                      <IconActionButton
-                        variant="danger"
-                        label="Supprimer ce rappel"
-                        onClick={() => void remove(r.id)}
-                      >
-                        <IconTrash />
-                      </IconActionButton>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </li>
-          ))}
+                    </div>
+                  </form>
+                ) : (
+                  <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                      <strong>{r.title}</strong>
+                      {r.due_at ? (
+                        <div className="muted">{new Date(r.due_at).toLocaleString('fr-FR')}</div>
+                      ) : null}
+                      {linked ? (
+                        <div className="muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                          Modèle : {formatCandidateListLabel(linked)}
+                        </div>
+                      ) : null}
+                      {r.body ? <p style={{ margin: '0.35rem 0 0' }}>{r.body}</p> : null}
+                    </div>
+                    <div className="row icon-action-toolbar">
+                      {canWrite ? (
+                        <>
+                          <IconActionButton
+                            variant="primary"
+                            label={`Modifier le rappel « ${r.title} »`}
+                            onClick={() => startEdit(r)}
+                          >
+                            <IconPencil />
+                          </IconActionButton>
+                          <IconActionButton
+                            variant="secondary"
+                            label={r.done ? 'Rouvrir ce rappel' : 'Marquer comme fait'}
+                            onClick={() => void toggle(r)}
+                          >
+                            {r.done ? <IconRotateCcw /> : <IconCheck />}
+                          </IconActionButton>
+                          <IconActionButton
+                            variant="danger"
+                            label="Supprimer ce rappel"
+                            onClick={() => void remove(r.id)}
+                          >
+                            <IconTrash />
+                          </IconActionButton>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
