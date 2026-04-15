@@ -439,7 +439,7 @@ export function buildWorkspacePromptMarkdown(bundle: WorkspaceExportBundle): str
     }
   }
 
-  push('', '---', '', '## Rappels', '')
+  push('', '---', '', '## Visites et rappels', '')
   const reminders = bundle.reminders as {
     title: string
     body: string

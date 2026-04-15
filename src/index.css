@@ -1745,6 +1745,109 @@ th {
   opacity: 0.9;
 }
 
+/* Visites et rappels — vue Chronologie (frise unifiée) */
+.reminders-timeline-wrap {
+  gap: 0.65rem;
+}
+
+.reminders-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.reminders-timeline-day {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reminders-timeline-day-heading {
+  font-size: 0.78rem;
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.reminders-timeline-day-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgb(148 163 184 / 0.28);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.reminders-timeline-row {
+  display: grid;
+  grid-template-columns: 2.85rem minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  border-bottom: 1px solid rgb(148 163 184 / 0.22);
+  background: transparent;
+}
+
+.reminders-timeline-day-list .reminders-timeline-row:last-child {
+  border-bottom: none;
+}
+
+.reminders-timeline-row--overdue {
+  background: rgb(239 68 68 / 0.06);
+}
+
+.reminders-timeline-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.reminders-timeline-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+}
+
+.reminders-timeline-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.reminders-timeline-text strong {
+  font-weight: 600;
+}
+
+.reminders-timeline-note {
+  font-weight: 400;
+}
+
+.reminders-timeline-badge {
+  flex-shrink: 0;
+}
+
+.reminders-timeline-badge--done {
+  opacity: 0.85;
+}
+
+.reminders-timeline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem;
+  justify-content: flex-end;
+}
+
 .workspace-header-breadcrumb a {
   text-decoration: none;
 }
@@ -1883,7 +1986,7 @@ th {
 
 /* --- Bloc-notes (accordéon) --- */
 .notepad-accordion-head-row {
-  align-items: flex-start;
+  align-items: center;
   gap: 0.35rem;
 }
 
@@ -1913,8 +2016,57 @@ th {
   gap: 0.75rem;
 }
 
-.notepad-accordion-header:hover strong {
+.notepad-accordion-header:hover .notepad-accordion-name {
   text-decoration: underline;
+}
+
+.notepad-accordion-header-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.notepad-accordion-name {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notepad-accordion-badge-moi {
+  flex-shrink: 0;
+}
+
+.notepad-accordion-pinned-hint {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notepad-accordion-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.notepad-accordion-status-sep {
+  margin-right: 0.25rem;
+}
+
+.notepad-accordion-toggle-label {
+  flex-shrink: 0;
+  font-size: 0.88rem;
 }
 
 @media (min-width: 640px) {

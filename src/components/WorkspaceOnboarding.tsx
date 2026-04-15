@@ -58,12 +58,12 @@ export function WorkspaceOnboarding({
     },
     {
       titleId: 'ws-onboard-3',
-      title: 'Comparer, rappels & décision',
+      title: 'Comparer, suivi & décision',
       body: (
         <p className="muted" style={{ marginTop: 0 }}>
           <strong>Comparer</strong> : graphiques, profils de critères, impression.{' '}
-          <strong>Rappels</strong> pour les prochaines actions. Décision enregistrée dans{' '}
-          <strong>Réglages</strong>.
+          <strong>Visites et rappels</strong> pour le suivi (essais, rappels, rendez-vous). Décision
+          enregistrée dans <strong>Réglages</strong>.
         </p>
       ),
     },

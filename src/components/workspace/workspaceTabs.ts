@@ -4,7 +4,8 @@ export const WORKSPACE_TABS = [
   { id: 'evaluations', label: 'Évaluations' },
   { id: 'candidates', label: 'Modèles' },
   { id: 'compare', label: 'Comparer' },
-  { id: 'reminders', label: 'Rappels' },
+  /** Visites (historique) + rappels à faire / faits — même onglet dans l’UI. */
+  { id: 'reminders', label: 'Visites et rappels' },
   { id: 'activity', label: 'Activité' },
   { id: 'settings', label: 'Réglages' },
 ] as const

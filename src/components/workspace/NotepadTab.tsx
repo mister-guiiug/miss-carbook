@@ -356,24 +356,34 @@ export function NotepadTab({ workspaceId, canWrite }: { workspaceId: string; can
             aria-expanded={isOpen}
             onClick={() => setOpen((o) => ({ ...o, [m.user_id]: !isOpen }))}
           >
-            <div style={{ minWidth: 0 }}>
-              <strong>{m.display_name}</strong> {isMe ? <span className="badge">Moi</span> : null}
+            <span className="notepad-accordion-header-text">
+              <strong className="notepad-accordion-name">{m.display_name}</strong>
+              {isMe ? (
+                <span className="badge notepad-accordion-badge-moi">Moi</span>
+              ) : null}
               {opts.pinned ? (
-                <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
-                  (toujours en premier)
+                <span
+                  className="muted notepad-accordion-pinned-hint"
+                  title="Votre bloc reste toujours affiché en premier"
+                >
+                  1er
                 </span>
               ) : null}
-              {updatedAt ? (
-                <div className="muted" style={{ fontSize: '0.85rem' }}>
-                  Modifié : {new Date(updatedAt).toLocaleString('fr-FR')}
-                </div>
-              ) : (
-                <div className="muted" style={{ fontSize: '0.85rem' }}>
-                  Aucune note
-                </div>
-              )}
-            </div>
-            <span className="muted">{isOpen ? 'Réduire' : 'Afficher'}</span>
+              <span className="muted notepad-accordion-status">
+                <span className="notepad-accordion-status-sep" aria-hidden="true">
+                  ·
+                </span>
+                {updatedAt
+                  ? `Modifié ${new Date(updatedAt).toLocaleString('fr-FR', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })}`
+                  : 'Aucune note'}
+              </span>
+            </span>
+            <span className="muted notepad-accordion-toggle-label">
+              {isOpen ? 'Réduire' : 'Afficher'}
+            </span>
           </button>
         </div>
 
