@@ -93,12 +93,12 @@ describe('requirementSchema', () => {
 })
 
 describe('candidateSchema', () => {
-  it('accepte URL vide', () => {
-    const r = candidateSchema.safeParse({ manufacturer_url: '' })
+  it('accepte une liste de liens vide', () => {
+    const r = candidateSchema.safeParse({ manufacturer_links: [] })
     expect(r.success).toBe(true)
   })
-  it('refuse URL invalide', () => {
-    const r = candidateSchema.safeParse({ manufacturer_url: 'pas-une-url' })
+  it('refuse une URL invalide dans les liens', () => {
+    const r = candidateSchema.safeParse({ manufacturer_links: [{ url: 'pas-une-url', label: '' }] })
     expect(r.success).toBe(false)
   })
   it('normalise parent_candidate_id vide en null', () => {
