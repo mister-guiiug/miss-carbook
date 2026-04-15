@@ -183,8 +183,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       }
       for (const def of CRITERIA) {
         if (!criteria[def.key]) continue
-        if (def.key === 'price')
-          row[def.label] = c.price != null ? formatPriceEur(c.price) : null
+        if (def.key === 'price') row[def.label] = c.price != null ? formatPriceEur(c.price) : null
         else if (def.key === 'scoreAvg') row[def.label] = avgByCand[c.id] ?? null
         else if (def.path === 'spec') {
           const v = spec[def.key]

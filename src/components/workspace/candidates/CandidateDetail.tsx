@@ -92,8 +92,7 @@ export function CandidateDetail({
     model: candidate.model,
     trim: candidate.trim,
     engine: candidate.engine,
-    price:
-      candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
+    price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
     event_date: candidate.event_date ?? '',
     status: candidate.status,
     reject_reason: candidate.reject_reason,
@@ -109,8 +108,7 @@ export function CandidateDetail({
       model: candidate.model,
       trim: candidate.trim,
       engine: candidate.engine,
-      price:
-        candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
+      price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
       event_date: candidate.event_date ?? '',
       status: candidate.status,
       reject_reason: candidate.reject_reason,
@@ -123,7 +121,7 @@ export function CandidateDetail({
   const parentRow = useMemo(
     () =>
       candidate.parent_candidate_id
-        ? rootCandidates.find((p) => p.id === candidate.parent_candidate_id) ?? null
+        ? (rootCandidates.find((p) => p.id === candidate.parent_candidate_id) ?? null)
         : null,
     [candidate.parent_candidate_id, rootCandidates]
   )
@@ -154,8 +152,7 @@ export function CandidateDetail({
     try {
       const brand = isChild && parentRow ? parentRow.brand : parsed.data.brand
       const model = isChild && parentRow ? parentRow.model : parsed.data.model
-      const eventDate =
-        isChild && parentRow ? parentRow.event_date : parsed.data.event_date
+      const eventDate = isChild && parentRow ? parentRow.event_date : parsed.data.event_date
 
       const { error } = await supabase
         .from('candidates')
@@ -197,8 +194,8 @@ export function CandidateDetail({
     setSpecs((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
   }, [candidate])
 
-  const [vehDetailsOpen, setVehDetailsOpen] = useState(() =>
-    !isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate))
+  const [vehDetailsOpen, setVehDetailsOpen] = useState(
+    () => !isVehicleDetailMetaEmpty(vehicleDetailFromCandidate(candidate))
   )
   const [specsAccordionOpen, setSpecsAccordionOpen] = useState(() =>
     hasAnySpecData((candidate.candidate_specs?.specs as Record<string, unknown>) ?? {})
@@ -454,7 +451,7 @@ export function CandidateDetail({
                       id={`cand-meta-trim-${candidate.id}`}
                       value={meta.trim}
                       onChange={(e) => setMeta((m) => ({ ...m, trim: e.target.value }))}
-                      placeholder='Vide = « Générique » (version de base)'
+                      placeholder="Vide = « Générique » (version de base)"
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
@@ -509,7 +506,9 @@ export function CandidateDetail({
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>Année(s) / période</label>
+                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
+                      Année(s) / période
+                    </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
                       className="candidate-field-readonly"
@@ -560,7 +559,9 @@ export function CandidateDetail({
                 </div>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>Année(s) / période</label>
+                    <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
+                      Année(s) / période
+                    </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
                       className="candidate-field-readonly"
@@ -784,8 +785,7 @@ export function CandidateDetail({
         <summary className="home-accordion-summary">
           Commentaires
           <span className="muted" style={{ fontWeight: 400, marginLeft: '0.35rem' }}>
-            ({comments.length})
-            {comments.length === 0 ? ' — vide' : ''}
+            ({comments.length}){comments.length === 0 ? ' — vide' : ''}
           </span>
         </summary>
         <div className="home-accordion-body stack">
@@ -808,7 +808,11 @@ export function CandidateDetail({
                 onChange={(e) => setComment(e.target.value)}
                 style={{ flex: 1 }}
               />
-              <IconActionButton nativeType="submit" variant="primary" label="Envoyer le commentaire">
+              <IconActionButton
+                nativeType="submit"
+                variant="primary"
+                label="Envoyer le commentaire"
+              >
                 <IconSend />
               </IconActionButton>
             </form>

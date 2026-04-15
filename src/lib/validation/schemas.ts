@@ -111,13 +111,15 @@ export const candidateSchema = z.object({
     .union([z.string().uuid(), z.literal(''), z.null()])
     .optional()
     .transform((v) => (v === '' || v === undefined || v === null ? null : v)),
-  price: z
-    .preprocess((val) => {
+  price: z.preprocess(
+    (val) => {
       if (val === undefined) return undefined
       if (val === '' || val === null) return null
       if (typeof val === 'number' && !Number.isNaN(val)) return val
       return parsePriceInput(String(val))
-    }, z.union([z.number().min(0), z.null()]).optional()),
+    },
+    z.union([z.number().min(0), z.null()]).optional()
+  ),
   options: z.string().max(4000).optional().default(''),
   garage_location: z.string().max(200).optional().default(''),
   manufacturer_url: z

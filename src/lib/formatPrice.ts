@@ -13,7 +13,7 @@ export function parsePriceInput(raw: string): number | null {
   return n
 }
 
-/** Affichage prix avec séparateurs de milliers (ex. 12 345,67 €). */
+/** Affichage prix avec séparateurs de milliers (ex. 12 345,67 EUR). */
 export function formatPriceEur(value: number | null | undefined): string {
   if (value == null || Number.isNaN(Number(value))) return ''
   return (
