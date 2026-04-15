@@ -125,6 +125,22 @@ export const candidateSchema = z.object({
     },
     z.union([z.number().min(0), z.null()]).optional()
   ),
+  mileage_km: z.preprocess(
+    (val) => {
+      if (val === undefined) return undefined
+      if (val === '' || val === null) return null
+      if (typeof val === 'number' && Number.isFinite(val))
+        return Math.min(9_999_999, Math.max(0, Math.floor(val)))
+      const s = String(val).replace(/\s/g, '').replace(',', '.')
+      const n = Number(s)
+      if (!Number.isFinite(n)) return null
+      return Math.min(9_999_999, Math.max(0, Math.floor(n)))
+    },
+    z.union([z.number().int().min(0).max(9_999_999), z.null()]).optional()
+  ),
+  first_registration: z.string().max(120).optional().default(''),
+  gearbox: z.string().max(120).optional().default(''),
+  energy: z.string().max(120).optional().default(''),
   options: z.string().max(4000).optional().default(''),
   garage_location: z.string().max(200).optional().default(''),
   manufacturer_url: z

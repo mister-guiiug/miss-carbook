@@ -120,4 +120,9 @@ describe('candidateSchema', () => {
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.price).toBe(12345.67)
   })
+  it('parse le kilométrage (entier km)', () => {
+    const r = candidateSchema.safeParse({ mileage_km: '45 000' })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.mileage_km).toBe(45000)
+  })
 })

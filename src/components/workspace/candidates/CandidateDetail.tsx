@@ -23,6 +23,30 @@ import {
   hasCandidateSpecVisibleData,
 } from '../../../lib/candidateSpecsUi'
 
+/** Suggestions boîte de vitesses (saisie libre via liste). */
+const GEARBOX_SUGGESTIONS = [
+  'Manuelle',
+  'Automatique',
+  'Robotisée (double embrayage)',
+  'CVT',
+  'Réducteur fixe (électrique)',
+  'Autre / NC',
+] as const
+
+/** Suggestions énergie / carburant (saisie libre). */
+const ENERGY_SUGGESTIONS = [
+  'Essence',
+  'Diesel',
+  'GPL / GNV',
+  'Électrique',
+  'Hybride essence rechargeable',
+  'Hybride essence non rechargeable',
+  'Hybride diesel',
+  'E85',
+  'Hydrogène',
+  'Autre / NC',
+] as const
+
 function isBlank(s: string | null | undefined): boolean {
   return !s || String(s).trim() === ''
 }
@@ -31,15 +55,24 @@ function isBlank(s: string | null | undefined): boolean {
 function isVehicleDetailMetaEmpty(m: {
   engine: string
   price: string
+  mileage_km: string
+  first_registration: string
+  gearbox: string
+  energy: string
   garage_location: string
   manufacturer_url: string
   options: string
   reject_reason: string
 }): boolean {
   const priceEmpty = m.price === '' || m.price === undefined
+  const mileageEmpty = m.mileage_km === '' || m.mileage_km === undefined
   return (
     isBlank(m.engine) &&
     priceEmpty &&
+    mileageEmpty &&
+    isBlank(m.first_registration) &&
+    isBlank(m.gearbox) &&
+    isBlank(m.energy) &&
     isBlank(m.garage_location) &&
     isBlank(m.manufacturer_url) &&
     isBlank(m.options) &&
@@ -51,6 +84,10 @@ function vehicleDetailFromCandidate(c: CandidateRow) {
   return {
     engine: c.engine ?? '',
     price: c.price != null ? formatPriceInputDisplay(c.price) : '',
+    mileage_km: c.mileage_km != null ? String(c.mileage_km) : '',
+    first_registration: c.first_registration ?? '',
+    gearbox: c.gearbox ?? '',
+    energy: c.energy ?? '',
     garage_location: c.garage_location ?? '',
     manufacturer_url: c.manufacturer_url ?? '',
     options: c.options ?? '',
@@ -85,6 +122,10 @@ export function CandidateDetail({
     trim: candidate.trim,
     engine: candidate.engine,
     price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
+    mileage_km: candidate.mileage_km != null ? String(candidate.mileage_km) : '',
+    first_registration: candidate.first_registration ?? '',
+    gearbox: candidate.gearbox ?? '',
+    energy: candidate.energy ?? '',
     event_date: candidate.event_date ?? '',
     status: candidate.status,
     reject_reason: candidate.reject_reason,
@@ -102,6 +143,10 @@ export function CandidateDetail({
       trim: candidate.trim,
       engine: candidate.engine,
       price: candidate.price != null ? formatPriceInputDisplay(candidate.price) : '',
+      mileage_km: candidate.mileage_km != null ? String(candidate.mileage_km) : '',
+      first_registration: candidate.first_registration ?? '',
+      gearbox: candidate.gearbox ?? '',
+      energy: candidate.energy ?? '',
       event_date: candidate.event_date ?? '',
       status: candidate.status,
       reject_reason: candidate.reject_reason,
@@ -157,6 +202,10 @@ export function CandidateDetail({
           trim: parsed.data.trim,
           engine: parsed.data.engine,
           price: parsed.data.price,
+          mileage_km: parsed.data.mileage_km ?? null,
+          first_registration: parsed.data.first_registration,
+          gearbox: parsed.data.gearbox,
+          energy: parsed.data.energy,
           options: parsed.data.options,
           garage_location: parsed.data.garage_location,
           manufacturer_url: parsed.data.manufacturer_url,
@@ -658,6 +707,75 @@ export function CandidateDetail({
                         }))
                       }}
                     />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-mileage-${candidate.id}`}>Kilométrage (km)</label>
+                    <input
+                      id={`cand-meta-mileage-${candidate.id}`}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="ex. 45 000"
+                      value={meta.mileage_km}
+                      onChange={(e) =>
+                        setMeta((m) => ({
+                          ...m,
+                          mileage_km: e.target.value.replace(/[^\d\s,]/g, ''),
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="row" style={{ flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-circ-${candidate.id}`}>Mise en circulation</label>
+                    <input
+                      id={`cand-meta-circ-${candidate.id}`}
+                      type="text"
+                      autoComplete="off"
+                      value={meta.first_registration}
+                      onChange={(e) =>
+                        setMeta((m) => ({ ...m, first_registration: e.target.value }))
+                      }
+                      placeholder="ex. 12/03/2019, mars 2019…"
+                      maxLength={120}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-energy-${candidate.id}`}>Énergie / carburant</label>
+                    <input
+                      id={`cand-meta-energy-${candidate.id}`}
+                      type="text"
+                      autoComplete="off"
+                      list={`cand-meta-energy-dl-${candidate.id}`}
+                      value={meta.energy}
+                      onChange={(e) => setMeta((m) => ({ ...m, energy: e.target.value }))}
+                      placeholder="ex. Essence, Électrique…"
+                      maxLength={120}
+                    />
+                    <datalist id={`cand-meta-energy-dl-${candidate.id}`}>
+                      {ENERGY_SUGGESTIONS.map((o) => (
+                        <option key={o} value={o} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div style={{ flex: '1 1 160px' }}>
+                    <label htmlFor={`cand-meta-gear-${candidate.id}`}>Boîte de vitesses</label>
+                    <input
+                      id={`cand-meta-gear-${candidate.id}`}
+                      type="text"
+                      autoComplete="off"
+                      list={`cand-meta-gear-dl-${candidate.id}`}
+                      value={meta.gearbox}
+                      onChange={(e) => setMeta((m) => ({ ...m, gearbox: e.target.value }))}
+                      placeholder="ex. Automatique, Manuelle…"
+                      maxLength={120}
+                    />
+                    <datalist id={`cand-meta-gear-dl-${candidate.id}`}>
+                      {GEARBOX_SUGGESTIONS.map((o) => (
+                        <option key={o} value={o} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
                 <div>
