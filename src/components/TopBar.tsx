@@ -6,7 +6,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useTheme } from '../hooks/useTheme'
 import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
-import { useWorkspaceChrome } from '../contexts/WorkspaceChromeContext'
+import { useWorkspaceChrome } from '../contexts/useWorkspaceChrome'
 import { WorkspaceHeaderToolbar } from './workspace/WorkspaceHeaderToolbar'
 
 const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`

@@ -55,14 +55,12 @@ type VisitRow = {
 
 type View = 'open' | 'done' | 'visits'
 
-type ConfirmState =
-  | null
-  | {
-      kind: 'reminder' | 'visit'
-      id: string
-      title: string
-      subtitle?: string
-    }
+type ConfirmState = null | {
+  kind: 'reminder' | 'visit'
+  id: string
+  title: string
+  subtitle?: string
+}
 
 function fmtShortDateTimeFr(iso: string | null): string {
   if (!iso) return ''
@@ -334,7 +332,9 @@ export function RemindersTab({
       kind: 'visit',
       id,
       title,
-      subtitle: v?.candidate_id ? `Modèle : ${candidateLabelById.get(v.candidate_id) ?? '—'}` : undefined,
+      subtitle: v?.candidate_id
+        ? `Modèle : ${candidateLabelById.get(v.candidate_id) ?? '—'}`
+        : undefined,
     })
   }
 
@@ -853,21 +853,29 @@ export function RemindersTab({
                         </div>
                       </form>
                     ) : (
-                      <div className="row" style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
+                      <div
+                        className="row"
+                        style={{ justifyContent: 'space-between', gap: '0.75rem' }}
+                      >
                         <div style={{ flex: '1 1 220px', minWidth: 0 }}>
                           <div className="row" style={{ gap: '0.35rem', flexWrap: 'wrap' }}>
                             <span className="badge">{reminderKindLabel[k] ?? 'Rappel'}</span>
                             {overdue ? <span className="badge danger">En retard</span> : null}
                           </div>
                           <strong>{r.title}</strong>
-                          {r.due_at ? <div className="muted">{fmtShortDateTimeFr(r.due_at)}</div> : null}
+                          {r.due_at ? (
+                            <div className="muted">{fmtShortDateTimeFr(r.due_at)}</div>
+                          ) : null}
                           {(r.place ?? '').trim() ? (
                             <div className="muted" style={{ fontSize: '0.9rem' }}>
                               Lieu : {(r.place ?? '').trim()}
                             </div>
                           ) : null}
                           {linkedLabel ? (
-                            <div className="muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                            <div
+                              className="muted"
+                              style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}
+                            >
                               Modèle : {linkedLabel}
                             </div>
                           ) : null}
