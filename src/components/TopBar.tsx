@@ -9,7 +9,7 @@ import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useWorkspaceChrome } from '../contexts/useWorkspaceChrome'
 import { WorkspaceHeaderToolbar } from './workspace/WorkspaceHeaderToolbar'
 
-const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
+const logoSrc = `${import.meta.env.BASE_URL}logo.png`
 
 function IconSun({ className }: { className?: string }) {
   return (
