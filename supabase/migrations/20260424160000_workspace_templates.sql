@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS public.workspace_templates (
   usage_count int NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_wt_created_by ON public.workspace_templates (created_by);
-CREATE INDEX IF NOT EXISTS EXISTS idx_wt_public ON public.workspace_templates (is_public);
+CREATE INDEX IF NOT EXISTS idx_wt_created_by ON public.workspace_templates (created_by);
+CREATE INDEX IF NOT EXISTS idx_wt_public ON public.workspace_templates (is_public);
 
 -- Table for template requirements
 CREATE TABLE IF NOT EXISTS public.template_requirements (
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.template_requirements (
   sort_order int NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tr_template ON public.template_requirements (template_id);
+CREATE INDEX IF NOT EXISTS idx_tr_template ON public.template_requirements (template_id);
 
 -- Table for template budget categories
 CREATE TABLE IF NOT EXISTS public.template_budget_categories (
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS public.template_budget_categories (
   sort_order int NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tbc_template ON public.template_budget_categories (template_id);
+CREATE INDEX IF NOT EXISTS idx_tbc_template ON public.template_budget_categories (template_id);
 
 -- Table for template budget items
 CREATE TABLE IF NOT EXISTS public.template_budget_items (
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS public.template_budget_items (
   sort_order int NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tbi_template ON public.template_budget_items (template_id);
+CREATE INDEX IF NOT EXISTS idx_tbi_template ON public.template_budget_items (template_id);
 
 -- Table for template checklist items
 CREATE TABLE IF NOT EXISTS public.template_checklist_items (
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.template_checklist_items (
   sort_order int NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tci_template ON public.template_checklist_items (template_id);
+CREATE INDEX IF NOT EXISTS idx_tci_template ON public.template_checklist_items (template_id);
 
 -- Trigger for updated_at
 DROP TRIGGER IF EXISTS trg_wt_updated ON public.workspace_templates;
