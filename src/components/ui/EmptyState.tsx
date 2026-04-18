@@ -24,7 +24,7 @@ export function EmptyState({ icon, title, text, action }: EmptyStateProps) {
 }
 
 function EmptyStateIcon({ type }: { type: string }) {
-  const icons: Record<string, JSX.Element> = {
+  const icons: Record<string, React.ReactElement> = {
     candidates: (
       <svg
         className="empty-state-icon"
