@@ -5,6 +5,12 @@
 
 import { Metric, onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals'
 
+declare global {
+  interface Window {
+    gtag?: (command: string, targetId: string, config?: Record<string, unknown>) => void
+  }
+}
+
 interface MetricWithRating extends Metric {
   rating: 'good' | 'needs-improvement' | 'poor'
 }
@@ -51,8 +57,8 @@ function logMetric(metric: MetricWithRating): void {
   }
 
   // Envoyer à Google Analytics
-  if (typeof gtag !== 'undefined') {
-    gtag('event', metric.name, {
+  if (typeof window.gtag !== 'undefined') {
+    window.gtag('event', metric.name, {
       event_category: 'Web Vitals',
       event_label: metric.id,
       value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
@@ -100,26 +106,6 @@ export function initWebVitals(): void {
 }
 
 /**
- * Hook React pour mesurer des métriques personnalisées
- */
-export function useCustomMetric(name: string) {
-  const start = performance.now()
-
-  return () => {
-    const duration = performance.now() - start
-    const metric: Metric = {
-      name,
-      value: duration,
-      id: `custom-${Date.now()}`,
-      navigationType: (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)
-        ?.type,
-    }
-
-    logMetric({ ...metric, rating: getRating(metric) })
-  }
-}
-
-/**
  * Mesurer le temps de chargement d'un composant
  */
 export function measureComponentRender(componentName: string, enabled = import.meta.env.DEV) {
@@ -134,8 +120,8 @@ export function measureComponentRender(componentName: string, enabled = import.m
       console.warn(`[Performance] ${componentName} took ${duration.toFixed(2)}ms to render`)
     }
 
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'component_render', {
+    if (typeof window.gtag !== 'undefined') {
+      window.gtag('event', 'component_render', {
         event_category: 'Performance',
         event_label: componentName,
         value: Math.round(duration),
