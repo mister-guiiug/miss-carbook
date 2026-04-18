@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { supabase } from '../../lib/supabase'
-import { useToast } from '../../contexts/ToastContext'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import {
   calculateCompositeScores,
@@ -11,12 +10,10 @@ import {
   DEFAULT_WEIGHTS,
   type WeightConfig,
   type CandidateEvaluationData,
-  type CandidateScore,
 } from '../../lib/scoringAlgorithm'
 import { EmptyState } from '../ui/EmptyState'
 import {
   IconActionButton,
-  IconTrendingUp,
   IconInfo,
   IconX,
   IconRefresh,
@@ -49,12 +46,10 @@ type ReviewRow = {
 
 export function SmartCompareTab({
   workspaceId,
-  canWrite,
 }: {
   workspaceId: string
-  canWrite: boolean
 }) {
-  const { showToast } = useToast()
+  const { reportException } = useErrorDialog()
   const { reportException } = useErrorDialog()
   const [candidates, setCandidates] = useState<RawCandidate[]>([])
   const [evaluations, setEvaluations] = useState<EvaluationRow[]>([])
