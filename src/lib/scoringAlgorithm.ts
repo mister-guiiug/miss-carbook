@@ -106,7 +106,7 @@ function normalizeScore(
  */
 function calculatePriceScore(
   candidatePrice: number | null,
-  allPrices: (number | null)[[]
+  allPrices: (number | null)[]
 ): number {
   const validPrices = allPrices.filter((p) => p != null && Number.isFinite(p)) as number[]
   if (validPrices.length === 0) return 50 // Pas de données de prix

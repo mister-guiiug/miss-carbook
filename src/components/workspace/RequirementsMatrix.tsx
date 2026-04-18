@@ -5,12 +5,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { CandidateStatus, RequirementLevel } from '../../types/database'
 import { EmptyState } from '../ui/EmptyState'
-import {
-  IconActionButton,
-  IconDownload,
-  IconFilter,
-  IconX,
-} from '../ui/IconActionButton'
+import { IconActionButton, IconDownload, IconFilter, IconX } from '../ui/IconActionButton'
 
 type Req = {
   id: string
@@ -161,7 +156,15 @@ export function RequirementsMatrix({
   }
 
   const candidateScores = useMemo(() => {
-    const scores: Record<string, { total: number; weighted: number; maxPossible: number; details: Array<{ reqId: string; reqLabel: string; score: number; weight: number }> }> = {}
+    const scores: Record<
+      string,
+      {
+        total: number
+        weighted: number
+        maxPossible: number
+        details: Array<{ reqId: string; reqLabel: string; score: number; weight: number }>
+      }
+    > = {}
 
     for (const cand of filteredCands) {
       let total = 0
@@ -171,7 +174,7 @@ export function RequirementsMatrix({
 
       for (const req of filteredReqs) {
         const eval_ = evalMap.get(evalKey(req.id, cand.id))
-        const score = eval_ ? STATUS_VALUES[eval_.status] ?? 0 : 0
+        const score = eval_ ? (STATUS_VALUES[eval_.status] ?? 0) : 0
         const weight = req.weight ?? 1
 
         total += score
@@ -198,7 +201,12 @@ export function RequirementsMatrix({
   }, [filteredCands, filteredReqs, evalMap])
 
   const exportCsv = () => {
-    const headers = ['Exigence', 'Niveau', 'Poids', ...filteredCands.map((c) => formatCandidateListLabel(c))]
+    const headers = [
+      'Exigence',
+      'Niveau',
+      'Poids',
+      ...filteredCands.map((c) => formatCandidateListLabel(c)),
+    ]
     const rows = filteredReqs.map((req) => [
       req.label,
       req.level === 'mandatory' ? 'Obligatoire' : 'À discuter',
@@ -239,7 +247,15 @@ export function RequirementsMatrix({
   return (
     <div className="stack requirements-matrix">
       <div className="card stack" style={{ boxShadow: 'none' }}>
-        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div
+          className="row"
+          style={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+          }}
+        >
           <h3 style={{ margin: 0 }}>Matrice des exigences</h3>
           <div className="row icon-action-toolbar">
             <IconActionButton
@@ -249,11 +265,7 @@ export function RequirementsMatrix({
             >
               <IconFilter />
             </IconActionButton>
-            <IconActionButton
-              variant="secondary"
-              label="Exporter en CSV"
-              onClick={exportCsv}
-            >
+            <IconActionButton variant="secondary" label="Exporter en CSV" onClick={exportCsv}>
               <IconDownload />
             </IconActionButton>
           </div>
@@ -341,7 +353,8 @@ export function RequirementsMatrix({
               </label>
             </div>
             <p className="muted" style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}>
-              {filteredReqs.length} / {reqs.length} exigences · {filteredCands.length} / {cands.length} modèles affichés
+              {filteredReqs.length} / {reqs.length} exigences · {filteredCands.length} /{' '}
+              {cands.length} modèles affichés
             </p>
           </div>
         ) : null}
@@ -351,7 +364,8 @@ export function RequirementsMatrix({
         <div className="card stack" style={{ boxShadow: 'none' }}>
           <h4 style={{ margin: 0 }}>Scores pondérés par modèle</h4>
           <p className="muted" style={{ margin: '0.25rem 0 1rem', fontSize: '0.9rem' }}>
-            Score basé sur les évaluations (OK=1, Partiel=0.5, Non=0) et le poids de chaque exigence.
+            Score basé sur les évaluations (OK=1, Partiel=0.5, Non=0) et le poids de chaque
+            exigence.
           </p>
           {filteredCands.length === 0 ? (
             <p className="muted">Aucun modèle à afficher avec les filtres actuels.</p>
@@ -362,26 +376,43 @@ export function RequirementsMatrix({
                 .sort((a, b) => b.score.weighted - a.score.weighted)
                 .map(({ cand, score }) => (
                   <div key={cand.id} className="card" style={{ boxShadow: 'none' }}>
-                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div
+                      className="row"
+                      style={{ justifyContent: 'space-between', alignItems: 'center' }}
+                    >
                       <div>
                         <strong>{formatCandidateListLabel(cand)}</strong>
                         {cand.price != null ? (
                           <span className="muted" style={{ marginLeft: '0.5rem' }}>
-                            {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(cand.price)}
+                            {new Intl.NumberFormat('fr-FR', {
+                              style: 'currency',
+                              currency: 'EUR',
+                            }).format(cand.price)}
                           </span>
                         ) : null}
                       </div>
                       <div className="row" style={{ gap: '1rem', alignItems: 'center' }}>
                         <span className="muted" style={{ fontSize: '0.85rem' }}>
-                          {score.details.filter((d) => d.score > 0).length} / {score.details.length} satisfaites
+                          {score.details.filter((d) => d.score > 0).length} / {score.details.length}{' '}
+                          satisfaites
                         </span>
-                        <span className="badge success" style={{ fontSize: '1.1rem', padding: '0.35rem 0.75rem' }}>
+                        <span
+                          className="badge success"
+                          style={{ fontSize: '1.1rem', padding: '0.35rem 0.75rem' }}
+                        >
                           {score.weighted.toFixed(1)}%
                         </span>
                       </div>
                     </div>
                     <div style={{ marginTop: '0.75rem' }}>
-                      <div style={{ height: '8px', background: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '8px',
+                          background: 'var(--bg-secondary)',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                        }}
+                      >
                         <div
                           style={{
                             height: '100%',
@@ -431,9 +462,7 @@ export function RequirementsMatrix({
                       </span>
                     </td>
                   )}
-                  {view === 'full' && (
-                    <td className="muted">{req.weight?.toString() ?? '1'}</td>
-                  )}
+                  {view === 'full' && <td className="muted">{req.weight?.toString() ?? '1'}</td>}
                   {filteredCands.map((c) => {
                     const cell = evalMap.get(evalKey(req.id, c.id))
                     const status = cell?.status ?? 'unknown'

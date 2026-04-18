@@ -100,13 +100,7 @@ const CATEGORY_COLORS = {
   info: 'var(--info-light)',
 }
 
-export function BudgetTab({
-  workspaceId,
-  canWrite,
-}: {
-  workspaceId: string
-  canWrite: boolean
-}) {
+export function BudgetTab({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
   const { reportException } = useErrorDialog()
   const { showToast } = useToast()
   const [candidates, setCandidates] = useState<Cand[]>([])
@@ -121,7 +115,9 @@ export function BudgetTab({
   const [editItemId, setEditItemId] = useState<string | null>(null)
   const [itemName, setItemName] = useState('')
   const [itemAmount, setItemAmount] = useState('')
-  const [itemFrequency, setItemFrequency] = useState<'one_time' | 'monthly' | 'annual' | 'per_km'>('one_time')
+  const [itemFrequency, setItemFrequency] = useState<'one_time' | 'monthly' | 'annual' | 'per_km'>(
+    'one_time'
+  )
   const [itemCategory, setItemCategory] = useState<string | null>(null)
   const [itemCandidate, setItemCandidate] = useState<string | null>(null)
   const [itemNotes, setItemNotes] = useState('')
@@ -149,13 +145,8 @@ export function BudgetTab({
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('sort_order', { ascending: true }),
-      supabase
-        .from('budget_items')
-        .select('*')
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('tco_parameters')
-        .select('*'),
+      supabase.from('budget_items').select('*').order('sort_order', { ascending: true }),
+      supabase.from('tco_parameters').select('*'),
     ])
 
     const firstErr = c.error ?? cat.error ?? i.error ?? t.error
@@ -231,7 +222,7 @@ export function BudgetTab({
       sort_order: editItemId ? undefined : items.length,
     })
 
-    if (error) reportException(error, 'Enregistrement de l\'élément')
+    if (error) reportException(error, "Enregistrement de l'élément")
     else {
       setItemName('')
       setItemAmount('')
@@ -249,7 +240,7 @@ export function BudgetTab({
   const deleteItem = async (id: string) => {
     if (!canWrite) return
     const { error } = await supabase.from('budget_items').delete().eq('id', id)
-    if (error) reportException(error, 'Suppression de l\'élément')
+    if (error) reportException(error, "Suppression de l'élément")
     else {
       await load()
       showToast('Élément supprimé')
@@ -270,21 +261,19 @@ export function BudgetTab({
   const saveTcoParams = async (candidateId: string) => {
     if (!canWrite) return
     const existing = tcoParams.find((t) => t.candidate_id === candidateId)
-    const { error } = await supabase
-      .from('tco_parameters')
-      .upsert({
-        id: existing?.id,
-        workspace_id: workspaceId,
-        candidate_id: candidateId,
-        annual_km: parseInt(tcoAnnualKm) || 15000,
-        ownership_years: parseInt(tcoOwnershipYears) || 5,
-        insurance_cost: tcoInsuranceCost ? parseFloat(tcoInsuranceCost) || null : null,
-        fuel_price: tcoFuelPrice ? parseFloat(tcoFuelPrice) || null : null,
-        electricity_price: null,
-        residual_value_percent: tcoResidualValue ? parseFloat(tcoResidualValue) || null : null,
-        loan_interest_rate: tcoLoanRate ? parseFloat(tcoLoanRate) || null : null,
-        loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
-      })
+    const { error } = await supabase.from('tco_parameters').upsert({
+      id: existing?.id,
+      workspace_id: workspaceId,
+      candidate_id: candidateId,
+      annual_km: parseInt(tcoAnnualKm) || 15000,
+      ownership_years: parseInt(tcoOwnershipYears) || 5,
+      insurance_cost: tcoInsuranceCost ? parseFloat(tcoInsuranceCost) || null : null,
+      fuel_price: tcoFuelPrice ? parseFloat(tcoFuelPrice) || null : null,
+      electricity_price: null,
+      residual_value_percent: tcoResidualValue ? parseFloat(tcoResidualValue) || null : null,
+      loan_interest_rate: tcoLoanRate ? parseFloat(tcoLoanRate) || null : null,
+      loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
+    })
 
     if (error) reportException(error, 'Enregistrement des paramètres TCO')
     else {
@@ -300,7 +289,9 @@ export function BudgetTab({
     setTcoOwnershipYears(String(existing?.ownership_years ?? 5))
     setTcoInsuranceCost(existing?.insurance_cost ? String(existing.insurance_cost) : '')
     setTcoFuelPrice(existing?.fuel_price ? String(existing.fuel_price) : '')
-    setTcoResidualValue(existing?.residual_value_percent ? String(existing.residual_value_percent) : '')
+    setTcoResidualValue(
+      existing?.residual_value_percent ? String(existing.residual_value_percent) : ''
+    )
     setTcoLoanRate(existing?.loan_interest_rate ? String(existing.loan_interest_rate) : '')
     setTcoLoanMonths(existing?.loan_months ? String(existing.loan_months) : '')
   }
@@ -383,7 +374,14 @@ export function BudgetTab({
             </div>
 
             {showAddItem && canWrite && (
-              <form onSubmit={(e) => { e.preventDefault(); void saveItem() }} className="card stack" style={{ boxShadow: 'none', padding: '1rem' }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  void saveItem()
+                }}
+                className="card stack"
+                style={{ boxShadow: 'none', padding: '1rem' }}
+              >
                 <h4 style={{ margin: 0 }}>{editItemId ? 'Modifier' : 'Nouvel'} élément</h4>
                 <div>
                   <label>Nom</label>
@@ -487,12 +485,18 @@ export function BudgetTab({
                   const cat = item.category_id ? categoryById.get(item.category_id) : null
                   return (
                     <li key={item.id} className="card" style={{ boxShadow: 'none' }}>
-                      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div
+                        className="row"
+                        style={{ justifyContent: 'space-between', alignItems: 'center' }}
+                      >
                         <div className="row" style={{ gap: '0.5rem', alignItems: 'center' }}>
                           {cat && (
                             <span
                               className="badge"
-                              style={{ background: CATEGORY_COLORS[cat.color as keyof typeof CATEGORY_COLORS] }}
+                              style={{
+                                background:
+                                  CATEGORY_COLORS[cat.color as keyof typeof CATEGORY_COLORS],
+                              }}
                             >
                               {cat.name}
                             </span>
@@ -544,12 +548,18 @@ export function BudgetTab({
                     const cat = item.category_id ? categoryById.get(item.category_id) : null
                     return (
                       <li key={item.id} className="card" style={{ boxShadow: 'none' }}>
-                        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div
+                          className="row"
+                          style={{ justifyContent: 'space-between', alignItems: 'center' }}
+                        >
                           <div className="row" style={{ gap: '0.5rem', alignItems: 'center' }}>
                             {cat && (
                               <span
                                 className="badge"
-                                style={{ background: CATEGORY_COLORS[cat.color as keyof typeof CATEGORY_COLORS] }}
+                                style={{
+                                  background:
+                                    CATEGORY_COLORS[cat.color as keyof typeof CATEGORY_COLORS],
+                                }}
                               >
                                 {cat.name}
                               </span>
@@ -609,7 +619,15 @@ export function BudgetTab({
 
                 return (
                   <div key={cand.id} className="card stack" style={{ boxShadow: 'none' }}>
-                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div
+                      className="row"
+                      style={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                      }}
+                    >
                       <div>
                         <h4 style={{ margin: 0 }}>{formatCandidateListLabel(cand)}</h4>
                         {cand.price != null && (
@@ -621,12 +639,18 @@ export function BudgetTab({
                       <div className="row icon-action-toolbar">
                         {tco && (
                           <div className="stack" style={{ alignItems: 'flex-end' }}>
-                            <span className="muted" style={{ fontSize: '0.85rem' }}>TCO total</span>
-                            <span className="badge primary" style={{ fontSize: '1.2rem', padding: '0.5rem 1rem' }}>
+                            <span className="muted" style={{ fontSize: '0.85rem' }}>
+                              TCO total
+                            </span>
+                            <span
+                              className="badge primary"
+                              style={{ fontSize: '1.2rem', padding: '0.5rem 1rem' }}
+                            >
                               {formatCurrency(tco.total_tco)}
                             </span>
                             <span className="muted" style={{ fontSize: '0.8rem' }}>
-                              sur {tco.parameters.ownership_years} ans / {tco.parameters.total_km.toLocaleString('fr-FR')} km
+                              sur {tco.parameters.ownership_years} ans /{' '}
+                              {tco.parameters.total_km.toLocaleString('fr-FR')} km
                             </span>
                           </div>
                         )}
@@ -641,7 +665,14 @@ export function BudgetTab({
                     </div>
 
                     {editing && canWrite && (
-                      <div className="card stack" style={{ boxShadow: 'none', padding: '1rem', background: 'var(--bg-secondary)' }}>
+                      <div
+                        className="card stack"
+                        style={{
+                          boxShadow: 'none',
+                          padding: '1rem',
+                          background: 'var(--bg-secondary)',
+                        }}
+                      >
                         <h5 style={{ margin: 0 }}>Paramètres TCO</h5>
                         <div className="row" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                           <div style={{ flex: '1 1 150px' }}>
@@ -730,59 +761,111 @@ export function BudgetTab({
                       <div className="stack" style={{ marginTop: '1rem' }}>
                         <h5 style={{ margin: 0 }}>Détail du TCO</h5>
                         <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Prix d'achat</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Prix d'achat
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.purchase_price)}
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Coûts uniques</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Coûts uniques
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.one_time_costs)}
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Coûts annuels</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Coûts annuels
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.annual_costs)}
                             </div>
                             <div className="muted" style={{ fontSize: '0.8rem' }}>
-                              soit {formatCurrency(tco.breakdown.annual_costs / tco.parameters.ownership_years)} / an
+                              soit{' '}
+                              {formatCurrency(
+                                tco.breakdown.annual_costs / tco.parameters.ownership_years
+                              )}{' '}
+                              / an
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Carburant</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Carburant
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.fuel_cost)}
                             </div>
                             <div className="muted" style={{ fontSize: '0.8rem' }}>
-                              soit {formatCurrency(tco.breakdown.fuel_cost / tco.parameters.total_km)} / km
+                              soit{' '}
+                              {formatCurrency(tco.breakdown.fuel_cost / tco.parameters.total_km)} /
+                              km
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Assurance</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Assurance
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.insurance_cost)}
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Dépréciation</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Dépréciation
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.depreciation)}
                             </div>
                           </div>
-                          <div className="card" style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}>
-                            <div className="muted" style={{ fontSize: '0.85rem' }}>Coût financement</div>
+                          <div
+                            className="card"
+                            style={{ boxShadow: 'none', padding: '0.75rem', flex: '1 1 200px' }}
+                          >
+                            <div className="muted" style={{ fontSize: '0.85rem' }}>
+                              Coût financement
+                            </div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                               {formatCurrency(tco.breakdown.financing_cost)}
                             </div>
                           </div>
                         </div>
 
-                        <div className="card" style={{ boxShadow: 'none', padding: '1rem', marginTop: '0.5rem' }}>
+                        <div
+                          className="card"
+                          style={{ boxShadow: 'none', padding: '1rem', marginTop: '0.5rem' }}
+                        >
                           <h5 style={{ margin: '0 0 0.5rem 0' }}>Répartition visuelle</h5>
-                          <div style={{ display: 'flex', height: '24px', borderRadius: '4px', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              height: '24px',
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                              background: 'var(--bg-secondary)',
+                            }}
+                          >
                             {Object.entries(tco.breakdown).map(([key, value]) => {
                               if (value === 0) return null
                               const percent = (value / tco.total_tco) * 100
@@ -809,7 +892,15 @@ export function BudgetTab({
                               )
                             })}
                           </div>
-                          <div className="row" style={{ flexWrap: 'wrap', gap: '1rem', marginTop: '0.75rem', fontSize: '0.85rem' }}>
+                          <div
+                            className="row"
+                            style={{
+                              flexWrap: 'wrap',
+                              gap: '1rem',
+                              marginTop: '0.75rem',
+                              fontSize: '0.85rem',
+                            }}
+                          >
                             {Object.entries(tco.breakdown).map(([key, value]) => {
                               if (value === 0) return null
                               const colors: Record<string, string> = {
@@ -823,8 +914,19 @@ export function BudgetTab({
                                 financing_cost: '#ec4899',
                               }
                               return (
-                                <div key={key} className="row" style={{ alignItems: 'center', gap: '0.35rem' }}>
-                                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: colors[key] }} />
+                                <div
+                                  key={key}
+                                  className="row"
+                                  style={{ alignItems: 'center', gap: '0.35rem' }}
+                                >
+                                  <div
+                                    style={{
+                                      width: '12px',
+                                      height: '12px',
+                                      borderRadius: '2px',
+                                      background: colors[key],
+                                    }}
+                                  />
                                   <span className="muted">{key.replace(/_/g, ' ')}:</span>
                                   <span>{formatCurrency(value)}</span>
                                 </div>

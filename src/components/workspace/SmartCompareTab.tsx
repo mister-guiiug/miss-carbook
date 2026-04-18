@@ -79,10 +79,7 @@ export function SmartCompareTab({
           .from('requirement_candidate_evaluations')
           .select('requirement_id, candidate_id, status')
           .eq('workspace_id', workspaceId),
-        supabase
-          .from('requirements')
-          .select('id, level')
-          .eq('workspace_id', workspaceId),
+        supabase.from('requirements').select('id, level').eq('workspace_id', workspaceId),
         supabase
           .from('candidate_reviews')
           .select('candidate_id, score')
@@ -114,9 +111,7 @@ export function SmartCompareTab({
     const mandatoryReqs = new Set(
       requirements.filter((r) => r.level === 'mandatory').map((r) => r.id)
     )
-    const optionalReqs = new Set(
-      requirements.filter((r) => r.level === 'discuss').map((r) => r.id)
-    )
+    const optionalReqs = new Set(requirements.filter((r) => r.level === 'discuss').map((r) => r.id))
 
     // Agréger les revues par candidat
     const reviewMap = new Map<string, number[]>()
@@ -139,8 +134,7 @@ export function SmartCompareTab({
       const mandatoryMet = [...mandatoryReqs].filter((id) => satisfiedReqs.has(id)).length
       const optionalMet = [...optionalReqs].filter((id) => satisfiedReqs.has(id)).length
 
-      const mandatoryScore =
-        mandatoryReqs.size > 0 ? mandatoryMet / mandatoryReqs.size : 0
+      const mandatoryScore = mandatoryReqs.size > 0 ? mandatoryMet / mandatoryReqs.size : 0
       const optionalScore = optionalReqs.size > 0 ? optionalMet / optionalReqs.size : 0
       const evaluationScore = mandatoryScore * 0.7 + optionalScore * 0.3
 
@@ -288,17 +282,18 @@ export function SmartCompareTab({
               />
             </label>
             <span className="muted">
-              (Total : {Math.round((customWeights.evaluations + customWeights.reviews + customWeights.price) * 10) / 10}
+              (Total :{' '}
+              {Math.round(
+                (customWeights.evaluations + customWeights.reviews + customWeights.price) * 10
+              ) / 10}
             </span>
           </div>
         ) : null}
 
         {selectedScenario && (
           <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-            {
-              SCENARIO_PRESETS.find((p) => p.id === selectedScenario)?.description ||
-                'Scénario personnalisé'
-            }
+            {SCENARIO_PRESETS.find((p) => p.id === selectedScenario)?.description ||
+              'Scénario personnalisé'}
           </p>
         )}
       </div>
@@ -306,19 +301,31 @@ export function SmartCompareTab({
       {/* Recommandation */}
       {showRecommendation && recommendation.topCandidate && (
         <div className="card smart-recommendation" style={{ boxShadow: 'none' }}>
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div
+            className="row"
+            style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+          >
             <div className="stack" style={{ flex: 1 }}>
               <h3 style={{ margin: 0 }}>💡 Recommandation</h3>
               <div
                 className="smart-recommendation-content"
-                dangerouslySetInnerHTML={{ __html: recommendation.reasoning.replace(/\n\n/g, '<br/><br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
+                dangerouslySetInnerHTML={{
+                  __html: recommendation.reasoning
+                    .replace(/\n\n/g, '<br/><br/>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+                }}
               />
               <div className="row" style={{ gap: '0.5rem', marginTop: '0.5rem' }}>
                 <span
                   className={`badge smart-confidence-${recommendation.confidence}`}
                   style={{ fontSize: '0.85rem' }}
                 >
-                  Confiance : {recommendation.confidence === 'high' ? 'Élevée' : recommendation.confidence === 'medium' ? 'Moyenne' : 'Faible'}
+                  Confiance :{' '}
+                  {recommendation.confidence === 'high'
+                    ? 'Élevée'
+                    : recommendation.confidence === 'medium'
+                      ? 'Moyenne'
+                      : 'Faible'}
                 </span>
                 {consensus.consensus !== 'low' && (
                   <span className="badge" style={{ fontSize: '0.85rem' }}>
@@ -327,7 +334,11 @@ export function SmartCompareTab({
                 )}
               </div>
             </div>
-            <IconActionButton variant="secondary" label="Masquer" onClick={() => setShowRecommendation(false)}>
+            <IconActionButton
+              variant="secondary"
+              label="Masquer"
+              onClick={() => setShowRecommendation(false)}
+            >
               <IconX />
             </IconActionButton>
           </div>
@@ -336,11 +347,7 @@ export function SmartCompareTab({
 
       {!showRecommendation && recommendation.topCandidate && (
         <div className="row" style={{ justifyContent: 'center' }}>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => setShowRecommendation(true)}
-          >
+          <button type="button" className="secondary" onClick={() => setShowRecommendation(true)}>
             Afficher la recommandation
           </button>
         </div>
@@ -367,7 +374,9 @@ export function SmartCompareTab({
                     style={{ justifyContent: 'space-between', alignItems: 'center' }}
                   >
                     <div className="row" style={{ gap: '0.75rem', alignItems: 'center', flex: 1 }}>
-                      <span className={`smart-rank smart-rank--${candidate.rank <= 3 ? 'top' : 'other'}`}>
+                      <span
+                        className={`smart-rank smart-rank--${candidate.rank <= 3 ? 'top' : 'other'}`}
+                      >
                         #{candidate.rank}
                       </span>
                       <div className="stack" style={{ flex: 1, gap: '0.15rem' }}>

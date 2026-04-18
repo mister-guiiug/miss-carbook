@@ -4,12 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useErrorDialog } from '../contexts/ErrorDialogContext'
 import { useToast } from '../contexts/ToastContext'
 import { EmptyState } from './ui/EmptyState'
-import {
-  IconActionButton,
-  IconPlus,
-  IconX,
-  IconDuplicate,
-} from './ui/IconActionButton'
+import { IconActionButton, IconPlus, IconX, IconDuplicate } from './ui/IconActionButton'
 
 type Workspace = {
   id: string
@@ -72,10 +67,7 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
 
   const load = useCallback(async () => {
     const [t, w, p] = await Promise.all([
-      supabase
-        .from('workspace_templates')
-        .select('*')
-        .order('usage_count', { ascending: false }),
+      supabase.from('workspace_templates').select('*').order('usage_count', { ascending: false }),
       supabase
         .from('workspaces')
         .select('id, name, description')
@@ -102,7 +94,9 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
   }, [profiles])
 
   const myTemplates = useMemo(() => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return []
     return templates.filter((t) => t.created_by === user.id)
   }, [templates])
@@ -114,7 +108,9 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
   const createTemplate = async () => {
     if (!templateName.trim() || !sourceWorkspace) return
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error } = await supabase.rpc('create_template_from_workspace', {
@@ -167,33 +163,22 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ margin: 0 }}>Modèles de dossiers</h2>
         {onClose && (
-          <IconActionButton
-            variant="secondary"
-            label="Fermer"
-            onClick={onClose}
-          >
+          <IconActionButton variant="secondary" label="Fermer" onClick={onClose}>
             <IconX />
           </IconActionButton>
         )}
       </div>
 
       <p className="muted" style={{ margin: 0 }}>
-        Créez des modèles à partir de vos dossiers existants pour gagner du temps sur vos futurs projets.
+        Créez des modèles à partir de vos dossiers existants pour gagner du temps sur vos futurs
+        projets.
       </p>
 
       <div className="row" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => setShowCreateForm(true)}
-        >
+        <button type="button" className="primary" onClick={() => setShowCreateForm(true)}>
           <IconPlus /> Créer un modèle
         </button>
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => setShowCreateFromTemplate(true)}
-        >
+        <button type="button" className="secondary" onClick={() => setShowCreateFromTemplate(true)}>
           <IconDuplicate /> Nouveau dossier à partir d'un modèle
         </button>
       </div>
@@ -365,7 +350,10 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
                   style={{ boxShadow: 'none', flex: '1 1 300px', maxWidth: '400px' }}
                 >
                   <div className="stack" style={{ gap: '0.5rem' }}>
-                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div
+                      className="row"
+                      style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+                    >
                       <strong>{t.name}</strong>
                       <span className="badge">Utilisé {t.usage_count}x</span>
                     </div>
@@ -379,7 +367,9 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
                         Par {createdBy?.display_name || 'Vous'}
                       </span>
                       {t.is_public && <span className="badge success">Public</span>}
-                      <span className="badge">{CATEGORIES.find((c) => c.value === t.category)?.label}</span>
+                      <span className="badge">
+                        {CATEGORIES.find((c) => c.value === t.category)?.label}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -406,7 +396,10 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
                     style={{ boxShadow: 'none', flex: '1 1 300px', maxWidth: '400px' }}
                   >
                     <div className="stack" style={{ gap: '0.5rem' }}>
-                      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div
+                        className="row"
+                        style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+                      >
                         <strong>{t.name}</strong>
                         <span className="badge">Utilisé {t.usage_count}x</span>
                       </div>
@@ -419,7 +412,9 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
                         <span className="muted" style={{ fontSize: '0.85rem' }}>
                           Par {createdBy?.display_name || 'Inconnu'}
                         </span>
-                        <span className="badge">{CATEGORIES.find((c) => c.value === t.category)?.label}</span>
+                        <span className="badge">
+                          {CATEGORIES.find((c) => c.value === t.category)?.label}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -3,7 +3,13 @@ import { supabase } from '../../../lib/supabase'
 import { formatCandidateListLabel } from '../../../lib/candidateLabel'
 import { signedUrlForPath } from '../../../lib/storageUpload'
 import { EmptyState } from '../../ui/EmptyState'
-import { IconActionButton, IconX, IconZoomIn, IconZoomOut, IconRotateCw } from '../../ui/IconActionButton'
+import {
+  IconActionButton,
+  IconX,
+  IconZoomIn,
+  IconZoomOut,
+  IconRotateCw,
+} from '../../ui/IconActionButton'
 import './PhotoComparisonGrid.css'
 
 type Candidate = {
@@ -126,32 +132,35 @@ export function PhotoComparisonGrid({
     setPan({ x: 0, y: 0 })
   }, [])
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault()
-        const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
-        setZoom((z) => Math.min(Math.max(z + delta, MIN_ZOOM), MAX_ZOOM))
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
+      setZoom((z) => Math.min(Math.max(z + delta, MIN_ZOOM), MAX_ZOOM))
+    }
+  }, [])
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button === 0 && zoom > DEFAULT_ZOOM) {
+        setIsDragging(true)
+        setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
       }
     },
-    []
+    [zoom, pan]
   )
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 0 && zoom > DEFAULT_ZOOM) {
-      setIsDragging(true)
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
-    }
-  }, [zoom, pan])
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging) {
-      setPan({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      })
-    }
-  }, [isDragging, dragStart])
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDragging) {
+        setPan({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        })
+      }
+    },
+    [isDragging, dragStart]
+  )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -245,14 +254,17 @@ export function PhotoComparisonGrid({
             </div>
           </div>
           <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
-            Utilisez la molette pour zoomer · Clic+glisser pour déplacer · <kbd>+</kbd>/<kbd>-</kbd> pour
-            le zoom · <kbd>0</kbd> pour réinitialiser
+            Utilisez la molette pour zoomer · Clic+glisser pour déplacer · <kbd>+</kbd>/<kbd>-</kbd>{' '}
+            pour le zoom · <kbd>0</kbd> pour réinitialiser
           </p>
         </div>
 
         {/* Contrôles */}
         <div className="photo-comparison-controls card" style={{ boxShadow: 'none' }}>
-          <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="row"
+            style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}
+          >
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="secondary"
@@ -262,7 +274,10 @@ export function PhotoComparisonGrid({
               >
                 <IconZoomOut />
               </IconActionButton>
-              <span className="muted" style={{ minWidth: '3rem', textAlign: 'center', fontSize: '0.9rem' }}>
+              <span
+                className="muted"
+                style={{ minWidth: '3rem', textAlign: 'center', fontSize: '0.9rem' }}
+              >
                 {Math.round(zoom * 100)}%
               </span>
               <IconActionButton
@@ -273,11 +288,7 @@ export function PhotoComparisonGrid({
               >
                 <IconZoomIn />
               </IconActionButton>
-              <IconActionButton
-                variant="secondary"
-                label="Réinitialiser"
-                onClick={handleResetZoom}
-              >
+              <IconActionButton variant="secondary" label="Réinitialiser" onClick={handleResetZoom}>
                 <IconRotateCw />
               </IconActionButton>
             </div>
