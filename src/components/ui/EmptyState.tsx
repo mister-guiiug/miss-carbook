@@ -1,5 +1,12 @@
 interface EmptyStateProps {
-  icon?: 'candidates' | 'comparison' | 'requirements' | 'reminders' | 'notes' | 'activity' | 'search'
+  icon?:
+    | 'candidates'
+    | 'comparison'
+    | 'requirements'
+    | 'reminders'
+    | 'notes'
+    | 'activity'
+    | 'search'
   title: string
   text: string
   action?: React.ReactNode

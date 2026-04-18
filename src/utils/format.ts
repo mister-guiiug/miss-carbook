@@ -5,11 +5,7 @@
 /**
  * Formater un nombre en devise (EUR par défaut)
  */
-export function formatCurrency(
-  amount: number,
-  locale = 'fr-FR',
-  currency = 'EUR'
-): string {
+export function formatCurrency(amount: number, locale = 'fr-FR', currency = 'EUR'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
@@ -30,11 +26,7 @@ export function formatNumber(
 /**
  * Formater un pourcentage
  */
-export function formatPercentage(
-  value: number,
-  decimals = 1,
-  locale = 'fr-FR'
-): string {
+export function formatPercentage(value: number, decimals = 1, locale = 'fr-FR'): string {
   return new Intl.NumberFormat(locale, {
     style: 'percent',
     minimumFractionDigits: decimals,
@@ -45,10 +37,7 @@ export function formatPercentage(
 /**
  * Formater une date en relatif ("il y a 2 heures")
  */
-export function formatRelativeTime(
-  date: Date | string,
-  locale = 'fr-FR'
-): string {
+export function formatRelativeTime(date: Date | string, locale = 'fr-FR'): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000)
@@ -114,7 +103,8 @@ export function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
-    .normalize('NFD').trim()
+    .normalize('NFD')
+    .trim()
     .replace(/\s+/g, '-')
     .replace(/[^\w\-]+/g, '')
     .replace(/\-\-+/g, '-')

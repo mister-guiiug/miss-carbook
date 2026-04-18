@@ -121,10 +121,7 @@ export function useCustomMetric(name: string) {
 /**
  * Mesurer le temps de chargement d'un composant
  */
-export function measureComponentRender(
-  componentName: string,
-  enabled = import.meta.env.DEV
-) {
+export function measureComponentRender(componentName: string, enabled = import.meta.env.DEV) {
   if (!enabled) return () => {}
 
   const start = performance.now()
@@ -133,9 +130,7 @@ export function measureComponentRender(
     const duration = performance.now() - start
 
     if (duration > 100) {
-      console.warn(
-        `[Performance] ${componentName} took ${duration.toFixed(2)}ms to render`
-      )
+      console.warn(`[Performance] ${componentName} took ${duration.toFixed(2)}ms to render`)
     }
 
     if (typeof gtag !== 'undefined') {
@@ -157,14 +152,16 @@ export function measureBundleSize(): void {
   const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
 
   const jsSize = resources
-    .filter(r => r.name.endsWith('.js'))
+    .filter((r) => r.name.endsWith('.js'))
     .reduce((acc, r) => acc + r.transferSize, 0)
 
   const cssSize = resources
-    .filter(r => r.name.endsWith('.css'))
+    .filter((r) => r.name.endsWith('.css'))
     .reduce((acc, r) => acc + r.transferSize, 0)
 
-  console.log(`[Bundle Size] JS: ${(jsSize / 1024).toFixed(2)}KB, CSS: ${(cssSize / 1024).toFixed(2)}KB`)
+  console.log(
+    `[Bundle Size] JS: ${(jsSize / 1024).toFixed(2)}KB, CSS: ${(cssSize / 1024).toFixed(2)}KB`
+  )
 }
 
 /**
@@ -179,9 +176,7 @@ export function useEffectPerformance(effectName: string) {
     const duration = performance.now() - start
 
     if (duration > 50) {
-      console.warn(
-        `[Effect Performance] ${effectName} took ${duration.toFixed(2)}ms`
-      )
+      console.warn(`[Effect Performance] ${effectName} took ${duration.toFixed(2)}ms`)
     }
 
     return cleanup

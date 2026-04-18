@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Navigation basique', () => {
-  test('page d\'accueil se charge', async ({ page }) => {
+  test("page d'accueil se charge", async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveTitle(/./) // N'importe quel titre
   })
@@ -24,16 +24,17 @@ test.describe('Navigation basique', () => {
 })
 
 test.describe('Accessibilité', () => {
-  test('pas d\'erreurs ARIA', async ({ page }) => {
+  test("pas d'erreurs ARIA", async ({ page }) => {
     await page.goto('/')
 
     // Vérifier les attributs ARIA manquants
     const buttons = await page.locator('button').all()
     for (const button of buttons) {
-      const hasLabel = await button.evaluate(el =>
-        el.hasAttribute('aria-label') ||
-        el.hasAttribute('aria-labelledby') ||
-        !!el.textContent?.trim()
+      const hasLabel = await button.evaluate(
+        (el) =>
+          el.hasAttribute('aria-label') ||
+          el.hasAttribute('aria-labelledby') ||
+          !!el.textContent?.trim()
       )
       expect(hasLabel).toBeTruthy()
     }
@@ -59,9 +60,9 @@ test.describe('Performance', () => {
     expect(loadTime).toBeLessThan(3000)
   })
 
-  test('pas d\'erreurs console', async ({ page }) => {
+  test("pas d'erreurs console", async ({ page }) => {
     const errors: string[] = []
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 

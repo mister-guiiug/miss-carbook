@@ -18,18 +18,16 @@ export function ProgressIndicator({
   if (variant === 'compact') {
     return (
       <div className="completion-indicator" data-state={getCompletionState(percentage)}>
-        <svg
-          className="completion-indicator-icon"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
+        <svg className="completion-indicator-icon" viewBox="0 0 16 16" fill="currentColor">
           {percentage === 100 ? (
             <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
           ) : (
             <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
           )}
         </svg>
-        <span>{current}/{total}</span>
+        <span>
+          {current}/{total}
+        </span>
       </div>
     )
   }

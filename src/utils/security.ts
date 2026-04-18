@@ -82,9 +82,10 @@ export function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
   if (!local || !domain) return email
 
-  const maskedLocal = local.length > 2
-    ? local[0] + '*'.repeat(local.length - 2) + local[local.length - 1]
-    : '*'.repeat(local.length)
+  const maskedLocal =
+    local.length > 2
+      ? local[0] + '*'.repeat(local.length - 2) + local[local.length - 1]
+      : '*'.repeat(local.length)
 
   return `${maskedLocal}@${domain}`
 }
@@ -117,7 +118,7 @@ export class RateLimiter {
     const requests = this.requests.get(identifier) || []
 
     // Nettoyer les anciennes requêtes
-    const validRequests = requests.filter(time => now - time < this.windowMs)
+    const validRequests = requests.filter((time) => now - time < this.windowMs)
 
     if (validRequests.length >= this.maxRequests) {
       return false
@@ -137,15 +138,7 @@ export class RateLimiter {
  * Détecter si une requête vient d'un bot (basique)
  */
 export function isBotRequest(userAgent: string): boolean {
-  const botPatterns = [
-    /bot/i,
-    /spider/i,
-    /crawl/i,
-    /curl/i,
-    /wget/i,
-    /python/i,
-    /java/i,
-  ]
+  const botPatterns = [/bot/i, /spider/i, /crawl/i, /curl/i, /wget/i, /python/i, /java/i]
 
-  return botPatterns.some(pattern => pattern.test(userAgent))
+  return botPatterns.some((pattern) => pattern.test(userAgent))
 }
