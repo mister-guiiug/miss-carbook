@@ -437,3 +437,93 @@ export function IconRefresh() {
     </svg>
   )
 }
+
+/** Icône rotation horaire. */
+export function IconRotateCw() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** Icône calculatrice. */
+export function IconCalculator() {
+  return (
+    <svg {...ic} aria-hidden>
+      <rect
+        x="4"
+        y="2"
+        width="16"
+        height="20"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
+      <line x1="8" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="2" />
+      <line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" strokeWidth="2" />
+      <line x1="8" y1="14" x2="10" y2="14" stroke="currentColor" strokeWidth="2" />
+      <line x1="14" y1="14" x2="16" y2="14" stroke="currentColor" strokeWidth="2" />
+      <line x1="8" y1="18" x2="10" y2="18" stroke="currentColor" strokeWidth="2" />
+      <line x1="11" y1="18" x2="13" y2="18" stroke="currentColor" strokeWidth="2" />
+      <line x1="14" y1="18" x2="16" y2="18" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
+/** Icône télécharger. */
+export function IconDownload() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** Icône filtrer. */
+export function IconFilter() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** Icône zoom avant. */
+export function IconZoomIn() {
+  return (
+    <svg {...ic} aria-hidden>
+      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+      <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** Icône zoom arrière. */
+export function IconZoomOut() {
+  return (
+    <svg {...ic} aria-hidden>
+      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+      <path d="M21 21l-4.35-4.35M8 11h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
