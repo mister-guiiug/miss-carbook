@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatCandidateListLabel } from '../../lib/candidateLabel'
 import { formatPriceEur } from '../../lib/formatPrice'
 import { supabase } from '../../lib/supabase'
-import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { CandidateStatus } from '../../types/database'
@@ -182,12 +181,6 @@ export function BudgetTab({ workspaceId, canWrite }: { workspaceId: string; canW
     for (const c of categories) m.set(c.id, c)
     return m
   }, [categories])
-
-  const candidateById = useMemo(() => {
-    const m = new Map<string, Cand>()
-    for (const c of candidates) m.set(c.id, c)
-    return m
-  }, [candidates])
 
   const globalItems = useMemo(() => {
     return items.filter((i) => !i.candidate_id)
@@ -409,7 +402,7 @@ export function BudgetTab({ workspaceId, canWrite }: { workspaceId: string; canW
                     <label>Fréquence</label>
                     <select
                       value={itemFrequency}
-                      onChange={(e) => setItemFrequency(e.target.value as any)}
+                      onChange={(e) => setItemFrequency(e.target.value as 'one_time' | 'monthly' | 'annual' | 'per_km')}
                     >
                       {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>

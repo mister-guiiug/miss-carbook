@@ -110,12 +110,6 @@ export function WeightedVotingTab({
     void load()
   }, [load])
 
-  const profileById = useMemo(() => {
-    const m = new Map<string, Profile>()
-    for (const p of profiles) m.set(p.id, p)
-    return m
-  }, [profiles])
-
   const votingWeightByUserId = useMemo(() => {
     const m = new Map<string, number>()
     for (const vw of votingWeights) m.set(vw.user_id, vw.voting_weight)

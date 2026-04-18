@@ -356,7 +356,7 @@ export function WorkspacePage() {
           <RequirementsTab workspaceId={workspaceId} canWrite={canWrite} />
         ) : null}
         {tab === 'requirementsMatrix' ? (
-          <RequirementsMatrix workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
+          <RequirementsMatrix workspaceId={workspaceId} canWrite={canWrite} />
         ) : null}
         {tab === 'evaluations' ? (
           <EvaluationsTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
@@ -369,7 +369,7 @@ export function WorkspacePage() {
         ) : null}
         {tab === 'compare' ? <CompareTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
         {tab === 'smartCompare' ? (
-          <SmartCompareTab workspaceId={workspaceId} canWrite={canWrite} />
+          <SmartCompareTab workspaceId={workspaceId} />
         ) : null}
         {tab === 'reminders' ? (
           <RemindersTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />

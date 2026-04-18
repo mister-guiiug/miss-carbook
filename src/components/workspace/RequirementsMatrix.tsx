@@ -5,7 +5,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { CandidateStatus, RequirementLevel } from '../../types/database'
 import { EmptyState } from '../ui/EmptyState'
-import { IconActionButton, IconDownload, IconFilter, IconX } from '../ui/IconActionButton'
+import { IconActionButton, IconDownload, IconFilter } from '../ui/IconActionButton'
 
 type Req = {
   id: string
@@ -34,12 +34,6 @@ type EvalRow = {
   note: string
 }
 
-type Vote = {
-  requirement_id: string
-  user_id: string
-  vote: string
-}
-
 const STATUS_VALUES: Record<string, number> = {
   unknown: 0,
   ko: 0,
@@ -66,18 +60,15 @@ type MatrixView = 'full' | 'compact' | 'scores'
 export function RequirementsMatrix({
   workspaceId,
   canWrite,
-  userId,
 }: {
   workspaceId: string
   canWrite: boolean
-  userId: string
 }) {
   const { reportException } = useErrorDialog()
   const { showToast } = useToast()
   const [reqs, setReqs] = useState<Req[]>([])
   const [cands, setCands] = useState<Cand[]>([])
   const [evals, setEvals] = useState<EvalRow[]>([])
-  const [votes, setVotes] = useState<Vote[]>([])
   const [view, setView] = useState<MatrixView>('full')
   const [showFilters, setShowFilters] = useState(false)
 
@@ -87,7 +78,7 @@ export function RequirementsMatrix({
   const [hideToSee, setHideToSee] = useState(false)
 
   const load = useCallback(async () => {
-    const [r, c, e, v] = await Promise.all([
+    const [r, c, e] = await Promise.all([
       supabase
         .from('requirements')
         .select('*')
@@ -103,15 +94,13 @@ export function RequirementsMatrix({
       supabase
         .from('requirement_candidate_evaluations')
         .select('requirement_id, candidate_id, status, note'),
-      supabase.from('requirement_priority_votes').select('requirement_id, user_id, vote'),
     ])
-    const firstErr = r.error ?? c.error ?? e.error ?? v.error
+    const firstErr = r.error ?? c.error ?? e.error
     if (firstErr) reportException(firstErr, 'Chargement de la matrice des exigences')
 
     setReqs((r.data ?? []) as Req[])
     setCands((c.data ?? []) as Cand[])
     setEvals((e.data ?? []) as EvalRow[])
-    setVotes((v.data ?? []) as Vote[])
   }, [workspaceId, reportException])
 
   useEffect(() => {

@@ -145,7 +145,6 @@ export function calculateCompositeScores(
   // Extraire les données pour les calculs de normalisation
   const allPrices = candidates.map((c) => c.price)
   const allAvgReviews = candidates.map((c) => c.avgReviewScore)
-  const allEvaluationScores = candidates.map((c) => c.evaluationScore)
 
   // Calculer les scores pour chaque candidat
   const scored = candidates.map((candidate) => {

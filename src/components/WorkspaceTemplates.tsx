@@ -113,7 +113,7 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
     } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data, error } = await supabase.rpc('create_template_from_workspace', {
+    const { error } = await supabase.rpc('create_template_from_workspace', {
       p_workspace_id: sourceWorkspace,
       p_name: templateName.trim(),
       p_description: templateDesc.trim(),
