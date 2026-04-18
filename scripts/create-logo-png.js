@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename)
 const CAR_SVG_PATH = path.join(__dirname, '../public/unnamed.svg')
 const OUTPUT_PATH = path.join(__dirname, '../public/logo.png')
 const SIZE = 192
+const CAR_SCALE = 0.75 // La voiture prend 75% de l'espace (padding de 25%)
 
 const GRADIENT_COLORS = {
   start: '#0f766e',
@@ -23,8 +24,8 @@ async function createLogo() {
     // 1. Lire le SVG et l'extraire en PNG sans crop
     console.log('   ↓ Conversion SVG → PNG...')
     const carPngBuffer = await sharp(CAR_SVG_PATH)
-      .resize(SIZE, SIZE, {
-        fit: 'contain', // Contain pour ne pas croper
+      .resize(Math.round(SIZE * CAR_SCALE), Math.round(SIZE * CAR_SCALE), {
+        fit: 'contain',
         withoutEnlargement: false,
       })
       .toBuffer()
