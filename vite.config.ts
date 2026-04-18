@@ -129,7 +129,7 @@ export default defineConfig({
       includeAssets: ['logo.png', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
       manifest: {
         name: 'Miss Carbook',
-        short_name: 'Carbook',
+        short_name: 'Miss Carbook',
         description:
           'Carnet collaboratif pour comparer véhicules, exigences et avis — fonctionne hors ligne pour la coque.',
         theme_color: '#0f766e',
