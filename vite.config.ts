@@ -77,6 +77,50 @@ function htmlTrackingPlugin(): Plugin {
 
 export default defineConfig({
   base,
+  build: {
+    sourcemap: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+
+          const norm = id.replace(/\\/g, '/')
+
+          // Séparer React et écosystème
+          if (
+            norm.includes('/react-dom/') ||
+            norm.includes('/node_modules/react/') ||
+            norm.includes('/scheduler/')
+          ) {
+            return 'react-vendor'
+          }
+
+          // Supabase séparé
+          if (norm.includes('/@supabase/')) {
+            return 'supabase'
+          }
+
+          // Router séparé
+          if (norm.includes('/react-router/')) {
+            return 'router'
+          }
+
+          // Charts séparé
+          if (norm.includes('/recharts/')) {
+            return 'charts'
+          }
+
+          // Validation séparée
+          if (norm.includes('/zod/')) {
+            return 'validation'
+          }
+
+          return 'vendor'
+        },
+      },
+    },
+  },
   plugins: [
     htmlTrackingPlugin(),
     react(),
