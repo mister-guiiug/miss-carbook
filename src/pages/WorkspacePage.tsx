@@ -368,9 +368,7 @@ export function WorkspacePage() {
           <CandidatesTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}
         {tab === 'compare' ? <CompareTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
-        {tab === 'smartCompare' ? (
-          <SmartCompareTab workspaceId={workspaceId} />
-        ) : null}
+        {tab === 'smartCompare' ? <SmartCompareTab workspaceId={workspaceId} /> : null}
         {tab === 'reminders' ? (
           <RemindersTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}

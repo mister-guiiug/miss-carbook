@@ -513,7 +513,12 @@ export function IconZoomIn() {
   return (
     <svg {...ic} aria-hidden>
       <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
-      <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M21 21l-4.35-4.35M11 8v6M8 11h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -523,7 +528,12 @@ export function IconZoomOut() {
   return (
     <svg {...ic} aria-hidden>
       <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
-      <path d="M21 21l-4.35-4.35M8 11h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M21 21l-4.35-4.35M8 11h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
