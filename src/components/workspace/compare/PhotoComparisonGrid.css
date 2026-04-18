@@ -1,0 +1,222 @@
+/* Conteneur principal en plein écran */
+.photo-comparison-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+/* Conteneur principal */
+.photo-comparison-container {
+  width: 100%;
+  max-width: 1600px;
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+/* En-tête */
+.photo-comparison-header {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg, #1a1a1a);
+  border-radius: 8px;
+}
+
+.photo-comparison-header h2 {
+  color: var(--text-primary, #ffffff);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* Contrôles */
+.photo-comparison-controls {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: var(--card-bg, #1a1a1a);
+}
+
+/* Grille de photos */
+.photo-comparison-grid {
+  flex: 1;
+  display: grid;
+  gap: 0.5rem;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Grille 2x2 */
+.photo-comparison-grid--2x2 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+/* Grille 1x4 (une ligne) */
+.photo-comparison-grid--1x4 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr;
+}
+
+/* Grille 4x1 (une colonne) */
+.photo-comparison-grid--4x1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, 1fr);
+}
+
+/* Cellule de photo */
+.photo-comparison-cell {
+  background: var(--card-bg, #1a1a1a);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* En-tête de cellule */
+.photo-comparison-cell-header {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.photo-comparison-cell-header strong {
+  color: var(--text-primary, #ffffff);
+  font-size: 0.95rem;
+}
+
+/* Wrapper d'image */
+.photo-comparison-image-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  min-height: 0;
+}
+
+/* Image avec transformation */
+.photo-comparison-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.15s ease-out;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Navigation entre photos */
+.photo-comparison-nav {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 0.25rem;
+  border-radius: 20px;
+}
+
+.photo-comparison-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.photo-comparison-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* États d'image */
+.photo-comparison-empty,
+.photo-comparison-loading,
+.photo-comparison-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: var(--text-muted, #888);
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .photo-comparison-grid--2x2 {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .photo-comparison-grid--1x4 {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .photo-comparison-grid--4x1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  .photo-comparison-header h2 {
+    font-size: 1rem;
+  }
+
+  .photo-comparison-controls {
+    font-size: 0.85rem;
+  }
+
+  .photo-comparison-cell-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Mode impression */
+@media print {
+  .photo-comparison-backdrop {
+    position: static;
+    background: white;
+    padding: 0;
+  }
+
+  .photo-comparison-container {
+    height: auto;
+    max-height: none;
+  }
+
+  .photo-comparison-controls,
+  .photo-comparison-nav {
+    display: none;
+  }
+
+  .photo-comparison-grid {
+    gap: 0.25rem;
+  }
+
+  .photo-comparison-image {
+    max-height: 300px;
+  }
+}

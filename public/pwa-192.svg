@@ -1,51 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="192" height="192" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none">
   <defs>
-    <linearGradient id="mcb192" x1="4" y1="2" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+    <linearGradient id="mcb192-bg" x1="24" y1="12" x2="180" y2="192" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0f766e"/>
       <stop offset="0.5" stop-color="#0d9488"/>
       <stop offset="1" stop-color="#0891b2"/>
     </linearGradient>
-    <linearGradient id="mcb192-hi" x1="16" y1="0" x2="16" y2="16" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffffff" stop-opacity="0.22"/>
+    <linearGradient id="mcb192-hi" x1="96" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
+    <linearGradient id="bookmark-grad-192" x1="156" y1="18" x2="156" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#99f6e4"/>
+    </linearGradient>
+    <filter id="glow-192">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
   </defs>
-  <rect width="32" height="32" rx="8" fill="url(#mcb192)"/>
-  <rect width="32" height="32" rx="8" fill="url(#mcb192-hi)"/>
-  <path
-    d="M7.5 8.5C7.5 7.67 8.17 7 9 7h3.1l1.25 1.4H21c.83 0 1.5.67 1.5 1.5V11H7.5V8.5Z"
-    fill="#ffffff"
-    fill-opacity="0.14"
-  />
-  <path
-    d="M7 11.5c0-.83.67-1.5 1.5-1.5h4.4l.95 1H21c.83 0 1.5.67 1.5 1.5v2.5H7v-3.5Z"
-    fill="#ffffff"
-    fill-opacity="0.1"
-  />
-  <rect x="5" y="18" width="2.85" height="9" rx="1.3" fill="#ecfdf5"/>
-  <rect x="8.85" y="14" width="2.85" height="13" rx="1.3" fill="#f0fdfa"/>
-  <rect x="12.7" y="16" width="2.85" height="11" rx="1.3" fill="#ccfbf1"/>
-  <circle cx="24.4" cy="8.6" r="1.55" fill="#99f6e4" fill-opacity="0.95"/>
-  <circle cx="27.5" cy="11.5" r="1.35" fill="#ccfbf1" fill-opacity="0.85"/>
-  <path
-    d="M25.5 10c.7.42 1.25.98 1.65 1.65"
-    stroke="#ecfeff"
-    stroke-opacity="0.55"
-    stroke-width="1.05"
-    stroke-linecap="round"
-  />
-  <path
-    fill="#f8fafc"
-    d="M15.6 18.35h10.2c.72 0 1.32.52 1.42 1.22l.32 1.65v2.05c0 .38-.3.68-.68.68h-.62a1.55 1.55 0 0 1-3.1 0h-3.1a1.55 1.55 0 0 1-3.1 0h-.52c-.38 0-.68-.3-.68-.68v-2.72c0-.78.48-1.48 1.22-1.72l.62-.2Z"
-  />
-  <path
-    fill="#ecfdf5"
-    d="M17 15.4h7.8c.42 0 .8.26.98.65l1.05 2.05H15l1.05-2.05c.18-.39.56-.65.98-.65Z"
-  />
-  <rect x="19.15" y="16.05" width="2.65" height="2.15" rx="0.45" fill="#0f766e" fill-opacity="0.28"/>
-  <rect x="22.25" y="16.05" width="2.65" height="2.15" rx="0.45" fill="#0f766e" fill-opacity="0.2"/>
-  <circle cx="19.1" cy="24.35" r="1.45" fill="#134e4a"/>
-  <circle cx="25.9" cy="24.35" r="1.45" fill="#134e4a"/>
-  <circle cx="19.1" cy="24.35" r="0.5" fill="#5eead4" fill-opacity="0.5"/>
-  <circle cx="25.9" cy="24.35" r="0.5" fill="#5eead4" fill-opacity="0.5"/>
+
+  <!-- Background -->
+  <rect width="192" height="192" rx="48" fill="url(#mcb192-bg)"/>
+  <rect width="192" height="192" rx="48" fill="url(#mcb192-hi)"/>
+
+  <!-- Bookmark top right -->
+  <path d="M150 18v60l12-12 12 12V18c0-3.3-2.7-6-6-6h-12c-3.3 0-6 2.7-6 6z" fill="url(#bookmark-grad-192)"/>
+  <path d="M162 25v48l-6-6-6 6V25" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Car silhouette - minimalist front view -->
+  <g fill="#ffffff" filter="url(#glow-192)">
+    <!-- Car body outline - rounded top -->
+    <path d="M30 84c0-24 18-42 42-42h48c24 0 42 18 42 42v48H30v-48z"/>
+
+    <!-- Grille - horizontal rectangle -->
+    <rect x="54" y="90" width="84" height="30" rx="6"/>
+
+    <!-- Badge/emblem in center of grille -->
+    <ellipse cx="96" cy="105" rx="18" ry="11"/>
+
+    <!-- Headlights -->
+    <circle cx="42" cy="96" r="9"/>
+    <circle cx="150" cy="96" r="9"/>
+  </g>
+
+  <!-- Lower bumper -->
+  <rect x="60" y="126" width="72" height="6" rx="2" fill="#ffffff" fill-opacity="0.6"/>
+  <rect x="72" y="132" width="48" height="3" rx="1" fill="#ffffff" fill-opacity="0.3"/>
 </svg>
