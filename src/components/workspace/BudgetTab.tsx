@@ -402,7 +402,11 @@ export function BudgetTab({ workspaceId, canWrite }: { workspaceId: string; canW
                     <label>Fréquence</label>
                     <select
                       value={itemFrequency}
-                      onChange={(e) => setItemFrequency(e.target.value as 'one_time' | 'monthly' | 'annual' | 'per_km')}
+                      onChange={(e) =>
+                        setItemFrequency(
+                          e.target.value as 'one_time' | 'monthly' | 'annual' | 'per_km'
+                        )
+                      }
                     >
                       {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>

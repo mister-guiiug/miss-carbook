@@ -12,12 +12,7 @@ import {
   type CandidateEvaluationData,
 } from '../../lib/scoringAlgorithm'
 import { EmptyState } from '../ui/EmptyState'
-import {
-  IconActionButton,
-  IconInfo,
-  IconX,
-  IconRefresh,
-} from '../ui/IconActionButton'
+import { IconActionButton, IconInfo, IconX, IconRefresh } from '../ui/IconActionButton'
 import './SmartCompareTab.css'
 
 type RawCandidate = {
@@ -44,11 +39,7 @@ type ReviewRow = {
   score: number
 }
 
-export function SmartCompareTab({
-  workspaceId,
-}: {
-  workspaceId: string
-}) {
+export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
   const { reportException } = useErrorDialog()
   const [candidates, setCandidates] = useState<RawCandidate[]>([])
   const [evaluations, setEvaluations] = useState<EvaluationRow[]>([])

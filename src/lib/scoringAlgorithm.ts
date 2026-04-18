@@ -44,7 +44,7 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: 'consensus',
     name: 'Consensus groupe',
-    description: 'L\'avis des membres est prépondérant',
+    description: "L'avis des membres est prépondérant",
     weights: { evaluations: 0.3, reviews: 0.6, price: 0.1 },
   },
   {
@@ -90,12 +90,7 @@ export type CandidateScore = CandidateEvaluationData & {
 /**
  * Calcule le score d'une catégorie normalisé entre 0 et 100
  */
-function normalizeScore(
-  value: number,
-  min: number,
-  max: number,
-  invert = false
-): number {
+function normalizeScore(value: number, min: number, max: number, invert = false): number {
   if (max === min) return 50
   const normalized = ((value - min) / (max - min)) * 100
   return invert ? 100 - normalized : normalized
@@ -104,10 +99,7 @@ function normalizeScore(
 /**
  * Calcul du score de prix (inverse : moins cher = meilleur)
  */
-function calculatePriceScore(
-  candidatePrice: number | null,
-  allPrices: (number | null)[]
-): number {
+function calculatePriceScore(candidatePrice: number | null, allPrices: (number | null)[]): number {
   const validPrices = allPrices.filter((p) => p != null && Number.isFinite(p)) as number[]
   if (validPrices.length === 0) return 50 // Pas de données de prix
   if (candidatePrice == null) return 50 // Pas de prix pour ce candidat
@@ -120,10 +112,7 @@ function calculatePriceScore(
 /**
  * Calcul du score des avis membres
  */
-function calculateReviewScore(
-  avgReview: number | null,
-  allAvgReviews: (number | null)[]
-): number {
+function calculateReviewScore(avgReview: number | null, allAvgReviews: (number | null)[]): number {
   const validReviews = allAvgReviews.filter((r) => r != null && Number.isFinite(r)) as number[]
   if (validReviews.length === 0) return 50 // Pas d'avis
   if (avgReview == null) return 50 // Pas d'avis pour ce candidat
@@ -148,12 +137,7 @@ export function calculateCompositeScores(
 
   // Calculer les scores pour chaque candidat
   const scored = candidates.map((candidate) => {
-    const evaluationsScore = normalizeScore(
-      candidate.evaluationScore,
-      0,
-      1,
-      false
-    )
+    const evaluationsScore = normalizeScore(candidate.evaluationScore, 0, 1, false)
 
     const reviewsScore = calculateReviewScore(candidate.avgReviewScore, allAvgReviews)
 
@@ -311,14 +295,10 @@ export function analyzeGroupConsensus(candidates: CandidateScore[]): {
   }
 
   // Calculer la variance des scores de revues
-  const reviewScores = candidates
-    .map((c) => c.scores.reviews)
-    .filter((s) => s !== 50) // 50 = pas de données
+  const reviewScores = candidates.map((c) => c.scores.reviews).filter((s) => s !== 50) // 50 = pas de données
 
   const variance =
-    reviewScores.length > 0
-      ? Math.max(...reviewScores) - Math.min(...reviewScores)
-      : 0
+    reviewScores.length > 0 ? Math.max(...reviewScores) - Math.min(...reviewScores) : 0
 
   let consensus: 'high' | 'medium' | 'low' = 'low'
   if (variance < 15) consensus = 'high'
