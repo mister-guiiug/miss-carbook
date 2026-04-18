@@ -24,6 +24,7 @@ import {
   IconSave,
   IconTable,
 } from '../ui/IconActionButton'
+import { EmptyState } from '../ui/EmptyState'
 
 const CompareTabRadar = lazy(() => import('./CompareTabRadar'))
 
@@ -417,12 +418,11 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           Cartes surlignées = inclus dans la comparaison. Cochez au moins les modèles à comparer.
         </p>
         {candidates.length === 0 && !currentVehicle ? (
-          <div className="empty-state">
-            <p className="muted" style={{ margin: 0 }}>
-              Aucun modèle candidat pour l’instant. Ajoutez des véhicules dans l’onglet{' '}
-              <strong>Modèles</strong> pour les comparer ici.
-            </p>
-          </div>
+          <EmptyState
+            icon="comparison"
+            title="Aucun modèle à comparer"
+            text="Ajoutez des véhicules dans l’onglet Modèles pour les comparer ici."
+          />
         ) : (
           <div className="compare-pick-grid">
             {currentVehicle ? (
