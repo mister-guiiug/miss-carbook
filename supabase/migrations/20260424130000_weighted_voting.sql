@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS public.weighted_requirement_votes (
   UNIQUE (requirement_id, user_id)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_wrv_requirement ON public.weighted_requirement_votes (requirement_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_wrv_user ON public.weighted_requirement_votes (user_id);
+CREATE INDEX IF NOT EXISTS idx_wrv_requirement ON public.weighted_requirement_votes (requirement_id);
+CREATE INDEX IF NOT EXISTS idx_wrv_user ON public.weighted_requirement_votes (user_id);
 
 -- Table for weighted votes on candidates (overall scoring)
 CREATE TABLE IF NOT EXISTS public.weighted_candidate_votes (
@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS public.weighted_candidate_votes (
   UNIQUE (candidate_id, user_id, category)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_wcv_candidate ON public.weighted_candidate_votes (candidate_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_wcv_user ON public.weighted_candidate_votes (user_id);
+CREATE INDEX IF NOT EXISTS idx_wcv_candidate ON public.weighted_candidate_votes (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_wcv_user ON public.weighted_candidate_votes (user_id);
 
 -- Table for user weights (workspace members can have different voting weights)
 CREATE TABLE IF NOT EXISTS public.workspace_voting_weights (
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.workspace_voting_weights (
   PRIMARY KEY (workspace_id, user_id)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_wvw_workspace ON public.workspace_voting_weights (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_wvw_workspace ON public.workspace_voting_weights (workspace_id);
 
 -- Trigger for updated_at on weighted_requirement_votes
 DROP TRIGGER IF EXISTS trg_wrv_updated ON public.weighted_requirement_votes;
