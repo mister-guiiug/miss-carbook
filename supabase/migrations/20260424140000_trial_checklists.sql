@@ -183,7 +183,9 @@ SELECT USING (
     )
   );
 
-DROP POLICY IF EXISTS tci_write ON public.trial_checklist_items FOR ALL USING (
+DROP POLICY IF EXISTS tci_write ON public.trial_checklist_items;
+
+CREATE POLICY tci_write ON public.trial_checklist_items FOR ALL USING (
     EXISTS (
       SELECT 1
       FROM public.trial_checklist_templates t
@@ -262,7 +264,9 @@ SELECT USING (
     )
   );
 
-DROP POLICY IF EXISTS tcir_write ON public.trial_checklist_item_responses FOR ALL USING (
+DROP POLICY IF EXISTS tcir_write ON public.trial_checklist_item_responses;
+
+CREATE POLICY tcir_write ON public.trial_checklist_item_responses FOR ALL USING (
     EXISTS (
       SELECT 1
       FROM public.trial_checklist_completions cc

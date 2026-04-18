@@ -80,7 +80,9 @@ DROP POLICY IF EXISTS bc_select ON public.budget_categories;
 CREATE POLICY bc_select ON public.budget_categories FOR
 SELECT USING (public.is_workspace_member (workspace_id));
 
-DROP POLICY IF EXISTS bc_write ON public.budget_categories FOR ALL
+DROP POLICY IF EXISTS bc_write ON public.budget_categories;
+
+CREATE POLICY bc_write ON public.budget_categories FOR ALL
 USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
@@ -90,7 +92,9 @@ DROP POLICY IF EXISTS bi_select ON public.budget_items;
 CREATE POLICY bi_select ON public.budget_items FOR
 SELECT USING (public.is_workspace_member (workspace_id));
 
-DROP POLICY IF EXISTS bi_write ON public.budget_items FOR ALL
+DROP POLICY IF EXISTS bi_write ON public.budget_items;
+
+CREATE POLICY bi_write ON public.budget_items FOR ALL
 USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
@@ -100,7 +104,9 @@ DROP POLICY IF EXISTS tco_select ON public.tco_parameters;
 CREATE POLICY tco_select ON public.tco_parameters FOR
 SELECT USING (public.is_workspace_member (workspace_id));
 
-DROP POLICY IF EXISTS tco_write ON public.tco_parameters FOR ALL
+DROP POLICY IF EXISTS tco_write ON public.tco_parameters;
+
+CREATE POLICY tco_write ON public.tco_parameters FOR ALL
 USING (public.can_write_workspace (workspace_id))
 WITH CHECK (public.can_write_workspace (workspace_id));
 
