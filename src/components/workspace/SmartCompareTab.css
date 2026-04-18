@@ -1,0 +1,147 @@
+/* Conteneur principal */
+.smart-compare-tab {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Carte de recommandation */
+.smart-recommendation {
+  border: 2px solid var(--accent-color, #4f9);
+  background: linear-gradient(135deg, rgba(79, 153, 255, 0.05) 0%, rgba(79, 153, 255, 0.02) 100%);
+}
+
+.smart-recommendation-content {
+  line-height: 1.6;
+}
+
+.smart-recommendation-content strong {
+  color: var(--text-primary, #ffffff);
+  font-weight: 600;
+}
+
+/* Badge de confiance */
+.smart-confidence-high {
+  background: var(--success-color, #28a745);
+  color: white;
+}
+
+.smart-confidence-medium {
+  background: var(--warning-color, #ffc107);
+  color: #000;
+}
+
+.smart-confidence-low {
+  background: var(--danger-color, #dc3545);
+  color: white;
+}
+
+/* Liste de classement */
+.smart-ranking-list {
+  gap: 0.5rem;
+}
+
+.smart-ranking-card {
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: all 0.2s;
+}
+
+.smart-ranking-card--top {
+  border-color: var(--accent-color, #4f9);
+  background: linear-gradient(135deg, rgba(79, 153, 255, 0.08) 0%, transparent 100%);
+}
+
+.smart-ranking-main {
+  cursor: pointer;
+}
+
+/* Rang */
+.smart-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.smart-rank--top {
+  background: var(--accent-color, #4f9);
+  color: white;
+}
+
+.smart-rank--other {
+  background: var(--border-color, #333);
+  color: var(--text-muted, #888);
+}
+
+/* Détails du classement */
+.smart-ranking-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #333);
+}
+
+/* Barres de score */
+.smart-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.smart-score-bar {
+  display: grid;
+  grid-template-columns: 100px 1fr 40px;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.smart-score-bar label {
+  color: var(--text-muted, #888);
+}
+
+.smart-score-bar-track {
+  height: 8px;
+  background: var(--border-color, #333);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.smart-score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.smart-score-bar-fill--evaluations {
+  background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+}
+
+.smart-score-bar-fill--reviews {
+  background: linear-gradient(90deg, #00b894, #55efc4);
+}
+
+.smart-score-bar-fill--price {
+  background: linear-gradient(90deg, #fdcb6e, #ffeaa7);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .smart-score-bar {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .smart-score-bar span:last-child {
+    text-align: right;
+  }
+
+  .smart-ranking-main {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+}

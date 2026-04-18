@@ -44,6 +44,50 @@ function IconEvaluations() {
   )
 }
 
+function IconRequirementsMatrix() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M3 3h7v7H3V3zm0 11h7v7H3v-7zM14 3h7v7h-7V3zm0 11h7v7h-7v-7z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M3 7h7M3 17h7M14 7h7M14 17h7M7 3v7M7 14v7M17 3v7M17 14v7" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function IconWeightedVoting() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M12 2l3 6-3 6-3-6 3-6z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="14" r="4" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 8v6M8 14h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M5 12l-2 4M19 12l2 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconBudget() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function IconModels() {
   return (
     <svg {...ic} aria-hidden>
@@ -68,6 +112,14 @@ function IconCompare() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+function IconSmartCompare() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -120,10 +172,14 @@ function IconSettings() {
 const MAP: Record<TabId, FC> = {
   notepad: IconNotepad,
   requirements: IconRequirements,
+  requirementsMatrix: IconRequirementsMatrix,
   evaluations: IconEvaluations,
+  weightedVoting: IconWeightedVoting,
   candidates: IconModels,
   compare: IconCompare,
+  smartCompare: IconSmartCompare,
   reminders: IconReminders,
+  budget: IconBudget,
   activity: IconActivity,
   settings: IconSettings,
 }

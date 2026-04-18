@@ -1540,6 +1540,82 @@ th {
   font-size: 0.75rem;
 }
 
+.requirements-matrix {
+  font-size: 0.85rem;
+}
+
+.requirements-matrix-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.requirements-matrix-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.requirements-matrix-table th,
+.requirements-matrix-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.requirements-matrix-table th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.requirements-matrix-table--compact th,
+.requirements-matrix-table--compact td {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.requirements-matrix-table--compact .badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.requirements-matrix-table tr:hover td {
+  background: var(--bg-secondary);
+}
+
+.status-select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.status-select--unknown {
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+}
+
+.status-select--ko {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.status-select--partial {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.status-select--success {
+  background: var(--success-light);
+  color: var(--success);
+}
+
 .print-only {
   display: none;
 }

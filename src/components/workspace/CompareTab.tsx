@@ -20,11 +20,13 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import {
   IconActionButton,
   IconJson,
+  IconPhoto,
   IconPrinter,
   IconSave,
   IconTable,
 } from '../ui/IconActionButton'
 import { EmptyState } from '../ui/EmptyState'
+import { PhotoComparisonGrid } from './compare/PhotoComparisonGrid'
 
 const CompareTabRadar = lazy(() => import('./CompareTabRadar'))
 
@@ -135,6 +137,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
   )
   const [presets, setPresets] = useState<Preset[]>([])
   const [presetName, setPresetName] = useState('')
+  const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
   const compareCriteriaBootstrappedWs = useRef<string | null>(null)
 
@@ -494,6 +497,14 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       <div className="row no-print icon-action-toolbar">
         <IconActionButton
           variant="secondary"
+          label="Comparer les photos"
+          onClick={() => setShowPhotoComparison(true)}
+          disabled={picked.length < 2}
+        >
+          <IconPhoto />
+        </IconActionButton>
+        <IconActionButton
+          variant="secondary"
           label="Exporter la comparaison en JSON"
           onClick={exportJson}
           disabled={!tableRows.length}
@@ -574,6 +585,14 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           </p>
         )}
       </div>
+
+      {showPhotoComparison ? (
+        <PhotoComparisonGrid
+          workspaceId={workspaceId}
+          selectedCandidates={picked}
+          onClose={() => setShowPhotoComparison(false)}
+        />
+      ) : null}
     </div>
   )
 }

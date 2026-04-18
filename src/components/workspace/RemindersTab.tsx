@@ -16,8 +16,10 @@ import {
   IconRotateCcw,
   IconTrash,
   IconX,
+  IconClipboard,
 } from '../ui/IconActionButton'
 import { EmptyState } from '../ui/EmptyState'
+import { TrialChecklist } from './TrialChecklist'
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return ''
@@ -125,9 +127,11 @@ function isOverdue(iso: string | null): boolean {
 export function RemindersTab({
   workspaceId,
   canWrite,
+  userId,
 }: {
   workspaceId: string
   canWrite: boolean
+  userId: string
 }) {
   const { reportException } = useErrorDialog()
   const { showToast } = useToast()
@@ -167,6 +171,7 @@ export function RemindersTab({
   const [candidateFilter, setCandidateFilter] = useState('all')
   const [showAddReminder, setShowAddReminder] = useState(false)
   const [showAddVisit, setShowAddVisit] = useState(false)
+  const [checklistVisit, setChecklistVisit] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const [rem, vs, cand] = await Promise.all([
@@ -958,6 +963,13 @@ export function RemindersTab({
                       ) : null}
                     </div>
                     <div className="row icon-action-toolbar">
+                      <IconActionButton
+                        variant="secondary"
+                        label="Checklist d'essai"
+                        onClick={() => setChecklistVisit(v.id)}
+                      >
+                        <IconClipboard />
+                      </IconActionButton>
                       {canWrite ? (
                         <IconActionButton
                           variant="danger"
@@ -1213,6 +1225,42 @@ export function RemindersTab({
           </div>
         </div>
       ) : null}
+
+      {checklistVisit && (
+        <div
+          className="error-dialog-backdrop"
+          role="presentation"
+          onClick={() => setChecklistVisit(null)}
+        >
+          <div
+            className="error-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="checklist-dialog-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 id="checklist-dialog-title" className="error-dialog-title" style={{ margin: 0 }}>
+                Checklist d'essai
+              </h2>
+              <IconActionButton
+                variant="secondary"
+                label="Fermer"
+                onClick={() => setChecklistVisit(null)}
+              >
+                <IconX />
+              </IconActionButton>
+            </div>
+            <TrialChecklist
+              workspaceId={workspaceId}
+              visitId={checklistVisit}
+              canWrite={canWrite}
+              userId={userId}
+              onClose={() => setChecklistVisit(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

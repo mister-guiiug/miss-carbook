@@ -8,11 +8,15 @@ import { WorkspaceOnboarding } from '../components/WorkspaceOnboarding'
 import { WorkspaceSearchModal } from '../components/WorkspaceSearchModal'
 import { NotepadTab } from '../components/workspace/NotepadTab'
 import { RequirementsTab } from '../components/workspace/RequirementsTab'
+import { RequirementsMatrix } from '../components/workspace/RequirementsMatrix'
 import { EvaluationsTab } from '../components/workspace/EvaluationsTab'
+import { WeightedVotingTab } from '../components/workspace/WeightedVotingTab'
 import { CandidatesTab } from '../components/workspace/CandidatesTab'
 import { CompareTab } from '../components/workspace/CompareTab'
+import { SmartCompareTab } from '../components/workspace/SmartCompareTab'
 import { ActivityTab } from '../components/workspace/ActivityTab'
 import { RemindersTab } from '../components/workspace/RemindersTab'
+import { BudgetTab } from '../components/workspace/BudgetTab'
 import { SettingsTab } from '../components/workspace/SettingsTab'
 import {
   WORKSPACE_ACTIVITY_TAB_TITLE,
@@ -351,16 +355,24 @@ export function WorkspacePage() {
         {tab === 'requirements' ? (
           <RequirementsTab workspaceId={workspaceId} canWrite={canWrite} />
         ) : null}
+        {tab === 'requirementsMatrix' ? (
+          <RequirementsMatrix workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
+        ) : null}
         {tab === 'evaluations' ? (
           <EvaluationsTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
+        ) : null}
+        {tab === 'weightedVoting' ? (
+          <WeightedVotingTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}
         {tab === 'candidates' ? (
           <CandidatesTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}
         {tab === 'compare' ? <CompareTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
+        {tab === 'smartCompare' ? <SmartCompareTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
         {tab === 'reminders' ? (
-          <RemindersTab workspaceId={workspaceId} canWrite={canWrite} />
+          <RemindersTab workspaceId={workspaceId} canWrite={canWrite} userId={user.id} />
         ) : null}
+        {tab === 'budget' ? <BudgetTab workspaceId={workspaceId} canWrite={canWrite} /> : null}
         {tab === 'activity' ? <ActivityTab workspaceId={workspaceId} /> : null}
         {tab === 'settings' ? (
           <SettingsTab
