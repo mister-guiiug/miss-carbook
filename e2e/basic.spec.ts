@@ -11,7 +11,7 @@ test.describe('Navigation basique', () => {
     await expect(page).toHaveTitle(/./) // N'importe quel titre
   })
 
-  test('navigation responsive', async ({ page, viewport }) => {
+  test('navigation responsive', async ({ page }) => {
     // Test mobile
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/')

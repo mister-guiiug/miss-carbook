@@ -46,7 +46,7 @@ export function initSentry(config: SentryConfig): void {
     replaysOnErrorSampleRate: config.replaysOnErrorSampleRate,
 
     // Filter out sensitive data
-    beforeSend(event, hint) {
+    beforeSend(event) {
       // Don't send events in development
       if (config.environment === 'development') {
         console.warn('Sentry event:', event)
@@ -74,7 +74,7 @@ export function initSentry(config: SentryConfig): void {
 /**
  * Envoyer une erreur manuellement à Sentry
  */
-export function captureException(error: Error, context?: Record<string, any>): void {
+export function captureException(error: Error, context?: Record<string, unknown>): void {
   Sentry.withScope((scope) => {
     if (context) {
       Object.entries(context).forEach(([key, value]) => {

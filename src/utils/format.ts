@@ -106,6 +106,6 @@ export function slugify(text: string): string {
     .normalize('NFD')
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/-+/g, '-')
 }

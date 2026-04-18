@@ -3,7 +3,7 @@
  * Compatible avec tous les projets React
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
 export function useLocalStorage<T>(
   key: string,
