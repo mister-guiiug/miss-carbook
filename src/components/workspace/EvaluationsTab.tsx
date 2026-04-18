@@ -205,10 +205,10 @@ export function EvaluationsTab({
         title="Matrice d’évaluation non disponible"
         text={
           !reqs.length && !cands.length
-            ? "Ajoutez des exigences (onglet Exigences) et des modèles (onglet Modèles) pour remplir la matrice d’évaluation."
+            ? 'Ajoutez des exigences (onglet Exigences) et des modèles (onglet Modèles) pour remplir la matrice d’évaluation.'
             : !reqs.length
-              ? "Ajoutez des exigences (onglet Exigences) pour remplir la matrice d’évaluation."
-              : "Ajoutez des modèles (onglet Modèles) pour remplir la matrice d’évaluation."
+              ? 'Ajoutez des exigences (onglet Exigences) pour remplir la matrice d’évaluation.'
+              : 'Ajoutez des modèles (onglet Modèles) pour remplir la matrice d’évaluation.'
         }
       />
     )

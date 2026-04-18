@@ -9,7 +9,7 @@ test.describe(' miss-carbook - Fonctionnalités critiques', () => {
     await page.goto('/')
   })
 
-  test('page d\'accueil se charge correctement', async ({ page }) => {
+  test("page d'accueil se charge correctement", async ({ page }) => {
     await expect(page.locator('h1, h2, .app-shell')).toBeVisible()
   })
 
@@ -46,9 +46,9 @@ test.describe(' miss-carbook - Fonctionnalités critiques', () => {
     expect(loadTime).toBeLessThan(4000)
   })
 
-  test('pas d\'erreurs console', async ({ page }) => {
+  test("pas d'erreurs console", async ({ page }) => {
     const errors: string[] = []
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
@@ -79,7 +79,7 @@ test.describe(' miss-carbook - Fonctionnalités critiques', () => {
   test('gestion des erreurs - composants ErrorBoundary', async ({ page }) => {
     // Tester qu'il n'y a pas d'erreurs React non gérées
     const errors: string[] = []
-    page.on('pageerror', error => errors.push(error.toString()))
+    page.on('pageerror', (error) => errors.push(error.toString()))
 
     await page.goto('/')
     await page.waitForLoadState('networkidle')
@@ -91,7 +91,9 @@ test.describe(' miss-carbook - Fonctionnalités critiques', () => {
     await page.goto('/')
 
     // Trouver le bouton de thème s'il existe
-    const themeButton = page.locator('[aria-label*="thème"], [aria-label*="theme"], button:has-text("Thème")').first()
+    const themeButton = page
+      .locator('[aria-label*="thème"], [aria-label*="theme"], button:has-text("Thème")')
+      .first()
 
     if (await themeButton.isVisible()) {
       await themeButton.click()
@@ -135,7 +137,9 @@ test.describe('miss-carbook - Formulaires et validation', () => {
       await page.click('button[type="submit"], button:has-text("Sauvegarder")')
 
       // Devrait afficher une erreur de validation
-      await expect(page.locator('text=invalid, text=incorrect, text=erreur, [role="alert"]')).toBeVisible()
+      await expect(
+        page.locator('text=invalid, text=incorrect, text=erreur, [role="alert"]')
+      ).toBeVisible()
     }
   })
 })

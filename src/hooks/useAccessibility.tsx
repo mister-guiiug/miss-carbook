@@ -2,7 +2,7 @@
  * Hooks et utilitaires d'accessibilité pour React
  */
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 
 /**
  * Hook pour gérer les modales avec trap focus
@@ -22,9 +22,7 @@ export function useFocusTrap(isActive: boolean) {
       const modal = trappedRef.current
       if (!modal) return
 
-      const focusable = Array.from(
-        modal.querySelectorAll(focusableElements)
-      ) as HTMLElement[]
+      const focusable = Array.from(modal.querySelectorAll(focusableElements)) as HTMLElement[]
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
 
