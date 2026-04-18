@@ -130,7 +130,10 @@ export function WeightedVotingTab({
     if (!canWrite) return
     const { error } = await supabase
       .from('weighted_requirement_votes')
-      .upsert({ requirement_id: requirementId, user_id: userId, weight }, { onConflict: 'requirement_id,user_id' })
+      .upsert(
+        { requirement_id: requirementId, user_id: userId, weight },
+        { onConflict: 'requirement_id,user_id' }
+      )
     if (error) reportException(error, 'Mise à jour du vote pondéré')
     else {
       await load()
@@ -142,7 +145,10 @@ export function WeightedVotingTab({
     if (!canWrite) return
     const { error } = await supabase
       .from('weighted_candidate_votes')
-      .upsert({ candidate_id: candidateId, user_id: userId, category, weight }, { onConflict: 'candidate_id,user_id,category' })
+      .upsert(
+        { candidate_id: candidateId, user_id: userId, category, weight },
+        { onConflict: 'candidate_id,user_id,category' }
+      )
     if (error) reportException(error, 'Mise à jour du vote pondéré')
     else {
       await load()
@@ -170,7 +176,9 @@ export function WeightedVotingTab({
     for (const cand of cands) {
       let totalWeight = 0
       let weightedSum = 0
-      for (const vote of candVotes.filter((v) => v.candidate_id === cand.id && v.category === categoryFilter)) {
+      for (const vote of candVotes.filter(
+        (v) => v.candidate_id === cand.id && v.category === categoryFilter
+      )) {
         const userWeight = votingWeightByUserId.get(vote.user_id) ?? 1
         totalWeight += userWeight
         weightedSum += vote.weight * userWeight
@@ -188,7 +196,8 @@ export function WeightedVotingTab({
 
   const myCandVotes = useMemo(() => {
     const m = new Map<string, number>()
-    for (const v of candVotes.filter((v) => v.user_id === userId && v.category === categoryFilter)) m.set(v.candidate_id, v.weight)
+    for (const v of candVotes.filter((v) => v.user_id === userId && v.category === categoryFilter))
+      m.set(v.candidate_id, v.weight)
     return m
   }, [candVotes, userId, categoryFilter])
 
@@ -205,7 +214,8 @@ export function WeightedVotingTab({
   return (
     <div className="stack weighted-voting-tab">
       <p className="muted" style={{ margin: 0 }}>
-        Attribuez des poids à vos votes. Les membres avec un poids de vote plus élevé ont plus d'influence sur le score final.
+        Attribuez des poids à vos votes. Les membres avec un poids de vote plus élevé ont plus
+        d'influence sur le score final.
       </p>
 
       <div className="card" style={{ boxShadow: 'none', padding: '0.5rem 1rem' }}>
@@ -257,7 +267,8 @@ export function WeightedVotingTab({
             <div className="card stack" style={{ boxShadow: 'none' }}>
               <h4 style={{ margin: 0 }}>Votes pondérés par exigence</h4>
               <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
-                Attribuez un poids de 0 à 10 pour chaque exigence. Le score final est calculé en pondérant les votes de tous les membres.
+                Attribuez un poids de 0 à 10 pour chaque exigence. Le score final est calculé en
+                pondérant les votes de tous les membres.
               </p>
             </div>
 
@@ -267,7 +278,15 @@ export function WeightedVotingTab({
                 const finalScore = weightedReqScores[req.id] ?? 0
                 return (
                   <div key={req.id} className="card" style={{ boxShadow: 'none' }}>
-                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div
+                      className="row"
+                      style={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                      }}
+                    >
                       <div style={{ flex: 1 }}>
                         <span className={`badge ${req.level}`}>
                           {req.level === 'mandatory' ? 'Obl.' : 'Disc.'}
@@ -276,7 +295,11 @@ export function WeightedVotingTab({
                       </div>
                       <div className="row" style={{ alignItems: 'center', gap: '1rem' }}>
                         <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
-                          <label htmlFor={`req-vote-${req.id}`} className="muted" style={{ fontSize: '0.85rem' }}>
+                          <label
+                            htmlFor={`req-vote-${req.id}`}
+                            className="muted"
+                            style={{ fontSize: '0.85rem' }}
+                          >
                             Votre vote :
                           </label>
                           <input
@@ -290,13 +313,21 @@ export function WeightedVotingTab({
                             onChange={(e) => void setReqVote(req.id, parseFloat(e.target.value))}
                             style={{ width: '120px' }}
                           />
-                          <span className="badge" style={{ minWidth: '2.5rem', textAlign: 'center' }}>
+                          <span
+                            className="badge"
+                            style={{ minWidth: '2.5rem', textAlign: 'center' }}
+                          >
                             {myVote}
                           </span>
                         </div>
                         <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="muted" style={{ fontSize: '0.85rem' }}>Score final :</span>
-                          <span className="badge success" style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}>
+                          <span className="muted" style={{ fontSize: '0.85rem' }}>
+                            Score final :
+                          </span>
+                          <span
+                            className="badge success"
+                            style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}
+                          >
                             {finalScore.toFixed(1)}
                           </span>
                         </div>
@@ -318,7 +349,10 @@ export function WeightedVotingTab({
         ) : (
           <div className="stack">
             <div className="card stack" style={{ boxShadow: 'none' }}>
-              <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                className="row"
+                style={{ justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <h4 style={{ margin: 0 }}>Votes pondérés par modèle</h4>
                 <select
                   value={categoryFilter}
@@ -341,16 +375,29 @@ export function WeightedVotingTab({
               {cands.map((cand) => {
                 const myVote = myCandVotes.get(cand.id) ?? 5
                 const finalScore = weightedCandScores[cand.id] ?? 0
-                const categoryLabel = CATEGORIES.find((c) => c.value === categoryFilter)?.label ?? categoryFilter
+                const categoryLabel =
+                  CATEGORIES.find((c) => c.value === categoryFilter)?.label ?? categoryFilter
                 return (
                   <div key={cand.id} className="card" style={{ boxShadow: 'none' }}>
-                    <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div
+                      className="row"
+                      style={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '1rem',
+                      }}
+                    >
                       <div style={{ flex: 1 }}>
                         <strong>{formatCandidateListLabel(cand)}</strong>
                       </div>
                       <div className="row" style={{ alignItems: 'center', gap: '1rem' }}>
                         <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
-                          <label htmlFor={`cand-vote-${cand.id}`} className="muted" style={{ fontSize: '0.85rem' }}>
+                          <label
+                            htmlFor={`cand-vote-${cand.id}`}
+                            className="muted"
+                            style={{ fontSize: '0.85rem' }}
+                          >
                             Votre vote ({categoryLabel}) :
                           </label>
                           <input
@@ -361,16 +408,26 @@ export function WeightedVotingTab({
                             step="0.5"
                             value={myVote}
                             disabled={!canWrite}
-                            onChange={(e) => void setCandVote(cand.id, categoryFilter, parseFloat(e.target.value))}
+                            onChange={(e) =>
+                              void setCandVote(cand.id, categoryFilter, parseFloat(e.target.value))
+                            }
                             style={{ width: '120px' }}
                           />
-                          <span className="badge" style={{ minWidth: '2.5rem', textAlign: 'center' }}>
+                          <span
+                            className="badge"
+                            style={{ minWidth: '2.5rem', textAlign: 'center' }}
+                          >
                             {myVote}
                           </span>
                         </div>
                         <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="muted" style={{ fontSize: '0.85rem' }}>Score final :</span>
-                          <span className="badge success" style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}>
+                          <span className="muted" style={{ fontSize: '0.85rem' }}>
+                            Score final :
+                          </span>
+                          <span
+                            className="badge success"
+                            style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}
+                          >
                             {finalScore.toFixed(1)}
                           </span>
                         </div>
@@ -387,7 +444,8 @@ export function WeightedVotingTab({
           <div className="card stack" style={{ boxShadow: 'none' }}>
             <h4 style={{ margin: 0 }}>Poids de vote des membres</h4>
             <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
-              Les administrateurs peuvent modifier le poids de vote de chaque membre. Par défaut, tous les membres ont un poids de 1.
+              Les administrateurs peuvent modifier le poids de vote de chaque membre. Par défaut,
+              tous les membres ont un poids de 1.
             </p>
           </div>
 
@@ -396,18 +454,29 @@ export function WeightedVotingTab({
               const weight = votingWeightByUserId.get(profile.id) ?? 1
               return (
                 <div key={profile.id} className="card" style={{ boxShadow: 'none' }}>
-                  <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    className="row"
+                    style={{ justifyContent: 'space-between', alignItems: 'center' }}
+                  >
                     <div>
                       <strong>{profile.display_name}</strong>
                       {profile.id === userId ? (
-                        <span className="muted" style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>
+                        <span
+                          className="muted"
+                          style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}
+                        >
                           (vous)
                         </span>
                       ) : null}
                     </div>
                     <div className="row" style={{ alignItems: 'center', gap: '0.5rem' }}>
-                      <span className="muted" style={{ fontSize: '0.85rem' }}>Poids :</span>
-                      <span className="badge" style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}>
+                      <span className="muted" style={{ fontSize: '0.85rem' }}>
+                        Poids :
+                      </span>
+                      <span
+                        className="badge"
+                        style={{ fontSize: '1rem', padding: '0.35rem 0.75rem' }}
+                      >
                         {weight}x
                       </span>
                     </div>

@@ -78,7 +78,13 @@ interface TrialChecklistProps {
   onClose?: () => void
 }
 
-export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose }: TrialChecklistProps) {
+export function TrialChecklist({
+  workspaceId,
+  visitId,
+  canWrite,
+  userId,
+  onClose,
+}: TrialChecklistProps) {
   const { reportException } = useErrorDialog()
   const { showToast } = useToast()
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
@@ -102,10 +108,7 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false }),
       supabase.from('trial_checklist_items').select('*').order('sort_order', { ascending: true }),
-      supabase
-        .from('trial_checklist_completions')
-        .select('*')
-        .eq('visit_id', visitId),
+      supabase.from('trial_checklist_completions').select('*').eq('visit_id', visitId),
       supabase.from('trial_checklist_item_responses').select('*'),
     ])
 
@@ -191,7 +194,7 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
       category: newItemCategory,
       sort_order: templateItems.length,
     })
-    if (error) reportException(error, 'Ajout de l\'élément')
+    if (error) reportException(error, "Ajout de l'élément")
     else {
       setNewItemLabel('')
       await load()
@@ -202,7 +205,7 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
   const deleteItem = async (itemId: string) => {
     if (!canWrite) return
     const { error } = await supabase.from('trial_checklist_items').delete().eq('id', itemId)
-    if (error) reportException(error, 'Suppression de l\'élément')
+    if (error) reportException(error, "Suppression de l'élément")
     else await load()
   }
 
@@ -305,17 +308,13 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="secondary"
-                label={showTemplateEditor ? 'Fermer l\'éditeur' : 'Éditer les modèles'}
+                label={showTemplateEditor ? "Fermer l'éditeur" : 'Éditer les modèles'}
                 onClick={() => setShowTemplateEditor((v) => !v)}
               >
                 {showTemplateEditor ? <IconX /> : <IconPencil />}
               </IconActionButton>
               {!showTemplateEditor && onClose && (
-                <IconActionButton
-                  variant="secondary"
-                  label="Fermer"
-                  onClick={onClose}
-                >
+                <IconActionButton variant="secondary" label="Fermer" onClick={onClose}>
                   <IconX />
                 </IconActionButton>
               )}
@@ -418,10 +417,19 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
                             <div
                               key={item.id}
                               className="row"
-                              style={{ justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}
+                              style={{
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '0.25rem 0.5rem',
+                                background: 'var(--bg-secondary)',
+                                borderRadius: '4px',
+                              }}
                             >
                               <span className="muted" style={{ fontSize: '0.85rem' }}>
-                                <span className={`badge ${cat?.color ?? 'muted'}`} style={{ fontSize: '0.7rem', marginRight: '0.5rem' }}>
+                                <span
+                                  className={`badge ${cat?.color ?? 'muted'}`}
+                                  style={{ fontSize: '0.7rem', marginRight: '0.5rem' }}
+                                >
                                   {cat?.label ?? item.category}
                                 </span>
                                 {item.label}
@@ -488,15 +496,35 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
 
       {selectedTemplate && !showTemplateEditor && myCompletion && (
         <div className="card stack" style={{ boxShadow: 'none' }}>
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="row"
+            style={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
             <div>
               <h4 style={{ margin: 0 }}>Progression</h4>
               <div className="muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                {templateItems.filter((i) => myResponses.has(i.id)).length} / {templateItems.length} vérifiés
+                {templateItems.filter((i) => myResponses.has(i.id)).length} / {templateItems.length}{' '}
+                vérifiés
               </div>
             </div>
-            <div className="stack" style={{ alignItems: 'flex-end', gap: '0.25rem', width: '150px' }}>
-              <div style={{ height: '8px', width: '100%', background: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div
+              className="stack"
+              style={{ alignItems: 'flex-end', gap: '0.25rem', width: '150px' }}
+            >
+              <div
+                style={{
+                  height: '8px',
+                  width: '100%',
+                  background: 'var(--bg-secondary)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                }}
+              >
                 <div
                   style={{
                     height: '100%',
@@ -506,7 +534,9 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
                   }}
                 />
               </div>
-              <span className="muted" style={{ fontSize: '0.85rem' }}>{completionProgress.toFixed(0)}%</span>
+              <span className="muted" style={{ fontSize: '0.85rem' }}>
+                {completionProgress.toFixed(0)}%
+              </span>
             </div>
           </div>
 
@@ -532,14 +562,19 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
         </div>
       )}
 
-      {selectedTemplate && !showTemplateEditor && myCompletion && Object.keys(groupedItems).length > 0 ? (
+      {selectedTemplate &&
+      !showTemplateEditor &&
+      myCompletion &&
+      Object.keys(groupedItems).length > 0 ? (
         <div className="stack">
           {Object.entries(groupedItems).map(([category, items]) => {
             const catInfo = CATEGORIES.find((c) => c.value === category)
             return (
               <div key={category} className="card stack" style={{ boxShadow: 'none' }}>
                 <h4 style={{ margin: 0 }}>
-                  <span className={`badge ${catInfo?.color ?? 'muted'}`}>{catInfo?.label ?? category}</span>
+                  <span className={`badge ${catInfo?.color ?? 'muted'}`}>
+                    {catInfo?.label ?? category}
+                  </span>
                 </h4>
                 <div className="stack" style={{ gap: '0.5rem', marginTop: '0.5rem' }}>
                   {items.map((item) => {
@@ -555,7 +590,14 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
                           padding: '0.75rem',
                         }}
                       >
-                        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                        <div
+                          className="row"
+                          style={{
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: '1rem',
+                          }}
+                        >
                           <div style={{ flex: 1 }}>
                             <strong>{item.label}</strong>
                             <div className="row" style={{ gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -571,7 +613,10 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
                                     fontSize: '0.85rem',
                                     borderRadius: '4px',
                                     border: '1px solid var(--border)',
-                                    background: status === s ? `var(--${STATUS_COLORS[s]})` : 'var(--surface)',
+                                    background:
+                                      status === s
+                                        ? `var(--${STATUS_COLORS[s]})`
+                                        : 'var(--surface)',
                                     color: status === s ? '#fff' : 'var(--text)',
                                     cursor: canWrite ? 'pointer' : 'not-allowed',
                                     opacity: status === s ? 1 : 0.7,
@@ -591,7 +636,9 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
                           </div>
                           {status !== 'pending' && (
                             <span className={`badge ${STATUS_COLORS[status]}`}>
-                              <IconCheck style={{ width: 14, height: 14, marginRight: '0.25rem' }} />
+                              <IconCheck
+                                style={{ width: 14, height: 14, marginRight: '0.25rem' }}
+                              />
                               {STATUS_LABELS[status]}
                             </span>
                           )}
@@ -625,10 +672,7 @@ export function TrialChecklist({ workspaceId, visitId, canWrite, userId, onClose
           />
           {canWrite && (
             <div className="row icon-action-toolbar">
-              <button
-                type="button"
-                onClick={() => void saveCompletionNotes()}
-              >
+              <button type="button" onClick={() => void saveCompletionNotes()}>
                 Enregistrer les notes
               </button>
             </div>

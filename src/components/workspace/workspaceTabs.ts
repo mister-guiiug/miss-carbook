@@ -1,17 +1,17 @@
 export const WORKSPACE_TABS = [
-  { id: ‘notepad’, label: ‘Bloc-notes’ },
-  { id: ‘requirements’, label: ‘Exigences’ },
-  { id: ‘requirementsMatrix’, label: ‘Matrice exigences’ },
-  { id: ‘evaluations’, label: ‘Évaluations’ },
-  { id: ‘weightedVoting’, label: ‘Votes pondérés’ },
-  { id: ‘candidates’, label: ‘Modèles’ },
-  { id: ‘compare’, label: ‘Comparer’ },
-  { id: ‘smartCompare’, label: ‘Assistant’ },
-  /** Visites (historique) + rappels à faire / faits — même onglet dans l’UI. */
-  { id: ‘reminders’, label: ‘Visites et rappels’ },
-  { id: ‘budget’, label: ‘Budget et TCO’ },
-  { id: ‘activity’, label: ‘Activité’ },
-  { id: ‘settings’, label: ‘Réglages’ },
+  { id: 'notepad', label: 'Bloc-notes' },
+  { id: 'requirements', label: 'Exigences' },
+  { id: 'requirementsMatrix', label: 'Matrice exigences' },
+  { id: 'evaluations', label: 'Évaluations' },
+  { id: 'weightedVoting', label: 'Votes pondérés' },
+  { id: 'candidates', label: 'Modèles' },
+  { id: 'compare', label: 'Comparer' },
+  { id: 'smartCompare', label: 'Assistant' },
+  /** Visites (historique) + rappels à faire / faits — même onglet dans l'UI. */
+  { id: 'reminders', label: 'Visites et rappels' },
+  { id: 'budget', label: 'Budget et TCO' },
+  { id: 'activity', label: 'Activité' },
+  { id: 'settings', label: 'Réglages' },
 ] as const
 
 export type TabId = (typeof WORKSPACE_TABS)[number]['id']
