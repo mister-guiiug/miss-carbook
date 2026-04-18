@@ -62,7 +62,7 @@ interface ProgressStepsProps {
 export function ProgressSteps({ steps }: ProgressStepsProps) {
   return (
     <div className="progress-steps">
-      {steps.map((step, index) => (
+      {steps.map((step) => (
         <div
           key={step.id}
           className={`progress-step ${step.completed ? 'completed' : ''} ${step.active ? 'active' : ''}`}

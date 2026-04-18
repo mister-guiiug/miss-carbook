@@ -2,7 +2,7 @@
  * Hooks et utilitaires d'accessibilité pour React
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Hook pour gérer les modales avec trap focus
@@ -49,7 +49,7 @@ export function useFocusTrap(isActive: boolean) {
 /**
  * Hook pour gérer le focus quand un élément apparaît
  */
-export function useAutoFocus(dependencies: any[] = []) {
+export function useAutoFocus(dependencies: unknown[] = []) {
   const ref = useRef<HTMLElement>(null)
 
   useEffect(() => {
