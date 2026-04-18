@@ -126,7 +126,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
+      includeAssets: ['logo.png', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
       manifest: {
         name: 'Miss Carbook',
         short_name: 'Carbook',
@@ -141,15 +141,15 @@ export default defineConfig({
         lang: 'fr',
         icons: [
           {
-            src: `${base}pwa-192.svg`,
+            src: `${base}pwa-192.png`,
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: `${base}pwa-512.svg`,
+            src: `${base}pwa-512.png`,
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable',
           },
         ],
