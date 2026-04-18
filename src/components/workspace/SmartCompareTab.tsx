@@ -50,7 +50,6 @@ export function SmartCompareTab({
   workspaceId: string
 }) {
   const { reportException } = useErrorDialog()
-  const { reportException } = useErrorDialog()
   const [candidates, setCandidates] = useState<RawCandidate[]>([])
   const [evaluations, setEvaluations] = useState<EvaluationRow[]>([])
   const [requirements, setRequirements] = useState<Requirement[]>([])

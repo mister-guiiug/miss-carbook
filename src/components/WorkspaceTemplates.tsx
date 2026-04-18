@@ -52,6 +52,7 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
   const [templates, setTemplates] = useState<Template[]>([])
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showCreateFromTemplate, setShowCreateFromTemplate] = useState(false)
 
@@ -66,13 +67,14 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const [t, w, p] = await Promise.all([
+    const [t, w, p, userResp] = await Promise.all([
       supabase.from('workspace_templates').select('*').order('usage_count', { ascending: false }),
       supabase
         .from('workspaces')
         .select('id, name, description')
         .order('created_at', { ascending: false }),
       supabase.from('profiles').select('id, display_name'),
+      supabase.auth.getUser(),
     ])
 
     const firstErr = t.error ?? w.error ?? p.error
@@ -81,6 +83,7 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
     setTemplates((t.data ?? []) as Template[])
     setWorkspaces((w.data ?? []) as Workspace[])
     setProfiles((p.data ?? []) as Profile[])
+    setCurrentUserId(userResp.data.user?.id ?? null)
   }, [reportException])
 
   useEffect(() => {
@@ -94,12 +97,9 @@ export function WorkspaceTemplates({ onClose, onCreateWorkspace }: WorkspaceTemp
   }, [profiles])
 
   const myTemplates = useMemo(() => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return []
-    return templates.filter((t) => t.created_by === user.id)
-  }, [templates])
+    if (!currentUserId) return []
+    return templates.filter((t) => t.created_by === currentUserId)
+  }, [templates, currentUserId])
 
   const publicTemplates = useMemo(() => {
     return templates.filter((t) => t.is_public)

@@ -635,9 +635,9 @@ export function TrialChecklist({
                           </div>
                           {status !== 'pending' && (
                             <span className={`badge ${STATUS_COLORS[status]}`}>
-                              <IconCheck
-                                style={{ width: 14, height: 14, marginRight: '0.25rem' }}
-                              />
+                              <span style={{ width: 14, height: 14, marginRight: '0.25rem', display: 'inline-block' }}>
+                                <IconCheck />
+                              </span>
                               {STATUS_LABELS[status]}
                             </span>
                           )}
