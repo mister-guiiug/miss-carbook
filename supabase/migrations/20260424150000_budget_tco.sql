@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.budget_categories (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_bc_workspace ON public.budget_categories (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_bc_workspace ON public.budget_categories (workspace_id);
 
 -- Table for budget items
 CREATE TABLE IF NOT EXISTS public.budget_items (
@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS public.budget_items (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_bi_workspace ON public.budget_items (workspace_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_bi_category ON public.budget_items (category_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_bi_candidate ON public.budget_items (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_bi_workspace ON public.budget_items (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_bi_category ON public.budget_items (category_id);
+CREATE INDEX IF NOT EXISTS idx_bi_candidate ON public.budget_items (candidate_id);
 
 -- Table for TCO parameters (per workspace or per candidate)
 CREATE TABLE IF NOT EXISTS public.tco_parameters (
@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS public.tco_parameters (
   UNIQUE (workspace_id, candidate_id)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tco_workspace ON public.tco_parameters (workspace_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_tco_candidate ON public.tco_parameters (candidate_id);
+CREATE INDEX IF NOT EXISTS idx_tco_workspace ON public.tco_parameters (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_tco_candidate ON public.tco_parameters (candidate_id);
 
 -- Trigger for updated_at on budget_items
 DROP TRIGGER IF EXISTS trg_bi_updated ON public.budget_items;

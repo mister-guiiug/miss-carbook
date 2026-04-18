@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.trial_checklist_templates (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tct_workspace ON public.trial_checklist_templates (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_tct_workspace ON public.trial_checklist_templates (workspace_id);
 
 -- Table for trial checklist items (within templates)
 CREATE TABLE IF NOT EXISTS public.trial_checklist_items (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.trial_checklist_items (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tci_template ON public.trial_checklist_items (template_id);
+CREATE INDEX IF NOT EXISTS idx_tci_template ON public.trial_checklist_items (template_id);
 
 -- Table for trial checklist completions (linked to visits)
 CREATE TABLE IF NOT EXISTS public.trial_checklist_completions (
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS public.trial_checklist_completions (
   UNIQUE (visit_id, template_id, completed_by)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tcc_visit ON public.trial_checklist_completions (visit_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_tcc_template ON public.trial_checklist_completions (template_id);
+CREATE INDEX IF NOT EXISTS idx_tcc_visit ON public.trial_checklist_completions (visit_id);
+CREATE INDEX IF NOT EXISTS idx_tcc_template ON public.trial_checklist_completions (template_id);
 
 -- Table for trial checklist item responses
 CREATE TABLE IF NOT EXISTS public.trial_checklist_item_responses (
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS public.trial_checklist_item_responses (
   UNIQUE (completion_id, item_id)
 );
 
-CREATE INDEX IF NOT EXISTS EXISTS idx_tcir_completion ON public.trial_checklist_item_responses (completion_id);
-CREATE INDEX IF NOT EXISTS EXISTS idx_tcir_item ON public.trial_checklist_item_responses (item_id);
+CREATE INDEX IF NOT EXISTS idx_tcir_completion ON public.trial_checklist_item_responses (completion_id);
+CREATE INDEX IF NOT EXISTS idx_tcir_item ON public.trial_checklist_item_responses (item_id);
 
 -- Default trial checklist template for new workspaces
 CREATE OR REPLACE FUNCTION public.create_default_trial_checklist (p_workspace_id uuid)
