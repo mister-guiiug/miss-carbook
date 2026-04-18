@@ -17,6 +17,7 @@ import {
   IconTrash,
   IconX,
 } from '../ui/IconActionButton'
+import { EmptyState } from '../ui/EmptyState'
 
 type Req = {
   id: string
@@ -389,18 +390,28 @@ export function RequirementsTab({
       ) : null}
 
       {rows.length === 0 ? (
-        <div className="empty-state">
-          <p className="muted" style={{ margin: 0 }}>
-            Aucune exigence encore. Utilisez le bouton « Ajouter une exigence » pour créer des
-            critères (obligatoires ou à discuter) et structurer la comparaison des modèles.
-          </p>
-        </div>
+        <EmptyState
+          icon="requirements"
+          title="Aucune exigence définie"
+          text="Utilisez le bouton « Ajouter une exigence » pour créer des critères (obligatoires ou à discuter) et structurer la comparaison des modèles."
+          action={
+            canWrite ? (
+              <IconActionButton
+                variant="primary"
+                label="Ajouter une exigence"
+                onClick={() => setShowAddForm(true)}
+              >
+                <IconPlus />
+              </IconActionButton>
+            ) : undefined
+          }
+        />
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <p className="muted" style={{ margin: 0 }}>
-            Aucune exigence pour ce filtre. Changez de filtre ou créez une entrée de ce niveau.
-          </p>
-        </div>
+        <EmptyState
+          icon="search"
+          title="Aucune exigence pour ce filtre"
+          text="Changez de filtre ou créez une entrée de ce niveau."
+        />
       ) : (
         <ul className="stack requirement-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {filtered.map((r) => {

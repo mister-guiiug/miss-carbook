@@ -17,6 +17,7 @@ import {
   IconTrash,
   IconX,
 } from '../ui/IconActionButton'
+import { EmptyState } from '../ui/EmptyState'
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return ''
@@ -784,12 +785,11 @@ export function RemindersTab({
 
       {view === 'timeline' ? (
         filteredTimelineGroups.length === 0 ? (
-          <div className="empty-state">
-            <p className="muted" style={{ margin: 0 }}>
-              Aucun événement pour ces filtres. Ajoutez des rappels (À faire) ou des visites (onglet
-              Visites).
-            </p>
-          </div>
+          <EmptyState
+            icon="reminders"
+            title="Aucun événement pour ces filtres"
+            text="Ajoutez des rappels (À faire) ou des visites (onglet Visites)."
+          />
         ) : (
           <div className="stack reminders-timeline-wrap">
             <p className="muted reminders-timeline-hint" style={{ margin: 0, fontSize: '0.88rem' }}>
@@ -929,11 +929,11 @@ export function RemindersTab({
         )
       ) : view === 'visits' ? (
         filteredVisits.length === 0 ? (
-          <div className="empty-state">
-            <p className="muted" style={{ margin: 0 }}>
-              Aucune visite.
-            </p>
-          </div>
+          <EmptyState
+            icon="reminders"
+            title="Aucune visite planifiée"
+            text="Ajoutez des visites pour suivre vos essais et rendez-vous en concession."
+          />
         ) : (
           <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {filteredVisits.map((v) => {
@@ -975,11 +975,11 @@ export function RemindersTab({
           </ul>
         )
       ) : rows.length === 0 ? (
-        <div className="empty-state">
-          <p className="muted" style={{ margin: 0 }}>
-            Aucun rappel pour ce dossier.
-          </p>
-        </div>
+        <EmptyState
+          icon="reminders"
+          title="Aucun rappel pour ce dossier"
+          text="Créez des rappels pour suivre vos tâches, contacts et échéances liées à votre projet véhicule."
+        />
       ) : (
         <div className="card stack" style={{ boxShadow: 'none' }}>
           <h4 style={{ margin: 0 }}>{view === 'open' ? 'À faire' : 'Faits'}</h4>

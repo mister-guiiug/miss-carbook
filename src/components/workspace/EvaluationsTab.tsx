@@ -5,6 +5,7 @@ import { logActivity } from '../../lib/activity'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
 import { useToast } from '../../contexts/ToastContext'
 import type { CandidateStatus, RequirementLevel } from '../../types/database'
+import { EmptyState } from '../ui/EmptyState'
 
 type Req = { id: string; label: string; level: RequirementLevel }
 type Cand = {
@@ -199,13 +200,17 @@ export function EvaluationsTab({
 
   if (!reqs.length || !cands.length) {
     return (
-      <div className="empty-state">
-        <p className="muted" style={{ margin: 0 }}>
-          Ajoutez des <strong>exigences</strong> (onglet <strong>Exigences</strong>) et des{' '}
-          <strong>modèles</strong> (onglet <strong>Modèles</strong>) pour remplir la matrice
-          d’évaluation.
-        </p>
-      </div>
+      <EmptyState
+        icon="requirements"
+        title="Matrice d’évaluation non disponible"
+        text={
+          !reqs.length && !cands.length
+            ? "Ajoutez des exigences (onglet Exigences) et des modèles (onglet Modèles) pour remplir la matrice d’évaluation."
+            : !reqs.length
+              ? "Ajoutez des exigences (onglet Exigences) pour remplir la matrice d’évaluation."
+              : "Ajoutez des modèles (onglet Modèles) pour remplir la matrice d’évaluation."
+        }
+      />
     )
   }
 

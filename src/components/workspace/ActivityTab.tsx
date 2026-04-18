@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { activityActionLabel, activityEntityLabel } from '../../lib/activityLogLabels'
 import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+import { EmptyState } from '../ui/EmptyState'
 
 type Row = {
   id: string
@@ -129,12 +130,11 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       </header>
 
       {rows.length === 0 ? (
-        <div className="empty-state activity-tab-empty">
-          <p className="muted activity-tab-empty-text">
-            Aucun événement pour l’instant. Dès que vous ou d’autres membres agirez dans le dossier,
-            le détail apparaîtra ici avec la date et l’auteur.
-          </p>
-        </div>
+        <EmptyState
+          icon="activity"
+          title="Aucune activité pour l’instant"
+          text="Dès que vous ou d’autres membres agirez dans le dossier, le détail apparaîtra ici avec la date et l’auteur."
+        />
       ) : (
         <ul className="activity-timeline">
           {groups.map(([dayKey, { heading, items }]) => (
