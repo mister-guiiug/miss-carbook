@@ -1,5 +1,6 @@
-# Déploiement statique sur GitHub Pages (source: GitHub Actions).
-# Documentation : https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow
+# Déploiement GitHub Pages avec migrations Supabase préalables.
+# Utilise la composite action setup-pwa pour le checkout/setup-node/install.
+# Le job migrate reste custom (Supabase CLI).
 name: Deploy to GitHub Pages
 
 on:
@@ -11,6 +12,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  packages: read
 
 concurrency:
   group: pages
@@ -18,18 +20,16 @@ concurrency:
 
 jobs:
   # ── Migrations Supabase ─────────────────────────────────────────────────────
-  # Prérequis — secrets à définir dans Settings > Secrets > Actions :
+  # Secrets à définir dans Settings > Secrets > Actions :
   #   SUPABASE_ACCESS_TOKEN  : token personnel  https://supabase.com/dashboard/account/tokens
   #   SUPABASE_PROJECT_ID    : ref du projet    (slug dans l'URL du dashboard)
   #   SUPABASE_DB_PASSWORD   : mot de passe DB  (défini à la création du projet)
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v1
         with:
           version: latest
 
@@ -49,30 +49,21 @@ jobs:
     needs: migrate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: mister-guiiug/dev-wpa-config/.github/actions/setup-pwa@v1
         with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Lint & tests
-        run: npm run lint && npm run test
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         env:
-          # Pages projet : https://<user>.github.io/<repo>/
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PUBLIC_SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -84,6 +75,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
