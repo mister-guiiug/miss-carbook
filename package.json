@@ -16,7 +16,7 @@
     "test:e2e:ui": "playwright test --ui",
     "gen:types": "npx supabase gen types typescript --linked > src/types/database.gen.ts",
     "type-check": "tsc --noEmit",
-    "analyze": "npm run build -- --analyze"
+    "build:analyze": "cross-env ANALYZE=1 npm run build"
   },
   "dependencies": {
     "@sentry/react": "^8.45.0",
@@ -24,20 +24,28 @@
     "jszip": "^3.10.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^6.28.0",
+    "react-router-dom": "^7.14.1",
     "recharts": "^2.15.0",
+    "tailwindcss": "^4.2.2",
     "web-vitals": "^4.2.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.8.0",
     "@eslint/js": "^9.39.4",
+    "@mister-guiiug/dev-wpa-config": "^1.0.1",
     "@playwright/test": "^1.49.1",
     "@sentry/vite-plugin": "^2.22.6",
+    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
+    "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
+    "axe-core": "^4.8.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -46,6 +54,7 @@
     "jsdom": "^26.0.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.6.2",
+    "rollup-plugin-visualizer": "^7.0.1",
     "sharp": "^0.34.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.0",

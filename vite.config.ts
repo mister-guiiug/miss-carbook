@@ -1,6 +1,10 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, type Plugin, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { visualizer } from 'rollup-plugin-visualizer'
+
+const analyze = process.env.ANALYZE === '1'
 
 /**
  * Base path pour GitHub Pages : définir VITE_BASE_PATH=/nom-du-repo/ en CI.
@@ -116,6 +120,16 @@ export default defineConfig({
             return 'validation'
           }
 
+          // State manager
+          if (norm.includes('/zustand/')) {
+            return 'zustand'
+          }
+
+          // Tailwind runtime
+          if (norm.includes('/tailwindcss/') || norm.includes('/@tailwindcss/')) {
+            return 'tailwind'
+          }
+
           return 'vendor'
         },
       },
@@ -124,6 +138,7 @@ export default defineConfig({
   plugins: [
     htmlTrackingPlugin(),
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['logo.png', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
@@ -174,5 +189,15 @@ export default defineConfig({
         enabled: false,
       },
     }),
+    ...(analyze
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            open: !process.env.CI,
+          }) as PluginOption,
+        ]
+      : []),
   ],
 })
