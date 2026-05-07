@@ -63,7 +63,23 @@ Voir le fichier `LICENSE` du dépôt.
 <details>
 <summary><strong>Pour les développeurs (installation, base de données, déploiement)</strong></summary>
 
-Application **PWA** (React, Vite, TypeScript) ; front statique compatible **GitHub Pages** ; collaboration via **Supabase** (Auth, Postgres, Realtime, Storage) avec RLS et clé **anon** côté client uniquement.
+Application **PWA** (React 19 + Vite 7 + TypeScript strict ES2025) ; front statique compatible **GitHub Pages** ; collaboration via **Supabase** (Auth, Postgres, Realtime, Storage) avec RLS et clé **anon** côté client uniquement.
+
+### Stack
+
+| Couche            | Technologie                                                                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework         | [React 19](https://react.dev/) + [react-router-dom 7](https://reactrouter.com/)                                                                                                                       |
+| Build             | [Vite 7](https://vitejs.dev/) (cible ES2025)                                                                                                                                                          |
+| Style             | [Tailwind CSS 4](https://tailwindcss.com/) + CSS classique                                                                                                                                            |
+| State             | [Zustand 5](https://zustand-demo.pmnd.rs/)                                                                                                                                                            |
+| Validation        | [Zod 3](https://zod.dev/)                                                                                                                                                                             |
+| Backend           | [Supabase](https://supabase.com/) (`@supabase/supabase-js`)                                                                                                                                           |
+| Charts            | [Recharts](https://recharts.org/)                                                                                                                                                                     |
+| Tests             | [Vitest 3](https://vitest.dev/) (jsdom) + [Testing Library](https://testing-library.com/) + [Playwright](https://playwright.dev/) + [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) |
+| Monitoring        | [@sentry/react](https://docs.sentry.io/platforms/javascript/guides/react/) + [web-vitals 4](https://web.dev/vitals/)                                                                                  |
+| Configs partagées | [`@mister-guiiug/dev-wpa-config`](../dev-wpa-config/README.md) (ESLint, Prettier, TS, Vitest)                                                                                                                  |
+| PWA               | [`vite-plugin-pwa 1.2`](https://vite-pwa-org.netlify.app/) (Workbox `generateSW`)                                                                                                                     |
 
 Référence déploiement Pages via Actions : [Configurer une source de publication GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow).
 
@@ -84,10 +100,13 @@ npm run dev
 
 Scripts utiles :
 
-- `npm run build` — build production + copie `404.html` pour le routing SPA sur Pages
+- `npm run build` — `tsc -b && vite build && copy-404` (TS strict + production + SPA Pages)
+- `npm run build:analyze` — build avec `rollup-plugin-visualizer` (`dist/stats.html`)
 - `npm run preview` — prévisualiser le build
-- `npm run lint` / `npm run format`
-- `npm run test` — tests Vitest (schémas, onglets dossier, dialogue d’erreur)
+- `npm run lint` / `npm run format` / `npm run format:check`
+- `npm run type-check` — `tsc --noEmit` (strict)
+- `npm run test` / `npm run test:watch` — Vitest (jsdom + Testing Library)
+- `npm run test:e2e` / `npm run test:e2e:ui` — Playwright
 - `npm run gen:types` — régénère `src/types/database.gen.ts` depuis le projet **Supabase lié** (`supabase link`). Fichier ignoré par git : comparer ou fusionner avec `src/types/database.ts` à la main après migration.
 
 ### Visite guidée (mobile / PWA)
