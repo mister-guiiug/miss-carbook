@@ -5,8 +5,8 @@ import {
   IconPencil,
   IconShield,
   IconUserMinus,
-} from '../../ui/IconActionButton'
-import type { Member } from './settingsTypes'
+} from '../../ui/IconActionButton';
+import type { Member } from './settingsTypes';
 
 export function SettingsParticipantsCard({
   members,
@@ -16,18 +16,18 @@ export function SettingsParticipantsCard({
   onRemoveMember,
   onLeave,
 }: {
-  members: (Member & { display_name?: string })[]
-  isAdmin: boolean
-  userId: string
-  onSetRole: (uid: string, role: Member['role']) => void
-  onRemoveMember: (uid: string) => void
-  onLeave: () => void
+  members: (Member & { display_name?: string })[];
+  isAdmin: boolean;
+  userId: string;
+  onSetRole: (uid: string, role: Member['role']) => void;
+  onRemoveMember: (uid: string) => void;
+  onLeave: () => void;
 }) {
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
       <h3 style={{ margin: 0 }}>Membres</h3>
       <ul className="settings-participants-list">
-        {members.map((m) => (
+        {members.map(m => (
           <li key={m.user_id} className="settings-participants-row">
             <div className="settings-participants-identity">
               <strong>{m.display_name ?? m.user_id.slice(0, 8)}</strong>
@@ -76,5 +76,5 @@ export function SettingsParticipantsCard({
         <IconLogOut />
       </IconActionButton>
     </div>
-  )
+  );
 }

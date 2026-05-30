@@ -1,28 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const initial = stored === 'dark' || (!stored && prefersDark) ? 'dark' : 'light'
-    setTheme(initial)
-    document.documentElement.setAttribute('data-theme', initial)
-  }, [])
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+    const initial =
+      stored === 'dark' || (!stored && prefersDark) ? 'dark' : 'light';
+    setTheme(initial);
+    document.documentElement.setAttribute('data-theme', initial);
+  }, []);
 
   const toggle = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
-    setTheme(next)
-    document.documentElement.setAttribute('data-theme', next)
-    localStorage.setItem('theme', next)
-  }
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  };
 
   return (
     <button
       className="theme-toggle"
       onClick={toggle}
-      aria-label={theme === 'light' ? 'Passer au mode sombre' : 'Passer au mode clair'}
+      aria-label={
+        theme === 'light' ? 'Passer au mode sombre' : 'Passer au mode clair'
+      }
       title={theme === 'light' ? 'Mode sombre' : 'Mode clair'}
     >
       <svg
@@ -52,5 +57,5 @@ export function ThemeToggle() {
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
     </button>
-  )
+  );
 }

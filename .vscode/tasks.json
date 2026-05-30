@@ -6,7 +6,11 @@
       "type": "npm",
       "script": "dev",
       "isBackground": true,
-      "presentation": { "reveal": "silent", "panel": "dedicated", "group": "dev" },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "group": "dev"
+      },
       "problemMatcher": {
         "owner": "vite",
         "pattern": { "regexp": "^$" },

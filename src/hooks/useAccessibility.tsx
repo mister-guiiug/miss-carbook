@@ -2,63 +2,65 @@
  * Hooks et utilitaires d'accessibilité pour React
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Hook pour gérer les modales avec trap focus
  */
 export function useFocusTrap(isActive: boolean) {
-  const trappedRef = useRef<HTMLElement | null>(null)
+  const trappedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) return;
 
     const focusableElements =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return
+      if (e.key !== 'Tab') return;
 
-      const modal = trappedRef.current
-      if (!modal) return
+      const modal = trappedRef.current;
+      if (!modal) return;
 
-      const focusable = Array.from(modal.querySelectorAll(focusableElements)) as HTMLElement[]
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
+      const focusable = Array.from(
+        modal.querySelectorAll(focusableElements)
+      ) as HTMLElement[];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
 
       if (e.shiftKey) {
         if (document.activeElement === first) {
-          last.focus()
-          e.preventDefault()
+          last.focus();
+          e.preventDefault();
         }
       } else {
         if (document.activeElement === last) {
-          first.focus()
-          e.preventDefault()
+          first.focus();
+          e.preventDefault();
         }
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleTab)
-    return () => document.removeEventListener('keydown', handleTab)
-  }, [isActive])
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [isActive]);
 
-  return trappedRef
+  return trappedRef;
 }
 
 /**
  * Hook pour gérer le focus quand un élément apparaît
  */
 export function useAutoFocus(dependencies: unknown[] = []) {
-  const ref = useRef<HTMLElement>(null)
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.focus()
+      ref.current.focus();
     }
-  }, dependencies)
+  }, dependencies);
 
-  return ref
+  return ref;
 }
 
 /**
@@ -66,90 +68,92 @@ export function useAutoFocus(dependencies: unknown[] = []) {
  */
 export function useEscapeHandler(onEscape: () => void, isActive = true) {
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onEscape()
+        onEscape();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [onEscape, isActive])
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onEscape, isActive]);
 }
 
 /**
  * Hook pour sauvegarder et restorer le focus
  */
 export function useFocusRestore(isActive: boolean) {
-  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!isActive) {
       // Restaurer le focus quand on ferme
       if (previousFocusRef.current) {
-        previousFocusRef.current.focus()
+        previousFocusRef.current.focus();
       }
-      return
+      return;
     }
 
     // Sauvegarder le focus actuel
-    previousFocusRef.current = document.activeElement as HTMLElement
-  }, [isActive])
+    previousFocusRef.current = document.activeElement as HTMLElement;
+  }, [isActive]);
 }
 
 /**
  * Hook pour annoncer les changements aux lecteurs d'écran
  */
 export function useA11yAnnouncement(message: string | null) {
-  const announcerRef = useRef<HTMLDivElement>(null)
+  const announcerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!message || !announcerRef.current) return
+    if (!message || !announcerRef.current) return;
 
-    announcerRef.current.textContent = message
-  }, [message])
+    announcerRef.current.textContent = message;
+  }, [message]);
 
-  return announcerRef
+  return announcerRef;
 }
 
 /**
  * Hook pour la préférence de mouvement réduit
  */
 export function usePrefersReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
 
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
-    mediaQuery.addEventListener('change', handler)
+    const handler = (e: MediaQueryListEvent) =>
+      setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
 
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [])
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
-  return prefersReducedMotion
+  return prefersReducedMotion;
 }
 
 /**
  * Hook pour détecter les high contrast mode
  */
 export function usePrefersHighContrast(): boolean {
-  const [prefersHighContrast, setPrefersHighContrast] = useState(false)
+  const [prefersHighContrast, setPrefersHighContrast] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-contrast: high)')
-    setPrefersHighContrast(mediaQuery.matches)
+    const mediaQuery = window.matchMedia('(prefers-contrast: high)');
+    setPrefersHighContrast(mediaQuery.matches);
 
-    const handler = (e: MediaQueryListEvent) => setPrefersHighContrast(e.matches)
-    mediaQuery.addEventListener('change', handler)
+    const handler = (e: MediaQueryListEvent) =>
+      setPrefersHighContrast(e.matches);
+    mediaQuery.addEventListener('change', handler);
 
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [])
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
-  return prefersHighContrast
+  return prefersHighContrast;
 }
 
 /**
@@ -161,7 +165,7 @@ export function useIconButtonProps(label: string, disabled = false) {
     role: 'button',
     tabIndex: disabled ? -1 : 0,
     'aria-disabled': disabled,
-  }
+  };
 }
 
 /**
@@ -173,14 +177,14 @@ export function useAccessibleLink(href: string, external = false) {
     target: external ? '_blank' : undefined,
     rel: external ? 'noopener noreferrer' : undefined,
     'aria-label': external ? `Ouvre ${href} dans un nouvel onglet` : undefined,
-  }
+  };
 }
 
 /**
  * Composant pour les annonces ARIA
  */
 export function A11yAnnouncer({ message }: { message: string | null }) {
-  const announcerRef = useA11yAnnouncement(message)
+  const announcerRef = useA11yAnnouncement(message);
 
   return (
     <div
@@ -197,5 +201,5 @@ export function A11yAnnouncer({ message }: { message: string | null }) {
         overflow: 'hidden',
       }}
     />
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import { useUpdatePrompt } from '../hooks/useUpdatePrompt'
+import { useUpdatePrompt } from '../hooks/useUpdatePrompt';
 
 export function UpdateBanner() {
-  const { needRefresh, reloadToLatest } = useUpdatePrompt()
+  const { needRefresh, reloadToLatest } = useUpdatePrompt();
 
-  if (!needRefresh) return null
+  if (!needRefresh) return null;
 
   return (
     <div className="pwa-update-banner" role="status" aria-live="polite">
@@ -14,5 +14,5 @@ export function UpdateBanner() {
         Mettre à jour
       </button>
     </div>
-  )
+  );
 }

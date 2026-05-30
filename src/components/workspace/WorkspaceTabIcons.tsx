@@ -1,7 +1,12 @@
-import type { FC } from 'react'
-import type { TabId } from './workspaceTabs'
+import type { FC } from 'react';
+import type { TabId } from './workspaceTabs';
 
-const ic = { width: 18, height: 18, viewBox: '0 0 24 24' as const, fill: 'none' as const }
+const ic = {
+  width: 18,
+  height: 18,
+  viewBox: '0 0 24 24' as const,
+  fill: 'none' as const,
+};
 
 function IconNotepad() {
   return (
@@ -12,9 +17,14 @@ function IconNotepad() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 8h6M9 12h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 8h6M9 12h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconRequirements() {
@@ -26,9 +36,14 @@ function IconRequirements() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 12h6M9 16h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconEvaluations() {
@@ -41,7 +56,7 @@ function IconEvaluations() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconRequirementsMatrix() {
@@ -59,7 +74,7 @@ function IconRequirementsMatrix() {
         strokeWidth="1.5"
       />
     </svg>
-  )
+  );
 }
 
 function IconWeightedVoting() {
@@ -72,10 +87,20 @@ function IconWeightedVoting() {
         strokeLinejoin="round"
       />
       <circle cx="12" cy="14" r="4" stroke="currentColor" strokeWidth="2" />
-      <path d="M12 8v6M8 14h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M5 12l-2 4M19 12l2 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M12 8v6M8 14h8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 12l-2 4M19 12l2 4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconBudget() {
@@ -89,7 +114,7 @@ function IconBudget() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconModels() {
@@ -101,9 +126,13 @@ function IconModels() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M12 12l8-4.5M12 12v9M12 12L4 7.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
     </svg>
-  )
+  );
 }
 
 function IconCompare() {
@@ -117,7 +146,7 @@ function IconCompare() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSmartCompare() {
@@ -130,7 +159,7 @@ function IconSmartCompare() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconReminders() {
@@ -143,7 +172,7 @@ function IconReminders() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconActivity() {
@@ -156,7 +185,7 @@ function IconActivity() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSettings() {
@@ -175,7 +204,7 @@ function IconSettings() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 const MAP: Record<TabId, FC> = {
@@ -191,9 +220,9 @@ const MAP: Record<TabId, FC> = {
   budget: IconBudget,
   activity: IconActivity,
   settings: IconSettings,
-}
+};
 
 export function WorkspaceTabIcon({ tabId }: { tabId: TabId }) {
-  const Cmp = MAP[tabId]
-  return <Cmp />
+  const Cmp = MAP[tabId];
+  return <Cmp />;
 }

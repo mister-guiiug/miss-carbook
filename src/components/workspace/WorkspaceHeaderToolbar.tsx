@@ -1,17 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
-import { useOnlineStatus } from '../../hooks/useOnlineStatus'
-import { useTheme } from '../../hooks/useTheme'
-import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents'
-import { useErrorDialog } from '../../contexts/ErrorDialogContext'
-import { emitWorkspaceQuickAdd, type WorkspaceQuickAddTab } from '../../lib/workspaceHeaderEvents'
-import { WorkspaceTabIcon } from './WorkspaceTabIcons'
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { useTheme } from '../../hooks/useTheme';
+import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents';
+import { useErrorDialog } from '../../contexts/ErrorDialogContext';
+import {
+  emitWorkspaceQuickAdd,
+  type WorkspaceQuickAddTab,
+} from '../../lib/workspaceHeaderEvents';
+import { WorkspaceTabIcon } from './WorkspaceTabIcons';
 import {
   WORKSPACE_ACTIVITY_TAB_TITLE,
   WORKSPACE_SETTINGS_TAB_TITLE,
   type TabId,
-} from './workspaceTabs'
+} from './workspaceTabs';
 
 function IconPlus() {
   return (
@@ -24,12 +27,19 @@ function IconPlus() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconGear({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
         stroke="currentColor"
@@ -45,12 +55,19 @@ function IconGear({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSun({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
       <path
         d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
@@ -59,12 +76,19 @@ function IconSun({ className }: { className?: string }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconMoon({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
         stroke="currentColor"
@@ -73,35 +97,66 @@ function IconMoon({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSearch({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M20 20l-4.3-4.3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconHome({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M3 10.5L12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20V10.5z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 21.5V12h6v9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 21.5V12h6v9.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconFolderSettings({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M4 6.5h5l1.5 2H19a1 1 0 0 1 1 1V9H4V6.5zM4 9v8a1 1 0 0 0 1 1h5"
         stroke="currentColor"
@@ -116,40 +171,71 @@ function IconFolderSettings({ className }: { className?: string }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconNote({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M8 4h10a1 1 0 0 1 1 1v14l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 8h6M9 12h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 8h6M9 12h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconClipboard({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M9 5h6l1 2h3v14H5V7h3l1-2z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M9 12h6M9 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M9 12h6M9 16h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function IconBell({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zM18 16V11a6 6 0 1 0-12 0v5l-2 2h16l-2-2z"
         stroke="currentColor"
@@ -157,26 +243,44 @@ function IconBell({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconModel({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M12 12l8-4.5M12 12v9M12 12L4 7.5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
     </svg>
-  )
+  );
 }
 
 function IconLogOut({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
         stroke="currentColor"
@@ -185,91 +289,92 @@ function IconLogOut({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
-const flyoutSvg = 'app-topbar-flyout-svg'
+const flyoutSvg = 'app-topbar-flyout-svg';
 
 function initialsFromDisplayName(name: string) {
-  const t = name.trim()
-  if (!t) return '?'
-  const parts = t.split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
-  return t.slice(0, 2).toUpperCase()
+  const t = name.trim();
+  if (!t) return '?';
+  const parts = t.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2)
+    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
+  return t.slice(0, 2).toUpperCase();
 }
 
-type Menu = 'plus' | 'user' | null
+type Menu = 'plus' | 'user' | null;
 
 export function WorkspaceHeaderToolbar({
   canWrite,
   onOpenTab,
   onOpenSearch,
 }: {
-  canWrite: boolean
-  onOpenTab: (id: TabId) => void
-  onOpenSearch: () => void
+  canWrite: boolean;
+  onOpenTab: (id: TabId) => void;
+  onOpenSearch: () => void;
 }) {
-  const navigate = useNavigate()
-  const { mode, toggle } = useTheme()
-  const online = useOnlineStatus()
-  const { reportException } = useErrorDialog()
-  const [open, setOpen] = useState<Menu>(null)
-  const [displayName, setDisplayName] = useState<string | null>(null)
-  const [loadingProfile, setLoadingProfile] = useState(true)
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate();
+  const { mode, toggle } = useTheme();
+  const online = useOnlineStatus();
+  const { reportException } = useErrorDialog();
+  const [open, setOpen] = useState<Menu>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   const loadProfile = useCallback(async () => {
-    setLoadingProfile(true)
+    setLoadingProfile(true);
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
     if (!user) {
-      setDisplayName(null)
-      setLoadingProfile(false)
-      return
+      setDisplayName(null);
+      setLoadingProfile(false);
+      return;
     }
     const { data, error } = await supabase
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
-      .maybeSingle()
+      .maybeSingle();
     if (error) {
-      reportException(error, 'Chargement du pseudo (barre dossier)')
-      setDisplayName(null)
+      reportException(error, 'Chargement du pseudo (barre dossier)');
+      setDisplayName(null);
     } else {
-      setDisplayName(data?.display_name ?? null)
+      setDisplayName(data?.display_name ?? null);
     }
-    setLoadingProfile(false)
-  }, [reportException])
+    setLoadingProfile(false);
+  }, [reportException]);
 
   useEffect(() => {
-    void loadProfile()
-  }, [loadProfile])
+    void loadProfile();
+  }, [loadProfile]);
 
   useEffect(() => {
-    const onUpdate = () => void loadProfile()
-    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdate)
-    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdate)
-  }, [loadProfile])
+    const onUpdate = () => void loadProfile();
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdate);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdate);
+  }, [loadProfile]);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      const el = wrapRef.current
-      if (el && !el.contains(e.target as Node)) setOpen(null)
-    }
+      const el = wrapRef.current;
+      if (el && !el.contains(e.target as Node)) setOpen(null);
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(null)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
+      if (e.key === 'Escape') setOpen(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
-  const close = () => setOpen(null)
+  const close = () => setOpen(null);
 
   const quickAdd = (tab: WorkspaceQuickAddTab) => {
     const map: Record<WorkspaceQuickAddTab, TabId> = {
@@ -277,19 +382,19 @@ export function WorkspaceHeaderToolbar({
       requirements: 'requirements',
       reminders: 'reminders',
       candidates: 'candidates',
-    }
-    onOpenTab(map[tab])
-    close()
-    queueMicrotask(() => emitWorkspaceQuickAdd(tab))
-  }
+    };
+    onOpenTab(map[tab]);
+    close();
+    queueMicrotask(() => emitWorkspaceQuickAdd(tab));
+  };
 
   const signOut = () => {
-    close()
-    void supabase.auth.signOut().then(() => navigate('/', { replace: true }))
-  }
+    close();
+    void supabase.auth.signOut().then(() => navigate('/', { replace: true }));
+  };
 
-  const profileLabel = loadingProfile ? '…' : displayName?.trim() || 'Profil'
-  const themeLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre'
+  const profileLabel = loadingProfile ? '…' : displayName?.trim() || 'Profil';
+  const themeLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre';
 
   return (
     <div ref={wrapRef} className="workspace-chrome-toolbar" role="presentation">
@@ -302,7 +407,7 @@ export function WorkspaceHeaderToolbar({
             aria-haspopup="menu"
             aria-controls="workspace-menu-plus"
             title="Ajouter dans le dossier"
-            onClick={() => setOpen((m) => (m === 'plus' ? null : 'plus'))}
+            onClick={() => setOpen(m => (m === 'plus' ? null : 'plus'))}
           >
             <IconPlus />
           </button>
@@ -390,12 +495,17 @@ export function WorkspaceHeaderToolbar({
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
             title={`${profileLabel} — dossier, compte et navigation`}
-            onClick={() => setOpen((m) => (m === 'user' ? null : 'user'))}
+            onClick={() => setOpen(m => (m === 'user' ? null : 'user'))}
           >
             <span className="workspace-toolbar-avatar" aria-hidden="true">
-              {loadingProfile ? '…' : initialsFromDisplayName(displayName ?? '')}
+              {loadingProfile
+                ? '…'
+                : initialsFromDisplayName(displayName ?? '')}
             </span>
-            <span className="workspace-toolbar-avatar-chevron" aria-hidden="true">
+            <span
+              className="workspace-toolbar-avatar-chevron"
+              aria-hidden="true"
+            >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M6 9l6 6 6-6"
@@ -417,34 +527,43 @@ export function WorkspaceHeaderToolbar({
               <div className="app-topbar-flyout-meta">
                 <div className="app-topbar-flyout-ident">
                   <span className="app-topbar-flyout-name">{profileLabel}</span>
-                  <span className="app-topbar-flyout-hint muted">Compte sur cet appareil</span>
+                  <span className="app-topbar-flyout-hint muted">
+                    Compte sur cet appareil
+                  </span>
                 </div>
                 <div
                   className="app-topbar-flyout-online"
                   title={online ? 'En ligne' : 'Hors ligne'}
                 >
-                  <span className={`online-dot ${online ? 'on' : 'off'}`} aria-hidden="true" />
+                  <span
+                    className={`online-dot ${online ? 'on' : 'off'}`}
+                    aria-hidden="true"
+                  />
                   <span className="app-topbar-flyout-online-txt">
                     {online ? 'En ligne' : 'Hors ligne'}
                   </span>
                 </div>
               </div>
               <div className="app-topbar-flyout-list">
-                <div className="workspace-toolbar-flyout-group-label">Ce dossier</div>
+                <div className="workspace-toolbar-flyout-group-label">
+                  Ce dossier
+                </div>
                 <button
                   type="button"
                   role="menuitem"
                   className="app-topbar-flyout-row"
                   title={WORKSPACE_SETTINGS_TAB_TITLE}
                   onClick={() => {
-                    onOpenTab('settings')
-                    close()
+                    onOpenTab('settings');
+                    close();
                   }}
                 >
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
                     <IconFolderSettings className={flyoutSvg} />
                   </span>
-                  <span className="app-topbar-flyout-txt">Réglages du dossier</span>
+                  <span className="app-topbar-flyout-txt">
+                    Réglages du dossier
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -452,8 +571,8 @@ export function WorkspaceHeaderToolbar({
                   className="app-topbar-flyout-row"
                   title={WORKSPACE_ACTIVITY_TAB_TITLE}
                   onClick={() => {
-                    onOpenTab('activity')
-                    close()
+                    onOpenTab('activity');
+                    close();
                   }}
                 >
                   <span
@@ -462,16 +581,33 @@ export function WorkspaceHeaderToolbar({
                   >
                     <WorkspaceTabIcon tabId="activity" />
                   </span>
-                  <span className="app-topbar-flyout-txt">Activité du dossier</span>
+                  <span className="app-topbar-flyout-txt">
+                    Activité du dossier
+                  </span>
                 </button>
-                <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
-                <Link role="menuitem" className="app-topbar-flyout-row" to="/" onClick={close}>
+                <div
+                  className="workspace-toolbar-menu-sep"
+                  role="separator"
+                  aria-hidden="true"
+                />
+                <Link
+                  role="menuitem"
+                  className="app-topbar-flyout-row"
+                  to="/"
+                  onClick={close}
+                >
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
                     <IconHome className={flyoutSvg} />
                   </span>
-                  <span className="app-topbar-flyout-txt">Accueil Miss Carbook</span>
+                  <span className="app-topbar-flyout-txt">
+                    Accueil Miss Carbook
+                  </span>
                 </Link>
-                <div className="workspace-toolbar-menu-sep" role="separator" aria-hidden="true" />
+                <div
+                  className="workspace-toolbar-menu-sep"
+                  role="separator"
+                  aria-hidden="true"
+                />
                 <Link
                   role="menuitem"
                   to="/parametres"
@@ -481,15 +617,17 @@ export function WorkspaceHeaderToolbar({
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
                     <IconGear className={flyoutSvg} />
                   </span>
-                  <span className="app-topbar-flyout-txt">Paramètres généraux</span>
+                  <span className="app-topbar-flyout-txt">
+                    Paramètres généraux
+                  </span>
                 </Link>
                 <button
                   type="button"
                   role="menuitem"
                   className="app-topbar-flyout-row"
                   onClick={() => {
-                    toggle()
-                    close()
+                    toggle();
+                    close();
                   }}
                 >
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
@@ -518,5 +656,5 @@ export function WorkspaceHeaderToolbar({
         </div>
       </div>
     </div>
-  )
+  );
 }

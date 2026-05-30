@@ -8,12 +8,15 @@ export const candidateSpecDimensionKeys = [
   'widthMm',
   'heightMm',
   'wheelbaseMm',
-] as const
+] as const;
 
-export type CandidateSpecDimensionKey = (typeof candidateSpecDimensionKeys)[number]
+export type CandidateSpecDimensionKey =
+  (typeof candidateSpecDimensionKeys)[number];
 
-export function isCandidateSpecDimensionKey(k: string): k is CandidateSpecDimensionKey {
-  return (candidateSpecDimensionKeys as readonly string[]).includes(k)
+export function isCandidateSpecDimensionKey(
+  k: string
+): k is CandidateSpecDimensionKey {
+  return (candidateSpecDimensionKeys as readonly string[]).includes(k);
 }
 
 export const candidateSpecNumericKeys = [
@@ -32,11 +35,14 @@ export const candidateSpecNumericKeys = [
   'powerHp',
   'co2Gkm',
   'warrantyMonths',
-] as const
+] as const;
 
-export type CandidateSpecNumericKey = (typeof candidateSpecNumericKeys)[number]
+export type CandidateSpecNumericKey = (typeof candidateSpecNumericKeys)[number];
 
-export const candidateSpecLabels: Record<CandidateSpecNumericKey | 'notes', string> = {
+export const candidateSpecLabels: Record<
+  CandidateSpecNumericKey | 'notes',
+  string
+> = {
   lengthMm: 'Longueur (mm)',
   widthMm: 'Largeur (mm)',
   heightMm: 'Hauteur (mm)',
@@ -53,12 +59,12 @@ export const candidateSpecLabels: Record<CandidateSpecNumericKey | 'notes', stri
   co2Gkm: 'Émissions CO₂ (g/km)',
   warrantyMonths: 'Garantie constructeur (mois)',
   notes: 'Remarques / sources constructeur',
-}
+};
 
 /** Groupes pour l’UI (titres optionnels au-dessus des champs). */
 export const candidateSpecFieldGroups: {
-  title: string
-  keys: readonly CandidateSpecNumericKey[]
+  title: string;
+  keys: readonly CandidateSpecNumericKey[];
 }[] = [
   {
     title: 'Dimensions',
@@ -86,13 +92,15 @@ export const candidateSpecFieldGroups: {
     title: 'Garantie',
     keys: ['warrantyMonths'],
   },
-]
+];
 
-export function hasCandidateSpecVisibleData(specs: Record<string, unknown>): boolean {
+export function hasCandidateSpecVisibleData(
+  specs: Record<string, unknown>
+): boolean {
   for (const k of candidateSpecNumericKeys) {
-    const v = specs[k]
-    if (typeof v === 'number' && !Number.isNaN(v)) return true
+    const v = specs[k];
+    if (typeof v === 'number' && !Number.isNaN(v)) return true;
   }
-  const n = specs.notes
-  return typeof n === 'string' && n.trim() !== ''
+  const n = specs.notes;
+  return typeof n === 'string' && n.trim() !== '';
 }

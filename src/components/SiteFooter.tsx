@@ -1,5 +1,5 @@
-const REPO_URL = 'https://github.com/mister-guiiug/miss-carbook'
-const BMC_URL = 'https://buymeacoffee.com/mister.guiiug'
+const REPO_URL = 'https://github.com/mister-guiiug/miss-carbook';
+const BMC_URL = 'https://buymeacoffee.com/mister.guiiug';
 
 export function SiteFooter() {
   return (
@@ -7,7 +7,9 @@ export function SiteFooter() {
       <div className="site-footer-inner">
         <div className="site-footer-meta">
           <span className="site-footer-title">Miss Carbook</span>
-          <span className="site-footer-tagline">Choix de véhicule collaboratif</span>
+          <span className="site-footer-tagline">
+            Choix de véhicule collaboratif
+          </span>
         </div>
         <nav className="site-footer-nav" aria-label="Liens externes">
           <ul className="site-footer-links">
@@ -25,5 +27,5 @@ export function SiteFooter() {
         </nav>
       </div>
     </footer>
-  )
+  );
 }

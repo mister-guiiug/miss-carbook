@@ -1,6 +1,9 @@
-import type { Dispatch, SetStateAction } from 'react'
-import { displayVersionLabel, formatCandidateListLabel } from '../../../lib/candidateLabel'
-import { formatPriceEur } from '../../../lib/formatPrice'
+import type { Dispatch, SetStateAction } from 'react';
+import {
+  displayVersionLabel,
+  formatCandidateListLabel,
+} from '../../../lib/candidateLabel';
+import { formatPriceEur } from '../../../lib/formatPrice';
 import {
   IconActionButton,
   IconChevronDown,
@@ -8,10 +11,10 @@ import {
   IconDuplicate,
   IconGripVertical,
   IconTrash,
-} from '../../ui/IconActionButton'
-import { CandidateDetail } from './CandidateDetail'
-import type { CandidateRow } from './candidateTypes'
-import { statusLabels } from './candidateTypes'
+} from '../../ui/IconActionButton';
+import { CandidateDetail } from './CandidateDetail';
+import type { CandidateRow } from './candidateTypes';
+import { statusLabels } from './candidateTypes';
 
 export function CandidateCard({
   candidate: c,
@@ -32,38 +35,38 @@ export function CandidateCard({
   garageSuggestions,
   reorder,
 }: {
-  candidate: CandidateRow
-  nested?: boolean
-  hierarchyDetached?: boolean
-  openId: string | null
+  candidate: CandidateRow;
+  nested?: boolean;
+  hierarchyDetached?: boolean;
+  openId: string | null;
   /** Ouvre le détail de ce candidat ou le ferme s’il est déjà ouvert. */
-  onToggleDetail: (id: string) => void
-  onDuplicate: (c: CandidateRow) => void
+  onToggleDetail: (id: string) => void;
+  onDuplicate: (c: CandidateRow) => void;
   /** Ouvre la confirmation de suppression (fiche + compléments le cas échéant). */
-  onRequestDelete?: (c: CandidateRow) => void
-  rootCandidatesForParent: CandidateRow[]
-  variationCount?: number
-  childrenOf: (parentId: string) => CandidateRow[]
-  workspaceId: string
-  canWrite: boolean
-  userId: string
-  onChanged: () => void
-  garageSuggestions: string[]
+  onRequestDelete?: (c: CandidateRow) => void;
+  rootCandidatesForParent: CandidateRow[];
+  variationCount?: number;
+  childrenOf: (parentId: string) => CandidateRow[];
+  workspaceId: string;
+  canWrite: boolean;
+  userId: string;
+  onChanged: () => void;
+  garageSuggestions: string[];
   reorder?: {
-    canReorder: boolean
-    draggingId: string | null
-    dragOverId: string | null
-    setDraggingId: Dispatch<SetStateAction<string | null>>
-    setDragOverId: Dispatch<SetStateAction<string | null>>
-    onDrop: (targetId: string, draggedId: string) => void
-  }
+    canReorder: boolean;
+    draggingId: string | null;
+    dragOverId: string | null;
+    setDraggingId: Dispatch<SetStateAction<string | null>>;
+    setDragOverId: Dispatch<SetStateAction<string | null>>;
+    onDrop: (targetId: string, draggedId: string) => void;
+  };
 }) {
-  const open = openId === c.id
-  const childCount = variationCount ?? childrenOf(c.id).length
-  const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : ''
+  const open = openId === c.id;
+  const childCount = variationCount ?? childrenOf(c.id).length;
+  const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : '';
 
-  const ro = reorder
-  const canReorder = ro?.canReorder ?? false
+  const ro = reorder;
+  const canReorder = ro?.canReorder ?? false;
 
   return (
     <li
@@ -73,30 +76,30 @@ export function CandidateCard({
       style={{ boxShadow: 'none' }}
       onDragOver={
         ro && canReorder
-          ? (e) => {
-              if (![...e.dataTransfer.types].includes('text/plain')) return
-              e.preventDefault()
-              e.dataTransfer.dropEffect = 'move'
-              ro.setDragOverId(c.id)
+          ? e => {
+              if (![...e.dataTransfer.types].includes('text/plain')) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              ro.setDragOverId(c.id);
             }
           : undefined
       }
       onDragLeave={
         ro && canReorder
-          ? (e) => {
-              const next = e.relatedTarget as Node | null
-              if (next && e.currentTarget.contains(next)) return
-              ro.setDragOverId((cur) => (cur === c.id ? null : cur))
+          ? e => {
+              const next = e.relatedTarget as Node | null;
+              if (next && e.currentTarget.contains(next)) return;
+              ro.setDragOverId(cur => (cur === c.id ? null : cur));
             }
           : undefined
       }
       onDrop={
         ro && canReorder
-          ? (e) => {
-              e.preventDefault()
-              const draggedId = e.dataTransfer.getData('text/plain')
-              ro.setDragOverId(null)
-              if (draggedId) ro.onDrop(c.id, draggedId)
+          ? e => {
+              e.preventDefault();
+              const draggedId = e.dataTransfer.getData('text/plain');
+              ro.setDragOverId(null);
+              if (draggedId) ro.onDrop(c.id, draggedId);
             }
           : undefined
       }
@@ -113,14 +116,14 @@ export function CandidateCard({
               draggable
               aria-label={`Réordonner : ${formatCandidateListLabel(c)}`}
               title="Glisser pour réordonner"
-              onDragStart={(e) => {
-                ro.setDraggingId(c.id)
-                e.dataTransfer.setData('text/plain', c.id)
-                e.dataTransfer.effectAllowed = 'move'
+              onDragStart={e => {
+                ro.setDraggingId(c.id);
+                e.dataTransfer.setData('text/plain', c.id);
+                e.dataTransfer.effectAllowed = 'move';
               }}
               onDragEnd={() => {
-                ro.setDraggingId(null)
-                ro.setDragOverId(null)
+                ro.setDraggingId(null);
+                ro.setDragOverId(null);
               }}
             >
               <IconGripVertical />
@@ -128,18 +131,26 @@ export function CandidateCard({
           ) : null}
           <div className="candidate-card-title requirement-card-body">
             <strong>{formatCandidateListLabel(c)}</strong>{' '}
-            <span className={`badge candidate-status-badge candidate-status-badge--${c.status}`}>
+            <span
+              className={`badge candidate-status-badge candidate-status-badge--${c.status}`}
+            >
               {statusLabels[c.status]}
             </span>
             {c.parent_candidate_id ? (
-              <span className="muted" style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}>
+              <span
+                className="muted"
+                style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}
+              >
                 {hierarchyDetached ? 'complément orphelin' : 'complément'}
               </span>
             ) : null}
             {hierarchyDetached ? (
               <span
                 className="badge candidate-status-badge"
-                style={{ marginLeft: '0.35rem', background: 'var(--warn-bg, #4a3a00)' }}
+                style={{
+                  marginLeft: '0.35rem',
+                  background: 'var(--warn-bg, #4a3a00)',
+                }}
                 title="Le parent référencé est absent : rattachez cette fiche à une racine dans le détail."
               >
                 Parent manquant
@@ -148,7 +159,9 @@ export function CandidateCard({
             <div className="muted">
               {nested ? (
                 <>
-                  <span className="candidate-version-line-prefix">Complément · </span>
+                  <span className="candidate-version-line-prefix">
+                    Complément ·{' '}
+                  </span>
                   {[
                     displayVersionLabel(c),
                     c.engine?.trim(),
@@ -158,7 +171,11 @@ export function CandidateCard({
                     .join(' · ')}
                 </>
               ) : (
-                <>{[displayVersionLabel(c), periodLabel].filter(Boolean).join(' · ')}</>
+                <>
+                  {[displayVersionLabel(c), periodLabel]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </>
               )}
             </div>
           </div>
@@ -202,5 +219,5 @@ export function CandidateCard({
         />
       ) : null}
     </li>
-  )
+  );
 }

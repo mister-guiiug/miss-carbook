@@ -7,7 +7,11 @@
 /* Carte de recommandation */
 .smart-recommendation {
   border: 2px solid var(--accent-color, #4f9);
-  background: linear-gradient(135deg, rgba(79, 153, 255, 0.05) 0%, rgba(79, 153, 255, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(79, 153, 255, 0.05) 0%,
+    rgba(79, 153, 255, 0.02) 100%
+  );
 }
 
 .smart-recommendation-content {
@@ -49,7 +53,11 @@
 
 .smart-ranking-card--top {
   border-color: var(--accent-color, #4f9);
-  background: linear-gradient(135deg, rgba(79, 153, 255, 0.08) 0%, transparent 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(79, 153, 255, 0.08) 0%,
+    transparent 100%
+  );
 }
 
 .smart-ranking-main {

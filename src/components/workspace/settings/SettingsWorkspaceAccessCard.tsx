@@ -1,6 +1,11 @@
-import type { Dispatch, SetStateAction } from 'react'
-import { IconActionButton, IconBan, IconCopy, IconPlus } from '../../ui/IconActionButton'
-import type { InviteRow, Ws } from './settingsTypes'
+import type { Dispatch, SetStateAction } from 'react';
+import {
+  IconActionButton,
+  IconBan,
+  IconCopy,
+  IconPlus,
+} from '../../ui/IconActionButton';
+import type { InviteRow, Ws } from './settingsTypes';
 
 /** Lien permanent + invitations (admin), regroupés pour limiter le défilement. */
 export function SettingsWorkspaceAccessCard({
@@ -19,34 +24,37 @@ export function SettingsWorkspaceAccessCard({
   onCreateInvite,
   onRevokeInvite,
 }: {
-  workspace: Ws
-  inviteUrl: string
-  onCopy: () => void
-  isAdmin: boolean
-  origin: string
-  base: string
-  inviteRole: 'read' | 'write' | 'admin'
-  setInviteRole: Dispatch<SetStateAction<'read' | 'write' | 'admin'>>
-  inviteDays: number
-  setInviteDays: Dispatch<SetStateAction<number>>
-  lastToken: string | null
-  invites: InviteRow[]
-  onCreateInvite: () => void
-  onRevokeInvite: (id: string) => void
+  workspace: Ws;
+  inviteUrl: string;
+  onCopy: () => void;
+  isAdmin: boolean;
+  origin: string;
+  base: string;
+  inviteRole: 'read' | 'write' | 'admin';
+  setInviteRole: Dispatch<SetStateAction<'read' | 'write' | 'admin'>>;
+  inviteDays: number;
+  setInviteDays: Dispatch<SetStateAction<number>>;
+  lastToken: string | null;
+  invites: InviteRow[];
+  onCreateInvite: () => void;
+  onRevokeInvite: (id: string) => void;
 }) {
   const lastLink = lastToken
     ? `${origin}${base}?invite=${lastToken}`.replace(/([^:]\/)\/+/g, '$1')
-    : null
+    : null;
 
   return (
-    <div className="card stack settings-access-card" style={{ boxShadow: 'none' }}>
+    <div
+      className="card stack settings-access-card"
+      style={{ boxShadow: 'none' }}
+    >
       <h3 style={{ margin: 0 }}>Accès au dossier</h3>
 
       <div className="settings-access-block stack">
         <h4 className="settings-access-subtitle">Lien permanent</h4>
         <p className="muted settings-access-lead" style={{ margin: 0 }}>
-          Code <code>{workspace.share_code}</code> — tout membre déjà connecté peut rejoindre avec
-          ce lien.
+          Code <code>{workspace.share_code}</code> — tout membre déjà connecté
+          peut rejoindre avec ce lien.
         </p>
         <p className="settings-access-url muted" title={inviteUrl}>
           {inviteUrl}
@@ -66,14 +74,19 @@ export function SettingsWorkspaceAccessCard({
         <>
           <hr className="settings-access-sep" />
           <div className="settings-access-block stack">
-            <h4 className="settings-access-subtitle">Invitations (lien à usage unique)</h4>
+            <h4 className="settings-access-subtitle">
+              Invitations (lien à usage unique)
+            </h4>
             <p className="muted settings-access-lead" style={{ margin: 0 }}>
-              Rôle + expiration. Le lien est copié automatiquement à la création.
+              Rôle + expiration. Le lien est copié automatiquement à la
+              création.
             </p>
             <div className="settings-invite-toolbar row">
               <select
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
+                onChange={e =>
+                  setInviteRole(e.target.value as typeof inviteRole)
+                }
                 aria-label="Rôle pour la nouvelle invitation"
               >
                 <option value="read">Lecture</option>
@@ -92,7 +105,7 @@ export function SettingsWorkspaceAccessCard({
                   min={1}
                   max={90}
                   value={inviteDays}
-                  onChange={(e) => setInviteDays(Number(e.target.value))}
+                  onChange={e => setInviteDays(Number(e.target.value))}
                   style={{ width: '4.25rem' }}
                   aria-label="Durée de validité en jours"
                 />
@@ -109,12 +122,16 @@ export function SettingsWorkspaceAccessCard({
               </IconActionButton>
             </div>
             {lastLink ? (
-              <p className="muted settings-access-url" style={{ margin: 0 }} title={lastLink}>
+              <p
+                className="muted settings-access-url"
+                style={{ margin: 0 }}
+                title={lastLink}
+              >
                 Dernière : <code>{lastLink}</code>
               </p>
             ) : null}
             <ul className="settings-invite-list">
-              {invites.map((i) => (
+              {invites.map(i => (
                 <li key={i.id} className="settings-invite-list-item">
                   <span className="settings-invite-list-meta">
                     <code>{i.token.slice(0, 8)}…</code>
@@ -140,5 +157,5 @@ export function SettingsWorkspaceAccessCard({
         </>
       ) : null}
     </div>
-  )
+  );
 }

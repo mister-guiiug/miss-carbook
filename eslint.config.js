@@ -1,1 +1,1 @@
-export { default } from '@mister-guiiug/dev-wpa-config/eslint-react'
+export { default } from '@mister-guiiug/dev-wpa-config/eslint-react';

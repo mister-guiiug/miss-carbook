@@ -1,23 +1,23 @@
-import { useCallback, useEffect, useState } from 'react'
-import { registerSW } from 'virtual:pwa-register'
+import { useCallback, useEffect, useState } from 'react';
+import { registerSW } from 'virtual:pwa-register';
 
-type ReloadFn = (reload?: boolean) => Promise<void>
+type ReloadFn = (reload?: boolean) => Promise<void>;
 
-let updateSW: ReloadFn | undefined
-const needRefreshListeners = new Set<() => void>()
+let updateSW: ReloadFn | undefined;
+const needRefreshListeners = new Set<() => void>();
 
 function ensureServiceWorkerRegistered() {
-  if (updateSW) return
+  if (updateSW) return;
   const fn = registerSW({
     immediate: true,
     onNeedRefresh() {
-      needRefreshListeners.forEach((l) => l())
+      needRefreshListeners.forEach(l => l());
     },
     onOfflineReady() {
-      console.info('[PWA] Cache prêt — coque disponible hors ligne.')
+      console.info('[PWA] Cache prêt — coque disponible hors ligne.');
     },
-  })
-  updateSW = fn as ReloadFn
+  });
+  updateSW = fn as ReloadFn;
 }
 
 /**
@@ -25,32 +25,32 @@ function ensureServiceWorkerRegistered() {
  * Sinon, recharge simplement pour reprendre le dernier `index.html` / assets.
  */
 export async function reloadToLatestApp(): Promise<void> {
-  ensureServiceWorkerRegistered()
+  ensureServiceWorkerRegistered();
   try {
-    await updateSW?.(true)
+    await updateSW?.(true);
   } catch {
     /* ignore */
   }
-  window.location.reload()
+  window.location.reload();
 }
 
 export function useUpdatePrompt() {
-  const [needRefresh, setNeedRefresh] = useState(false)
+  const [needRefresh, setNeedRefresh] = useState(false);
 
   useEffect(() => {
-    ensureServiceWorkerRegistered()
-    const listener = () => setNeedRefresh(true)
-    needRefreshListeners.add(listener)
+    ensureServiceWorkerRegistered();
+    const listener = () => setNeedRefresh(true);
+    needRefreshListeners.add(listener);
     return () => {
-      needRefreshListeners.delete(listener)
-    }
-  }, [])
+      needRefreshListeners.delete(listener);
+    };
+  }, []);
 
   const update = useCallback(() => {
-    void updateSW?.(true)
-  }, [])
+    void updateSW?.(true);
+  }, []);
 
-  const reloadToLatest = useCallback(() => reloadToLatestApp(), [])
+  const reloadToLatest = useCallback(() => reloadToLatestApp(), []);
 
-  return { needRefresh, update, reloadToLatest }
+  return { needRefresh, update, reloadToLatest };
 }

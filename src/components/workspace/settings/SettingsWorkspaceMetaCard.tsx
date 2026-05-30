@@ -1,4 +1,4 @@
-import type { Ws } from './settingsTypes'
+import type { Ws } from './settingsTypes';
 
 export function SettingsWorkspaceMetaCard({
   workspace,
@@ -10,14 +10,14 @@ export function SettingsWorkspaceMetaCard({
   busyWorkspaceMeta,
   onSave,
 }: {
-  workspace: Ws
-  isAdmin: boolean
-  wsName: string
-  setWsName: (v: string) => void
-  wsDesc: string
-  setWsDesc: (v: string) => void
-  busyWorkspaceMeta: boolean
-  onSave: (e: React.FormEvent) => void
+  workspace: Ws;
+  isAdmin: boolean;
+  wsName: string;
+  setWsName: (v: string) => void;
+  wsDesc: string;
+  setWsDesc: (v: string) => void;
+  busyWorkspaceMeta: boolean;
+  onSave: (e: React.FormEvent) => void;
 }) {
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
@@ -32,7 +32,7 @@ export function SettingsWorkspaceMetaCard({
             <input
               id="ws-settings-name"
               value={wsName}
-              onChange={(e) => setWsName(e.target.value)}
+              onChange={e => setWsName(e.target.value)}
               maxLength={120}
               required
             />
@@ -42,7 +42,7 @@ export function SettingsWorkspaceMetaCard({
             <textarea
               id="ws-settings-desc"
               value={wsDesc}
-              onChange={(e) => setWsDesc(e.target.value)}
+              onChange={e => setWsDesc(e.target.value)}
               rows={4}
               maxLength={4000}
             />
@@ -57,10 +57,12 @@ export function SettingsWorkspaceMetaCard({
             <strong>{workspace.name}</strong>
           </p>
           <p className="muted" style={{ margin: 0 }}>
-            {workspace.description?.trim() ? workspace.description : 'Sans description'}
+            {workspace.description?.trim()
+              ? workspace.description
+              : 'Sans description'}
           </p>
         </div>
       )}
     </div>
-  )
+  );
 }

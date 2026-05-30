@@ -7,16 +7,16 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react'
-import { formatCandidateListLabel } from '../../lib/candidateLabel'
-import { formatPriceEur } from '../../lib/formatPrice'
-import { supabase } from '../../lib/supabase'
-import { CRITERIA } from '../../lib/compareCriteria'
-import { isCandidateSpecDimensionKey } from '../../lib/candidateSpecsUi'
-import { formatGroupedIntegerFrDisplay } from '../../lib/formatGroupedIntegerFr'
-import type { CandidateStatus, Json } from '../../types/database'
-import { useToast } from '../../contexts/ToastContext'
-import { useErrorDialog } from '../../contexts/ErrorDialogContext'
+} from 'react';
+import { formatCandidateListLabel } from '../../lib/candidateLabel';
+import { formatPriceEur } from '../../lib/formatPrice';
+import { supabase } from '../../lib/supabase';
+import { CRITERIA } from '../../lib/compareCriteria';
+import { isCandidateSpecDimensionKey } from '../../lib/candidateSpecsUi';
+import { formatGroupedIntegerFrDisplay } from '../../lib/formatGroupedIntegerFr';
+import type { CandidateStatus, Json } from '../../types/database';
+import { useToast } from '../../contexts/ToastContext';
+import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import {
   IconActionButton,
   IconJson,
@@ -24,40 +24,40 @@ import {
   IconPrinter,
   IconSave,
   IconTable,
-} from '../ui/IconActionButton'
-import { EmptyState } from '../ui/EmptyState'
-import { PhotoComparisonGrid } from './compare/PhotoComparisonGrid'
+} from '../ui/IconActionButton';
+import { EmptyState } from '../ui/EmptyState';
+import { PhotoComparisonGrid } from './compare/PhotoComparisonGrid';
 
-const CompareTabRadar = lazy(() => import('./CompareTabRadar'))
+const CompareTabRadar = lazy(() => import('./CompareTabRadar'));
 
 type Candidate = {
-  id: string
-  brand: string
-  model: string
-  trim: string
-  parent_candidate_id: string | null
-  engine: string
-  price: number | null
-  status: CandidateStatus
-  candidate_specs: { specs: Json } | null
-  is_current?: boolean
-}
+  id: string;
+  brand: string;
+  model: string;
+  trim: string;
+  parent_candidate_id: string | null;
+  engine: string;
+  price: number | null;
+  status: CandidateStatus;
+  candidate_specs: { specs: Json } | null;
+  is_current?: boolean;
+};
 
-type Review = { candidate_id: string; score: number }
+type Review = { candidate_id: string; score: number };
 
-type Preset = { id: string; name: string; criteria_keys: string[] }
+type Preset = { id: string; name: string; criteria_keys: string[] };
 
 function download(filename: string, mime: string, text: string) {
-  const blob = new Blob([text], { type: mime })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-type ColDef = { key: string; header: string; align: 'left' | 'right' }
+type ColDef = { key: string; header: string; align: 'left' | 'right' };
 
 const COMPARE_STATIC_COLS: ColDef[] = [
   { key: 'libellé', header: 'Libellé', align: 'left' },
@@ -66,19 +66,22 @@ const COMPARE_STATIC_COLS: ColDef[] = [
   { key: 'finition', header: 'Finition', align: 'left' },
   { key: 'motorisation', header: 'Motorisation', align: 'left' },
   { key: 'statut', header: 'Statut', align: 'left' },
-]
+];
 
-function toCsv(columnOrder: string[], rows: Record<string, string | number | null>[]) {
-  if (!rows.length) return ''
+function toCsv(
+  columnOrder: string[],
+  rows: Record<string, string | number | null>[]
+) {
+  if (!rows.length) return '';
   const esc = (v: string | number | null | undefined) => {
-    const s = v == null ? '' : String(v)
-    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
-    return s
-  }
+    const s = v == null ? '' : String(v);
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
   return [
     columnOrder.join(','),
-    ...rows.map((r) => columnOrder.map((k) => esc(r[k])).join(',')),
-  ].join('\n')
+    ...rows.map(r => columnOrder.map(k => esc(r[k])).join(',')),
+  ].join('\n');
 }
 
 function candidateHasCriterionValue(
@@ -86,19 +89,20 @@ function candidateHasCriterionValue(
   def: (typeof CRITERIA)[number],
   avgByCand: Record<string, number | null>
 ): boolean {
-  if (def.key === 'price') return c.price != null && Number.isFinite(Number(c.price))
+  if (def.key === 'price')
+    return c.price != null && Number.isFinite(Number(c.price));
   if (def.key === 'scoreAvg') {
-    const v = avgByCand[c.id]
-    return v != null && Number.isFinite(v)
+    const v = avgByCand[c.id];
+    return v != null && Number.isFinite(v);
   }
   if (def.path === 'spec') {
-    const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
-    const v = spec[def.key]
-    if (v == null || v === '') return false
-    if (typeof v === 'number') return !Number.isNaN(v)
-    return String(v).trim() !== ''
+    const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>;
+    const v = spec[def.key];
+    if (v == null || v === '') return false;
+    if (typeof v === 'number') return !Number.isNaN(v);
+    return String(v).trim() !== '';
   }
-  return false
+  return false;
 }
 
 /** Critères cochés par défaut : d’abord ceux renseignés partout ; sinon au moins 2 lignes ; sinon tout. */
@@ -106,44 +110,55 @@ function computeDefaultCriteria(
   picked: Candidate[],
   avgByCand: Record<string, number | null>
 ): Record<string, boolean> {
-  const all = () => Object.fromEntries(CRITERIA.map((c) => [c.key, true]))
-  if (picked.length === 0) return all()
+  const all = () => Object.fromEntries(CRITERIA.map(c => [c.key, true]));
+  if (picked.length === 0) return all();
 
-  const next: Record<string, boolean> = Object.fromEntries(CRITERIA.map((c) => [c.key, false]))
+  const next: Record<string, boolean> = Object.fromEntries(
+    CRITERIA.map(c => [c.key, false])
+  );
   for (const def of CRITERIA) {
-    next[def.key] = picked.every((c) => candidateHasCriterionValue(c, def, avgByCand))
+    next[def.key] = picked.every(c =>
+      candidateHasCriterionValue(c, def, avgByCand)
+    );
   }
-  if (Object.values(next).some(Boolean)) return next
+  if (Object.values(next).some(Boolean)) return next;
 
-  const threshold = picked.length <= 1 ? 1 : 2
+  const threshold = picked.length <= 1 ? 1 : 2;
   for (const def of CRITERIA) {
     next[def.key] =
-      picked.filter((c) => candidateHasCriterionValue(c, def, avgByCand)).length >= threshold
+      picked.filter(c => candidateHasCriterionValue(c, def, avgByCand))
+        .length >= threshold;
   }
-  if (Object.values(next).some(Boolean)) return next
+  if (Object.values(next).some(Boolean)) return next;
 
-  return all()
+  return all();
 }
 
-export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; canWrite: boolean }) {
-  const { showToast } = useToast()
-  const { reportException } = useErrorDialog()
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [currentVehicle, setCurrentVehicle] = useState<Candidate | null>(null)
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [selected, setSelected] = useState<Record<string, boolean>>({})
+export function CompareTab({
+  workspaceId,
+  canWrite,
+}: {
+  workspaceId: string;
+  canWrite: boolean;
+}) {
+  const { showToast } = useToast();
+  const { reportException } = useErrorDialog();
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [currentVehicle, setCurrentVehicle] = useState<Candidate | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [criteria, setCriteria] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CRITERIA.map((c) => [c.key, true]))
-  )
-  const [presets, setPresets] = useState<Preset[]>([])
-  const [presetName, setPresetName] = useState('')
-  const [showPhotoComparison, setShowPhotoComparison] = useState(false)
-  const printRef = useRef<HTMLDivElement>(null)
-  const compareCriteriaBootstrappedWs = useRef<string | null>(null)
+    Object.fromEntries(CRITERIA.map(c => [c.key, true]))
+  );
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presetName, setPresetName] = useState('');
+  const [showPhotoComparison, setShowPhotoComparison] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+  const compareCriteriaBootstrappedWs = useRef<string | null>(null);
 
   useEffect(() => {
-    compareCriteriaBootstrappedWs.current = null
-  }, [workspaceId])
+    compareCriteriaBootstrappedWs.current = null;
+  }, [workspaceId]);
 
   const loadCandidates = useCallback(async () => {
     const { data, error } = await supabase
@@ -154,23 +169,24 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       .eq('workspace_id', workspaceId)
       .order('parent_candidate_id', { ascending: true, nullsFirst: true })
       .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true });
     if (error) {
-      reportException(error, 'Chargement des modèles (comparer)')
-      return
+      reportException(error, 'Chargement des modèles (comparer)');
+      return;
     }
-    const list = (data ?? []).map((row) => ({
+    const list = (data ?? []).map(row => ({
       ...(row as unknown as Candidate),
       parent_candidate_id:
-        (row as { parent_candidate_id?: string | null }).parent_candidate_id ?? null,
-    }))
-    setCandidates(list)
+        (row as { parent_candidate_id?: string | null }).parent_candidate_id ??
+        null,
+    }));
+    setCandidates(list);
 
     const { data: cvData } = await supabase
       .from('current_vehicle')
       .select('*')
       .eq('workspace_id', workspaceId)
-      .maybeSingle()
+      .maybeSingle();
 
     if (cvData) {
       setCurrentVehicle({
@@ -184,26 +200,26 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         status: 'selected' as CandidateStatus,
         candidate_specs: { specs: cvData.specs },
         is_current: true,
-      })
+      });
     } else {
-      setCurrentVehicle(null)
+      setCurrentVehicle(null);
     }
 
-    const ids = list.map((c) => c.id)
+    const ids = list.map(c => c.id);
     if (!ids.length) {
-      setReviews([])
-      return
+      setReviews([]);
+      return;
     }
     const { data: revs } = await supabase
       .from('candidate_reviews')
       .select('candidate_id, score')
-      .in('candidate_id', ids)
-    setReviews(revs ?? [])
-  }, [workspaceId, reportException])
+      .in('candidate_id', ids);
+    setReviews(revs ?? []);
+  }, [workspaceId, reportException]);
 
   useEffect(() => {
-    void loadCandidates()
-  }, [loadCandidates])
+    void loadCandidates();
+  }, [loadCandidates]);
 
   useEffect(() => {
     void (async () => {
@@ -211,62 +227,64 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         .from('comparison_presets')
         .select('id, name, criteria_keys')
         .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false })
-      setPresets((data ?? []) as Preset[])
-    })()
-  }, [workspaceId])
+        .order('created_at', { ascending: false });
+      setPresets((data ?? []) as Preset[]);
+    })();
+  }, [workspaceId]);
 
   useEffect(() => {
-    setSelected((prev) => {
-      const next = { ...prev }
-      if (currentVehicle && next[currentVehicle.id] === undefined) next[currentVehicle.id] = true
-      for (const c of candidates) if (next[c.id] === undefined) next[c.id] = false
-      return next
-    })
-  }, [candidates, currentVehicle])
+    setSelected(prev => {
+      const next = { ...prev };
+      if (currentVehicle && next[currentVehicle.id] === undefined)
+        next[currentVehicle.id] = true;
+      for (const c of candidates)
+        if (next[c.id] === undefined) next[c.id] = false;
+      return next;
+    });
+  }, [candidates, currentVehicle]);
 
   const avgByCand = useMemo(() => {
-    const map: Record<string, { sum: number; n: number }> = {}
+    const map: Record<string, { sum: number; n: number }> = {};
     for (const r of reviews) {
-      if (!map[r.candidate_id]) map[r.candidate_id] = { sum: 0, n: 0 }
-      map[r.candidate_id].sum += Number(r.score)
-      map[r.candidate_id].n += 1
+      if (!map[r.candidate_id]) map[r.candidate_id] = { sum: 0, n: 0 };
+      map[r.candidate_id].sum += Number(r.score);
+      map[r.candidate_id].n += 1;
     }
-    const out: Record<string, number | null> = {}
+    const out: Record<string, number | null> = {};
     for (const id of Object.keys(map)) {
-      const { sum, n } = map[id]
-      out[id] = n ? Math.round((sum / n) * 10) / 10 : null
+      const { sum, n } = map[id];
+      out[id] = n ? Math.round((sum / n) * 10) / 10 : null;
     }
-    return out
-  }, [reviews])
+    return out;
+  }, [reviews]);
 
   const picked = useMemo(() => {
-    const list = candidates.filter((c) => selected[c.id])
+    const list = candidates.filter(c => selected[c.id]);
     if (currentVehicle && selected[currentVehicle.id]) {
-      list.unshift(currentVehicle)
+      list.unshift(currentVehicle);
     }
-    return list
-  }, [candidates, currentVehicle, selected])
+    return list;
+  }, [candidates, currentVehicle, selected]);
 
   useLayoutEffect(() => {
-    if (picked.length === 0) return
-    if (compareCriteriaBootstrappedWs.current === workspaceId) return
-    compareCriteriaBootstrappedWs.current = workspaceId
-    setCriteria(computeDefaultCriteria(picked, avgByCand))
-  }, [workspaceId, picked, avgByCand])
+    if (picked.length === 0) return;
+    if (compareCriteriaBootstrappedWs.current === workspaceId) return;
+    compareCriteriaBootstrappedWs.current = workspaceId;
+    setCriteria(computeDefaultCriteria(picked, avgByCand));
+  }, [workspaceId, picked, avgByCand]);
 
   const tableColumns = useMemo((): ColDef[] => {
-    const crit: ColDef[] = CRITERIA.filter((c) => criteria[c.key]).map((c) => ({
+    const crit: ColDef[] = CRITERIA.filter(c => criteria[c.key]).map(c => ({
       key: c.label,
       header: c.label,
       align: c.numeric ? 'right' : 'left',
-    }))
-    return [...COMPARE_STATIC_COLS, ...crit]
-  }, [criteria])
+    }));
+    return [...COMPARE_STATIC_COLS, ...crit];
+  }, [criteria]);
 
   const tableRows = useMemo(() => {
-    return picked.map((c) => {
-      const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>
+    return picked.map(c => {
+      const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       const row: Record<string, string | number | null> = {
         libellé: c.is_current ? 'Véhicule actuel' : formatCandidateListLabel(c),
         marque: c.brand,
@@ -274,127 +292,156 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         finition: c.trim,
         motorisation: c.engine,
         statut: c.is_current ? 'Actuel' : c.status,
-      }
+      };
       for (const def of CRITERIA) {
-        if (!criteria[def.key]) continue
-        if (def.key === 'price') row[def.label] = c.price != null ? formatPriceEur(c.price) : null
-        else if (def.key === 'scoreAvg') row[def.label] = avgByCand[c.id] ?? null
+        if (!criteria[def.key]) continue;
+        if (def.key === 'price')
+          row[def.label] = c.price != null ? formatPriceEur(c.price) : null;
+        else if (def.key === 'scoreAvg')
+          row[def.label] = avgByCand[c.id] ?? null;
         else if (def.path === 'spec') {
-          const v = spec[def.key]
+          const v = spec[def.key];
           if (typeof v === 'number' && isCandidateSpecDimensionKey(def.key)) {
-            const s = formatGroupedIntegerFrDisplay(v)
-            row[def.label] = s !== '' ? s : null
+            const s = formatGroupedIntegerFrDisplay(v);
+            row[def.label] = s !== '' ? s : null;
           } else {
-            row[def.label] = typeof v === 'number' ? v : v != null ? String(v) : null
+            row[def.label] =
+              typeof v === 'number' ? v : v != null ? String(v) : null;
           }
         }
       }
-      return row
-    })
-  }, [picked, criteria, avgByCand])
+      return row;
+    });
+  }, [picked, criteria, avgByCand]);
 
-  const csvColumnOrder = useMemo(() => tableColumns.map((c) => c.key), [tableColumns])
+  const csvColumnOrder = useMemo(
+    () => tableColumns.map(c => c.key),
+    [tableColumns]
+  );
 
   const radarData = useMemo(() => {
-    const keys = CRITERIA.filter((c) => criteria[c.key] && c.numeric).map((c) => c.key)
-    if (picked.length < 2 || keys.length < 2) return []
-    const raw: Record<string, Record<string, number>> = {}
+    const keys = CRITERIA.filter(c => criteria[c.key] && c.numeric).map(
+      c => c.key
+    );
+    if (picked.length < 2 || keys.length < 2) return [];
+    const raw: Record<string, Record<string, number>> = {};
     for (const p of picked) {
-      raw[p.id] = {}
-      const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>
+      raw[p.id] = {};
+      const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       for (const k of keys) {
-        let v = 0
-        if (k === 'price') v = p.price ?? 0
-        else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0
-        else v = Number(spec[k]) || 0
-        raw[p.id][k] = v
+        let v = 0;
+        if (k === 'price') v = p.price ?? 0;
+        else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0;
+        else v = Number(spec[k]) || 0;
+        raw[p.id][k] = v;
       }
     }
     const normKey = (k: string) => {
-      const vals = picked.map((p) => raw[p.id][k])
-      const min = Math.min(...vals)
-      const max = Math.max(...vals)
-      const span = max - min || 1
-      return (p: Candidate) => (raw[p.id][k] - min) / span
-    }
-    return keys.map((k) => {
+      const vals = picked.map(p => raw[p.id][k]);
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const span = max - min || 1;
+      return (p: Candidate) => (raw[p.id][k] - min) / span;
+    };
+    return keys.map(k => {
       const row: Record<string, string | number> = {
-        subject: CRITERIA.find((c) => c.key === k)?.label ?? k,
-      }
-      for (const p of picked) row[p.id] = Math.round(normKey(k)(p) * 100)
-      return row
-    })
-  }, [picked, criteria, avgByCand])
+        subject: CRITERIA.find(c => c.key === k)?.label ?? k,
+      };
+      for (const p of picked) row[p.id] = Math.round(normKey(k)(p) * 100);
+      return row;
+    });
+  }, [picked, criteria, avgByCand]);
 
-  const toggleCand = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }))
-  const toggleCrit = (key: string) => setCriteria((s) => ({ ...s, [key]: !s[key] }))
+  const toggleCand = (id: string) => setSelected(s => ({ ...s, [id]: !s[id] }));
+  const toggleCrit = (key: string) =>
+    setCriteria(s => ({ ...s, [key]: !s[key] }));
 
-  const selectedCount = useMemo(() => Object.values(selected).filter(Boolean).length, [selected])
+  const selectedCount = useMemo(
+    () => Object.values(selected).filter(Boolean).length,
+    [selected]
+  );
 
   const exportJson = () => {
-    download('comparaison.json', 'application/json', JSON.stringify(tableRows, null, 2))
-    showToast('Export JSON téléchargé')
-  }
+    download(
+      'comparaison.json',
+      'application/json',
+      JSON.stringify(tableRows, null, 2)
+    );
+    showToast('Export JSON téléchargé');
+  };
   const exportCsv = () => {
-    download('comparaison.csv', 'text/csv;charset=utf-8', toCsv(csvColumnOrder, tableRows))
-    showToast('Export CSV téléchargé')
-  }
+    download(
+      'comparaison.csv',
+      'text/csv;charset=utf-8',
+      toCsv(csvColumnOrder, tableRows)
+    );
+    showToast('Export CSV téléchargé');
+  };
 
   const savePreset = async () => {
-    if (!canWrite || !presetName.trim()) return
-    const keys = CRITERIA.filter((c) => criteria[c.key]).map((c) => c.key)
+    if (!canWrite || !presetName.trim()) return;
+    const keys = CRITERIA.filter(c => criteria[c.key]).map(c => c.key);
     const {
       data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+    } = await supabase.auth.getUser();
+    if (!user) return;
     const { error } = await supabase.from('comparison_presets').insert({
       workspace_id: workspaceId,
       name: presetName.trim(),
       criteria_keys: keys,
       created_by: user.id,
-    })
+    });
     if (!error) {
-      setPresetName('')
+      setPresetName('');
       const { data } = await supabase
         .from('comparison_presets')
         .select('id, name, criteria_keys')
-        .eq('workspace_id', workspaceId)
-      setPresets((data ?? []) as Preset[])
-      showToast('Profil de critères enregistré')
+        .eq('workspace_id', workspaceId);
+      setPresets((data ?? []) as Preset[]);
+      showToast('Profil de critères enregistré');
     }
-  }
+  };
 
   const applyPreset = (p: Preset) => {
-    const set = new Set(p.criteria_keys)
-    setCriteria(Object.fromEntries(CRITERIA.map((c) => [c.key, set.has(c.key)])))
-    showToast(`Profil « ${p.name} » appliqué`)
-  }
+    const set = new Set(p.criteria_keys);
+    setCriteria(Object.fromEntries(CRITERIA.map(c => [c.key, set.has(c.key)])));
+    showToast(`Profil « ${p.name} » appliqué`);
+  };
 
   const printCompare = () => {
-    window.print()
-  }
+    window.print();
+  };
 
   return (
     <div className="stack compare-tab">
       <p className="muted">
-        Profils de critères, graphique radar (valeurs normalisées), exports et impression.
+        Profils de critères, graphique radar (valeurs normalisées), exports et
+        impression.
       </p>
 
       <div className="card stack no-print" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Profils enregistrés</h3>
         <div className="row" style={{ flexWrap: 'wrap', gap: '0.35rem' }}>
-          {presets.map((p) => (
-            <button key={p.id} type="button" className="secondary" onClick={() => applyPreset(p)}>
+          {presets.map(p => (
+            <button
+              key={p.id}
+              type="button"
+              className="secondary"
+              onClick={() => applyPreset(p)}
+            >
               {p.name}
             </button>
           ))}
         </div>
         {canWrite ? (
-          <div className="row icon-action-toolbar" style={{ alignItems: 'center' }}>
+          <div
+            className="row icon-action-toolbar"
+            style={{ alignItems: 'center' }}
+          >
             <input
               placeholder="Nom du profil"
               value={presetName}
-              onChange={(e) => setPresetName(e.target.value)}
+              onChange={e => setPresetName(e.target.value)}
               style={{ flex: 1 }}
             />
             <IconActionButton
@@ -408,17 +455,30 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         ) : null}
       </div>
 
-      <div className="card stack compare-pick-card-wrap" style={{ boxShadow: 'none' }}>
-        <div className="compare-pick-heading row" style={{ justifyContent: 'space-between' }}>
+      <div
+        className="card stack compare-pick-card-wrap"
+        style={{ boxShadow: 'none' }}
+      >
+        <div
+          className="compare-pick-heading row"
+          style={{ justifyContent: 'space-between' }}
+        >
           <h3 style={{ margin: 0 }}>Modèles</h3>
           {candidates.length > 0 || currentVehicle ? (
             <span className="compare-pick-count muted" aria-live="polite">
-              <strong className="compare-pick-count-num">{selectedCount}</strong> dans le tableau
+              <strong className="compare-pick-count-num">
+                {selectedCount}
+              </strong>{' '}
+              dans le tableau
             </span>
           ) : null}
         </div>
-        <p className="muted compare-pick-hint" style={{ margin: 0, fontSize: '0.88rem' }}>
-          Cartes surlignées = inclus dans la comparaison. Cochez au moins les modèles à comparer.
+        <p
+          className="muted compare-pick-hint"
+          style={{ margin: 0, fontSize: '0.88rem' }}
+        >
+          Cartes surlignées = inclus dans la comparaison. Cochez au moins les
+          modèles à comparer.
         </p>
         {candidates.length === 0 && !currentVehicle ? (
           <EmptyState
@@ -441,15 +501,17 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
                 />
                 <span className="compare-pick-card-main">
                   <span className="compare-pick-title">Véhicule actuel</span>
-                  <span className="compare-pick-sub muted">Référence dossier</span>
+                  <span className="compare-pick-sub muted">
+                    Référence dossier
+                  </span>
                 </span>
                 <span className="compare-pick-tick" aria-hidden="true">
                   {selected[currentVehicle.id] ? '✓' : ''}
                 </span>
               </label>
             ) : null}
-            {candidates.map((c) => {
-              const on = !!selected[c.id]
+            {candidates.map(c => {
+              const on = !!selected[c.id];
               return (
                 <label
                   key={c.id}
@@ -462,7 +524,9 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
                     onChange={() => toggleCand(c.id)}
                   />
                   <span className="compare-pick-card-main">
-                    <span className="compare-pick-title">{formatCandidateListLabel(c)}</span>
+                    <span className="compare-pick-title">
+                      {formatCandidateListLabel(c)}
+                    </span>
                     <span className="compare-pick-sub muted">
                       {c.engine ? `${c.engine}` : '—'}
                       {c.price != null ? ` · ${formatPriceEur(c.price)}` : ''}
@@ -472,7 +536,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
                     {on ? '✓' : ''}
                   </span>
                 </label>
-              )
+              );
             })}
           </div>
         )}
@@ -481,7 +545,7 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
       <div className="card stack" style={{ boxShadow: 'none' }}>
         <h3 style={{ margin: 0 }}>Critères</h3>
         <div className="row" style={{ flexWrap: 'wrap' }}>
-          {CRITERIA.map((c) => (
+          {CRITERIA.map(c => (
             <label key={c.key} className="row" style={{ gap: '0.35rem' }}>
               <input
                 type="checkbox"
@@ -535,11 +599,13 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
           <table className="compare-table">
             <thead>
               <tr>
-                {tableColumns.map((col) => (
+                {tableColumns.map(col => (
                   <th
                     key={col.key}
                     scope="col"
-                    className={col.align === 'right' ? 'compare-table-num' : undefined}
+                    className={
+                      col.align === 'right' ? 'compare-table-num' : undefined
+                    }
                   >
                     {col.header}
                   </th>
@@ -549,16 +615,20 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
             <tbody>
               {tableRows.map((r, ri) => (
                 <tr key={picked[ri]?.id ?? ri}>
-                  {tableColumns.map((col) => {
-                    const v = r[col.key]
+                  {tableColumns.map(col => {
+                    const v = r[col.key];
                     return (
                       <td
                         key={col.key}
-                        className={col.align === 'right' ? 'compare-table-num' : undefined}
+                        className={
+                          col.align === 'right'
+                            ? 'compare-table-num'
+                            : undefined
+                        }
                       >
                         {v == null ? '' : String(v)}
                       </td>
-                    )
+                    );
                   })}
                 </tr>
               ))}
@@ -571,7 +641,11 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
             fallback={
               <p
                 className="muted"
-                style={{ minHeight: 320, display: 'flex', alignItems: 'center' }}
+                style={{
+                  minHeight: 320,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
               >
                 Chargement du graphique…
               </p>
@@ -594,5 +668,5 @@ export function CompareTab({ workspaceId, canWrite }: { workspaceId: string; can
         />
       ) : null}
     </div>
-  )
+  );
 }

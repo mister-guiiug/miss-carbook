@@ -1,25 +1,25 @@
-import { useState, useCallback } from 'react'
-import { supabase } from '../../../lib/supabase'
-import { logActivity } from '../../../lib/activity'
-import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks'
-import type { ManufacturerLink } from '../../../lib/manufacturerLinks'
-import { candidateSchema } from '../../../lib/validation/schemas'
-import type { CandidateStatus, Json } from '../../../types/database'
+import { useState, useCallback } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { logActivity } from '../../../lib/activity';
+import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks';
+import type { ManufacturerLink } from '../../../lib/manufacturerLinks';
+import { candidateSchema } from '../../../lib/validation/schemas';
+import type { CandidateStatus, Json } from '../../../types/database';
 
 export type AddCandidateFormState = {
-  parent_id: string
-  brand: string
-  model: string
-  trim: string
-  engine: string
-  price: string
-  options: string
-  garage_location: string
-  manufacturer_links: ManufacturerLink[]
-  event_date: string
-  status: CandidateStatus
-  reject_reason: string
-}
+  parent_id: string;
+  brand: string;
+  model: string;
+  trim: string;
+  engine: string;
+  price: string;
+  options: string;
+  garage_location: string;
+  manufacturer_links: ManufacturerLink[];
+  event_date: string;
+  status: CandidateStatus;
+  reject_reason: string;
+};
 
 const emptyForm = (): AddCandidateFormState => ({
   parent_id: '',
@@ -34,7 +34,7 @@ const emptyForm = (): AddCandidateFormState => ({
   event_date: '',
   status: 'to_see' as CandidateStatus,
   reject_reason: '',
-})
+});
 
 export function useAddCandidateForm({
   workspaceId,
@@ -43,45 +43,48 @@ export function useAddCandidateForm({
   reportException,
   reportMessage,
 }: {
-  workspaceId: string
-  canWrite: boolean
-  load: () => Promise<void>
-  reportException: (e: unknown, ctx: string) => void
-  reportMessage: (msg: string, detail?: string) => void
+  workspaceId: string;
+  canWrite: boolean;
+  load: () => Promise<void>;
+  reportException: (e: unknown, ctx: string) => void;
+  reportMessage: (msg: string, detail?: string) => void;
 }) {
-  const [form, setForm] = useState<AddCandidateFormState>(emptyForm)
+  const [form, setForm] = useState<AddCandidateFormState>(emptyForm);
 
   const addCandidate = useCallback(
     async (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!canWrite) return
+      e.preventDefault();
+      if (!canWrite) return;
       const parsed = candidateSchema.safeParse({
         ...form,
         parent_candidate_id: form.parent_id || null,
         price: form.price,
         event_date: form.event_date || null,
-      })
+      });
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message ?? 'Invalide'
-        reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2))
-        return
+        const msg = parsed.error.errors[0]?.message ?? 'Invalide';
+        reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
+        return;
       }
       try {
-        const parentId = parsed.data.parent_candidate_id
-        let q = supabase.from('candidates').select('sort_order').eq('workspace_id', workspaceId)
-        if (parentId) q = q.eq('parent_candidate_id', parentId)
-        else q = q.is('parent_candidate_id', null)
+        const parentId = parsed.data.parent_candidate_id;
+        let q = supabase
+          .from('candidates')
+          .select('sort_order')
+          .eq('workspace_id', workspaceId);
+        if (parentId) q = q.eq('parent_candidate_id', parentId);
+        else q = q.is('parent_candidate_id', null);
         const { data: lastSort } = await q
           .order('sort_order', { ascending: false })
           .limit(1)
-          .maybeSingle()
-        const prev = (lastSort as { sort_order?: number } | null)?.sort_order
-        const nextOrder = (prev == null ? -1 : prev) + 1
+          .maybeSingle();
+        const prev = (lastSort as { sort_order?: number } | null)?.sort_order;
+        const nextOrder = (prev == null ? -1 : prev) + 1;
 
-        const isRootRow = !parentId
+        const isRootRow = !parentId;
         const manufacturer_links: ManufacturerLink[] = isRootRow
           ? []
-          : parsed.data.manufacturer_links
+          : parsed.data.manufacturer_links;
         const { data, error } = await supabase
           .from('candidates')
           .insert({
@@ -96,24 +99,33 @@ export function useAddCandidateForm({
             options: isRootRow ? '' : parsed.data.options,
             garage_location: isRootRow ? '' : parsed.data.garage_location,
             manufacturer_links: manufacturer_links as unknown as Json,
-            manufacturer_url: legacyManufacturerUrlFromLinks(manufacturer_links),
+            manufacturer_url:
+              legacyManufacturerUrlFromLinks(manufacturer_links),
             event_date: parsed.data.event_date,
             status: parsed.data.status,
             reject_reason: parsed.data.reject_reason,
           })
           .select('id')
-          .single()
-        if (error) throw error
-        await supabase.from('candidate_specs').insert({ candidate_id: data.id, specs: {} })
-        await logActivity(workspaceId, 'candidate.create', 'candidate', data.id, {})
-        setForm(emptyForm())
-        await load()
+          .single();
+        if (error) throw error;
+        await supabase
+          .from('candidate_specs')
+          .insert({ candidate_id: data.id, specs: {} });
+        await logActivity(
+          workspaceId,
+          'candidate.create',
+          'candidate',
+          data.id,
+          {}
+        );
+        setForm(emptyForm());
+        await load();
       } catch (e: unknown) {
-        reportException(e, 'Création d’un modèle candidat')
+        reportException(e, 'Création d’un modèle candidat');
       }
     },
     [canWrite, form, workspaceId, load, reportException, reportMessage]
-  )
+  );
 
-  return { form, setForm, addCandidate }
+  return { form, setForm, addCandidate };
 }

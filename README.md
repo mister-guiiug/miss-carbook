@@ -78,7 +78,7 @@ Application **PWA** (React 19 + Vite 7 + TypeScript strict ES2025) ; front stati
 | Charts            | [Recharts](https://recharts.org/)                                                                                                                                                                     |
 | Tests             | [Vitest 3](https://vitest.dev/) (jsdom) + [Testing Library](https://testing-library.com/) + [Playwright](https://playwright.dev/) + [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) |
 | Monitoring        | [@sentry/react](https://docs.sentry.io/platforms/javascript/guides/react/) + [web-vitals 4](https://web.dev/vitals/)                                                                                  |
-| Configs partagées | [`@mister-guiiug/dev-wpa-config`](../dev-wpa-config/README.md) (ESLint, Prettier, TS, Vitest)                                                                                                                  |
+| Configs partagées | [`@mister-guiiug/dev-wpa-config`](../dev-wpa-config/README.md) (ESLint, Prettier, TS, Vitest)                                                                                                         |
 | PWA               | [`vite-plugin-pwa 1.2`](https://vite-pwa-org.netlify.app/) (Workbox `generateSW`)                                                                                                                     |
 
 Référence déploiement Pages via Actions : [Configurer une source de publication GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow).
@@ -166,10 +166,12 @@ Les tables `notes`, `candidates`, `comments`, `activity_log`, `candidate_reviews
 const { data } = await supabase
   .from('workspace_members')
   .select('workspace_id, role, workspaces ( id, name, share_code )')
-  .eq('user_id', user.id)
+  .eq('user_id', user.id);
 
 // Rejoindre un dossier
-const { data: wsId, error } = await supabase.rpc('join_workspace', { p_code: 'ABCD1234' })
+const { data: wsId, error } = await supabase.rpc('join_workspace', {
+  p_code: 'ABCD1234',
+});
 ```
 
 Chemins Storage conseillés : `{workspace_id}/{candidate_id}/{uuid}-{nomfichier}`.

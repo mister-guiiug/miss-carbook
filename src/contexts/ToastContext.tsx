@@ -6,35 +6,35 @@ import {
   useMemo,
   useState,
   type ReactNode,
-} from 'react'
+} from 'react';
 
 type ToastContextValue = {
-  showToast: (message: string) => void
-}
+  showToast: (message: string) => void;
+};
 
-const ToastContext = createContext<ToastContextValue | null>(null)
+const ToastContext = createContext<ToastContextValue | null>(null);
 
 // eslint-disable-next-line react-refresh/only-export-components -- hook + provider
 export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast doit être utilisé dans ToastProvider')
-  return ctx
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error('useToast doit être utilisé dans ToastProvider');
+  return ctx;
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
-    setMessage(msg)
-  }, [])
+    setMessage(msg);
+  }, []);
 
   useEffect(() => {
-    if (!message) return
-    const t = window.setTimeout(() => setMessage(null), 3200)
-    return () => window.clearTimeout(t)
-  }, [message])
+    if (!message) return;
+    const t = window.setTimeout(() => setMessage(null), 3200);
+    return () => window.clearTimeout(t);
+  }, [message]);
 
-  const value = useMemo(() => ({ showToast }), [showToast])
+  const value = useMemo(() => ({ showToast }), [showToast]);
 
   return (
     <ToastContext.Provider value={value}>
@@ -49,5 +49,5 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {message ? <div className="toast-card">{message}</div> : null}
       </div>
     </ToastContext.Provider>
-  )
+  );
 }

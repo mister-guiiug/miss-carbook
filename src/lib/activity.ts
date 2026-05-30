@@ -1,5 +1,5 @@
-import { supabase } from './supabase'
-import type { Json } from '../types/database'
+import { supabase } from './supabase';
+import type { Json } from '../types/database';
 
 export async function logActivity(
   workspaceId: string,
@@ -10,8 +10,8 @@ export async function logActivity(
 ) {
   const {
     data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return
+  } = await supabase.auth.getUser();
+  if (!user) return;
   await supabase.from('activity_log').insert({
     workspace_id: workspaceId,
     user_id: user.id,
@@ -19,5 +19,5 @@ export async function logActivity(
     entity_type: entityType,
     entity_id: entityId ?? null,
     metadata,
-  })
+  });
 }

@@ -26,5 +26,11 @@ coverage
 # PWA dev
 dev-dist
 
+# Playwright / coverage (artefacts générés)
+/playwright-report/
+/test-results/
+/blob-report/
+/coverage/
+
 # Types Supabase générés localement (`npm run gen:types`) — comparer avec src/types/database.ts
 src/types/database.gen.ts

@@ -6,25 +6,25 @@ import {
   Radar,
   RadarChart,
   ResponsiveContainer,
-} from 'recharts'
-import { formatCandidateListLabel } from '../../lib/candidateLabel'
-import { COMPARE_RADAR_COLORS } from '../../lib/compareCriteria'
-import type { Json } from '../../types/database'
+} from 'recharts';
+import { formatCandidateListLabel } from '../../lib/candidateLabel';
+import { COMPARE_RADAR_COLORS } from '../../lib/compareCriteria';
+import type { Json } from '../../types/database';
 
 type Candidate = {
-  id: string
-  brand: string
-  model: string
-  trim: string
-  parent_candidate_id: string | null
-  candidate_specs: { specs: Json } | null
-  is_current?: boolean
-}
+  id: string;
+  brand: string;
+  model: string;
+  trim: string;
+  parent_candidate_id: string | null;
+  candidate_specs: { specs: Json } | null;
+  is_current?: boolean;
+};
 
 type Props = {
-  radarData: Record<string, string | number>[]
-  picked: Candidate[]
-}
+  radarData: Record<string, string | number>[];
+  picked: Candidate[];
+};
 
 export default function CompareTabRadar({ radarData, picked }: Props) {
   return (
@@ -57,5 +57,5 @@ export default function CompareTabRadar({ radarData, picked }: Props) {
         </RadarChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }

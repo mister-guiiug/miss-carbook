@@ -1,12 +1,12 @@
-import { useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react';
 
 function subscribe(cb: () => void) {
-  window.addEventListener('online', cb)
-  window.addEventListener('offline', cb)
+  window.addEventListener('online', cb);
+  window.addEventListener('offline', cb);
   return () => {
-    window.removeEventListener('online', cb)
-    window.removeEventListener('offline', cb)
-  }
+    window.removeEventListener('online', cb);
+    window.removeEventListener('offline', cb);
+  };
 }
 
 export function useOnlineStatus() {
@@ -14,5 +14,5 @@ export function useOnlineStatus() {
     subscribe,
     () => navigator.onLine,
     () => true
-  )
+  );
 }
