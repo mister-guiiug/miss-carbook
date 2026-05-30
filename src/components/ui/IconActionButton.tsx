@@ -1,23 +1,38 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-const ic = { width: 20, height: 20, viewBox: '0 0 24 24' as const, fill: 'none' as const }
+const ic = {
+  width: 20,
+  height: 20,
+  viewBox: '0 0 24 24' as const,
+  fill: 'none' as const,
+};
 
 export const IconActionButton = forwardRef<
   HTMLButtonElement,
-  Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'aria-label' | 'title' | 'children'> & {
-    label: string
-    variant?: 'primary' | 'secondary' | 'danger'
-    nativeType?: 'button' | 'submit'
-    children: ReactNode
+  Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    'type' | 'aria-label' | 'title' | 'children'
+  > & {
+    label: string;
+    variant?: 'primary' | 'secondary' | 'danger';
+    nativeType?: 'button' | 'submit';
+    children: ReactNode;
   }
 >(function IconActionButton(
-  { label, variant = 'secondary', nativeType = 'button', className = '', children, ...rest },
+  {
+    label,
+    variant = 'secondary',
+    nativeType = 'button',
+    className = '',
+    children,
+    ...rest
+  },
   ref
 ) {
-  const mods = ['icon-action-btn']
-  if (variant === 'secondary') mods.push('icon-action-btn--secondary')
-  else if (variant === 'danger') mods.push('icon-action-btn--danger')
-  else mods.push('icon-action-btn--primary')
+  const mods = ['icon-action-btn'];
+  if (variant === 'secondary') mods.push('icon-action-btn--secondary');
+  else if (variant === 'danger') mods.push('icon-action-btn--danger');
+  else mods.push('icon-action-btn--primary');
   return (
     <button
       {...rest}
@@ -29,8 +44,8 @@ export const IconActionButton = forwardRef<
     >
       {children}
     </button>
-  )
-})
+  );
+});
 
 export function IconPlus() {
   return (
@@ -43,7 +58,7 @@ export function IconPlus() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconX() {
@@ -57,7 +72,7 @@ export function IconX() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconPencil() {
@@ -71,12 +86,12 @@ export function IconPencil() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Poignée de glisser-déposer (grille 2×3, style “drag handle” moderne). */
 export function IconGripVertical() {
-  const r = 1.65
+  const r = 1.65;
   return (
     <svg {...ic} aria-hidden>
       <circle cx="9" cy="7" r={r} fill="currentColor" />
@@ -86,7 +101,7 @@ export function IconGripVertical() {
       <circle cx="9" cy="17" r={r} fill="currentColor" />
       <circle cx="15" cy="17" r={r} fill="currentColor" />
     </svg>
-  )
+  );
 }
 
 export function IconTrash() {
@@ -100,7 +115,7 @@ export function IconTrash() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconCheck() {
@@ -114,7 +129,7 @@ export function IconCheck() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconRotateCcw() {
@@ -127,9 +142,14 @@ export function IconRotateCcw() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M3 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M3 3v5h5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconClipboard() {
@@ -142,16 +162,37 @@ export function IconClipboard() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="2" />
-      <path d="M9 12h6M9 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <rect
+        x="9"
+        y="3"
+        width="6"
+        height="4"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M9 12h6M9 16h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconDuplicate() {
   return (
     <svg {...ic} aria-hidden>
-      <rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" />
+      <rect
+        x="8"
+        y="8"
+        width="13"
+        height="13"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
       <path
         d="M4 16V6a2 2 0 012-2h10"
         stroke="currentColor"
@@ -160,31 +201,46 @@ export function IconDuplicate() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconChevronDown() {
   return (
     <svg {...ic} aria-hidden>
-      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path
+        d="M6 9l6 6 6-6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconChevronUp() {
   return (
     <svg {...ic} aria-hidden>
-      <path d="M6 15l6-6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path
+        d="M6 15l6-6 6 6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconChevronRight() {
   return (
     <svg {...ic} aria-hidden>
-      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path
+        d="M9 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconJson() {
@@ -198,7 +254,7 @@ export function IconJson() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconTable() {
@@ -212,7 +268,7 @@ export function IconTable() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconPrinter() {
@@ -227,7 +283,7 @@ export function IconPrinter() {
       />
       <path d="M6 13h12" stroke="currentColor" strokeWidth="2" />
     </svg>
-  )
+  );
 }
 
 export function IconSave() {
@@ -246,7 +302,7 @@ export function IconSave() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconArchiveDown() {
@@ -265,13 +321,21 @@ export function IconArchiveDown() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconCopy() {
   return (
     <svg {...ic} aria-hidden>
-      <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+      <rect
+        x="8"
+        y="8"
+        width="12"
+        height="12"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
       <path
         d="M4 16V6a2 2 0 012-2h10"
         stroke="currentColor"
@@ -279,16 +343,21 @@ export function IconCopy() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconBan() {
   return (
     <svg {...ic} aria-hidden>
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-      <path d="M5 5l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M5 5l14 14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 export function IconUserMinus() {
@@ -302,7 +371,7 @@ export function IconUserMinus() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconEye() {
@@ -316,7 +385,7 @@ export function IconEye() {
       />
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
     </svg>
-  )
+  );
 }
 
 export function IconShield() {
@@ -329,7 +398,7 @@ export function IconShield() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconLogOut() {
@@ -343,7 +412,7 @@ export function IconLogOut() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 export function IconSend() {
@@ -357,7 +426,7 @@ export function IconSend() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Document / contexte pour assistant. */
@@ -370,16 +439,29 @@ export function IconPromptFile() {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path d="M8 10h8M8 14h8M8 18h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M8 10h8M8 14h8M8 18h5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 /** Icône photo / image pour comparaison. */
 export function IconPhoto() {
   return (
     <svg {...ic} aria-hidden>
-      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
       <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
       <path
         d="M21 15l-5-5L5 16v3h16z"
@@ -388,7 +470,7 @@ export function IconPhoto() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône trending up pour scores. */
@@ -410,7 +492,7 @@ export function IconTrendingUp() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône information. */
@@ -418,9 +500,14 @@ export function IconInfo() {
   return (
     <svg {...ic} aria-hidden>
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M12 16v-4M12 8h.01"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 /** Icône rafraîchir / recharger. */
@@ -435,7 +522,7 @@ export function IconRefresh() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône rotation horaire. */
@@ -450,7 +537,7 @@ export function IconRotateCw() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône calculatrice. */
@@ -467,15 +554,64 @@ export function IconCalculator() {
         strokeWidth="2"
         fill="none"
       />
-      <line x1="8" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="2" />
-      <line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" strokeWidth="2" />
-      <line x1="8" y1="14" x2="10" y2="14" stroke="currentColor" strokeWidth="2" />
-      <line x1="14" y1="14" x2="16" y2="14" stroke="currentColor" strokeWidth="2" />
-      <line x1="8" y1="18" x2="10" y2="18" stroke="currentColor" strokeWidth="2" />
-      <line x1="11" y1="18" x2="13" y2="18" stroke="currentColor" strokeWidth="2" />
-      <line x1="14" y1="18" x2="16" y2="18" stroke="currentColor" strokeWidth="2" />
+      <line
+        x1="8"
+        y1="6"
+        x2="16"
+        y2="6"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="8"
+        y1="10"
+        x2="16"
+        y2="10"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="8"
+        y1="14"
+        x2="10"
+        y2="14"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="14"
+        y1="14"
+        x2="16"
+        y2="14"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="8"
+        y1="18"
+        x2="10"
+        y2="18"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="11"
+        y1="18"
+        x2="13"
+        y2="18"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <line
+        x1="14"
+        y1="18"
+        x2="16"
+        y2="18"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
     </svg>
-  )
+  );
 }
 
 /** Icône télécharger. */
@@ -490,7 +626,7 @@ export function IconDownload() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône filtrer. */
@@ -505,14 +641,21 @@ export function IconFilter() {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône zoom avant. */
 export function IconZoomIn() {
   return (
     <svg {...ic} aria-hidden>
-      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle
+        cx="11"
+        cy="11"
+        r="8"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
       <path
         d="M21 21l-4.35-4.35M11 8v6M8 11h6"
         stroke="currentColor"
@@ -520,14 +663,21 @@ export function IconZoomIn() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 /** Icône zoom arrière. */
 export function IconZoomOut() {
   return (
     <svg {...ic} aria-hidden>
-      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle
+        cx="11"
+        cy="11"
+        r="8"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
       <path
         d="M21 21l-4.35-4.35M8 11h6"
         stroke="currentColor"
@@ -535,5 +685,5 @@ export function IconZoomOut() {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }

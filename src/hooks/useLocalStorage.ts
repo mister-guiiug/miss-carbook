@@ -3,7 +3,7 @@
  * Compatible avec tous les projets React
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react';
 
 export function useLocalStorage<T>(
   key: string,
@@ -12,46 +12,47 @@ export function useLocalStorage<T>(
   // Lire depuis localStorage ou utiliser initialValue
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
-      return initialValue
+      return initialValue;
     }
     try {
-      const item = window.localStorage.getItem(key)
-      return item ? JSON.parse(item) : initialValue
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error)
-      return initialValue
+      console.warn(`Error reading localStorage key "${key}":`, error);
+      return initialValue;
     }
-  })
+  });
 
   // Mettre à jour localStorage quand la valeur change
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
-        const valueToStore = value instanceof Function ? value(storedValue) : value
-        setStoredValue(valueToStore)
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        setStoredValue(valueToStore);
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error)
+        console.warn(`Error setting localStorage key "${key}":`, error);
       }
     },
     [key, storedValue]
-  )
+  );
 
   // Supprimer la clé du localStorage
   const removeValue = useCallback(() => {
     try {
-      setStoredValue(initialValue)
+      setStoredValue(initialValue);
       if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(key)
+        window.localStorage.removeItem(key);
       }
     } catch (error) {
-      console.warn(`Error removing localStorage key "${key}":`, error)
+      console.warn(`Error removing localStorage key "${key}":`, error);
     }
-  }, [key, initialValue])
+  }, [key, initialValue]);
 
-  return [storedValue, setValue, removeValue]
+  return [storedValue, setValue, removeValue];
 }
 
 // Exemple d'utilisation :

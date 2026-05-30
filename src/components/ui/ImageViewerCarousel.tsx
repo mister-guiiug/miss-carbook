@@ -1,7 +1,7 @@
-import { useCallback, useEffect } from 'react'
-import { IconActionButton, IconChevronRight, IconX } from './IconActionButton'
+import { useCallback, useEffect } from 'react';
+import { IconActionButton, IconChevronRight, IconX } from './IconActionButton';
 
-export type ImageViewerItem = { id: string; url: string }
+export type ImageViewerItem = { id: string; url: string };
 
 /**
  * Visionneuse plein écran avec navigation (précédent / suivant, flèches clavier, Échap).
@@ -12,40 +12,40 @@ export function ImageViewerCarousel({
   onClose,
   onNavigate,
 }: {
-  items: ImageViewerItem[]
+  items: ImageViewerItem[];
   /** Index courant ; `null` = fermé. */
-  index: number | null
-  onClose: () => void
-  onNavigate: (i: number) => void
+  index: number | null;
+  onClose: () => void;
+  onNavigate: (i: number) => void;
 }) {
-  const open = index !== null && items.length > 0
-  const safeIndex = open ? Math.min(Math.max(0, index!), items.length - 1) : 0
+  const open = index !== null && items.length > 0;
+  const safeIndex = open ? Math.min(Math.max(0, index!), items.length - 1) : 0;
 
   const goPrev = useCallback(() => {
-    if (index === null || items.length === 0) return
-    onNavigate(index <= 0 ? items.length - 1 : index - 1)
-  }, [index, items.length, onNavigate])
+    if (index === null || items.length === 0) return;
+    onNavigate(index <= 0 ? items.length - 1 : index - 1);
+  }, [index, items.length, onNavigate]);
 
   const goNext = useCallback(() => {
-    if (index === null || items.length === 0) return
-    onNavigate(index >= items.length - 1 ? 0 : index + 1)
-  }, [index, items.length, onNavigate])
+    if (index === null || items.length === 0) return;
+    onNavigate(index >= items.length - 1 ? 0 : index + 1);
+  }, [index, items.length, onNavigate]);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft') goPrev()
-      if (e.key === 'ArrowRight') goNext()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose, goPrev, goNext])
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose, goPrev, goNext]);
 
-  if (!open) return null
+  if (!open) return null;
 
-  const item = items[safeIndex]
-  const several = items.length > 1
+  const item = items[safeIndex];
+  const several = items.length > 1;
 
   return (
     <div
@@ -67,7 +67,7 @@ export function ImageViewerCarousel({
         role="dialog"
         aria-modal="true"
         aria-label={`Visionneuse photo ${safeIndex + 1} sur ${items.length}`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
         style={{
           position: 'relative',
           maxWidth: 'min(96vw, 1400px)',
@@ -95,9 +95,9 @@ export function ImageViewerCarousel({
           <IconActionButton
             variant="secondary"
             label="Photo précédente"
-            onClick={(e) => {
-              e.stopPropagation()
-              goPrev()
+            onClick={e => {
+              e.stopPropagation();
+              goPrev();
             }}
             style={{
               position: 'absolute',
@@ -117,9 +117,9 @@ export function ImageViewerCarousel({
           <IconActionButton
             variant="secondary"
             label="Photo suivante"
-            onClick={(e) => {
-              e.stopPropagation()
-              goNext()
+            onClick={e => {
+              e.stopPropagation();
+              goNext();
             }}
             style={{
               position: 'absolute',
@@ -162,7 +162,8 @@ export function ImageViewerCarousel({
         >
           {several ? (
             <>
-              {safeIndex + 1} / {items.length} — flèches du clavier pour défiler · Échap pour fermer
+              {safeIndex + 1} / {items.length} — flèches du clavier pour défiler
+              · Échap pour fermer
             </>
           ) : (
             <>Échap pour fermer</>
@@ -170,5 +171,5 @@ export function ImageViewerCarousel({
         </div>
       </div>
     </div>
-  )
+  );
 }

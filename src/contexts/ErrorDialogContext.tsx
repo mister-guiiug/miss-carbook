@@ -7,9 +7,9 @@ import {
   useRef,
   useState,
   type ReactNode,
-} from 'react'
-import { explainUnknownError } from '../lib/errorReporting'
-import { useFocusTrap } from '../hooks/useFocusTrap'
+} from 'react';
+import { explainUnknownError } from '../lib/errorReporting';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   IconActionButton,
   IconCheck,
@@ -17,84 +17,89 @@ import {
   IconChevronUp,
   IconCopy,
   IconX,
-} from '../components/ui/IconActionButton'
+} from '../components/ui/IconActionButton';
 
 type ErrorPayload = {
-  userMessage: string
-  technical: string
-}
+  userMessage: string;
+  technical: string;
+};
 
 type ErrorDialogContextValue = {
-  reportException: (err: unknown, context?: string) => void
+  reportException: (err: unknown, context?: string) => void;
   /** Erreur métier ou de validation : message clair + détail optionnel pour le copier-coller. */
-  reportMessage: (userMessage: string, technical?: string) => void
-  dismiss: () => void
-}
+  reportMessage: (userMessage: string, technical?: string) => void;
+  dismiss: () => void;
+};
 
-const ErrorDialogContext = createContext<ErrorDialogContextValue | null>(null)
+const ErrorDialogContext = createContext<ErrorDialogContextValue | null>(null);
 
 // eslint-disable-next-line react-refresh/only-export-components -- hook utilisé avec ErrorDialogProvider
 export function useErrorDialog() {
-  const ctx = useContext(ErrorDialogContext)
+  const ctx = useContext(ErrorDialogContext);
   if (!ctx) {
-    throw new Error('useErrorDialog doit être utilisé dans ErrorDialogProvider')
+    throw new Error(
+      'useErrorDialog doit être utilisé dans ErrorDialogProvider'
+    );
   }
-  return ctx
+  return ctx;
 }
 
 export function ErrorDialogProvider({ children }: { children: ReactNode }) {
-  const [payload, setPayload] = useState<ErrorPayload | null>(null)
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const panelRef = useRef<HTMLDivElement>(null)
-  useFocusTrap(panelRef, !!payload)
+  const [payload, setPayload] = useState<ErrorPayload | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, !!payload);
 
   const dismiss = useCallback(() => {
-    setPayload(null)
-    setDetailsOpen(false)
-    setCopied(false)
-  }, [])
+    setPayload(null);
+    setDetailsOpen(false);
+    setCopied(false);
+  }, []);
 
   const reportException = useCallback((err: unknown, context?: string) => {
-    const { userMessage, technical } = explainUnknownError(err, context)
-    setPayload({ userMessage, technical })
-    setDetailsOpen(false)
-    setCopied(false)
-  }, [])
+    const { userMessage, technical } = explainUnknownError(err, context);
+    setPayload({ userMessage, technical });
+    setDetailsOpen(false);
+    setCopied(false);
+  }, []);
 
-  const reportMessage = useCallback((userMessage: string, technical?: string) => {
-    setPayload({
-      userMessage,
-      technical: technical ?? userMessage,
-    })
-    setDetailsOpen(false)
-    setCopied(false)
-  }, [])
+  const reportMessage = useCallback(
+    (userMessage: string, technical?: string) => {
+      setPayload({
+        userMessage,
+        technical: technical ?? userMessage,
+      });
+      setDetailsOpen(false);
+      setCopied(false);
+    },
+    []
+  );
 
   const value = useMemo(
     () => ({ reportException, reportMessage, dismiss }),
     [reportException, reportMessage, dismiss]
-  )
+  );
 
   useEffect(() => {
-    if (!payload) return
+    if (!payload) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismiss()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [payload, dismiss])
+      if (e.key === 'Escape') dismiss();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [payload, dismiss]);
 
   const copyTechnical = useCallback(async () => {
-    if (!payload?.technical) return
+    if (!payload?.technical) return;
     try {
-      await navigator.clipboard.writeText(payload.technical)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(payload.technical);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setCopied(false)
+      setCopied(false);
     }
-  }, [payload?.technical])
+  }, [payload?.technical]);
 
   return (
     <ErrorDialogContext.Provider value={value}>
@@ -103,8 +108,8 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
         <div
           className="error-dialog-backdrop"
           role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) dismiss()
+          onClick={e => {
+            if (e.target === e.currentTarget) dismiss();
           }}
         >
           <div
@@ -131,7 +136,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                     ? 'Masquer les détails techniques'
                     : 'Afficher les détails techniques (copie support)'
                 }
-                onClick={() => setDetailsOpen((o) => !o)}
+                onClick={() => setDetailsOpen(o => !o)}
                 aria-expanded={detailsOpen}
               >
                 {detailsOpen ? <IconChevronUp /> : <IconChevronRight />}
@@ -169,5 +174,5 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
         </div>
       ) : null}
     </ErrorDialogContext.Provider>
-  )
+  );
 }

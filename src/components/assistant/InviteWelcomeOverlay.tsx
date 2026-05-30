@@ -1,46 +1,46 @@
-import { useState } from 'react'
-import { AssistantFullscreenLayout } from './AssistantFullscreenLayout'
-import { shouldOfferAssistantUi } from '../../lib/assistantDevice'
-import { isInviteTipDone, setInviteTipDone } from '../../lib/assistantStorage'
+import { useState } from 'react';
+import { AssistantFullscreenLayout } from './AssistantFullscreenLayout';
+import { shouldOfferAssistantUi } from '../../lib/assistantDevice';
+import { isInviteTipDone, setInviteTipDone } from '../../lib/assistantStorage';
 
-const INVITE_KEY = 'mc_invite_welcome'
+const INVITE_KEY = 'mc_invite_welcome';
 
 export function InviteWelcomeOverlay({
   workspaceId,
   workspaceName,
   onClose,
 }: {
-  workspaceId: string
-  workspaceName: string
-  onClose: () => void
+  workspaceId: string;
+  workspaceName: string;
+  onClose: () => void;
 }) {
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(0);
 
-  if (typeof window === 'undefined') return null
-  if (!shouldOfferAssistantUi()) return null
+  if (typeof window === 'undefined') return null;
+  if (!shouldOfferAssistantUi()) return null;
   if (isInviteTipDone(workspaceId)) {
     try {
-      sessionStorage.removeItem(INVITE_KEY)
+      sessionStorage.removeItem(INVITE_KEY);
     } catch {
       /* ignore */
     }
-    return null
+    return null;
   }
   try {
-    if (sessionStorage.getItem(INVITE_KEY) !== workspaceId) return null
+    if (sessionStorage.getItem(INVITE_KEY) !== workspaceId) return null;
   } catch {
-    return null
+    return null;
   }
 
   const finish = () => {
-    setInviteTipDone(workspaceId)
+    setInviteTipDone(workspaceId);
     try {
-      sessionStorage.removeItem(INVITE_KEY)
+      sessionStorage.removeItem(INVITE_KEY);
     } catch {
       /* ignore */
     }
-    onClose()
-  }
+    onClose();
+  };
 
   if (step === 0) {
     return (
@@ -56,11 +56,12 @@ export function InviteWelcomeOverlay({
         onNeverShowAgain={finish}
       >
         <p className="muted" style={{ marginTop: 0 }}>
-          Vous avez accepté une invitation pour « <strong>{workspaceName}</strong> ». Les membres
-          voient les mêmes exigences, modèles et messages en temps réel.
+          Vous avez accepté une invitation pour «{' '}
+          <strong>{workspaceName}</strong> ». Les membres voient les mêmes
+          exigences, modèles et messages en temps réel.
         </p>
       </AssistantFullscreenLayout>
-    )
+    );
   }
 
   return (
@@ -88,5 +89,5 @@ export function InviteWelcomeOverlay({
         </li>
       </ul>
     </AssistantFullscreenLayout>
-  )
+  );
 }

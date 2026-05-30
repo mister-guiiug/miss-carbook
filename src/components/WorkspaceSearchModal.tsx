@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { formatCandidateListLabel } from '../lib/candidateLabel'
-import { supabase } from '../lib/supabase'
-import { useFocusTrap } from '../hooks/useFocusTrap'
-import { IconActionButton, IconX } from './ui/IconActionButton'
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { formatCandidateListLabel } from '../lib/candidateLabel';
+import { supabase } from '../lib/supabase';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { IconActionButton, IconX } from './ui/IconActionButton';
 
-type Item = { type: string; label: string; tab: string; hint?: string }
+type Item = { type: string; label: string; tab: string; hint?: string };
 
 export function WorkspaceSearchModal({
   workspaceId,
@@ -12,19 +12,19 @@ export function WorkspaceSearchModal({
   onClose,
   onPick,
 }: {
-  workspaceId: string
-  open: boolean
-  onClose: () => void
-  onPick: (tab: string) => void
+  workspaceId: string;
+  open: boolean;
+  onClose: () => void;
+  onPick: (tab: string) => void;
 }) {
-  const [q, setQ] = useState('')
-  const [items, setItems] = useState<Item[]>([])
-  const panelRef = useRef<HTMLDivElement>(null)
-  useFocusTrap(panelRef, open)
+  const [q, setQ] = useState('');
+  const [items, setItems] = useState<Item[]>([]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
 
   useEffect(() => {
-    if (!open) return
-    let cancelled = false
+    if (!open) return;
+    let cancelled = false;
     void (async () => {
       const [req, cand, rem, visits] = await Promise.all([
         supabase
@@ -50,11 +50,16 @@ export function WorkspaceSearchModal({
           .eq('workspace_id', workspaceId)
           .order('visit_at', { ascending: false })
           .limit(40),
-      ])
-      if (cancelled) return
-      const list: Item[] = []
+      ]);
+      if (cancelled) return;
+      const list: Item[] = [];
       for (const r of req.data ?? [])
-        list.push({ type: 'Exigence', label: r.label, tab: 'requirements', hint: r.id.slice(0, 8) })
+        list.push({
+          type: 'Exigence',
+          label: r.label,
+          tab: 'requirements',
+          hint: r.id.slice(0, 8),
+        });
       for (const c of cand.data ?? [])
         list.push({
           type: 'Modèle',
@@ -66,42 +71,50 @@ export function WorkspaceSearchModal({
           }),
           tab: 'candidates',
           hint: c.id.slice(0, 8),
-        })
+        });
       for (const r of rem.data ?? [])
-        list.push({ type: 'Rappel', label: r.title, tab: 'reminders', hint: r.id.slice(0, 8) })
+        list.push({
+          type: 'Rappel',
+          label: r.title,
+          tab: 'reminders',
+          hint: r.id.slice(0, 8),
+        });
       for (const v of visits.data ?? []) {
-        const dt = (v as { visit_at: string }).visit_at
-        const loc = ((v as { location?: string | null }).location ?? '').trim()
+        const dt = (v as { visit_at: string }).visit_at;
+        const loc = ((v as { location?: string | null }).location ?? '').trim();
         const label = loc
           ? `${loc} · ${new Date(dt).toLocaleDateString('fr-FR')}`
-          : new Date(dt).toLocaleDateString('fr-FR')
+          : new Date(dt).toLocaleDateString('fr-FR');
         list.push({
           type: 'Visite',
           label,
           tab: 'reminders',
           hint: (v as { id: string }).id.slice(0, 8),
-        })
+        });
       }
-      setItems(list)
-    })()
+      setItems(list);
+    })();
     return () => {
-      cancelled = true
-    }
-  }, [open, workspaceId])
+      cancelled = true;
+    };
+  }, [open, workspaceId]);
 
   useEffect(() => {
-    if (!open) setQ('')
-  }, [open])
+    if (!open) setQ('');
+  }, [open]);
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return items.slice(0, 40)
+    const s = q.trim().toLowerCase();
+    if (!s) return items.slice(0, 40);
     return items
-      .filter((i) => i.label.toLowerCase().includes(s) || i.type.toLowerCase().includes(s))
-      .slice(0, 40)
-  }, [items, q])
+      .filter(
+        i =>
+          i.label.toLowerCase().includes(s) || i.type.toLowerCase().includes(s)
+      )
+      .slice(0, 40);
+  }, [items, q]);
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div
@@ -113,7 +126,11 @@ export function WorkspaceSearchModal({
       <div ref={panelRef} className="search-modal card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <strong>Recherche dans le dossier</strong>
-          <IconActionButton variant="secondary" label="Fermer la recherche" onClick={onClose}>
+          <IconActionButton
+            variant="secondary"
+            label="Fermer la recherche"
+            onClick={onClose}
+          >
             <IconX />
           </IconActionButton>
         </div>
@@ -121,17 +138,17 @@ export function WorkspaceSearchModal({
           autoFocus
           placeholder="Exigence, modèle, rappel, visite…"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={e => setQ(e.target.value)}
         />
         <ul className="search-modal-list">
-          {filtered.map((i) => (
+          {filtered.map(i => (
             <li key={`${i.type}-${i.hint}`}>
               <button
                 type="button"
                 className="search-modal-item"
                 onClick={() => {
-                  onPick(i.tab)
-                  onClose()
+                  onPick(i.tab);
+                  onClose();
                 }}
               >
                 <span className="badge">{i.type}</span> {i.label}
@@ -144,5 +161,5 @@ export function WorkspaceSearchModal({
         </p>
       </div>
     </div>
-  )
+  );
 }

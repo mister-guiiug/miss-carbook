@@ -6,10 +6,10 @@ interface EmptyStateProps {
     | 'reminders'
     | 'notes'
     | 'activity'
-    | 'search'
-  title: string
-  text: string
-  action?: React.ReactNode
+    | 'search';
+  title: string;
+  text: string;
+  action?: React.ReactNode;
 }
 
 export function EmptyState({ icon, title, text, action }: EmptyStateProps) {
@@ -20,7 +20,7 @@ export function EmptyState({ icon, title, text, action }: EmptyStateProps) {
       <p className="empty-state-text">{text}</p>
       {action && <div className="empty-state-action">{action}</div>}
     </div>
-  )
+  );
 }
 
 function EmptyStateIcon({ type }: { type: string }) {
@@ -114,7 +114,7 @@ function EmptyStateIcon({ type }: { type: string }) {
         <path d="m21 21-4.3-4.3" />
       </svg>
     ),
-  }
+  };
 
-  return icons[type] || icons.search
+  return icons[type] || icons.search;
 }

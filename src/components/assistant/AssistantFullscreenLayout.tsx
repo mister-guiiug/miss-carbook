@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function AssistantFullscreenLayout({
   stepIndex,
@@ -13,17 +13,17 @@ export function AssistantFullscreenLayout({
   onPassAll,
   onNeverShowAgain,
 }: {
-  stepIndex: number
-  stepCount: number
-  titleId: string
-  title: string
-  children: ReactNode
-  onBack?: () => void
-  onPrimary: () => void
-  primaryLabel: string
-  showBack: boolean
-  onPassAll: () => void
-  onNeverShowAgain: () => void
+  stepIndex: number;
+  stepCount: number;
+  titleId: string;
+  title: string;
+  children: ReactNode;
+  onBack?: () => void;
+  onPrimary: () => void;
+  primaryLabel: string;
+  showBack: boolean;
+  onPassAll: () => void;
+  onNeverShowAgain: () => void;
 }) {
   return (
     <div
@@ -51,13 +51,21 @@ export function AssistantFullscreenLayout({
         <div className="assistant-body">{children}</div>
         <div className="assistant-actions">
           {showBack ? (
-            <button type="button" className="secondary assistant-btn" onClick={onBack}>
+            <button
+              type="button"
+              className="secondary assistant-btn"
+              onClick={onBack}
+            >
               Retour
             </button>
           ) : (
             <span className="assistant-actions-spacer" />
           )}
-          <button type="button" className="assistant-btn assistant-btn-primary" onClick={onPrimary}>
+          <button
+            type="button"
+            className="assistant-btn assistant-btn-primary"
+            onClick={onPrimary}
+          >
             {primaryLabel}
           </button>
         </div>
@@ -66,11 +74,15 @@ export function AssistantFullscreenLayout({
             Passer tout
           </button>
           <span aria-hidden="true"> · </span>
-          <button type="button" className="link-like" onClick={onNeverShowAgain}>
+          <button
+            type="button"
+            className="link-like"
+            onClick={onNeverShowAgain}
+          >
             Ne plus proposer
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

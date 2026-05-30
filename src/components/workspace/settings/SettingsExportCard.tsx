@@ -1,5 +1,5 @@
-import { ExportWorkspaceButton } from '../ExportWorkspaceButton'
-import { ExportWorkspacePromptButton } from '../ExportWorkspacePromptButton'
+import { ExportWorkspaceButton } from '../ExportWorkspaceButton';
+import { ExportWorkspacePromptButton } from '../ExportWorkspacePromptButton';
 
 export function SettingsExportCard({ workspaceId }: { workspaceId: string }) {
   return (
@@ -8,10 +8,13 @@ export function SettingsExportCard({ workspaceId }: { workspaceId: string }) {
       <p className="muted settings-card-lead" style={{ margin: 0 }}>
         Archive JSON ou texte pour l’assistant.
       </p>
-      <div className="row" style={{ flexWrap: 'wrap', alignItems: 'flex-start', gap: '1.25rem' }}>
+      <div
+        className="row"
+        style={{ flexWrap: 'wrap', alignItems: 'flex-start', gap: '1.25rem' }}
+      >
         <ExportWorkspaceButton workspaceId={workspaceId} />
         <ExportWorkspacePromptButton workspaceId={workspaceId} />
       </div>
     </div>
-  )
+  );
 }

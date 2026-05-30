@@ -1,12 +1,16 @@
-import type { ManufacturerLink } from '../../../lib/manufacturerLinks'
-import { manufacturerLinksAreEmpty } from '../../../lib/manufacturerLinks'
-import { IconActionButton, IconPlus, IconTrash } from '../../ui/IconActionButton'
+import type { ManufacturerLink } from '../../../lib/manufacturerLinks';
+import { manufacturerLinksAreEmpty } from '../../../lib/manufacturerLinks';
+import {
+  IconActionButton,
+  IconPlus,
+  IconTrash,
+} from '../../ui/IconActionButton';
 
 function isHttpUrl(s: string): boolean {
   try {
-    return Boolean(new URL(s).protocol.match(/^https?:$/i))
+    return Boolean(new URL(s).protocol.match(/^https?:$/i));
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -16,22 +20,22 @@ export function ManufacturerLinksEditor({
   onChange,
   disabled,
 }: {
-  idPrefix: string
-  value: ManufacturerLink[]
-  onChange: (next: ManufacturerLink[]) => void
-  disabled?: boolean
+  idPrefix: string;
+  value: ManufacturerLink[];
+  onChange: (next: ManufacturerLink[]) => void;
+  disabled?: boolean;
 }) {
-  const addRow = () => onChange([...value, { url: '', label: '' }])
+  const addRow = () => onChange([...value, { url: '', label: '' }]);
   const updateRow = (i: number, patch: Partial<ManufacturerLink>) => {
-    const next = value.map((row, j) => (j === i ? { ...row, ...patch } : row))
-    onChange(next)
-  }
-  const removeRow = (i: number) => onChange(value.filter((_, j) => j !== i))
+    const next = value.map((row, j) => (j === i ? { ...row, ...patch } : row));
+    onChange(next);
+  };
+  const removeRow = (i: number) => onChange(value.filter((_, j) => j !== i));
 
-  const clickable = value.filter((l) => {
-    const u = l.url.trim()
-    return u !== '' && isHttpUrl(u)
-  })
+  const clickable = value.filter(l => {
+    const u = l.url.trim();
+    return u !== '' && isHttpUrl(u);
+  });
 
   return (
     <div className="stack" style={{ gap: '0.75rem' }}>
@@ -61,7 +65,8 @@ export function ManufacturerLinksEditor({
 
       {!disabled && value.length === 0 ? (
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Aucun lien pour l’instant. Utilisez « Ajouter un lien » puis enregistrez la fiche.
+          Aucun lien pour l’instant. Utilisez « Ajouter un lien » puis
+          enregistrez la fiche.
         </p>
       ) : null}
 
@@ -78,11 +83,13 @@ export function ManufacturerLinksEditor({
         >
           <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ flex: '1 1 140px' }}>
-              <label htmlFor={`${idPrefix}-label-${i}`}>Libellé (optionnel)</label>
+              <label htmlFor={`${idPrefix}-label-${i}`}>
+                Libellé (optionnel)
+              </label>
               <input
                 id={`${idPrefix}-label-${i}`}
                 value={row.label}
-                onChange={(e) => updateRow(i, { label: e.target.value })}
+                onChange={e => updateRow(i, { label: e.target.value })}
                 disabled={disabled}
                 placeholder="ex. Configurateur, Brochure PDF"
                 maxLength={120}
@@ -96,7 +103,7 @@ export function ManufacturerLinksEditor({
                 type="url"
                 inputMode="url"
                 value={row.url}
-                onChange={(e) => updateRow(i, { url: e.target.value })}
+                onChange={e => updateRow(i, { url: e.target.value })}
                 disabled={disabled}
                 placeholder="https://…"
                 maxLength={2000}
@@ -127,7 +134,11 @@ export function ManufacturerLinksEditor({
           <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.9rem' }}>
             {clickable.map((l, i) => (
               <li key={`${l.url}-${i}`}>
-                <a href={l.url.trim()} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={l.url.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {l.label.trim() || l.url.trim()}
                 </a>
               </li>
@@ -136,5 +147,5 @@ export function ManufacturerLinksEditor({
         </div>
       ) : null}
     </div>
-  )
+  );
 }

@@ -22,7 +22,7 @@ const ACTION: Record<string, string> = {
   'member.removed': 'Membre retiré',
   'workspace.decision': 'Décision (modèle retenu)',
   'workspace.update_meta': 'Nom ou description du dossier',
-}
+};
 
 const ENTITY: Record<string, string> = {
   workspace: 'Dossier',
@@ -34,12 +34,12 @@ const ENTITY: Record<string, string> = {
   user_note: 'Bloc-notes',
   reminder: 'Rappel',
   visit: 'Visite',
-}
+};
 
 export function activityActionLabel(actionType: string): string {
-  return ACTION[actionType] ?? actionType
+  return ACTION[actionType] ?? actionType;
 }
 
 export function activityEntityLabel(entityType: string): string {
-  return ENTITY[entityType] ?? entityType
+  return ENTITY[entityType] ?? entityType;
 }

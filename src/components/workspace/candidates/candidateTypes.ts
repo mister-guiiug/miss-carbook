@@ -1,28 +1,28 @@
-import type { ManufacturerLink } from '../../../lib/manufacturerLinks'
-import type { CandidateStatus, Json } from '../../../types/database'
+import type { ManufacturerLink } from '../../../lib/manufacturerLinks';
+import type { CandidateStatus, Json } from '../../../types/database';
 
 export type CandidateRow = {
-  id: string
-  parent_candidate_id: string | null
-  sort_order: number
-  brand: string
-  model: string
-  trim: string
-  engine: string
-  price: number | null
-  mileage_km: number | null
-  first_registration: string
-  gearbox: string
-  energy: string
-  options: string
-  garage_location: string
-  manufacturer_url: string
-  manufacturer_links: ManufacturerLink[]
-  event_date: string | null
-  status: CandidateStatus
-  reject_reason: string
-  candidate_specs: { specs: Json } | null
-}
+  id: string;
+  parent_candidate_id: string | null;
+  sort_order: number;
+  brand: string;
+  model: string;
+  trim: string;
+  engine: string;
+  price: number | null;
+  mileage_km: number | null;
+  first_registration: string;
+  gearbox: string;
+  energy: string;
+  options: string;
+  garage_location: string;
+  manufacturer_url: string;
+  manufacturer_links: ManufacturerLink[];
+  event_date: string | null;
+  status: CandidateStatus;
+  reject_reason: string;
+  candidate_specs: { specs: Json } | null;
+};
 
 export const statusLabels: Record<CandidateStatus, string> = {
   to_see: 'À voir',
@@ -30,4 +30,4 @@ export const statusLabels: Record<CandidateStatus, string> = {
   shortlist: 'Shortlist',
   selected: 'Retenu',
   rejected: 'Rejeté',
-}
+};

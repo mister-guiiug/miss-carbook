@@ -1,38 +1,39 @@
-import { defineConfig, type Plugin, type PluginOption } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
-import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig, type Plugin, type PluginOption } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
-const analyze = process.env.ANALYZE === '1'
+const analyze = process.env.ANALYZE === '1';
 
 /**
  * Base path pour GitHub Pages : définir VITE_BASE_PATH=/nom-du-repo/ en CI.
  * Documentation : https://docs.github.com/en/pages/getting-started-with-github-pages
  */
-const base = process.env.VITE_BASE_PATH ?? '/'
+const base = process.env.VITE_BASE_PATH ?? '/';
 
 /** Google Tag Manager — conteneur */
-const GTM_CONTAINER_ID = 'GTM-WMFQTNFX'
+const GTM_CONTAINER_ID = 'GTM-WMFQTNFX';
 
 /** Google Search Console — balise meta de vérification */
-const GSC_SITE_VERIFICATION = 'iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30'
+const GSC_SITE_VERIFICATION = 'iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30';
 
 /**
  * Google Analytics 4 — ID de mesure (`G-xxxxxxxxxx`).
  * Surcharge possible : variable `VITE_GA_MEASUREMENT_ID` (ex. CI / .env local).
  * Laisser vide pour désactiver le snippet gtag.js (un tag GA4 uniquement via GTM évite le double comptage).
  */
-const GA4_MEASUREMENT_ID_HARDCODED = ''
+const GA4_MEASUREMENT_ID_HARDCODED = '';
 
 const GA4_MEASUREMENT_ID =
-  (process.env.VITE_GA_MEASUREMENT_ID ?? '').trim() || GA4_MEASUREMENT_ID_HARDCODED
+  (process.env.VITE_GA_MEASUREMENT_ID ?? '').trim() ||
+  GA4_MEASUREMENT_ID_HARDCODED;
 
 function htmlTrackingPlugin(): Plugin {
   return {
     name: 'html-tracking-gtm-gsc-ga',
     transformIndexHtml(html) {
-      const metaGsc = `    <meta name="google-site-verification" content="${GSC_SITE_VERIFICATION}" />`
+      const metaGsc = `    <meta name="google-site-verification" content="${GSC_SITE_VERIFICATION}" />`;
       const gtmHead = `    <!-- Google Tag Manager -->
     <script>
       (function (w, d, s, l, i) {
@@ -46,7 +47,7 @@ function htmlTrackingPlugin(): Plugin {
         f.parentNode.insertBefore(j, f)
       })(window, document, 'script', 'dataLayer', '${GTM_CONTAINER_ID}')
     </script>
-    <!-- End Google Tag Manager -->`
+    <!-- End Google Tag Manager -->`;
       const gtmBody = `    <!-- Google Tag Manager (noscript) -->
     <noscript
       ><iframe
@@ -56,7 +57,7 @@ function htmlTrackingPlugin(): Plugin {
         style="display: none; visibility: hidden"
       ></iframe
     ></noscript>
-    <!-- End Google Tag Manager (noscript) -->`
+    <!-- End Google Tag Manager (noscript) -->`;
 
       const ga4Head =
         GA4_MEASUREMENT_ID !== ''
@@ -70,13 +71,15 @@ function htmlTrackingPlugin(): Plugin {
       gtag('js', new Date())
       gtag('config', '${GA4_MEASUREMENT_ID}')
     </script>`
-          : ''
+          : '';
 
-      const headBlocks = [metaGsc, gtmHead, ga4Head].filter(Boolean).join('\n')
+      const headBlocks = [metaGsc, gtmHead, ga4Head].filter(Boolean).join('\n');
 
-      return html.replace('<head>', `<head>\n${headBlocks}`).replace('<body>', `<body>\n${gtmBody}`)
+      return html
+        .replace('<head>', `<head>\n${headBlocks}`)
+        .replace('<body>', `<body>\n${gtmBody}`);
     },
-  }
+  };
 }
 
 export default defineConfig({
@@ -87,9 +90,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return
+          if (!id.includes('node_modules')) return;
 
-          const norm = id.replace(/\\/g, '/')
+          const norm = id.replace(/\\/g, '/');
 
           // Séparer React et écosystème
           if (
@@ -97,40 +100,43 @@ export default defineConfig({
             norm.includes('/node_modules/react/') ||
             norm.includes('/scheduler/')
           ) {
-            return 'react-vendor'
+            return 'react-vendor';
           }
 
           // Supabase séparé
           if (norm.includes('/@supabase/')) {
-            return 'supabase'
+            return 'supabase';
           }
 
           // Router séparé
           if (norm.includes('/react-router/')) {
-            return 'router'
+            return 'router';
           }
 
           // Charts séparé
           if (norm.includes('/recharts/')) {
-            return 'charts'
+            return 'charts';
           }
 
           // Validation séparée
           if (norm.includes('/zod/')) {
-            return 'validation'
+            return 'validation';
           }
 
           // State manager
           if (norm.includes('/zustand/')) {
-            return 'zustand'
+            return 'zustand';
           }
 
           // Tailwind runtime
-          if (norm.includes('/tailwindcss/') || norm.includes('/@tailwindcss/')) {
-            return 'tailwind'
+          if (
+            norm.includes('/tailwindcss/') ||
+            norm.includes('/@tailwindcss/')
+          ) {
+            return 'tailwind';
           }
 
-          return 'vendor'
+          return 'vendor';
         },
       },
     },
@@ -200,4 +206,4 @@ export default defineConfig({
         ]
       : []),
   ],
-})
+});
