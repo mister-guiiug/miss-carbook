@@ -135,7 +135,7 @@ export function HomePage() {
       replacement_enabled: replacement,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }

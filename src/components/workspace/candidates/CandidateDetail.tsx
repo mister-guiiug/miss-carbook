@@ -221,7 +221,7 @@ export function CandidateDetail({
       event_date: meta.event_date?.trim() || null,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -507,7 +507,7 @@ export function CandidateDetail({
       score: review.score,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Avis invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Avis invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
