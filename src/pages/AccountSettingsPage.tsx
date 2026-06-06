@@ -75,7 +75,7 @@ export function AccountSettingsPage() {
     if (!user) return;
     const parsed = displayNameSchema.safeParse(pseudoDraft);
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Pseudo invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Pseudo invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -102,7 +102,7 @@ export function AccountSettingsPage() {
     setEmailFeedback(null);
     const parsed = changeEmailSchema.safeParse({ email: emailDraft });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'E-mail invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'E-mail invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }

@@ -207,7 +207,7 @@ export function SettingsTab({
       specs: vehicle.specs,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setBusy(false);
       return;
@@ -379,7 +379,7 @@ export function SettingsTab({
       description: wsDesc,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Données invalides';
+      const msg = parsed.error.issues[0]?.message ?? 'Données invalides';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }

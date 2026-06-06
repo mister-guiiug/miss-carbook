@@ -190,7 +190,7 @@ export function RequirementsTab({
       tags,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setSaving(null);
       return;
@@ -244,7 +244,7 @@ export function RequirementsTab({
       tags: editTags,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setSaving(null);
       return;

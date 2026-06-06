@@ -81,7 +81,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     setPasswordFeedback(null);
     const parsed = authPasswordLoginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -115,7 +115,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       confirmPassword,
     });
     if (!parsed.success) {
-      const msg = parsed.error.errors[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
