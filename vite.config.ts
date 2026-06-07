@@ -1,8 +1,9 @@
-import { defineConfig, type Plugin, type PluginOption } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { pwaSeoPlugin } from '@mister-guiiug/dev-wpa-config/vite-pwa-base';
 
 const analyze = process.env.ANALYZE === '1';
 
@@ -12,75 +13,13 @@ const analyze = process.env.ANALYZE === '1';
  */
 const base = process.env.VITE_BASE_PATH ?? '/';
 
-/** Google Tag Manager — conteneur */
-const GTM_CONTAINER_ID = 'GTM-WMFQTNFX';
-
-/** Google Search Console — balise meta de vérification */
-const GSC_SITE_VERIFICATION = 'iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30';
-
 /**
- * Google Analytics 4 — ID de mesure (`G-xxxxxxxxxx`).
- * Surcharge possible : variable `VITE_GA_MEASUREMENT_ID` (ex. CI / .env local).
- * Laisser vide pour désactiver le snippet gtag.js (un tag GA4 uniquement via GTM évite le double comptage).
+ * Google Tag Manager — conteneur (injecté par pwaSeoPlugin via __ANALYTICS_*__).
+ * GA4 reste possible via la variable d'env VITE_GA_MEASUREMENT_ID (lue par le
+ * plugin), mais à configurer plutôt comme balise dans GTM pour éviter le double
+ * comptage. La balise google-site-verification est statique dans index.html.
  */
-const GA4_MEASUREMENT_ID_HARDCODED = '';
-
-const GA4_MEASUREMENT_ID =
-  (process.env.VITE_GA_MEASUREMENT_ID ?? '').trim() ||
-  GA4_MEASUREMENT_ID_HARDCODED;
-
-function htmlTrackingPlugin(): Plugin {
-  return {
-    name: 'html-tracking-gtm-gsc-ga',
-    transformIndexHtml(html) {
-      const metaGsc = `    <meta name="google-site-verification" content="${GSC_SITE_VERIFICATION}" />`;
-      const gtmHead = `    <!-- Google Tag Manager -->
-    <script>
-      (function (w, d, s, l, i) {
-        w[l] = w[l] || []
-        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : ''
-        j.async = true
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
-        f.parentNode.insertBefore(j, f)
-      })(window, document, 'script', 'dataLayer', '${GTM_CONTAINER_ID}')
-    </script>
-    <!-- End Google Tag Manager -->`;
-      const gtmBody = `    <!-- Google Tag Manager (noscript) -->
-    <noscript
-      ><iframe
-        src="https://www.googletagmanager.com/ns.html?id=${GTM_CONTAINER_ID}"
-        height="0"
-        width="0"
-        style="display: none; visibility: hidden"
-      ></iframe
-    ></noscript>
-    <!-- End Google Tag Manager (noscript) -->`;
-
-      const ga4Head =
-        GA4_MEASUREMENT_ID !== ''
-          ? `    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || []
-      function gtag() {
-        dataLayer.push(arguments)
-      }
-      gtag('js', new Date())
-      gtag('config', '${GA4_MEASUREMENT_ID}')
-    </script>`
-          : '';
-
-      const headBlocks = [metaGsc, gtmHead, ga4Head].filter(Boolean).join('\n');
-
-      return html
-        .replace('<head>', `<head>\n${headBlocks}`)
-        .replace('<body>', `<body>\n${gtmBody}`);
-    },
-  };
-}
+const GTM_CONTAINER_ID = 'GTM-WMFQTNFX';
 
 export default defineConfig({
   base,
@@ -142,7 +81,10 @@ export default defineConfig({
     },
   },
   plugins: [
-    htmlTrackingPlugin(),
+    pwaSeoPlugin({
+      siteName: 'Miss Carbook',
+      gtmContainerId: GTM_CONTAINER_ID,
+    }),
     react(),
     tailwindcss(),
     VitePWA({
