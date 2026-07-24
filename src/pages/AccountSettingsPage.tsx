@@ -19,6 +19,7 @@ import {
 } from '../lib/validation/schemas';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
+import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
 import type { ThemeMode } from '../lib/theme';
 
 export function AccountSettingsPage() {
@@ -392,6 +393,18 @@ export function AccountSettingsPage() {
               </button>
             </div>
           </div>
+        </section>
+
+        <section
+          className="card stack settings-card mc-family"
+          aria-labelledby="settings-family-heading"
+        >
+          <FamilyApps
+            currentAppId="miss-carbook"
+            showSource={false}
+            showSponsor={false}
+            labels={{ otherApps: 'Nos autres applications' }}
+          />
         </section>
       </div>
     </div>
