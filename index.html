@@ -2,6 +2,15 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Content-Security-Policy en défense en profondeur.
+      'unsafe-inline' : styles Tailwind/vite-plugin-pwa + snippet GTM injecté
+      au build. connect-src : Supabase (https + wss) et GA4/GTM.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://www.googletagmanager.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    />
     <meta
       name="google-site-verification"
       content="iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30"
@@ -19,6 +28,31 @@
       content="Carnet collaboratif pour choisir votre prochain véhicule — PWA."
     />
     <link rel="canonical" href="__SEO_HOME_URL__" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Miss Carbook" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="__SEO_HOME_URL__" />
+    <meta
+      property="og:title"
+      content="Miss Carbook — comparatif collaboratif de véhicules"
+    />
+    <meta
+      property="og:description"
+      content="Carnet collaboratif pour choisir votre prochain véhicule, en temps réel (PWA)."
+    />
+    <meta property="og:image" content="__SEO_LOGO_URL__" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Miss Carbook — comparatif collaboratif de véhicules"
+    />
+    <meta
+      name="twitter:description"
+      content="Comparatif collaboratif de véhicules, en temps réel (PWA)."
+    />
+    <meta name="twitter:image" content="__SEO_LOGO_URL__" />
     <title>Miss Carbook</title>
   </head>
   <body>
