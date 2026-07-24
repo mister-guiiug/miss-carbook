@@ -416,7 +416,10 @@ export function RequirementsMatrix({
           ) : (
             <div className="stack" style={{ gap: '0.75rem' }}>
               {filteredCands
-                .map(c => ({ cand: c, score: candidateScores[c.id] }))
+                .flatMap(c => {
+                  const score = candidateScores[c.id];
+                  return score ? [{ cand: c, score }] : [];
+                })
                 .sort((a, b) => b.score.weighted - a.score.weighted)
                 .map(({ cand, score }) => (
                   <div

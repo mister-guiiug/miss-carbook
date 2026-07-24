@@ -98,12 +98,18 @@ export function AssistantWelcomePage() {
     step < STEP_COUNT - 1 ? () => setStep(s => s + 1) : finishCompleted;
   const primaryLabel = step < STEP_COUNT - 1 ? 'Suivant' : 'Aller à l’accueil';
 
+  // Garde noUncheckedIndexedAccess : `step` est borné par la navigation,
+  // mais l'accès indexé reste `T | undefined` pour le compilateur.
+  const currentBody = bodies[step];
+  const currentTitle = titles[step];
+  if (!currentBody || currentTitle === undefined) return null;
+
   return (
     <AssistantFullscreenLayout
       stepIndex={step}
       stepCount={STEP_COUNT}
-      titleId={bodies[step].titleId}
-      title={titles[step]}
+      titleId={currentBody.titleId}
+      title={currentTitle}
       showBack={step > 0}
       onBack={() => setStep(s => Math.max(0, s - 1))}
       onPrimary={primary}
@@ -111,7 +117,7 @@ export function AssistantWelcomePage() {
       onPassAll={passAll}
       onNeverShowAgain={neverShow}
     >
-      {bodies[step].content}
+      {currentBody.content}
     </AssistantFullscreenLayout>
   );
 }

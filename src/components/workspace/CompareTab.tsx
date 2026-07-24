@@ -246,13 +246,12 @@ export function CompareTab({
   const avgByCand = useMemo(() => {
     const map: Record<string, { sum: number; n: number }> = {};
     for (const r of reviews) {
-      if (!map[r.candidate_id]) map[r.candidate_id] = { sum: 0, n: 0 };
-      map[r.candidate_id].sum += Number(r.score);
-      map[r.candidate_id].n += 1;
+      const agg = (map[r.candidate_id] ??= { sum: 0, n: 0 });
+      agg.sum += Number(r.score);
+      agg.n += 1;
     }
     const out: Record<string, number | null> = {};
-    for (const id of Object.keys(map)) {
-      const { sum, n } = map[id];
+    for (const [id, { sum, n }] of Object.entries(map)) {
       out[id] = n ? Math.round((sum / n) * 10) / 10 : null;
     }
     return out;
@@ -326,22 +325,23 @@ export function CompareTab({
     if (picked.length < 2 || keys.length < 2) return [];
     const raw: Record<string, Record<string, number>> = {};
     for (const p of picked) {
-      raw[p.id] = {};
+      const row: Record<string, number> = {};
+      raw[p.id] = row;
       const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       for (const k of keys) {
         let v = 0;
         if (k === 'price') v = p.price ?? 0;
         else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0;
         else v = Number(spec[k]) || 0;
-        raw[p.id][k] = v;
+        row[k] = v;
       }
     }
     const normKey = (k: string) => {
-      const vals = picked.map(p => raw[p.id][k]);
+      const vals = picked.map(p => raw[p.id]?.[k] ?? 0);
       const min = Math.min(...vals);
       const max = Math.max(...vals);
       const span = max - min || 1;
-      return (p: Candidate) => (raw[p.id][k] - min) / span;
+      return (p: Candidate) => ((raw[p.id]?.[k] ?? 0) - min) / span;
     };
     return keys.map(k => {
       const row: Record<string, string | number> = {

@@ -22,6 +22,7 @@ export function WorkspaceTabStrip({
       const i = TAB_IDS.indexOf(from);
       if (i < 0) return;
       const next = TAB_IDS[(i + delta + TAB_IDS.length) % TAB_IDS.length];
+      if (!next) return;
       setTab(next);
       queueMicrotask(() => {
         document.getElementById(`workspace-tab-btn-${next}`)?.focus();
@@ -45,13 +46,16 @@ export function WorkspaceTabStrip({
         move(current, -1);
       } else if (e.key === 'Home') {
         e.preventDefault();
-        setTab(TAB_IDS[0]);
+        const firstTab = TAB_IDS[0];
+        if (!firstTab) return;
+        setTab(firstTab);
         queueMicrotask(() =>
-          document.getElementById(`workspace-tab-btn-${TAB_IDS[0]}`)?.focus()
+          document.getElementById(`workspace-tab-btn-${firstTab}`)?.focus()
         );
       } else if (e.key === 'End') {
         e.preventDefault();
-        const last = TAB_IDS[TAB_IDS.length - 1];
+        const last = TAB_IDS.at(-1);
+        if (!last) return;
         setTab(last);
         queueMicrotask(() =>
           document.getElementById(`workspace-tab-btn-${last}`)?.focus()

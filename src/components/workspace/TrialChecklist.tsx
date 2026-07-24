@@ -168,8 +168,7 @@ export function TrialChecklist({
   const groupedItems = useMemo(() => {
     const groups: Record<string, ChecklistItem[]> = {};
     for (const item of filteredItems) {
-      if (!groups[item.category]) groups[item.category] = [];
-      groups[item.category].push(item);
+      (groups[item.category] ??= []).push(item);
     }
     return groups;
   }, [filteredItems]);

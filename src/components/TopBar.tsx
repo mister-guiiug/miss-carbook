@@ -106,8 +106,11 @@ function initialsFromDisplayName(name: string) {
   const t = name.trim();
   if (!t) return '?';
   const parts = t.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
+  const [firstWord, secondWord] = parts;
+  if (firstWord && secondWord)
+    return ((firstWord[0] ?? '') + (secondWord[0] ?? ''))
+      .toUpperCase()
+      .slice(0, 2);
   return t.slice(0, 2).toUpperCase();
 }
 

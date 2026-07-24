@@ -45,6 +45,7 @@ export function ImageViewerCarousel({
   if (!open) return null;
 
   const item = items[safeIndex];
+  if (!item) return null;
   const several = items.length > 1;
 
   return (

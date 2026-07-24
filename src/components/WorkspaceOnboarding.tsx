@@ -76,6 +76,7 @@ export function WorkspaceOnboarding({
   if (fullscreen) {
     const s = steps[step];
     const isLast = step >= stepCount - 1;
+    if (!s) return null;
     return (
       <AssistantFullscreenLayout
         stepIndex={step}
@@ -107,8 +108,8 @@ export function WorkspaceOnboarding({
       <p className="onboarding-step-meta muted">
         Étape {step + 1} sur {stepCount}
       </p>
-      <h3 style={{ marginTop: 0 }}>{steps[step].title}</h3>
-      {steps[step].body}
+      <h3 style={{ marginTop: 0 }}>{steps[step]?.title}</h3>
+      {steps[step]?.body}
       <div
         className="row"
         style={{ justifyContent: 'flex-end', gap: '0.5rem' }}

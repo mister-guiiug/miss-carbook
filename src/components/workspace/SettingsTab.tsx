@@ -455,7 +455,9 @@ export function SettingsTab({
                 e.preventDefault();
                 const dir = e.key === 'ArrowRight' ? 1 : -1;
                 const next = (index + dir + panels.length) % panels.length;
-                setPanel(panels[next].id);
+                const nextPanel = panels[next];
+                if (!nextPanel) return;
+                setPanel(nextPanel.id);
                 const root = e.currentTarget.closest('[role="tablist"]');
                 requestAnimationFrame(() => {
                   const buttons =

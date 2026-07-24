@@ -4373,3 +4373,32 @@ button.workspace-journey-link {
 [data-theme='dark'] .mc-family [data-maturity='alpha'] {
   color: #c9a6f0;
 }
+
+/* Écran de secours du composant partagé ErrorBoundary (dev-wpa-config).
+   Sans variable de thème : doit rester lisible même si le CSS applicatif
+   n'est pas chargé. */
+[data-dwc='error-boundary'] {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+[data-dwc='error-boundary-title'] {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+[data-dwc='error-boundary-reset'] {
+  border: 1px solid currentColor;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}

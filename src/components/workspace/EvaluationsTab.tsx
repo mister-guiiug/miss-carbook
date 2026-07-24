@@ -125,7 +125,7 @@ export function EvaluationsTab({
       if (!m.has(v.requirement_id))
         m.set(v.requirement_id, { must: 0, should: 0, could: 0, wont: 0 });
       const o = m.get(v.requirement_id)!;
-      if (v.vote in o) o[v.vote] += 1;
+      if (v.vote in o) o[v.vote] = (o[v.vote] ?? 0) + 1;
     }
     return m;
   }, [votes]);
