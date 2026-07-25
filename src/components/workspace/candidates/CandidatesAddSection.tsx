@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useI18n } from '../../../i18n';
 import {
   displayVersionLabel,
   formatCandidateListLabel,
@@ -32,6 +33,7 @@ export function CandidatesAddSection({
   candidates: CandidateRow[];
   garageSuggestions: string[];
 }) {
+  const { t } = useI18n();
   const isVariation = Boolean(form.parent_id);
   const parent = form.parent_id
     ? (candidates.find(x => x.id === form.parent_id) ?? null)
@@ -48,11 +50,10 @@ export function CandidatesAddSection({
         className="card candidates-menu-panel"
         style={{ boxShadow: 'none' }}
       >
-        <summary>Import CSV</summary>
+        <summary>{t('candidates.add.importCsvSummary')}</summary>
         <div className="stack" style={{ marginTop: '0.75rem' }}>
           <p className="muted" style={{ margin: 0 }}>
-            Première ligne : brand, model (obligatoires), trim, engine, price…
-            Séparateur virgule.
+            {t('candidates.add.csvHint')}
           </p>
           <input
             type="file"
@@ -67,14 +68,16 @@ export function CandidatesAddSection({
         className="card candidates-menu-panel"
         style={{ boxShadow: 'none' }}
       >
-        <summary>Nouveau modèle ou variation</summary>
+        <summary>{t('candidates.add.newModelSummary')}</summary>
         <form
           onSubmit={addCandidate}
           className="stack"
           style={{ marginTop: '0.75rem' }}
         >
           <div>
-            <label htmlFor="cand-parent">Modèle racine (optionnel)</label>
+            <label htmlFor="cand-parent">
+              {t('candidates.add.parentLabel')}
+            </label>
             <select
               id="cand-parent"
               value={form.parent_id}
@@ -110,7 +113,7 @@ export function CandidatesAddSection({
                 });
               }}
             >
-              <option value="">— Aucun (nouveau modèle racine) —</option>
+              <option value="">{t('candidates.add.parentNone')}</option>
               {rootCandidates.map(p => (
                 <option key={p.id} value={p.id}>
                   {formatCandidateListLabel(p)}
@@ -123,16 +126,18 @@ export function CandidatesAddSection({
             >
               {CANDIDATE_HIERARCHY_HELP_FR}{' '}
               {isVariation
-                ? 'Ici : la marque et le modèle viennent du racine ; précisez la version complémentaire, la motorisation et le prix pour cette ligne.'
-                : 'Le racine porte surtout marque, modèle et version / période ; le reste est regroupé sous « Détails » tant qu’il n’y a pas plusieurs variations.'}
+                ? t('candidates.add.parentHelpVariation')
+                : t('candidates.add.parentHelpRoot')}
             </p>
           </div>
 
           <div className="candidate-fiche-identity stack">
-            <h5 className="candidate-fiche-subtitle">Identité</h5>
+            <h5 className="candidate-fiche-subtitle">
+              {t('candidates.add.sectionIdentity')}
+            </h5>
             <div className="row">
               <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor="cand-brand">Marque</label>
+                <label htmlFor="cand-brand">{t('candidates.add.brand')}</label>
                 <input
                   id="cand-brand"
                   value={form.brand}
@@ -141,11 +146,15 @@ export function CandidatesAddSection({
                   }
                   readOnly={isVariation}
                   disabled={isVariation}
-                  title={isVariation ? 'Hérité du modèle racine' : undefined}
+                  title={
+                    isVariation
+                      ? t('candidates.add.inheritedFromRoot')
+                      : undefined
+                  }
                 />
               </div>
               <div style={{ flex: '1 1 160px' }}>
-                <label htmlFor="cand-model">Modèle</label>
+                <label htmlFor="cand-model">{t('candidates.add.model')}</label>
                 <input
                   id="cand-model"
                   value={form.model}
@@ -154,7 +163,11 @@ export function CandidatesAddSection({
                   }
                   readOnly={isVariation}
                   disabled={isVariation}
-                  title={isVariation ? 'Hérité du modèle racine' : undefined}
+                  title={
+                    isVariation
+                      ? t('candidates.add.inheritedFromRoot')
+                      : undefined
+                  }
                 />
               </div>
             </div>
@@ -162,7 +175,9 @@ export function CandidatesAddSection({
               <>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
-                    <label htmlFor="cand-base-ver">Version de base</label>
+                    <label htmlFor="cand-base-ver">
+                      {t('candidates.add.baseVersion')}
+                    </label>
                     <input
                       id="cand-base-ver"
                       className="candidate-field-readonly"
@@ -176,7 +191,7 @@ export function CandidatesAddSection({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor="cand-period-ro">
-                      Année(s) / période / génération
+                      {t('candidates.add.periodLabel')}
                     </label>
                     <input
                       id="cand-period-ro"
@@ -189,14 +204,16 @@ export function CandidatesAddSection({
                 </div>
                 <div className="row">
                   <div style={{ flex: '1 1 100%' }}>
-                    <label htmlFor="cand-trim">Version complémentaire</label>
+                    <label htmlFor="cand-trim">
+                      {t('candidates.add.extraVersion')}
+                    </label>
                     <input
                       id="cand-trim"
                       value={form.trim}
                       onChange={e =>
                         setForm(f => ({ ...f, trim: e.target.value }))
                       }
-                      placeholder="ex. finition, pack, motorisation…"
+                      placeholder={t('candidates.add.trimPlaceholder')}
                     />
                   </div>
                 </div>
@@ -204,19 +221,21 @@ export function CandidatesAddSection({
             ) : !isVariation ? (
               <div className="row">
                 <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-trim">Version de base</label>
+                  <label htmlFor="cand-trim">
+                    {t('candidates.add.baseVersion')}
+                  </label>
                   <input
                     id="cand-trim"
                     value={form.trim}
                     onChange={e =>
                       setForm(f => ({ ...f, trim: e.target.value }))
                     }
-                    placeholder="Vide = « Générique » (version de base)"
+                    placeholder={t('candidates.add.baseVersionPlaceholder')}
                   />
                 </div>
                 <div style={{ flex: '1 1 160px' }}>
                   <label htmlFor="cand-event-date">
-                    Année(s) / période / génération
+                    {t('candidates.add.periodLabel')}
                   </label>
                   <input
                     id="cand-event-date"
@@ -226,20 +245,19 @@ export function CandidatesAddSection({
                     onChange={e =>
                       setForm(f => ({ ...f, event_date: e.target.value }))
                     }
-                    placeholder="ex. 2024, 2020-2023, printemps 2025"
+                    placeholder={t('candidates.add.periodPlaceholder')}
                   />
                 </div>
               </div>
             ) : (
               <>
                 <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                  Parent introuvable dans la liste : indiquez au moins la
-                  version complémentaire.
+                  {t('candidates.add.orphanParentHint')}
                 </p>
                 <div className="row">
                   <div style={{ flex: '1 1 100%' }}>
                     <label htmlFor="cand-trim-orphan">
-                      Version complémentaire
+                      {t('candidates.add.extraVersion')}
                     </label>
                     <input
                       id="cand-trim-orphan"
@@ -247,7 +265,7 @@ export function CandidatesAddSection({
                       onChange={e =>
                         setForm(f => ({ ...f, trim: e.target.value }))
                       }
-                      placeholder="ex. finition, pack, motorisation…"
+                      placeholder={t('candidates.add.trimPlaceholder')}
                     />
                   </div>
                 </div>
@@ -258,11 +276,13 @@ export function CandidatesAddSection({
           {isVariation ? (
             <div className="candidate-fiche-details-attached stack">
               <h5 className="candidate-fiche-subtitle">
-                Détails de la variation
+                {t('candidates.add.sectionVariationDetails')}
               </h5>
               <div className="row">
                 <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-engine">Motorisation</label>
+                  <label htmlFor="cand-engine">
+                    {t('candidates.add.engine')}
+                  </label>
                   <input
                     id="cand-engine"
                     value={form.engine}
@@ -272,7 +292,7 @@ export function CandidatesAddSection({
                   />
                 </div>
                 <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-price">Prix</label>
+                  <label htmlFor="cand-price">{t('candidates.add.price')}</label>
                   <input
                     id="cand-price"
                     type="text"
@@ -302,11 +322,11 @@ export function CandidatesAddSection({
               <div>
                 <GarageLocationInput
                   id="cand-garage"
-                  label="Garage / lieu"
+                  label={t('candidates.add.garageLabel')}
                   value={form.garage_location}
                   onChange={v => setForm(f => ({ ...f, garage_location: v }))}
                   suggestions={garageSuggestions}
-                  placeholder="Saisie libre ou choix dans la liste"
+                  placeholder={t('candidates.add.garagePlaceholder')}
                 />
               </div>
               <ManufacturerLinksEditor
@@ -317,7 +337,7 @@ export function CandidatesAddSection({
                 }
               />
               <div>
-                <label htmlFor="cand-opt">Options</label>
+                <label htmlFor="cand-opt">{t('candidates.add.options')}</label>
                 <textarea
                   id="cand-opt"
                   value={form.options}
@@ -328,7 +348,7 @@ export function CandidatesAddSection({
               </div>
               <div className="row">
                 <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor="cand-st">Statut</label>
+                  <label htmlFor="cand-st">{t('candidates.add.status')}</label>
                   <select
                     id="cand-st"
                     value={form.status}
@@ -347,7 +367,9 @@ export function CandidatesAddSection({
                   </select>
                 </div>
                 <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor="cand-rej">Raison si rejet</label>
+                  <label htmlFor="cand-rej">
+                    {t('candidates.add.rejectReason')}
+                  </label>
                   <input
                     id="cand-rej"
                     value={form.reject_reason}
@@ -364,13 +386,13 @@ export function CandidatesAddSection({
                 className="muted"
                 style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}
               >
-                Pour une racine : pas de détails véhicule ni données
-                constructeur — ajoutez des compléments pour motorisation, prix,
-                fiche technique et photos.
+                {t('candidates.add.rootNoDetails')}
               </p>
               <div className="row">
                 <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor="cand-st-root">Statut</label>
+                  <label htmlFor="cand-st-root">
+                    {t('candidates.add.status')}
+                  </label>
                   <select
                     id="cand-st-root"
                     value={form.status}
@@ -389,7 +411,9 @@ export function CandidatesAddSection({
                   </select>
                 </div>
                 <div style={{ flex: '1 1 200px' }}>
-                  <label htmlFor="cand-rej-root">Raison si rejet</label>
+                  <label htmlFor="cand-rej-root">
+                    {t('candidates.add.rejectReason')}
+                  </label>
                   <input
                     id="cand-rej-root"
                     value={form.reject_reason}
@@ -402,7 +426,7 @@ export function CandidatesAddSection({
             </div>
           )}
 
-          <button type="submit">Ajouter</button>
+          <button type="submit">{t('common.add')}</button>
         </form>
       </details>
     </div>

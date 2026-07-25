@@ -1,17 +1,19 @@
+// Libellés d'onglets déplacés vers l'i18n (groupe `workspace`, clés `tab_<id>`) ;
+// seuls les identifiants stables restent ici, rendus via t('workspace.tab_<id>').
 export const WORKSPACE_TABS = [
-  { id: 'notepad', label: 'Bloc-notes' },
-  { id: 'requirements', label: 'Exigences' },
-  { id: 'requirementsMatrix', label: 'Matrice exigences' },
-  { id: 'evaluations', label: 'Évaluations' },
-  { id: 'weightedVoting', label: 'Votes pondérés' },
-  { id: 'candidates', label: 'Modèles' },
-  { id: 'compare', label: 'Comparer' },
-  { id: 'smartCompare', label: 'Assistant' },
+  { id: 'notepad' },
+  { id: 'requirements' },
+  { id: 'requirementsMatrix' },
+  { id: 'evaluations' },
+  { id: 'weightedVoting' },
+  { id: 'candidates' },
+  { id: 'compare' },
+  { id: 'smartCompare' },
   /** Visites (historique) + rappels à faire / faits — même onglet dans l'UI. */
-  { id: 'reminders', label: 'Visites et rappels' },
-  { id: 'budget', label: 'Budget et TCO' },
-  { id: 'activity', label: 'Activité' },
-  { id: 'settings', label: 'Réglages' },
+  { id: 'reminders' },
+  { id: 'budget' },
+  { id: 'activity' },
+  { id: 'settings' },
 ] as const;
 
 export type TabId = (typeof WORKSPACE_TABS)[number]['id'];
@@ -33,12 +35,6 @@ export const WORKSPACE_STRIP_TAB_ORDER = [
 export const WORKSPACE_TABS_STRIP = WORKSPACE_STRIP_TAB_ORDER.map(
   id => WORKSPACE_TABS.find(t => t.id === id)!
 );
-
-export const WORKSPACE_SETTINGS_TAB_TITLE =
-  'Nom du dossier, membres, invitations, partage — uniquement ce projet';
-
-export const WORKSPACE_ACTIVITY_TAB_TITLE =
-  'Activité et historique de ce dossier';
 
 export function parseWorkspaceTabParam(raw: string | null): TabId {
   if (raw && WORKSPACE_TABS.some(t => t.id === raw)) return raw as TabId;

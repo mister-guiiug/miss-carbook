@@ -11,6 +11,7 @@ import {
   authPasswordSignUpSchema,
 } from '../lib/validation/schemas';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
+import { useI18n } from '../i18n';
 
 type GateMode = 'magic' | 'password_login' | 'password_signup';
 
@@ -18,6 +19,7 @@ type Feedback = { variant: 'success' | 'error'; text: string } | null;
 
 export function PseudoGate({ children }: { children: ReactNode }) {
   const { reportException, reportMessage } = useErrorDialog();
+  const { t } = useI18n();
   const { user, loading } = useAuth();
   const [gateMode, setGateMode] = useState<GateMode>('magic');
 
@@ -47,8 +49,8 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       reportMessage(
-        'Adresse e-mail invalide',
-        `Saisie : ${JSON.stringify(trimmed)}`
+        t('auth.errEmailInvalid'),
+        t('auth.inputDetail', { value: JSON.stringify(trimmed) })
       );
       return;
     }
@@ -61,7 +63,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (error) throw error;
       setMagicFeedback({
         variant: 'success',
-        text: 'Lien envoyé : ouvrez l’e-mail et cliquez sur le lien pour vous connecter.',
+        text: t('auth.magicSent'),
       });
       setEmail('');
     } catch (e: unknown) {
@@ -69,7 +71,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (friendly) {
         setMagicFeedback({ variant: 'error', text: friendly });
       } else {
-        reportException(e, 'Envoi du lien magique (connexion)');
+        reportException(e, t('auth.ctxMagicSend'));
       }
     } finally {
       setBusyMagic(false);
@@ -81,7 +83,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     setPasswordFeedback(null);
     const parsed = authPasswordLoginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('common.invalidForm');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -99,7 +101,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (friendly) {
         setPasswordFeedback({ variant: 'error', text: friendly });
       } else {
-        reportException(e, 'Connexion par mot de passe');
+        reportException(e, t('auth.ctxPasswordLogin'));
       }
     } finally {
       setBusyPassword(false);
@@ -115,7 +117,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       confirmPassword,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('common.invalidForm');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -132,13 +134,13 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (data.session) {
         setPasswordFeedback({
           variant: 'success',
-          text: 'Compte créé : vous êtes connecté.',
+          text: t('auth.accountCreatedConnected'),
         });
         setEmail('');
       } else {
         setPasswordFeedback({
           variant: 'success',
-          text: 'Compte créé. Si le projet exige une confirmation par e-mail, ouvrez le lien reçu avant de vous connecter avec le mot de passe.',
+          text: t('auth.accountCreatedConfirm'),
         });
       }
     } catch (e: unknown) {
@@ -146,7 +148,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
       if (friendly) {
         setPasswordFeedback({ variant: 'error', text: friendly });
       } else {
-        reportException(e, 'Inscription par mot de passe');
+        reportException(e, t('auth.ctxPasswordSignup'));
       }
     } finally {
       setBusyPassword(false);
@@ -156,7 +158,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="shell">
-        <p className="muted">Chargement…</p>
+        <p className="muted">{t('common.loading')}</p>
       </div>
     );
   }
@@ -165,16 +167,13 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     return (
       <div className="shell">
         <div className="card stack">
-          <h1>Miss Carbook</h1>
-          <p className="muted">
-            Carnet collaboratif pour choisir un véhicule. Choisissez une méthode
-            de connexion ci-dessous.
-          </p>
+          <h1>{t('common.appName')}</h1>
+          <p className="muted">{t('auth.intro')}</p>
 
           <div
             className="auth-gate-tabs row"
             role="tablist"
-            aria-label="Méthode de connexion"
+            aria-label={t('auth.methodAria')}
           >
             <button
               type="button"
@@ -183,7 +182,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
               aria-selected={gateMode === 'magic'}
               onClick={() => setMode('magic')}
             >
-              Lien magique
+              {t('auth.tabMagic')}
             </button>
             <button
               type="button"
@@ -194,7 +193,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
               aria-selected={gateMode === 'password_login'}
               onClick={() => setMode('password_login')}
             >
-              Mot de passe
+              {t('auth.tabPassword')}
             </button>
             <button
               type="button"
@@ -205,24 +204,24 @@ export function PseudoGate({ children }: { children: ReactNode }) {
               aria-selected={gateMode === 'password_signup'}
               onClick={() => setMode('password_signup')}
             >
-              Créer un compte
+              {t('auth.tabSignup')}
             </button>
           </div>
 
           {gateMode === 'magic' ? (
             <form onSubmit={sendMagicLink} className="stack">
               <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                Sans mot de passe : vous recevrez un lien sécurisé par e-mail.
+                {t('auth.magicHint')}
               </p>
               <div>
-                <label htmlFor="gate-email">E-mail</label>
+                <label htmlFor="gate-email">{t('auth.emailLabel')}</label>
                 <input
                   id="gate-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   autoComplete="email"
-                  placeholder="vous@exemple.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   required
                 />
               </div>
@@ -236,7 +235,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
                 </p>
               ) : null}
               <button type="submit" disabled={busyMagic}>
-                {busyMagic ? 'Envoi…' : 'Recevoir le lien de connexion'}
+                {busyMagic ? t('common.sending') : t('auth.receiveLink')}
               </button>
             </form>
           ) : (
@@ -250,23 +249,25 @@ export function PseudoGate({ children }: { children: ReactNode }) {
             >
               <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
                 {gateMode === 'password_login'
-                  ? 'Connectez-vous avec l’e-mail et le mot de passe enregistrés sur ce projet.'
-                  : 'Création d’un compte avec mot de passe (8 caractères minimum côté application).'}
+                  ? t('auth.loginHint')
+                  : t('auth.signupHint')}
               </p>
               <div>
-                <label htmlFor="gate-pw-email">E-mail</label>
+                <label htmlFor="gate-pw-email">{t('auth.emailLabel')}</label>
                 <input
                   id="gate-pw-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   autoComplete="email"
-                  placeholder="vous@exemple.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label htmlFor="gate-pw-password">Mot de passe</label>
+                <label htmlFor="gate-pw-password">
+                  {t('auth.passwordLabel')}
+                </label>
                 <input
                   id="gate-pw-password"
                   type="password"
@@ -283,7 +284,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
               {gateMode === 'password_signup' ? (
                 <div>
                   <label htmlFor="gate-pw-confirm">
-                    Confirmer le mot de passe
+                    {t('auth.confirmPasswordLabel')}
                   </label>
                   <input
                     id="gate-pw-confirm"
@@ -306,18 +307,16 @@ export function PseudoGate({ children }: { children: ReactNode }) {
               ) : null}
               <button type="submit" disabled={busyPassword}>
                 {busyPassword
-                  ? 'Patientez…'
+                  ? t('auth.pleaseWait')
                   : gateMode === 'password_login'
-                    ? 'Se connecter'
-                    : 'Créer le compte'}
+                    ? t('auth.signIn')
+                    : t('auth.createAccount')}
               </button>
             </form>
           )}
 
           <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
-            Le fournisseur « E-mail » et l’option mot de passe doivent être
-            activés dans Supabase (Authentication → Providers). La confirmation
-            par e-mail à l’inscription dépend des réglages du projet.
+            {t('auth.providerNote')}
           </p>
         </div>
       </div>

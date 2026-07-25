@@ -10,6 +10,7 @@ import {
   IconZoomOut,
   IconRotateCw,
 } from '../../ui/IconActionButton';
+import { useI18n } from '../../../i18n';
 import './PhotoComparisonGrid.css';
 
 type Candidate = {
@@ -48,6 +49,7 @@ export function PhotoComparisonGrid({
   selectedCandidates: Candidate[];
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
@@ -224,7 +226,7 @@ export function PhotoComparisonGrid({
         aria-modal="true"
       >
         <div className="photo-comparison-container">
-          <p className="muted">Chargement des photos...</p>
+          <p className="muted">{t('compare.photo.loadingPhotos')}</p>
         </div>
       </div>
     );
@@ -245,7 +247,7 @@ export function PhotoComparisonGrid({
           <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
             <IconActionButton
               variant="secondary"
-              label="Fermer"
+              label={t('common.close')}
               onClick={onClose}
             >
               <IconX />
@@ -253,8 +255,8 @@ export function PhotoComparisonGrid({
           </div>
           <EmptyState
             icon="comparison"
-            title="Aucune photo à comparer"
-            text="Les modèles sélectionnés n'ont pas de photos. Ajoutez des photos aux candidats pour utiliser cette fonctionnalité."
+            title={t('compare.photo.emptyTitle')}
+            text={t('compare.photo.emptyText')}
           />
         </div>
       </div>
@@ -266,7 +268,7 @@ export function PhotoComparisonGrid({
       className="photo-comparison-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label="Comparaison photo côte-à-côte"
+      aria-label={t('compare.photo.dialogAria')}
       onClick={onClose}
     >
       <div
@@ -279,11 +281,11 @@ export function PhotoComparisonGrid({
             className="row"
             style={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <h2 style={{ margin: 0 }}>Comparaison photo</h2>
+            <h2 style={{ margin: 0 }}>{t('compare.photo.title')}</h2>
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="secondary"
-                label="Fermer"
+                label={t('common.close')}
                 onClick={onClose}
               >
                 <IconX />
@@ -294,9 +296,9 @@ export function PhotoComparisonGrid({
             className="muted"
             style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
           >
-            Utilisez la molette pour zoomer · Clic+glisser pour déplacer ·{' '}
-            <kbd>+</kbd>/<kbd>-</kbd> pour le zoom · <kbd>0</kbd> pour
-            réinitialiser
+            {t('compare.photo.hintZoomWheel')}{' '}
+            <kbd>+</kbd>/<kbd>-</kbd> {t('compare.photo.hintForZoom')}{' '}
+            <kbd>0</kbd> {t('compare.photo.hintToReset')}
           </p>
         </div>
 
@@ -316,7 +318,7 @@ export function PhotoComparisonGrid({
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="secondary"
-                label="Zoom arrière"
+                label={t('compare.photo.zoomOut')}
                 onClick={handleZoomOut}
                 disabled={zoom <= MIN_ZOOM}
               >
@@ -334,7 +336,7 @@ export function PhotoComparisonGrid({
               </span>
               <IconActionButton
                 variant="secondary"
-                label="Zoom avant"
+                label={t('compare.photo.zoomIn')}
                 onClick={handleZoomIn}
                 disabled={zoom >= MAX_ZOOM}
               >
@@ -342,7 +344,7 @@ export function PhotoComparisonGrid({
               </IconActionButton>
               <IconActionButton
                 variant="secondary"
-                label="Réinitialiser"
+                label={t('common.reset')}
                 onClick={handleResetZoom}
               >
                 <IconRotateCw />
@@ -353,12 +355,12 @@ export function PhotoComparisonGrid({
               className="row"
               style={{ gap: '0.35rem', alignItems: 'center' }}
             >
-              <span className="muted">Disposition :</span>
+              <span className="muted">{t('compare.photo.layoutLabel')}</span>
               <button
                 type="button"
                 className={viewMode === 'grid-2x2' ? 'primary' : 'secondary'}
                 onClick={() => setViewMode('grid-2x2')}
-                title="Grille 2×2"
+                title={t('compare.photo.grid2x2')}
               >
                 2×2
               </button>
@@ -366,7 +368,7 @@ export function PhotoComparisonGrid({
                 type="button"
                 className={viewMode === 'grid-1x4' ? 'primary' : 'secondary'}
                 onClick={() => setViewMode('grid-1x4')}
-                title="Grille 1×4"
+                title={t('compare.photo.grid1x4')}
               >
                 1×4
               </button>
@@ -374,7 +376,7 @@ export function PhotoComparisonGrid({
                 type="button"
                 className={viewMode === 'grid-4x1' ? 'primary' : 'secondary'}
                 onClick={() => setViewMode('grid-4x1')}
-                title="Grille 4×1"
+                title={t('compare.photo.grid4x1')}
               >
                 4×1
               </button>
@@ -432,7 +434,7 @@ export function PhotoComparisonGrid({
                           onClick={() =>
                             handlePrevPhoto(candidate.id, photos.length)
                           }
-                          title="Photo précédente"
+                          title={t('compare.photo.prevPhoto')}
                         >
                           ‹
                         </button>
@@ -442,7 +444,7 @@ export function PhotoComparisonGrid({
                           onClick={() =>
                             handleNextPhoto(candidate.id, photos.length)
                           }
-                          title="Photo suivante"
+                          title={t('compare.photo.nextPhoto')}
                         >
                           ›
                         </button>
@@ -451,7 +453,7 @@ export function PhotoComparisonGrid({
                   </div>
                 ) : (
                   <div className="photo-comparison-empty">
-                    <span className="muted">Aucune photo</span>
+                    <span className="muted">{t('compare.photo.noPhoto')}</span>
                   </div>
                 )}
               </div>
@@ -470,6 +472,7 @@ type PhotoDisplayProps = {
 };
 
 function PhotoDisplay({ storagePath, zoom, pan }: PhotoDisplayProps) {
+  const { t } = useI18n();
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
@@ -492,7 +495,7 @@ function PhotoDisplay({ storagePath, zoom, pan }: PhotoDisplayProps) {
   if (error) {
     return (
       <div className="photo-comparison-error">
-        <span className="muted">Erreur de chargement</span>
+        <span className="muted">{t('compare.photo.loadError')}</span>
       </div>
     );
   }
@@ -500,7 +503,7 @@ function PhotoDisplay({ storagePath, zoom, pan }: PhotoDisplayProps) {
   if (!url) {
     return (
       <div className="photo-comparison-loading">
-        <span className="muted">Chargement...</span>
+        <span className="muted">{t('compare.photo.loadingShort')}</span>
       </div>
     );
   }
@@ -508,7 +511,7 @@ function PhotoDisplay({ storagePath, zoom, pan }: PhotoDisplayProps) {
   return (
     <img
       src={url}
-      alt="Photo du candidat"
+      alt={t('compare.photo.imageAlt')}
       className="photo-comparison-image"
       style={{
         transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,

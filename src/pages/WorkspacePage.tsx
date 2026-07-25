@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useI18n } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
@@ -19,7 +20,6 @@ import { RemindersTab } from '../components/workspace/RemindersTab';
 import { BudgetTab } from '../components/workspace/BudgetTab';
 import { SettingsTab } from '../components/workspace/SettingsTab';
 import {
-  WORKSPACE_ACTIVITY_TAB_TITLE,
   WORKSPACE_TABS,
   parseWorkspaceTabParam,
   type TabId,
@@ -31,13 +31,14 @@ import { WorkspaceDecisionSummaryCard } from '../components/workspace/WorkspaceD
 import { InviteWelcomeOverlay } from '../components/assistant/InviteWelcomeOverlay';
 
 function WorkspacePageSkeleton() {
+  const { t } = useI18n();
   return (
     <div
       className="shell stack workspace-page-skeleton"
       aria-busy="true"
       aria-live="polite"
     >
-      <span className="sr-only">Chargement du dossier…</span>
+      <span className="sr-only">{t('workspace.loadingWorkspaceSr')}</span>
       <div className="skeleton-block skeleton-breadcrumb" />
       <div className="skeleton-block skeleton-title" />
       <div className="skeleton-block skeleton-line wide" />
@@ -55,6 +56,7 @@ export function WorkspacePage() {
   const { reportException, reportMessage } = useErrorDialog();
   const { workspace, role, decisionLabel, loading, accessBlocked, refresh } =
     useWorkspace(workspaceId, user?.id, reportException, reportMessage);
+  const { t } = useI18n();
   const tab = parseWorkspaceTabParam(searchParams.get('tab'));
   const [searchOpen, setSearchOpen] = useState(false);
   const [, bump] = useState(0);
@@ -89,7 +91,7 @@ export function WorkspacePage() {
 
   useEffect(() => {
     const raw = searchParams.get('tab');
-    if (raw && !WORKSPACE_TABS.some(t => t.id === raw)) {
+    if (raw && !WORKSPACE_TABS.some(tabDef => tabDef.id === raw)) {
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev);
@@ -150,13 +152,14 @@ export function WorkspacePage() {
     setWorkspaceChrome,
   ]);
 
-  if (!workspaceId) return <p className="shell">Dossier introuvable.</p>;
+  if (!workspaceId)
+    return <p className="shell">{t('workspace.notFound')}</p>;
 
   if (!user) {
     return (
       <div className="shell stack">
-        <p className="muted">Chargement session…</p>
-        <Link to="/">← Retour</Link>
+        <p className="muted">{t('workspace.loadingSession')}</p>
+        <Link to="/">{t('workspace.backArrow')}</Link>
       </div>
     );
   }
@@ -165,7 +168,7 @@ export function WorkspacePage() {
     return (
       <div className="shell stack">
         <WorkspacePageSkeleton />
-        <Link to="/">← Retour à l’accueil</Link>
+        <Link to="/">{t('workspace.backHomeArrow')}</Link>
       </div>
     );
   }
@@ -173,11 +176,8 @@ export function WorkspacePage() {
   if (accessBlocked || !workspace || !role) {
     return (
       <div className="shell stack">
-        <p className="muted">
-          Consultez la fenêtre d’erreur si besoin, ou retournez à l’accueil pour
-          ouvrir un autre dossier.
-        </p>
-        <Link to="/">← Retour</Link>
+        <p className="muted">{t('workspace.accessBlockedHelp')}</p>
+        <Link to="/">{t('workspace.backArrow')}</Link>
       </div>
     );
   }
@@ -209,7 +209,7 @@ export function WorkspacePage() {
         workspaceId={workspaceId}
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
-        onPick={t => setTab(t as TabId)}
+        onPick={picked => setTab(picked as TabId)}
       />
 
       <WorkspaceOnboarding
@@ -230,8 +230,8 @@ export function WorkspacePage() {
 
       {isReadOnly ? (
         <div className="workspace-readonly-banner" role="status">
-          <strong>Lecture seule</strong> — vous pouvez consulter ce dossier mais
-          pas le modifier.
+          <strong>{t('workspace.readOnly')}</strong>
+          {t('workspace.readOnlyBannerText')}
         </div>
       ) : null}
 
@@ -242,8 +242,10 @@ export function WorkspacePage() {
         >
           <div className="workspace-decision-banner-row">
             <div className="stack" style={{ gap: '0.25rem' }}>
-              <strong>Décision enregistrée</strong> : modèle retenu «{' '}
-              {decisionLabel} »
+              <strong>{t('workspace.decisionRecordedTitle')}</strong>
+              {t('workspace.decisionBannerPrefix')}
+              {decisionLabel}
+              {t('workspace.decisionBannerSuffix')}
               {workspace.decision_notes ? (
                 <span className="muted"> — {workspace.decision_notes}</span>
               ) : null}
@@ -252,7 +254,7 @@ export function WorkspacePage() {
               to="?tab=settings#workspace-settings-decision"
               className="workspace-decision-banner-link"
             >
-              Modifier dans Réglages
+              {t('workspace.editInSettings')}
             </Link>
           </div>
         </div>
@@ -260,8 +262,11 @@ export function WorkspacePage() {
 
       <header className="workspace-header workspace-header--document">
         <div className="workspace-header-main">
-          <nav className="workspace-breadcrumb muted" aria-label="Fil d’Ariane">
-            <Link to="/">Accueil</Link>
+          <nav
+            className="workspace-breadcrumb muted"
+            aria-label={t('workspace.breadcrumbLabel')}
+          >
+            <Link to="/">{t('workspace.home')}</Link>
             <span aria-hidden="true"> · </span>
             <span className="workspace-breadcrumb-current">
               {workspace.name}
@@ -274,7 +279,7 @@ export function WorkspacePage() {
             <div
               className="workspace-header-inline-tabs"
               role="toolbar"
-              aria-label="Raccourci activité du dossier"
+              aria-label={t('workspace.activityShortcutLabel')}
             >
               <button
                 type="button"
@@ -284,8 +289,8 @@ export function WorkspacePage() {
                     ? 'workspace-header-icon-tab workspace-header-icon-tab--active'
                     : 'workspace-header-icon-tab'
                 }
-                title={WORKSPACE_ACTIVITY_TAB_TITLE}
-                aria-label="Activité du dossier"
+                title={t('workspace.tab_activity_title')}
+                aria-label={t('workspace.activityOfWorkspace')}
                 aria-pressed={tab === 'activity'}
                 onClick={() => setTab('activity')}
               >
@@ -294,13 +299,13 @@ export function WorkspacePage() {
             </div>
             <span
               className={`badge workspace-role-badge workspace-role-badge--${role}`}
-              title="Votre rôle dans ce dossier"
+              title={t('workspace.yourRoleTitle')}
             >
               {role === 'admin'
-                ? 'Administrateur'
+                ? t('workspace.roleAdmin')
                 : role === 'write'
-                  ? 'Édition'
-                  : 'Lecture seule'}
+                  ? t('workspace.roleWrite')
+                  : t('workspace.readOnly')}
             </span>
           </div>
           <p className="muted workspace-header-desc">
@@ -308,17 +313,17 @@ export function WorkspacePage() {
               workspace.description
             ) : isAdmin ? (
               <>
-                <span>Aucune description.</span>{' '}
+                <span>{t('workspace.noDescription')}</span>{' '}
                 <button
                   type="button"
                   className="link-like"
                   onClick={() => setTab('settings')}
                 >
-                  Ajouter une description
+                  {t('workspace.addDescription')}
                 </button>
               </>
             ) : (
-              'Sans description'
+              t('workspace.withoutDescription')
             )}
           </p>
           {headerHintVisible ? (
@@ -327,17 +332,19 @@ export function WorkspacePage() {
               style={{ boxShadow: 'none' }}
             >
               <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                <strong>Réglages</strong> du dossier et{' '}
-                <strong>recherche</strong> : menu en haut à droite (icône
-                compte) ou loupe. <strong>Activité</strong> : raccourci ici ou
-                via ce menu. Compte et thème : même menu → paramètres généraux.
+                <strong>{t('workspace.tab_settings')}</strong>
+                {t('workspace.hintMid1')}
+                <strong>{t('workspace.searchWord')}</strong>
+                {t('workspace.hintMid2')}
+                <strong>{t('workspace.tab_activity')}</strong>
+                {t('workspace.hintEnd')}
               </p>
               <button
                 type="button"
                 className="secondary workspace-header-hint-dismiss"
                 onClick={dismissHeaderHint}
               >
-                Ne plus afficher
+                {t('workspace.dontShowAgain')}
               </button>
             </div>
           ) : null}
@@ -347,11 +354,11 @@ export function WorkspacePage() {
       <div className="workspace-tabs-toolbar">
         <div className="workspace-tabs-toolbar-row">
           <h2 className="workspace-tabs-heading" id="workspace-tabs-heading">
-            Sections
+            {t('workspace.sections')}
           </h2>
           <p className="workspace-shortcuts-hint muted">
             <kbd className="kbd">Ctrl</kbd> / <kbd className="kbd">⌘</kbd> +{' '}
-            <kbd className="kbd">K</kbd> · recherche
+            <kbd className="kbd">K</kbd> · {t('workspace.searchWord')}
           </p>
         </div>
         <WorkspaceTabStrip

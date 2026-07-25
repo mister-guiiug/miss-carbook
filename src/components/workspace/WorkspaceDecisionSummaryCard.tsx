@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import type { TabId } from './workspaceTabs';
+import { useI18n } from '../../i18n';
 
 /** Synthèse rapide : décision, rappels ouverts, liens vers les sections utiles. */
 export function WorkspaceDecisionSummaryCard({
@@ -14,6 +15,7 @@ export function WorkspaceDecisionSummaryCard({
   setTab: (id: TabId) => void;
 }) {
   const { reportException } = useErrorDialog();
+  const { t } = useI18n();
   const [pendingReminders, setPendingReminders] = useState<number | null>(null);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function WorkspaceDecisionSummaryCard({
         .eq('done', false);
       if (cancelled) return;
       if (error) {
-        reportException(error, 'Synthèse dossier (rappels)');
+        reportException(error, t('workspace.ctxSummaryReminders'));
         setPendingReminders(null);
         return;
       }
@@ -35,36 +37,38 @@ export function WorkspaceDecisionSummaryCard({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   return (
     <div
       className="card workspace-summary-card stack"
       style={{ boxShadow: 'none' }}
     >
-      <h2 className="workspace-summary-title">Vue d’ensemble</h2>
+      <h2 className="workspace-summary-title">{t('workspace.overview')}</h2>
       <ul className="workspace-summary-list">
         <li>
-          <strong>Décision</strong> :{' '}
+          <strong>{t('workspace.decision')}</strong>
+          {t('workspace.colon')}{' '}
           {hasRecordedDecision ? (
             <span className="muted">
-              enregistrée — détail dans la bannière ci-dessus.
+              {t('workspace.decisionRecordedDetail')}
             </span>
           ) : (
             <>
-              <span className="muted">pas encore arrêtée.</span>{' '}
+              <span className="muted">{t('workspace.decisionNotSet')}</span>{' '}
               <button
                 type="button"
                 className="link-like"
                 onClick={() => setTab('settings')}
               >
-                Enregistrer dans Réglages
+                {t('workspace.saveInSettings')}
               </button>
             </>
           )}
         </li>
         <li>
-          <strong>Rappels à faire</strong> :{' '}
+          <strong>{t('workspace.pendingReminders')}</strong>
+          {t('workspace.colon')}{' '}
           {pendingReminders === null ? (
             <span className="muted">…</span>
           ) : (
@@ -76,22 +80,23 @@ export function WorkspaceDecisionSummaryCard({
                   className="link-like"
                   onClick={() => setTab('reminders')}
                 >
-                  Voir
+                  {t('workspace.view')}
                 </button>
               ) : (
-                <span className="muted">aucun</span>
+                <span className="muted">{t('workspace.none')}</span>
               )}
             </>
           )}
         </li>
         <li>
-          <strong>Matrice</strong> :{' '}
+          <strong>{t('workspace.matrix')}</strong>
+          {t('workspace.colon')}{' '}
           <button
             type="button"
             className="link-like"
             onClick={() => setTab('evaluations')}
           >
-            Évaluations exigence × modèle
+            {t('workspace.matrixLink')}
           </button>
         </li>
       </ul>

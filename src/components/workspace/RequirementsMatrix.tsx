@@ -10,6 +10,7 @@ import {
   IconDownload,
   IconFilter,
 } from '../ui/IconActionButton';
+import { useI18n } from '../../i18n';
 
 type Req = {
   id: string;
@@ -45,13 +46,6 @@ const STATUS_VALUES: Record<string, number> = {
   ok: 1,
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  unknown: '?',
-  ko: 'Non',
-  partial: 'Partiel',
-  ok: 'OK',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   unknown: 'muted',
   ko: 'danger',
@@ -70,6 +64,13 @@ export function RequirementsMatrix({
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
+  const statusLabels: Record<string, string> = {
+    unknown: t('requirements.statusUnknown'),
+    ko: t('requirements.statusKo'),
+    partial: t('requirements.statusPartial'),
+    ok: t('requirements.statusOk'),
+  };
   const [reqs, setReqs] = useState<Req[]>([]);
   const [cands, setCands] = useState<Cand[]>([]);
   const [evals, setEvals] = useState<EvalRow[]>([]);
@@ -104,13 +105,12 @@ export function RequirementsMatrix({
         .select('requirement_id, candidate_id, status, note'),
     ]);
     const firstErr = r.error ?? c.error ?? e.error;
-    if (firstErr)
-      reportException(firstErr, 'Chargement de la matrice des exigences');
+    if (firstErr) reportException(firstErr, t('requirements.ctxLoadMatrix'));
 
     setReqs((r.data ?? []) as Req[]);
     setCands((c.data ?? []) as Cand[]);
     setEvals((e.data ?? []) as EvalRow[]);
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -155,7 +155,7 @@ export function RequirementsMatrix({
         },
         { onConflict: 'requirement_id,candidate_id' }
       );
-    if (error) reportException(error, 'Mise à jour du statut');
+    if (error) reportException(error, t('requirements.ctxUpdateStatus'));
     else await load();
   };
 
@@ -216,18 +216,22 @@ export function RequirementsMatrix({
 
   const exportCsv = () => {
     const headers = [
-      'Exigence',
-      'Niveau',
-      'Poids',
+      t('requirements.colRequirement'),
+      t('requirements.colLevel'),
+      t('requirements.colWeight'),
       ...filteredCands.map(c => formatCandidateListLabel(c)),
     ];
     const rows = filteredReqs.map(req => [
       req.label,
-      req.level === 'mandatory' ? 'Obligatoire' : 'À discuter',
+      req.level === 'mandatory'
+        ? t('requirements.levelMandatory')
+        : t('requirements.levelDiscuss'),
       req.weight?.toString() ?? '1',
       ...filteredCands.map(c => {
         const eval_ = evalMap.get(evalKey(req.id, c.id));
-        return eval_ ? STATUS_LABELS[eval_.status] : '?';
+        return eval_
+          ? statusLabels[eval_.status]
+          : t('requirements.statusUnknown');
       }),
     ]);
 
@@ -239,20 +243,20 @@ export function RequirementsMatrix({
     a.download = `matrice-exigences-${workspaceId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Export CSV téléchargé');
+    showToast(t('requirements.toastCsvExported'));
   };
 
   if (!reqs.length || !cands.length) {
     return (
       <EmptyState
         icon="requirements"
-        title="Matrice non disponible"
+        title={t('requirements.matrixEmptyTitle')}
         text={
           !reqs.length && !cands.length
-            ? 'Ajoutez des exigences (onglet Exigences) et des modèles (onglet Modèles) pour remplir la matrice.'
+            ? t('requirements.matrixEmptyBoth')
             : !reqs.length
-              ? 'Ajoutez des exigences (onglet Exigences) pour remplir la matrice.'
-              : 'Ajoutez des modèles (onglet Modèles) pour remplir la matrice.'
+              ? t('requirements.matrixEmptyReqs')
+              : t('requirements.matrixEmptyCands')
         }
       />
     );
@@ -270,12 +274,14 @@ export function RequirementsMatrix({
             gap: '0.5rem',
           }}
         >
-          <h3 style={{ margin: 0 }}>Matrice des exigences</h3>
+          <h3 style={{ margin: 0 }}>{t('requirements.matrixTitle')}</h3>
           <div className="row icon-action-toolbar">
             <IconActionButton
               variant="secondary"
               label={
-                showFilters ? 'Masquer les filtres' : 'Afficher les filtres'
+                showFilters
+                  ? t('requirements.hideFilters')
+                  : t('requirements.showFiltersLabel')
               }
               onClick={() => setShowFilters(v => !v)}
             >
@@ -283,7 +289,7 @@ export function RequirementsMatrix({
             </IconActionButton>
             <IconActionButton
               variant="secondary"
-              label="Exporter en CSV"
+              label={t('requirements.exportCsvLabel')}
               onClick={exportCsv}
             >
               <IconDownload />
@@ -300,7 +306,7 @@ export function RequirementsMatrix({
               className={view === 'full' ? 'active' : ''}
               onClick={() => setView('full')}
             >
-              Complète
+              {t('requirements.viewFull')}
             </button>
             <button
               type="button"
@@ -309,7 +315,7 @@ export function RequirementsMatrix({
               className={view === 'compact' ? 'active' : ''}
               onClick={() => setView('compact')}
             >
-              Compacte
+              {t('requirements.viewCompact')}
             </button>
             <button
               type="button"
@@ -318,7 +324,7 @@ export function RequirementsMatrix({
               className={view === 'scores' ? 'active' : ''}
               onClick={() => setView('scores')}
             >
-              Scores
+              {t('requirements.viewScores')}
             </button>
           </div>
         </div>
@@ -333,7 +339,9 @@ export function RequirementsMatrix({
               style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}
             >
               <div style={{ flex: '1 1 200px' }}>
-                <label htmlFor="req-level-filter">Niveau d'exigence</label>
+                <label htmlFor="req-level-filter">
+                  {t('requirements.filterLevelLabel')}
+                </label>
                 <select
                   id="req-level-filter"
                   value={levelFilter}
@@ -341,13 +349,19 @@ export function RequirementsMatrix({
                     setLevelFilter(e.target.value as 'all' | RequirementLevel)
                   }
                 >
-                  <option value="all">Toutes</option>
-                  <option value="mandatory">Obligatoires</option>
-                  <option value="discuss">À discuter</option>
+                  <option value="all">{t('requirements.filterAll')}</option>
+                  <option value="mandatory">
+                    {t('requirements.filterMandatory')}
+                  </option>
+                  <option value="discuss">
+                    {t('requirements.filterDiscuss')}
+                  </option>
                 </select>
               </div>
               <div style={{ flex: '1 1 200px' }}>
-                <label htmlFor="cand-status-filter">Statut des modèles</label>
+                <label htmlFor="cand-status-filter">
+                  {t('requirements.filterStatusLabel')}
+                </label>
                 <select
                   id="cand-status-filter"
                   value={statusFilter}
@@ -355,12 +369,22 @@ export function RequirementsMatrix({
                     setStatusFilter(e.target.value as 'all' | CandidateStatus)
                   }
                 >
-                  <option value="all">Tous</option>
-                  <option value="to_see">À voir</option>
-                  <option value="tried">Essayés</option>
-                  <option value="shortlist">Shortlist</option>
-                  <option value="selected">Sélectionné</option>
-                  <option value="rejected">Exclus</option>
+                  <option value="all">{t('requirements.statusAll')}</option>
+                  <option value="to_see">
+                    {t('requirements.statusToSee')}
+                  </option>
+                  <option value="tried">
+                    {t('requirements.statusTried')}
+                  </option>
+                  <option value="shortlist">
+                    {t('requirements.statusShortlist')}
+                  </option>
+                  <option value="selected">
+                    {t('requirements.statusSelected')}
+                  </option>
+                  <option value="rejected">
+                    {t('requirements.statusRejected')}
+                  </option>
                 </select>
               </div>
             </div>
@@ -374,7 +398,7 @@ export function RequirementsMatrix({
                   checked={hideExcluded}
                   onChange={e => setHideExcluded(e.target.checked)}
                 />
-                Masquer les exclus
+                {t('requirements.hideExcluded')}
               </label>
               <label
                 className="row"
@@ -385,15 +409,19 @@ export function RequirementsMatrix({
                   checked={hideToSee}
                   onChange={e => setHideToSee(e.target.checked)}
                 />
-                Masquer les « À voir »
+                {t('requirements.hideToSee')}
               </label>
             </div>
             <p
               className="muted"
               style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}
             >
-              {filteredReqs.length} / {reqs.length} exigences ·{' '}
-              {filteredCands.length} / {cands.length} modèles affichés
+              {t('requirements.filterCounts', {
+                shownReqs: filteredReqs.length,
+                totalReqs: reqs.length,
+                shownCands: filteredCands.length,
+                totalCands: cands.length,
+              })}
             </p>
           </div>
         ) : null}
@@ -401,18 +429,15 @@ export function RequirementsMatrix({
 
       {view === 'scores' ? (
         <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h4 style={{ margin: 0 }}>Scores pondérés par modèle</h4>
+          <h4 style={{ margin: 0 }}>{t('requirements.scoresTitle')}</h4>
           <p
             className="muted"
             style={{ margin: '0.25rem 0 1rem', fontSize: '0.9rem' }}
           >
-            Score basé sur les évaluations (OK=1, Partiel=0.5, Non=0) et le
-            poids de chaque exigence.
+            {t('requirements.scoresHint')}
           </p>
           {filteredCands.length === 0 ? (
-            <p className="muted">
-              Aucun modèle à afficher avec les filtres actuels.
-            </p>
+            <p className="muted">{t('requirements.scoresNoModels')}</p>
           ) : (
             <div className="stack" style={{ gap: '0.75rem' }}>
               {filteredCands
@@ -453,8 +478,10 @@ export function RequirementsMatrix({
                         style={{ gap: '1rem', alignItems: 'center' }}
                       >
                         <span className="muted" style={{ fontSize: '0.85rem' }}>
-                          {score.details.filter(d => d.score > 0).length} /{' '}
-                          {score.details.length} satisfaites
+                          {t('requirements.satisfiedCount', {
+                            ok: score.details.filter(d => d.score > 0).length,
+                            total: score.details.length,
+                          })}
                         </span>
                         <span
                           className="badge success"
@@ -498,9 +525,9 @@ export function RequirementsMatrix({
           >
             <thead>
               <tr>
-                <th>Exigence</th>
-                {view === 'full' && <th>Niveau</th>}
-                {view === 'full' && <th>Poids</th>}
+                <th>{t('requirements.colRequirement')}</th>
+                {view === 'full' && <th>{t('requirements.colLevel')}</th>}
+                {view === 'full' && <th>{t('requirements.colWeight')}</th>}
                 {filteredCands.map(c => (
                   <th key={c.id}>{formatCandidateListLabel(c)}</th>
                 ))}
@@ -511,7 +538,9 @@ export function RequirementsMatrix({
                 <tr key={req.id}>
                   <td>
                     <span className={`badge ${req.level}`}>
-                      {req.level === 'mandatory' ? 'Obl.' : 'Disc.'}
+                      {req.level === 'mandatory'
+                        ? t('requirements.levelMandatoryShort')
+                        : t('requirements.levelDiscussShort')}
                     </span>{' '}
                     <strong>{req.label}</strong>
                     {req.tags?.length ? (
@@ -527,8 +556,8 @@ export function RequirementsMatrix({
                     <td>
                       <span className={`badge ${req.level}`}>
                         {req.level === 'mandatory'
-                          ? 'Obligatoire'
-                          : 'À discuter'}
+                          ? t('requirements.levelMandatory')
+                          : t('requirements.levelDiscuss')}
                       </span>
                     </td>
                   )}
@@ -548,14 +577,22 @@ export function RequirementsMatrix({
                             }
                             className={`status-select status-select--${STATUS_COLORS[status]}`}
                           >
-                            <option value="unknown">?</option>
-                            <option value="ok">OK</option>
-                            <option value="partial">Partiel</option>
-                            <option value="ko">Non</option>
+                            <option value="unknown">
+                              {t('requirements.statusUnknown')}
+                            </option>
+                            <option value="ok">
+                              {t('requirements.statusOk')}
+                            </option>
+                            <option value="partial">
+                              {t('requirements.statusPartial')}
+                            </option>
+                            <option value="ko">
+                              {t('requirements.statusKo')}
+                            </option>
                           </select>
                         ) : (
                           <span className={`badge ${STATUS_COLORS[status]}`}>
-                            {STATUS_LABELS[status]}
+                            {statusLabels[status]}
                           </span>
                         )}
                       </td>

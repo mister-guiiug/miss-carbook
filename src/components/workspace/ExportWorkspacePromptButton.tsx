@@ -4,6 +4,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { fetchWorkspaceExportBundle } from '../../lib/workspaceExportBundle';
 import { buildWorkspacePromptMarkdown } from '../../lib/buildWorkspacePromptMarkdown';
 import { IconActionButton, IconPromptFile } from '../ui/IconActionButton';
+import { useI18n } from '../../i18n';
 
 export function ExportWorkspacePromptButton({
   workspaceId,
@@ -12,6 +13,7 @@ export function ExportWorkspacePromptButton({
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
@@ -26,9 +28,9 @@ export function ExportWorkspacePromptButton({
       a.download = `miss-carbook-contexte-ia-${workspaceId.slice(0, 8)}.md`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Export Markdown téléchargé — prêt à coller dans une IA');
+      showToast(t('workspace.toastMarkdownExported'));
     } catch (e: unknown) {
-      reportException(e, 'Export contexte IA (Markdown)');
+      reportException(e, t('workspace.ctxExportPrompt'));
     } finally {
       setBusy(false);
     }
@@ -40,8 +42,8 @@ export function ExportWorkspacePromptButton({
         variant="secondary"
         label={
           busy
-            ? 'Préparation du fichier pour l’IA…'
-            : 'Exporter le contexte pour une IA (Markdown)'
+            ? t('workspace.exportPromptBusy')
+            : t('workspace.exportPromptLabel')
         }
         disabled={busy}
         onClick={() => void run()}
@@ -49,10 +51,9 @@ export function ExportWorkspacePromptButton({
         <IconPromptFile />
       </IconActionButton>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-        Un seul fichier <strong>.md</strong> : exigences, modèles, matrice,
-        votes, avis, commentaires, bloc-notes, rappels, journal (extrait), sans
-        jetons d’invitation ni code de partage. Vérifiez ce que vous collez dans
-        des services tiers.
+        {t('workspace.exportPromptDescA')}
+        <strong>.md</strong>
+        {t('workspace.exportPromptDescB')}
       </p>
     </div>
   );

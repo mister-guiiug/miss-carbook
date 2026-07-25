@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useI18n } from '../../i18n';
 
 export function AssistantFullscreenLayout({
   stepIndex,
@@ -25,6 +26,7 @@ export function AssistantFullscreenLayout({
   onPassAll: () => void;
   onNeverShowAgain: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="assistant-fullscreen"
@@ -35,7 +37,7 @@ export function AssistantFullscreenLayout({
     >
       <div className="assistant-fullscreen-inner">
         <p className="assistant-step-meta muted">
-          Étape {stepIndex + 1} sur {stepCount}
+          {t('assistant.stepMeta', { index: stepIndex + 1, count: stepCount })}
         </p>
         <div className="assistant-progress" aria-hidden="true">
           {Array.from({ length: stepCount }, (_, i) => (
@@ -56,7 +58,7 @@ export function AssistantFullscreenLayout({
               className="secondary assistant-btn"
               onClick={onBack}
             >
-              Retour
+              {t('common.back')}
             </button>
           ) : (
             <span className="assistant-actions-spacer" />
@@ -71,7 +73,7 @@ export function AssistantFullscreenLayout({
         </div>
         <div className="assistant-footer-links">
           <button type="button" className="link-like" onClick={onPassAll}>
-            Passer tout
+            {t('assistant.passAll')}
           </button>
           <span aria-hidden="true"> · </span>
           <button
@@ -79,7 +81,7 @@ export function AssistantFullscreenLayout({
             className="link-like"
             onClick={onNeverShowAgain}
           >
-            Ne plus proposer
+            {t('assistant.neverShow')}
           </button>
         </div>
       </div>

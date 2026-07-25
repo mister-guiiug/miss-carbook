@@ -20,6 +20,9 @@ import {
 } from '../ui/IconActionButton';
 import { EmptyState } from '../ui/EmptyState';
 import { TrialChecklist } from './TrialChecklist';
+import { useI18n } from '../../i18n';
+
+type Translate = ReturnType<typeof useI18n>['t'];
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return '';
@@ -29,13 +32,6 @@ function isoToDatetimeLocal(iso: string | null): string {
 }
 
 type ReminderKind = 'contact' | 'visit' | 'appointment' | 'other';
-
-const reminderKindLabel: Record<ReminderKind, string> = {
-  contact: 'Contact',
-  visit: 'Visite',
-  appointment: 'RDV',
-  other: 'Autre',
-};
 
 type Row = {
   id: string;
@@ -74,14 +70,14 @@ function dayKeyFromIso(iso: string): string {
   return localDayKey(new Date(iso));
 }
 
-function formatTimelineDayHeading(iso: string): string {
+function formatTimelineDayHeading(iso: string, t: Translate): string {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const k = dayKeyFromIso(iso);
-  if (k === localDayKey(today)) return "Aujourd'hui";
-  if (k === localDayKey(yesterday)) return 'Hier';
+  if (k === localDayKey(today)) return t('reminders.timeline.today');
+  if (k === localDayKey(yesterday)) return t('reminders.timeline.yesterday');
   return d.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -135,6 +131,13 @@ export function RemindersTab({
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
+  const reminderKindLabel: Record<ReminderKind, string> = {
+    contact: t('reminders.kind.contact'),
+    visit: t('reminders.kind.visit'),
+    appointment: t('reminders.kind.appointment'),
+    other: t('reminders.kind.other'),
+  };
   const [rows, setRows] = useState<Row[]>([]);
   const [visits, setVisits] = useState<VisitRow[]>([]);
   const [candidates, setCandidates] = useState<
@@ -202,10 +205,10 @@ export function RemindersTab({
         .order('created_at', { ascending: true }),
     ]);
 
-    if (rem.error) reportException(rem.error, 'Chargement des rappels');
+    if (rem.error) reportException(rem.error, t('reminders.err.loadReminders'));
     else setRows((rem.data ?? []) as Row[]);
 
-    if (vs.error) reportException(vs.error, 'Chargement des visites');
+    if (vs.error) reportException(vs.error, t('reminders.err.loadVisits'));
     else setVisits((vs.data ?? []) as VisitRow[]);
 
     setCandidates(
@@ -218,7 +221,7 @@ export function RemindersTab({
           .parent_candidate_id ?? null) as string | null,
       }))
     );
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -289,7 +292,7 @@ export function RemindersTab({
       place: place.trim(),
       kind,
     });
-    if (error) reportException(error, 'Création d’un rappel');
+    if (error) reportException(error, t('reminders.err.createReminder'));
     else {
       setTitle('');
       setBody('');
@@ -299,7 +302,7 @@ export function RemindersTab({
       setKind('contact');
       await load();
       await logActivity(workspaceId, 'reminder.create', 'reminder', null, {});
-      showToast('Rappel ajouté');
+      showToast(t('reminders.toast.reminderAdded'));
     }
   };
 
@@ -313,7 +316,7 @@ export function RemindersTab({
       location: visitLocation.trim(),
       notes: visitNotes.trim(),
     });
-    if (error) reportException(error, 'Création d’une visite');
+    if (error) reportException(error, t('reminders.err.createVisit'));
     else {
       setVisitAt(isoToDatetimeLocal(new Date().toISOString()));
       setVisitLocation('');
@@ -321,7 +324,7 @@ export function RemindersTab({
       setVisitCandId('');
       await load();
       await logActivity(workspaceId, 'visit.create', 'visit', null, {});
-      showToast('Visite ajoutée');
+      showToast(t('reminders.toast.visitAdded'));
     }
   };
 
@@ -341,12 +344,12 @@ export function RemindersTab({
           kind: editKind,
         })
         .eq('id', id);
-      if (error) reportException(error, 'Mise à jour d’un rappel');
+      if (error) reportException(error, t('reminders.err.updateReminder'));
       else {
         cancelEdit();
         await load();
         await logActivity(workspaceId, 'reminder.update', 'reminder', id, {});
-        showToast('Rappel mis à jour');
+        showToast(t('reminders.toast.reminderUpdated'));
       }
     } finally {
       setSavingEdit(false);
@@ -360,10 +363,14 @@ export function RemindersTab({
       .update({ done: !r.done })
       .eq('id', r.id);
     if (error)
-      reportException(error, 'Mise à jour d’un rappel (fait / rouvrir)');
+      reportException(error, t('reminders.err.toggleReminder'));
     else {
       await load();
-      showToast(r.done ? 'Rappel rouvert' : 'Rappel marqué comme fait');
+      showToast(
+        r.done
+          ? t('reminders.toast.reminderReopened')
+          : t('reminders.toast.reminderDone')
+      );
     }
   };
 
@@ -373,9 +380,13 @@ export function RemindersTab({
     setConfirming({
       kind: 'reminder',
       id,
-      title: r?.title?.trim() ? r.title.trim() : 'ce rappel',
+      title: r?.title?.trim()
+        ? r.title.trim()
+        : t('reminders.confirm.thisReminder'),
       subtitle: r?.due_at
-        ? `Échéance : ${fmtShortDateTimeFr(r.due_at)}`
+        ? t('reminders.confirm.dueSubtitle', {
+            date: fmtShortDateTimeFr(r.due_at),
+          })
         : undefined,
     });
   };
@@ -385,13 +396,17 @@ export function RemindersTab({
     const v = visits.find(x => x.id === id);
     const when = v?.visit_at ? fmtShortDateTimeFr(v.visit_at) : '';
     const where = (v?.location ?? '').trim();
-    const title = [when, where].filter(Boolean).join(' · ') || 'cette visite';
+    const title =
+      [when, where].filter(Boolean).join(' · ') ||
+      t('reminders.confirm.thisVisit');
     setConfirming({
       kind: 'visit',
       id,
       title,
       subtitle: v?.candidate_id
-        ? `Modèle : ${candidateLabelById.get(v.candidate_id) ?? '—'}`
+        ? t('reminders.confirm.modelSubtitle', {
+            model: candidateLabelById.get(v.candidate_id) ?? '—',
+          })
         : undefined,
     });
   };
@@ -408,7 +423,7 @@ export function RemindersTab({
         if (error) throw error;
         if (editingId === confirming.id) cancelEdit();
         await load();
-        showToast('Rappel supprimé');
+        showToast(t('reminders.toast.reminderDeleted'));
       } else {
         const { error } = await supabase
           .from('visits')
@@ -416,15 +431,15 @@ export function RemindersTab({
           .eq('id', confirming.id);
         if (error) throw error;
         await load();
-        showToast('Visite supprimée');
+        showToast(t('reminders.toast.visitDeleted'));
       }
       setConfirming(null);
     } catch (e: unknown) {
       reportException(
         e,
         confirming.kind === 'reminder'
-          ? 'Suppression d’un rappel'
-          : 'Suppression d’une visite'
+          ? t('reminders.err.deleteReminder')
+          : t('reminders.err.deleteVisit')
       );
     } finally {
       setDeleting(false);
@@ -438,6 +453,7 @@ export function RemindersTab({
     showToast,
     editingId,
     cancelEdit,
+    t,
   ]);
 
   const openReminders = rows.filter(r => !r.done);
@@ -632,19 +648,19 @@ export function RemindersTab({
       if (cur) cur.items.push(ev);
       else
         dayMap.set(key, {
-          heading: formatTimelineDayHeading(ev.sortIso),
+          heading: formatTimelineDayHeading(ev.sortIso, t),
           items: [ev],
         });
     }
     return [...dayMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [visits, rows, query, kindFilter, candidateFilter, candidateLabelById]);
+  }, [visits, rows, query, kindFilter, candidateFilter, candidateLabelById, t]);
 
   return (
     <div className="stack reminders-tab">
       <p className="muted" style={{ margin: 0 }}>
-        Saisissez vos visites (historique) et vos rappels (à faire / faits) —
-        visibles par tous les membres. L’onglet <strong>Chronologie</strong>{' '}
-        regroupe tout sur une frise temporelle.
+        {t('reminders.intro.lead1')}
+        <strong>{t('reminders.tabs.timeline')}</strong>{' '}
+        {t('reminders.intro.lead2')}
       </p>
 
       <div
@@ -658,7 +674,7 @@ export function RemindersTab({
           <div
             className="tabs"
             role="tablist"
-            aria-label="Visites et rappels — sous-sections"
+            aria-label={t('reminders.tabs.aria')}
           >
             <button
               type="button"
@@ -667,7 +683,8 @@ export function RemindersTab({
               className={view === 'open' ? 'active' : ''}
               onClick={() => setView('open')}
             >
-              À faire <span className="muted">({counts.open})</span>
+              {t('reminders.tabs.open')}{' '}
+              <span className="muted">({counts.open})</span>
             </button>
             <button
               type="button"
@@ -676,7 +693,8 @@ export function RemindersTab({
               className={view === 'done' ? 'active' : ''}
               onClick={() => setView('done')}
             >
-              Faits <span className="muted">({counts.done})</span>
+              {t('reminders.tabs.done')}{' '}
+              <span className="muted">({counts.done})</span>
             </button>
             <button
               type="button"
@@ -685,7 +703,8 @@ export function RemindersTab({
               className={view === 'visits' ? 'active' : ''}
               onClick={() => setView('visits')}
             >
-              Visites <span className="muted">({counts.visits})</span>
+              {t('reminders.tabs.visits')}{' '}
+              <span className="muted">({counts.visits})</span>
             </button>
             <button
               type="button"
@@ -693,9 +712,10 @@ export function RemindersTab({
               aria-selected={view === 'timeline'}
               className={view === 'timeline' ? 'active' : ''}
               onClick={() => setView('timeline')}
-              title="Tous les rappels et visites, du plus récent au plus ancien"
+              title={t('reminders.tabs.timelineTitle')}
             >
-              Chronologie <span className="muted">({counts.timeline})</span>
+              {t('reminders.tabs.timeline')}{' '}
+              <span className="muted">({counts.timeline})</span>
             </button>
           </div>
 
@@ -706,8 +726,8 @@ export function RemindersTab({
                   variant="secondary"
                   label={
                     showAddReminder
-                      ? 'Fermer le formulaire de rappel'
-                      : 'Ajouter un rappel'
+                      ? t('reminders.actions.closeReminderForm')
+                      : t('reminders.actions.addReminder')
                   }
                   onClick={() => setShowAddReminder(v => !v)}
                 >
@@ -718,8 +738,8 @@ export function RemindersTab({
                   variant="secondary"
                   label={
                     showAddVisit
-                      ? 'Fermer le formulaire de visite'
-                      : 'Ajouter une visite'
+                      ? t('reminders.actions.closeVisitForm')
+                      : t('reminders.actions.addVisit')
                   }
                   onClick={() => setShowAddVisit(v => !v)}
                 >
@@ -732,17 +752,17 @@ export function RemindersTab({
 
         <div className="row reminders-filters" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: '2 1 220px' }}>
-            <label htmlFor="rem-q">Recherche</label>
+            <label htmlFor="rem-q">{t('reminders.filters.searchLabel')}</label>
             <input
               id="rem-q"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Titre, détail, lieu, modèle…"
+              placeholder={t('reminders.filters.searchPlaceholder')}
               maxLength={200}
             />
           </div>
           <div style={{ flex: '1 1 180px' }}>
-            <label htmlFor="rem-kind">Type</label>
+            <label htmlFor="rem-kind">{t('reminders.field.type')}</label>
             <select
               id="rem-kind"
               value={kindFilter}
@@ -752,11 +772,11 @@ export function RemindersTab({
               disabled={view === 'visits'}
               title={
                 view === 'timeline'
-                  ? 'Filtre les rappels ; « Visite » inclut aussi les entrées du carnet de visites'
+                  ? t('reminders.filters.typeTitleTimeline')
                   : undefined
               }
             >
-              <option value="all">Tous</option>
+              <option value="all">{t('reminders.filters.all')}</option>
               <option value="contact">{reminderKindLabel.contact}</option>
               <option value="visit">{reminderKindLabel.visit}</option>
               <option value="appointment">
@@ -766,13 +786,13 @@ export function RemindersTab({
             </select>
           </div>
           <div style={{ flex: '1 1 220px' }}>
-            <label htmlFor="rem-cand">Modèle</label>
+            <label htmlFor="rem-cand">{t('reminders.field.model')}</label>
             <select
               id="rem-cand"
               value={candidateFilter}
               onChange={e => setCandidateFilter(e.target.value)}
             >
-              <option value="all">Tous</option>
+              <option value="all">{t('reminders.filters.all')}</option>
               {candidates.map(c => (
                 <option key={c.id} value={c.id}>
                   {formatCandidateListLabel(c)}
@@ -792,10 +812,10 @@ export function RemindersTab({
           className="card stack"
           style={{ boxShadow: 'none' }}
         >
-          <h3 style={{ margin: 0 }}>Nouveau rappel</h3>
+          <h3 style={{ margin: 0 }}>{t('reminders.form.newReminderTitle')}</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 180px' }}>
-              <label>Type</label>
+              <label>{t('reminders.field.type')}</label>
               <select
                 value={kind}
                 onChange={e => setKind(e.target.value as ReminderKind)}
@@ -813,20 +833,20 @@ export function RemindersTab({
             id="reminder-title"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            placeholder="Titre"
+            placeholder={t('reminders.field.title')}
             required
             maxLength={200}
           />
           <textarea
             value={body}
             onChange={e => setBody(e.target.value)}
-            placeholder="Détail (optionnel)"
+            placeholder={t('reminders.form.bodyPlaceholder')}
             maxLength={2000}
             rows={3}
           />
           <div className="row" style={{ flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 160px' }}>
-              <label>Échéance</label>
+              <label>{t('reminders.field.due')}</label>
               <input
                 type="datetime-local"
                 value={due}
@@ -834,16 +854,16 @@ export function RemindersTab({
               />
             </div>
             <div style={{ flex: '1 1 220px' }}>
-              <label>Lieu (optionnel)</label>
+              <label>{t('reminders.form.placeLabelOptional')}</label>
               <input
                 value={place}
                 onChange={e => setPlace(e.target.value)}
-                placeholder="ex. Nom du garage, ville…"
+                placeholder={t('reminders.form.placePlaceholder')}
                 maxLength={200}
               />
             </div>
             <div style={{ flex: '1 1 220px' }}>
-              <label>Lié à un modèle (optionnel)</label>
+              <label>{t('reminders.form.linkModelOptional')}</label>
               <select value={candId} onChange={e => setCandId(e.target.value)}>
                 <option value="">—</option>
                 {candidates.map(c => (
@@ -855,10 +875,12 @@ export function RemindersTab({
             </div>
           </div>
           <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
-            <button type="submit">Ajouter le rappel</button>
+            <button type="submit">
+              {t('reminders.form.submitReminder')}
+            </button>
             <IconActionButton
               variant="secondary"
-              label="Fermer le formulaire"
+              label={t('reminders.actions.closeForm')}
               onClick={() => setShowAddReminder(false)}
             >
               <IconX />
@@ -873,10 +895,10 @@ export function RemindersTab({
           className="card stack"
           style={{ boxShadow: 'none' }}
         >
-          <h3 style={{ margin: 0 }}>Nouvelle visite</h3>
+          <h3 style={{ margin: 0 }}>{t('reminders.form.newVisitTitle')}</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 180px' }}>
-              <label>Date / heure</label>
+              <label>{t('reminders.form.visitDateTime')}</label>
               <input
                 type="datetime-local"
                 value={visitAt}
@@ -885,16 +907,16 @@ export function RemindersTab({
               />
             </div>
             <div style={{ flex: '1 1 220px' }}>
-              <label>Lieu</label>
+              <label>{t('reminders.field.place')}</label>
               <input
                 value={visitLocation}
                 onChange={e => setVisitLocation(e.target.value)}
-                placeholder="ex. Nom du garage, ville…"
+                placeholder={t('reminders.form.placePlaceholder')}
                 maxLength={500}
               />
             </div>
             <div style={{ flex: '1 1 220px' }}>
-              <label>Modèle (optionnel)</label>
+              <label>{t('reminders.form.modelOptional')}</label>
               <select
                 value={visitCandId}
                 onChange={e => setVisitCandId(e.target.value)}
@@ -909,20 +931,20 @@ export function RemindersTab({
             </div>
           </div>
           <div>
-            <label>Notes</label>
+            <label>{t('reminders.field.notes')}</label>
             <textarea
               value={visitNotes}
               onChange={e => setVisitNotes(e.target.value)}
-              placeholder="Impressions, points à vérifier, résultat…"
+              placeholder={t('reminders.form.notesPlaceholder')}
               maxLength={4000}
               rows={3}
             />
           </div>
           <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
-            <button type="submit">Ajouter la visite</button>
+            <button type="submit">{t('reminders.form.submitVisit')}</button>
             <IconActionButton
               variant="secondary"
-              label="Fermer le formulaire"
+              label={t('reminders.actions.closeForm')}
               onClick={() => setShowAddVisit(false)}
             >
               <IconX />
@@ -935,8 +957,8 @@ export function RemindersTab({
         filteredTimelineGroups.length === 0 ? (
           <EmptyState
             icon="reminders"
-            title="Aucun événement pour ces filtres"
-            text="Ajoutez des rappels (À faire) ou des visites (onglet Visites)."
+            title={t('reminders.empty.timelineTitle')}
+            text={t('reminders.empty.timelineText')}
           />
         ) : (
           <div className="stack reminders-timeline-wrap">
@@ -944,9 +966,9 @@ export function RemindersTab({
               className="muted reminders-timeline-hint"
               style={{ margin: 0, fontSize: '0.88rem' }}
             >
-              Frise unifiée : date de la visite, ou échéance du rappel, ou à
-              défaut date de création du rappel — du{' '}
-              <strong>plus récent</strong> au plus ancien.
+              {t('reminders.timeline.hintPrefix')}{' '}
+              <strong>{t('reminders.timeline.hintStrong')}</strong>
+              {t('reminders.timeline.hintSuffix')}
             </p>
             <ul className="reminders-timeline">
               {filteredTimelineGroups.map(([dayKey, { heading, items }]) => (
@@ -954,8 +976,8 @@ export function RemindersTab({
                   <h3 className="reminders-timeline-day-heading">{heading}</h3>
                   <ul className="reminders-timeline-day-list">
                     {items.map(ev => {
-                      const t = new Date(ev.sortIso);
-                      const timeStr = t.toLocaleTimeString('fr-FR', {
+                      const evDate = new Date(ev.sortIso);
+                      const timeStr = evDate.toLocaleTimeString('fr-FR', {
                         hour: '2-digit',
                         minute: '2-digit',
                       });
@@ -967,13 +989,13 @@ export function RemindersTab({
                         const loc = (v.location ?? '').trim();
                         const main =
                           [loc, linkedLabel].filter(Boolean).join(' · ') ||
-                          'Visite';
+                          t('reminders.timeline.visitBadge');
                         const note = (v.notes ?? '').trim();
                         return (
                           <li
                             key={`v-${v.id}`}
                             className="reminders-timeline-row"
-                            title={`${timeStr} — Visite — ${main}${note ? ` — ${note}` : ''}`}
+                            title={`${t('reminders.timeline.visitTitle', { time: timeStr, main })}${note ? ` — ${note}` : ''}`}
                           >
                             <time
                               className="reminders-timeline-time"
@@ -983,7 +1005,7 @@ export function RemindersTab({
                             </time>
                             <span className="reminders-timeline-main">
                               <span className="badge reminders-timeline-badge">
-                                Visite
+                                {t('reminders.timeline.visitBadge')}
                               </span>
                               <span className="reminders-timeline-text">
                                 <strong>{main}</strong>
@@ -999,7 +1021,7 @@ export function RemindersTab({
                               {canWrite ? (
                                 <IconActionButton
                                   variant="danger"
-                                  label="Supprimer la visite"
+                                  label={t('reminders.actions.deleteVisit')}
                                   onClick={() => void removeVisit(v.id)}
                                 >
                                   <IconTrash />
@@ -1016,7 +1038,9 @@ export function RemindersTab({
                         ? candidateLabelById.get(r.candidate_id)
                         : null;
                       const overdue = !r.done && isOverdue(r.due_at);
-                      const status = r.done ? 'Fait' : 'À faire';
+                      const status = r.done
+                        ? t('reminders.status.done')
+                        : t('reminders.status.todo');
                       const sub = [
                         status,
                         linkedLabel ? linkedLabel : null,
@@ -1042,10 +1066,12 @@ export function RemindersTab({
                             </span>
                             {r.done ? (
                               <span className="badge reminders-timeline-badge reminders-timeline-badge--done">
-                                Fait
+                                {t('reminders.status.done')}
                               </span>
                             ) : overdue ? (
-                              <span className="badge danger">Retard</span>
+                              <span className="badge danger">
+                                {t('reminders.badge.overdueShort')}
+                              </span>
                             ) : null}
                             <span className="reminders-timeline-text">
                               <strong>{r.title}</strong>
@@ -1062,7 +1088,9 @@ export function RemindersTab({
                               <>
                                 <IconActionButton
                                   variant="primary"
-                                  label={`Modifier le rappel « ${r.title} »`}
+                                  label={t('reminders.actions.editReminderNamed', {
+                                    title: r.title,
+                                  })}
                                   onClick={() => {
                                     setView(r.done ? 'done' : 'open');
                                     startEdit(r);
@@ -1074,8 +1102,8 @@ export function RemindersTab({
                                   variant="secondary"
                                   label={
                                     r.done
-                                      ? 'Rouvrir ce rappel'
-                                      : 'Marquer comme fait'
+                                      ? t('reminders.actions.reopenReminder')
+                                      : t('reminders.actions.markDone')
                                   }
                                   onClick={() => void toggle(r)}
                                 >
@@ -1083,7 +1111,7 @@ export function RemindersTab({
                                 </IconActionButton>
                                 <IconActionButton
                                   variant="danger"
-                                  label="Supprimer ce rappel"
+                                  label={t('reminders.actions.deleteReminder')}
                                   onClick={() => void remove(r.id)}
                                 >
                                   <IconTrash />
@@ -1104,8 +1132,8 @@ export function RemindersTab({
         filteredVisits.length === 0 ? (
           <EmptyState
             icon="reminders"
-            title="Aucune visite planifiée"
-            text="Ajoutez des visites pour suivre vos essais et rendez-vous en concession."
+            title={t('reminders.empty.visitsTitle')}
+            text={t('reminders.empty.visitsText')}
           />
         ) : (
           <ul
@@ -1126,7 +1154,9 @@ export function RemindersTab({
                       <strong>{fmtShortDateTimeFr(v.visit_at)}</strong>
                       {(v.location ?? '').trim() ? (
                         <div className="muted" style={{ fontSize: '0.9rem' }}>
-                          Lieu : {(v.location ?? '').trim()}
+                          {t('reminders.field.placeDisplay', {
+                            place: (v.location ?? '').trim(),
+                          })}
                         </div>
                       ) : null}
                       {linkedLabel ? (
@@ -1134,7 +1164,9 @@ export function RemindersTab({
                           className="muted"
                           style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}
                         >
-                          Modèle : {linkedLabel}
+                          {t('reminders.field.modelDisplay', {
+                            model: linkedLabel,
+                          })}
                         </div>
                       ) : null}
                       {(v.notes ?? '').trim() ? (
@@ -1144,7 +1176,7 @@ export function RemindersTab({
                     <div className="row icon-action-toolbar">
                       <IconActionButton
                         variant="secondary"
-                        label="Checklist d'essai"
+                        label={t('reminders.checklist.title')}
                         onClick={() => setChecklistVisit(v.id)}
                       >
                         <IconClipboard />
@@ -1152,7 +1184,7 @@ export function RemindersTab({
                       {canWrite ? (
                         <IconActionButton
                           variant="danger"
-                          label="Supprimer la visite"
+                          label={t('reminders.actions.deleteVisit')}
                           onClick={() => void removeVisit(v.id)}
                         >
                           <IconTrash />
@@ -1168,15 +1200,19 @@ export function RemindersTab({
       ) : rows.length === 0 ? (
         <EmptyState
           icon="reminders"
-          title="Aucun rappel pour ce dossier"
-          text="Créez des rappels pour suivre vos tâches, contacts et échéances liées à votre projet véhicule."
+          title={t('reminders.empty.remindersTitle')}
+          text={t('reminders.empty.remindersText')}
         />
       ) : (
         <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h4 style={{ margin: 0 }}>{view === 'open' ? 'À faire' : 'Faits'}</h4>
+          <h4 style={{ margin: 0 }}>
+            {view === 'open'
+              ? t('reminders.tabs.open')
+              : t('reminders.tabs.done')}
+          </h4>
           {(view === 'open' ? filteredOpen : filteredDone).length === 0 ? (
             <p className="muted" style={{ margin: 0 }}>
-              Aucun résultat pour ces filtres.
+              {t('reminders.empty.noResults')}
             </p>
           ) : (
             <ul
@@ -1205,15 +1241,19 @@ export function RemindersTab({
                       <form
                         className="stack"
                         onSubmit={e => void saveEdit(e, r.id)}
-                        aria-label={`Modifier le rappel « ${r.title} »`}
+                        aria-label={t('reminders.actions.editReminderNamed', {
+                          title: r.title,
+                        })}
                       >
                         <span className="muted" style={{ fontSize: '0.85rem' }}>
-                          Modification · <kbd>Échap</kbd> pour annuler
+                          {t('reminders.edit.editingPrefix')}
+                          <kbd>{t('reminders.edit.escKey')}</kbd>
+                          {t('reminders.edit.editingSuffix')}
                         </span>
                         <div className="row" style={{ flexWrap: 'wrap' }}>
                           <div style={{ flex: '1 1 180px' }}>
                             <label htmlFor={`rem-edit-kind-${r.id}`}>
-                              Type
+                              {t('reminders.field.type')}
                             </label>
                             <select
                               id={`rem-edit-kind-${r.id}`}
@@ -1239,7 +1279,7 @@ export function RemindersTab({
                         </div>
                         <div>
                           <label htmlFor={`rem-edit-title-${r.id}`}>
-                            Titre
+                            {t('reminders.field.title')}
                           </label>
                           <input
                             id={`rem-edit-title-${r.id}`}
@@ -1252,7 +1292,7 @@ export function RemindersTab({
                         </div>
                         <div>
                           <label htmlFor={`rem-edit-body-${r.id}`}>
-                            Détail
+                            {t('reminders.field.detail')}
                           </label>
                           <textarea
                             id={`rem-edit-body-${r.id}`}
@@ -1265,7 +1305,7 @@ export function RemindersTab({
                         <div className="row" style={{ flexWrap: 'wrap' }}>
                           <div style={{ flex: '1 1 160px' }}>
                             <label htmlFor={`rem-edit-due-${r.id}`}>
-                              Échéance
+                              {t('reminders.field.due')}
                             </label>
                             <input
                               id={`rem-edit-due-${r.id}`}
@@ -1276,19 +1316,19 @@ export function RemindersTab({
                           </div>
                           <div style={{ flex: '1 1 220px' }}>
                             <label htmlFor={`rem-edit-place-${r.id}`}>
-                              Lieu
+                              {t('reminders.field.place')}
                             </label>
                             <input
                               id={`rem-edit-place-${r.id}`}
                               value={editPlace}
                               onChange={e => setEditPlace(e.target.value)}
-                              placeholder="ex. Nom du garage, ville…"
+                              placeholder={t('reminders.form.placePlaceholder')}
                               maxLength={200}
                             />
                           </div>
                           <div style={{ flex: '1 1 220px' }}>
                             <label htmlFor={`rem-edit-cand-${r.id}`}>
-                              Lié à un modèle
+                              {t('reminders.form.linkModel')}
                             </label>
                             <select
                               id={`rem-edit-cand-${r.id}`}
@@ -1309,11 +1349,11 @@ export function RemindersTab({
                           style={{ flexWrap: 'wrap' }}
                         >
                           <button type="submit" disabled={savingEdit}>
-                            {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+                            {savingEdit ? t('common.saving') : t('common.save')}
                           </button>
                           <IconActionButton
                             variant="secondary"
-                            label="Annuler la modification"
+                            label={t('reminders.actions.cancelEdit')}
                             onClick={cancelEdit}
                             disabled={savingEdit}
                           >
@@ -1335,10 +1375,13 @@ export function RemindersTab({
                             style={{ gap: '0.35rem', flexWrap: 'wrap' }}
                           >
                             <span className="badge">
-                              {reminderKindLabel[k] ?? 'Rappel'}
+                              {reminderKindLabel[k] ??
+                                t('reminders.kind.fallback')}
                             </span>
                             {overdue ? (
-                              <span className="badge danger">En retard</span>
+                              <span className="badge danger">
+                                {t('reminders.badge.overdueLong')}
+                              </span>
                             ) : null}
                           </div>
                           <strong>{r.title}</strong>
@@ -1352,7 +1395,9 @@ export function RemindersTab({
                               className="muted"
                               style={{ fontSize: '0.9rem' }}
                             >
-                              Lieu : {(r.place ?? '').trim()}
+                              {t('reminders.field.placeDisplay', {
+                                place: (r.place ?? '').trim(),
+                              })}
                             </div>
                           ) : null}
                           {linkedLabel ? (
@@ -1363,7 +1408,9 @@ export function RemindersTab({
                                 marginTop: '0.25rem',
                               }}
                             >
-                              Modèle : {linkedLabel}
+                              {t('reminders.field.modelDisplay', {
+                                model: linkedLabel,
+                              })}
                             </div>
                           ) : null}
                           {r.body ? (
@@ -1375,7 +1422,9 @@ export function RemindersTab({
                             <>
                               <IconActionButton
                                 variant="primary"
-                                label={`Modifier le rappel « ${r.title} »`}
+                                label={t('reminders.actions.editReminderNamed', {
+                                  title: r.title,
+                                })}
                                 onClick={() => startEdit(r)}
                               >
                                 <IconPencil />
@@ -1384,8 +1433,8 @@ export function RemindersTab({
                                 variant="secondary"
                                 label={
                                   r.done
-                                    ? 'Rouvrir ce rappel'
-                                    : 'Marquer comme fait'
+                                    ? t('reminders.actions.reopenReminder')
+                                    : t('reminders.actions.markDone')
                                 }
                                 onClick={() => void toggle(r)}
                               >
@@ -1393,7 +1442,7 @@ export function RemindersTab({
                               </IconActionButton>
                               <IconActionButton
                                 variant="danger"
-                                label="Supprimer ce rappel"
+                                label={t('reminders.actions.deleteReminder')}
                                 onClick={() => void remove(r.id)}
                               >
                                 <IconTrash />
@@ -1427,11 +1476,12 @@ export function RemindersTab({
             aria-describedby="confirm-dialog-desc"
           >
             <h2 id="confirm-dialog-title" className="error-dialog-title">
-              Confirmer la suppression
+              {t('reminders.confirm.title')}
             </h2>
             <p id="confirm-dialog-desc" className="error-dialog-message">
-              Supprimer <strong>{confirming.title}</strong> ? Cette action est
-              définitive.
+              {t('reminders.confirm.deletePrefix')}
+              <strong>{confirming.title}</strong>
+              {t('reminders.confirm.deleteSuffix')}
             </p>
             {confirming.subtitle ? (
               <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -1441,7 +1491,7 @@ export function RemindersTab({
             <div className="error-dialog-actions">
               <IconActionButton
                 variant="secondary"
-                label="Annuler"
+                label={t('common.cancel')}
                 onClick={dismissConfirm}
                 disabled={deleting}
                 ref={cancelBtnRef}
@@ -1450,7 +1500,9 @@ export function RemindersTab({
               </IconActionButton>
               <IconActionButton
                 variant="danger"
-                label={deleting ? 'Suppression en cours' : 'Supprimer'}
+                label={
+                  deleting ? t('reminders.confirm.deleting') : t('common.delete')
+                }
                 onClick={() => void confirmDelete()}
                 disabled={deleting}
               >
@@ -1483,11 +1535,11 @@ export function RemindersTab({
                 className="error-dialog-title"
                 style={{ margin: 0 }}
               >
-                Checklist d'essai
+                {t('reminders.checklist.title')}
               </h2>
               <IconActionButton
                 variant="secondary"
-                label="Fermer"
+                label={t('common.close')}
                 onClick={() => setChecklistVisit(null)}
               >
                 <IconX />

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { explainUnknownError } from '../lib/errorReporting';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useI18n } from '../i18n';
 import {
   IconActionButton,
   IconCheck,
@@ -50,6 +51,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
   const [copied, setCopied] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, !!payload);
+  const { t } = useI18n();
 
   const dismiss = useCallback(() => {
     setPayload(null);
@@ -121,7 +123,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
             aria-describedby="error-dialog-desc"
           >
             <h2 id="error-dialog-title" className="error-dialog-title">
-              Problème
+              {t('dialog.title')}
             </h2>
             <p id="error-dialog-desc" className="error-dialog-message">
               {payload.userMessage}
@@ -132,9 +134,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                 variant="secondary"
                 className="error-dialog-details-toggle"
                 label={
-                  detailsOpen
-                    ? 'Masquer les détails techniques'
-                    : 'Afficher les détails techniques (copie support)'
+                  detailsOpen ? t('dialog.hideDetails') : t('dialog.showDetails')
                 }
                 onClick={() => setDetailsOpen(o => !o)}
                 aria-expanded={detailsOpen}
@@ -148,11 +148,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                   </pre>
                   <IconActionButton
                     variant="primary"
-                    label={
-                      copied
-                        ? 'Détails copiés dans le presse-papiers'
-                        : 'Copier les détails techniques dans le presse-papiers'
-                    }
+                    label={copied ? t('dialog.copied') : t('dialog.copyDetails')}
                     onClick={() => void copyTechnical()}
                   >
                     {copied ? <IconCheck /> : <IconCopy />}
@@ -164,7 +160,7 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
             <div className="error-dialog-actions">
               <IconActionButton
                 variant="secondary"
-                label="Fermer la boîte de dialogue"
+                label={t('dialog.closeDialog')}
                 onClick={dismiss}
               >
                 <IconX />

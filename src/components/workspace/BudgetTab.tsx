@@ -14,6 +14,7 @@ import {
   IconX,
   IconCalculator,
 } from '../ui/IconActionButton';
+import { useI18n } from '../../i18n';
 
 type Cand = {
   id: string;
@@ -82,13 +83,6 @@ type TCOResult = {
   };
 };
 
-const FREQUENCY_LABELS = {
-  one_time: 'Unique',
-  monthly: 'Mensuel',
-  annual: 'Annuel',
-  per_km: 'Par km',
-};
-
 const CATEGORY_COLORS = {
   default: 'var(--badge-bg)',
   primary: 'var(--primary-light)',
@@ -106,8 +100,18 @@ export function BudgetTab({
   workspaceId: string;
   canWrite: boolean;
 }) {
+  const { t } = useI18n();
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const frequencyLabels: Record<
+    'one_time' | 'monthly' | 'annual' | 'per_km',
+    string
+  > = {
+    one_time: t('budget.frequency.oneTime'),
+    monthly: t('budget.frequency.monthly'),
+    annual: t('budget.frequency.annual'),
+    per_km: t('budget.frequency.perKm'),
+  };
   const [candidates, setCandidates] = useState<Cand[]>([]);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [items, setItems] = useState<BudgetItem[]>([]);
@@ -140,7 +144,7 @@ export function BudgetTab({
   const [tcoLoanMonths, setTcoLoanMonths] = useState('');
 
   const load = useCallback(async () => {
-    const [c, cat, i, t] = await Promise.all([
+    const [c, cat, i, tcoRes] = await Promise.all([
       supabase
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id, status, price')
@@ -159,14 +163,14 @@ export function BudgetTab({
       supabase.from('tco_parameters').select('*'),
     ]);
 
-    const firstErr = c.error ?? cat.error ?? i.error ?? t.error;
-    if (firstErr) reportException(firstErr, 'Chargement du budget');
+    const firstErr = c.error ?? cat.error ?? i.error ?? tcoRes.error;
+    if (firstErr) reportException(firstErr, t('budget.errors.loadBudget'));
 
     const candidatesData = (c.data ?? []) as Cand[];
     setCandidates(candidatesData);
     setCategories((cat.data ?? []) as BudgetCategory[]);
     setItems((i.data ?? []) as BudgetItem[]);
-    setTcoParams((t.data ?? []) as TCOParams[]);
+    setTcoParams((tcoRes.data ?? []) as TCOParams[]);
 
     // Calculate TCO for each candidate
     for (const cand of candidatesData) {
@@ -181,7 +185,7 @@ export function BudgetTab({
         console.error('TCO calc error', e);
       }
     }
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -226,7 +230,7 @@ export function BudgetTab({
       sort_order: editItemId ? undefined : items.length,
     });
 
-    if (error) reportException(error, "Enregistrement de l'élément");
+    if (error) reportException(error, t('budget.errors.saveItem'));
     else {
       setItemName('');
       setItemAmount('');
@@ -237,17 +241,17 @@ export function BudgetTab({
       setEditItemId(null);
       setShowAddItem(false);
       await load();
-      showToast('Élément enregistré');
+      showToast(t('budget.toasts.itemSaved'));
     }
   };
 
   const deleteItem = async (id: string) => {
     if (!canWrite) return;
     const { error } = await supabase.from('budget_items').delete().eq('id', id);
-    if (error) reportException(error, "Suppression de l'élément");
+    if (error) reportException(error, t('budget.errors.deleteItem'));
     else {
       await load();
-      showToast('Élément supprimé');
+      showToast(t('budget.toasts.itemDeleted'));
     }
   };
 
@@ -283,10 +287,10 @@ export function BudgetTab({
       loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
     });
 
-    if (error) reportException(error, 'Enregistrement des paramètres TCO');
+    if (error) reportException(error, t('budget.errors.saveTcoParams'));
     else {
       await load();
-      showToast('Paramètres TCO enregistrés');
+      showToast(t('budget.toasts.tcoParamsSaved'));
       setEditingTcoCandidate(null);
     }
   };
@@ -329,8 +333,8 @@ export function BudgetTab({
     return (
       <EmptyState
         icon="requirements"
-        title="Budget et TCO non disponibles"
-        text="Ajoutez des candidats (onglet Modèles) pour commencer à suivre votre budget et calculer les coûts totaux."
+        title={t('budget.emptyState.title')}
+        text={t('budget.emptyState.text')}
       />
     );
   }
@@ -346,7 +350,7 @@ export function BudgetTab({
             className={view === 'items' ? 'active' : ''}
             onClick={() => setView('items')}
           >
-            Éléments de budget
+            {t('budget.tabs.budgetItems')}
           </button>
           <button
             type="button"
@@ -355,7 +359,7 @@ export function BudgetTab({
             className={view === 'tco' ? 'active' : ''}
             onClick={() => setView('tco')}
           >
-            Calculateur TCO
+            {t('budget.tabs.tcoCalculator')}
           </button>
         </div>
       </div>
@@ -367,12 +371,14 @@ export function BudgetTab({
               className="row"
               style={{ justifyContent: 'space-between', alignItems: 'center' }}
             >
-              <h3 style={{ margin: 0 }}>Budget</h3>
+              <h3 style={{ margin: 0 }}>{t('budget.items.heading')}</h3>
               {canWrite && (
                 <IconActionButton
                   variant="secondary"
                   label={
-                    showAddItem ? 'Fermer le formulaire' : 'Ajouter un élément'
+                    showAddItem
+                      ? t('budget.items.closeForm')
+                      : t('budget.items.addItem')
                   }
                   onClick={() => {
                     if (!showAddItem) {
@@ -402,21 +408,23 @@ export function BudgetTab({
                 style={{ boxShadow: 'none', padding: '1rem' }}
               >
                 <h4 style={{ margin: 0 }}>
-                  {editItemId ? 'Modifier' : 'Nouvel'} élément
+                  {editItemId
+                    ? t('budget.form.editItemTitle')
+                    : t('budget.form.newItemTitle')}
                 </h4>
                 <div>
-                  <label>Nom</label>
+                  <label>{t('common.name')}</label>
                   <input
                     value={itemName}
                     onChange={e => setItemName(e.target.value)}
-                    placeholder="ex. Assurance annuelle"
+                    placeholder={t('budget.form.namePlaceholder')}
                     required
                     maxLength={200}
                   />
                 </div>
                 <div className="row" style={{ flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 150px' }}>
-                    <label>Montant (€)</label>
+                    <label>{t('budget.form.amountLabel')}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -427,7 +435,7 @@ export function BudgetTab({
                     />
                   </div>
                   <div style={{ flex: '1 1 150px' }}>
-                    <label>Fréquence</label>
+                    <label>{t('budget.form.frequencyLabel')}</label>
                     <select
                       value={itemFrequency}
                       onChange={e =>
@@ -440,7 +448,7 @@ export function BudgetTab({
                         )
                       }
                     >
-                      {Object.entries(FREQUENCY_LABELS).map(
+                      {Object.entries(frequencyLabels).map(
                         ([value, label]) => (
                           <option key={value} value={value}>
                             {label}
@@ -452,12 +460,12 @@ export function BudgetTab({
                 </div>
                 <div className="row" style={{ flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 200px' }}>
-                    <label>Catégorie (optionnel)</label>
+                    <label>{t('budget.form.categoryLabel')}</label>
                     <select
                       value={itemCategory ?? ''}
                       onChange={e => setItemCategory(e.target.value || null)}
                     >
-                      <option value="">Sans catégorie</option>
+                      <option value="">{t('budget.form.noCategory')}</option>
                       {categories.map(c => (
                         <option key={c.id} value={c.id}>
                           {c.name}
@@ -466,12 +474,12 @@ export function BudgetTab({
                     </select>
                   </div>
                   <div style={{ flex: '1 1 200px' }}>
-                    <label>Lié à un modèle (optionnel)</label>
+                    <label>{t('budget.form.candidateLabel')}</label>
                     <select
                       value={itemCandidate ?? ''}
                       onChange={e => setItemCandidate(e.target.value || null)}
                     >
-                      <option value="">Tous les modèles</option>
+                      <option value="">{t('budget.form.allModels')}</option>
                       {candidates.map(c => (
                         <option key={c.id} value={c.id}>
                           {formatCandidateListLabel(c)}
@@ -481,7 +489,7 @@ export function BudgetTab({
                   </div>
                 </div>
                 <div>
-                  <label>Notes (optionnel)</label>
+                  <label>{t('budget.form.notesLabel')}</label>
                   <textarea
                     value={itemNotes}
                     onChange={e => setItemNotes(e.target.value)}
@@ -491,11 +499,11 @@ export function BudgetTab({
                 </div>
                 <div className="row icon-action-toolbar">
                   <button type="submit">
-                    {editItemId ? 'Modifier' : 'Ajouter'}
+                    {editItemId ? t('common.edit') : t('common.add')}
                   </button>
                   <IconActionButton
                     variant="secondary"
-                    label="Annuler"
+                    label={t('common.cancel')}
                     onClick={() => {
                       setShowAddItem(false);
                       setEditItemId(null);
@@ -509,9 +517,9 @@ export function BudgetTab({
           </div>
 
           <div className="stack">
-            <h4 style={{ margin: 0 }}>Éléments globaux</h4>
+            <h4 style={{ margin: 0 }}>{t('budget.items.globalHeading')}</h4>
             {globalItems.length === 0 ? (
-              <p className="muted">Aucun élément global.</p>
+              <p className="muted">{t('budget.items.noGlobalItems')}</p>
             ) : (
               <ul
                 className="stack"
@@ -557,7 +565,7 @@ export function BudgetTab({
                             style={{ fontSize: '0.9rem' }}
                           >
                             {formatCurrency(item.amount)}{' '}
-                            {FREQUENCY_LABELS[item.frequency]}
+                            {frequencyLabels[item.frequency]}
                           </span>
                           {item.notes && (
                             <span
@@ -572,14 +580,14 @@ export function BudgetTab({
                           <div className="row icon-action-toolbar">
                             <IconActionButton
                               variant="primary"
-                              label="Modifier"
+                              label={t('common.edit')}
                               onClick={() => editItem(item)}
                             >
                               <IconPencil />
                             </IconActionButton>
                             <IconActionButton
                               variant="danger"
-                              label="Supprimer"
+                              label={t('common.delete')}
                               onClick={() => void deleteItem(item.id)}
                             >
                               <IconTrash />
@@ -644,21 +652,21 @@ export function BudgetTab({
                               style={{ fontSize: '0.9rem' }}
                             >
                               {formatCurrency(item.amount)}{' '}
-                              {FREQUENCY_LABELS[item.frequency]}
+                              {frequencyLabels[item.frequency]}
                             </span>
                           </div>
                           {canWrite && (
                             <div className="row icon-action-toolbar">
                               <IconActionButton
                                 variant="primary"
-                                label="Modifier"
+                                label={t('common.edit')}
                                 onClick={() => editItem(item)}
                               >
                                 <IconPencil />
                               </IconActionButton>
                               <IconActionButton
                                 variant="danger"
-                                label="Supprimer"
+                                label={t('common.delete')}
                                 onClick={() => void deleteItem(item.id)}
                               >
                                 <IconTrash />
@@ -677,21 +685,20 @@ export function BudgetTab({
       ) : (
         <div className="stack">
           <div className="card stack" style={{ boxShadow: 'none' }}>
-            <h3 style={{ margin: 0 }}>Coût Total de Possession (TCO)</h3>
+            <h3 style={{ margin: 0 }}>{t('budget.tco.heading')}</h3>
             <p
               className="muted"
               style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
             >
-              Comparez les coûts totaux sur la durée de possession pour chaque
-              modèle.
+              {t('budget.tco.description')}
             </p>
           </div>
 
           {candidates.length === 0 ? (
             <EmptyState
               icon="requirements"
-              title="Aucun modèle"
-              text="Ajoutez des modèles pour calculer leur TCO."
+              title={t('budget.tco.emptyTitle')}
+              text={t('budget.tco.emptyText')}
             />
           ) : (
             <div className="stack">
@@ -723,7 +730,9 @@ export function BudgetTab({
                             className="muted"
                             style={{ fontSize: '0.9rem' }}
                           >
-                            Prix d'achat : {formatPriceEur(cand.price)}
+                            {t('budget.tco.purchasePriceWithValue', {
+                              price: formatPriceEur(cand.price),
+                            })}
                           </span>
                         )}
                       </div>
@@ -737,7 +746,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              TCO total
+                              {t('budget.tco.totalLabel')}
                             </span>
                             <span
                               className="badge primary"
@@ -752,15 +761,22 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.8rem' }}
                             >
-                              sur {tco.parameters.ownership_years} ans /{' '}
-                              {tco.parameters.total_km.toLocaleString('fr-FR')}{' '}
-                              km
+                              {t('budget.tco.overYearsKm', {
+                                years: tco.parameters.ownership_years,
+                                km: tco.parameters.total_km.toLocaleString(
+                                  'fr-FR'
+                                ),
+                              })}
                             </span>
                           </div>
                         )}
                         <IconActionButton
                           variant="secondary"
-                          label={editing ? 'Fermer' : 'Paramètres'}
+                          label={
+                            editing
+                              ? t('common.close')
+                              : t('budget.tco.settingsButton')
+                          }
                           onClick={() =>
                             setEditingTcoCandidate(editing ? null : cand.id)
                           }
@@ -779,13 +795,15 @@ export function BudgetTab({
                           background: 'var(--bg-secondary)',
                         }}
                       >
-                        <h5 style={{ margin: 0 }}>Paramètres TCO</h5>
+                        <h5 style={{ margin: 0 }}>
+                          {t('budget.tco.parametersTitle')}
+                        </h5>
                         <div
                           className="row"
                           style={{ flexWrap: 'wrap', gap: '1rem' }}
                         >
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Km annuel</label>
+                            <label>{t('budget.tco.annualKmLabel')}</label>
                             <input
                               type="number"
                               min="0"
@@ -795,7 +813,7 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Durée (années)</label>
+                            <label>{t('budget.tco.durationLabel')}</label>
                             <input
                               type="number"
                               min="1"
@@ -807,7 +825,7 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Assurance (€/an)</label>
+                            <label>{t('budget.tco.insuranceLabel')}</label>
                             <input
                               type="number"
                               min="0"
@@ -816,22 +834,22 @@ export function BudgetTab({
                               onChange={e =>
                                 setTcoInsuranceCost(e.target.value)
                               }
-                              placeholder="Optionnel"
+                              placeholder={t('common.optional')}
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Prix carburant (€/L)</label>
+                            <label>{t('budget.tco.fuelPriceLabel')}</label>
                             <input
                               type="number"
                               min="0"
                               step="0.001"
                               value={tcoFuelPrice}
                               onChange={e => setTcoFuelPrice(e.target.value)}
-                              placeholder="Optionnel"
+                              placeholder={t('common.optional')}
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Valeur résiduelle (%)</label>
+                            <label>{t('budget.tco.residualValueLabel')}</label>
                             <input
                               type="number"
                               min="0"
@@ -841,11 +859,11 @@ export function BudgetTab({
                               onChange={e =>
                                 setTcoResidualValue(e.target.value)
                               }
-                              placeholder="Optionnel"
+                              placeholder={t('common.optional')}
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>Taux crédit (%)</label>
+                            <label>{t('budget.tco.loanRateLabel')}</label>
                             <input
                               type="number"
                               min="0"
@@ -853,7 +871,7 @@ export function BudgetTab({
                               step="0.01"
                               value={tcoLoanRate}
                               onChange={e => setTcoLoanRate(e.target.value)}
-                              placeholder="Optionnel"
+                              placeholder={t('common.optional')}
                             />
                           </div>
                         </div>
@@ -862,11 +880,11 @@ export function BudgetTab({
                             type="button"
                             onClick={() => void saveTcoParams(cand.id)}
                           >
-                            Calculer le TCO
+                            {t('budget.tco.calculate')}
                           </button>
                           <IconActionButton
                             variant="secondary"
-                            label="Annuler"
+                            label={t('common.cancel')}
                             onClick={() => setEditingTcoCandidate(null)}
                           >
                             <IconX />
@@ -877,7 +895,9 @@ export function BudgetTab({
 
                     {tco && (
                       <div className="stack" style={{ marginTop: '1rem' }}>
-                        <h5 style={{ margin: 0 }}>Détail du TCO</h5>
+                        <h5 style={{ margin: 0 }}>
+                          {t('budget.tco.detailHeading')}
+                        </h5>
                         <div
                           className="row"
                           style={{ flexWrap: 'wrap', gap: '0.5rem' }}
@@ -894,7 +914,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Prix d'achat
+                              {t('budget.tco.purchasePrice')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -914,7 +934,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Coûts uniques
+                              {t('budget.tco.oneTimeCosts')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -934,7 +954,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Coûts annuels
+                              {t('budget.tco.annualCosts')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -945,12 +965,12 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.8rem' }}
                             >
-                              soit{' '}
-                              {formatCurrency(
-                                tco.breakdown.annual_costs /
-                                  tco.parameters.ownership_years
-                              )}{' '}
-                              / an
+                              {t('budget.tco.perYear', {
+                                amount: formatCurrency(
+                                  tco.breakdown.annual_costs /
+                                    tco.parameters.ownership_years
+                                ),
+                              })}
                             </div>
                           </div>
                           <div
@@ -965,7 +985,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Carburant
+                              {t('budget.tco.fuel')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -976,12 +996,12 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.8rem' }}
                             >
-                              soit{' '}
-                              {formatCurrency(
-                                tco.breakdown.fuel_cost /
-                                  tco.parameters.total_km
-                              )}{' '}
-                              / km
+                              {t('budget.tco.perKm', {
+                                amount: formatCurrency(
+                                  tco.breakdown.fuel_cost /
+                                    tco.parameters.total_km
+                                ),
+                              })}
                             </div>
                           </div>
                           <div
@@ -996,7 +1016,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Assurance
+                              {t('budget.tco.insurance')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -1016,7 +1036,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Dépréciation
+                              {t('budget.tco.depreciation')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -1036,7 +1056,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              Coût financement
+                              {t('budget.tco.financingCost')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -1055,7 +1075,7 @@ export function BudgetTab({
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.5rem 0' }}>
-                            Répartition visuelle
+                            {t('budget.tco.visualBreakdown')}
                           </h5>
                           <div
                             style={{

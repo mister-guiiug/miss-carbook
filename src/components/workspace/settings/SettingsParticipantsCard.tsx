@@ -7,6 +7,7 @@ import {
   IconUserMinus,
 } from '../../ui/IconActionButton';
 import type { Member } from './settingsTypes';
+import { useI18n } from '../../../i18n';
 
 export function SettingsParticipantsCard({
   members,
@@ -23,9 +24,10 @@ export function SettingsParticipantsCard({
   onRemoveMember: (uid: string) => void;
   onLeave: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
-      <h3 style={{ margin: 0 }}>Membres</h3>
+      <h3 style={{ margin: 0 }}>{t('settings.participants.title')}</h3>
       <ul className="settings-participants-list">
         {members.map(m => (
           <li key={m.user_id} className="settings-participants-row">
@@ -37,28 +39,36 @@ export function SettingsParticipantsCard({
               <div className="settings-participants-actions row icon-action-toolbar">
                 <IconActionButton
                   variant="secondary"
-                  label={`Attribuer le rôle lecture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  label={t('settings.participants.assignReadRole', {
+                    name: m.display_name ?? m.user_id.slice(0, 8),
+                  })}
                   onClick={() => void onSetRole(m.user_id, 'read')}
                 >
                   <IconEye />
                 </IconActionButton>
                 <IconActionButton
                   variant="secondary"
-                  label={`Attribuer le rôle écriture à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  label={t('settings.participants.assignWriteRole', {
+                    name: m.display_name ?? m.user_id.slice(0, 8),
+                  })}
                   onClick={() => void onSetRole(m.user_id, 'write')}
                 >
                   <IconPencil />
                 </IconActionButton>
                 <IconActionButton
                   variant="secondary"
-                  label={`Attribuer le rôle administrateur à ${m.display_name ?? m.user_id.slice(0, 8)}`}
+                  label={t('settings.participants.assignAdminRole', {
+                    name: m.display_name ?? m.user_id.slice(0, 8),
+                  })}
                   onClick={() => void onSetRole(m.user_id, 'admin')}
                 >
                   <IconShield />
                 </IconActionButton>
                 <IconActionButton
                   variant="danger"
-                  label={`Retirer ${m.display_name ?? m.user_id.slice(0, 8)} du dossier`}
+                  label={t('settings.participants.removeFromWorkspace', {
+                    name: m.display_name ?? m.user_id.slice(0, 8),
+                  })}
                   onClick={() => void onRemoveMember(m.user_id)}
                 >
                   <IconUserMinus />
@@ -70,7 +80,7 @@ export function SettingsParticipantsCard({
       </ul>
       <IconActionButton
         variant="secondary"
-        label="Quitter ce dossier"
+        label={t('settings.participants.leave')}
         onClick={() => void onLeave()}
       >
         <IconLogOut />

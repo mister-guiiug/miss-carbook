@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import type { ManufacturerLink } from '../../../lib/manufacturerLinks';
 import { manufacturerLinksAreEmpty } from '../../../lib/manufacturerLinks';
 import {
@@ -25,6 +26,7 @@ export function ManufacturerLinksEditor({
   onChange: (next: ManufacturerLink[]) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const addRow = () => onChange([...value, { url: '', label: '' }]);
   const updateRow = (i: number, patch: Partial<ManufacturerLink>) => {
     const next = value.map((row, j) => (j === i ? { ...row, ...patch } : row));
@@ -49,13 +51,13 @@ export function ManufacturerLinksEditor({
         }}
       >
         <span id={`${idPrefix}-legend`} style={{ fontWeight: 600 }}>
-          Liens (constructeur, fiche technique…)
+          {t('candidates.links.legend')}
         </span>
         {!disabled ? (
           <IconActionButton
             nativeType="button"
             variant="secondary"
-            label="Ajouter un lien"
+            label={t('candidates.links.addLink')}
             onClick={addRow}
           >
             <IconPlus />
@@ -65,8 +67,7 @@ export function ManufacturerLinksEditor({
 
       {!disabled && value.length === 0 ? (
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Aucun lien pour l’instant. Utilisez « Ajouter un lien » puis
-          enregistrez la fiche.
+          {t('candidates.links.empty')}
         </p>
       ) : null}
 
@@ -84,20 +85,22 @@ export function ManufacturerLinksEditor({
           <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ flex: '1 1 140px' }}>
               <label htmlFor={`${idPrefix}-label-${i}`}>
-                Libellé (optionnel)
+                {t('candidates.links.labelField')}
               </label>
               <input
                 id={`${idPrefix}-label-${i}`}
                 value={row.label}
                 onChange={e => updateRow(i, { label: e.target.value })}
                 disabled={disabled}
-                placeholder="ex. Configurateur, Brochure PDF"
+                placeholder={t('candidates.links.labelPlaceholder')}
                 maxLength={120}
                 autoComplete="off"
               />
             </div>
             <div style={{ flex: '2 1 220px' }}>
-              <label htmlFor={`${idPrefix}-url-${i}`}>URL</label>
+              <label htmlFor={`${idPrefix}-url-${i}`}>
+                {t('candidates.links.url')}
+              </label>
               <input
                 id={`${idPrefix}-url-${i}`}
                 type="url"
@@ -115,7 +118,7 @@ export function ManufacturerLinksEditor({
                 <IconActionButton
                   nativeType="button"
                   variant="danger"
-                  label={`Supprimer le lien ${i + 1}`}
+                  label={t('candidates.links.removeLink', { n: i + 1 })}
                   onClick={() => removeRow(i)}
                 >
                   <IconTrash />
@@ -129,7 +132,7 @@ export function ManufacturerLinksEditor({
       {!manufacturerLinksAreEmpty(value) && clickable.length > 0 ? (
         <div className="stack" style={{ gap: '0.35rem' }}>
           <span className="muted" style={{ fontSize: '0.85rem' }}>
-            Aperçu (cliquable)
+            {t('candidates.links.preview')}
           </span>
           <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.9rem' }}>
             {clickable.map((l, i) => (

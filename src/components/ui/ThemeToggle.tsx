@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../i18n';
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -25,10 +27,8 @@ export function ThemeToggle() {
     <button
       className="theme-toggle"
       onClick={toggle}
-      aria-label={
-        theme === 'light' ? 'Passer au mode sombre' : 'Passer au mode clair'
-      }
-      title={theme === 'light' ? 'Mode sombre' : 'Mode clair'}
+      aria-label={theme === 'light' ? t('ui.toDarkMode') : t('ui.toLightMode')}
+      title={theme === 'light' ? t('ui.darkMode') : t('ui.lightMode')}
     >
       <svg
         className="theme-toggle-icon theme-icon-sun"

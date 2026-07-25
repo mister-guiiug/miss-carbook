@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useI18n } from '../i18n';
 
 const KEY = 'mc-trust-banner-dismissed';
 
 export function TrustBanner() {
+  const { t } = useI18n();
   const [dismissed, setDismissed] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem(KEY) === '1' : false
   );
@@ -12,10 +14,7 @@ export function TrustBanner() {
   return (
     <div className="trust-banner" role="note">
       <p>
-        <strong>Usage responsable :</strong> Miss Carbook sert à organiser un
-        choix de véhicule entre proches ou collègues. N’y stockez pas de données
-        bancaires, de mots de passe ni de contrats signés — ce n’est pas un
-        coffre-fort certifié.
+        <strong>{t('app.trustTitle')}</strong> {t('app.trustBody')}
       </p>
       <button
         type="button"
@@ -25,7 +24,7 @@ export function TrustBanner() {
           setDismissed(true);
         }}
       >
-        Compris
+        {t('app.trustDismiss')}
       </button>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AssistantFullscreenLayout } from './AssistantFullscreenLayout';
 import { shouldOfferAssistantUi } from '../../lib/assistantDevice';
 import { isInviteTipDone, setInviteTipDone } from '../../lib/assistantStorage';
+import { useI18n } from '../../i18n';
 
 const INVITE_KEY = 'mc_invite_welcome';
 
@@ -15,6 +16,7 @@ export function InviteWelcomeOverlay({
   onClose: () => void;
 }) {
   const [step, setStep] = useState(0);
+  const { t } = useI18n();
 
   if (typeof window === 'undefined') return null;
   if (!shouldOfferAssistantUi()) return null;
@@ -48,17 +50,17 @@ export function InviteWelcomeOverlay({
         stepIndex={0}
         stepCount={2}
         titleId="invite-welcome-1"
-        title="Vous rejoignez ce dossier"
+        title={t('assistant.inviteTitle1')}
         showBack={false}
         onPrimary={() => setStep(1)}
-        primaryLabel="Suivant"
+        primaryLabel={t('assistant.next')}
         onPassAll={finish}
         onNeverShowAgain={finish}
       >
         <p className="muted" style={{ marginTop: 0 }}>
-          Vous avez accepté une invitation pour «{' '}
-          <strong>{workspaceName}</strong> ». Les membres voient les mêmes
-          exigences, modèles et messages en temps réel.
+          {t('assistant.inviteBody1a')}
+          <strong>{workspaceName}</strong>
+          {t('assistant.inviteBody1b')}
         </p>
       </AssistantFullscreenLayout>
     );
@@ -69,23 +71,26 @@ export function InviteWelcomeOverlay({
       stepIndex={1}
       stepCount={2}
       titleId="invite-welcome-2"
-      title="Par où commencer ?"
+      title={t('assistant.inviteTitle2')}
       showBack
       onBack={() => setStep(0)}
       onPrimary={finish}
-      primaryLabel="Explorer le dossier"
+      primaryLabel={t('assistant.inviteExplore')}
       onPassAll={finish}
       onNeverShowAgain={finish}
     >
       <ul className="assistant-bullet-list">
         <li>
-          <strong>Exigences</strong> — comprendre les critères du groupe.
+          <strong>{t('assistant.reqLabel')}</strong>
+          {t('assistant.inviteReqText')}
         </li>
         <li>
-          <strong>Modèles</strong> — voir les véhicules envisagés.
+          <strong>{t('assistant.modelsLabel')}</strong>
+          {t('assistant.inviteModelsText')}
         </li>
         <li>
-          <strong>Réglages</strong> — votre rôle, code de partage, invitations.
+          <strong>{t('assistant.settingsLabel')}</strong>
+          {t('assistant.inviteSettingsText')}
         </li>
       </ul>
     </AssistantFullscreenLayout>

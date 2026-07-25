@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+import { useI18n } from '../../../i18n';
 import {
   displayVersionLabel,
   formatCandidateListLabel,
@@ -61,6 +62,7 @@ export function CandidateCard({
     onDrop: (targetId: string, draggedId: string) => void;
   };
 }) {
+  const { t } = useI18n();
   const open = openId === c.id;
   const childCount = variationCount ?? childrenOf(c.id).length;
   const periodLabel = c.event_date?.trim() ? String(c.event_date).trim() : '';
@@ -114,8 +116,10 @@ export function CandidateCard({
               type="button"
               className="reorder-drag-handle"
               draggable
-              aria-label={`Réordonner : ${formatCandidateListLabel(c)}`}
-              title="Glisser pour réordonner"
+              aria-label={t('candidates.card.reorderAria', {
+                label: formatCandidateListLabel(c),
+              })}
+              title={t('candidates.card.reorderTitle')}
               onDragStart={e => {
                 ro.setDraggingId(c.id);
                 e.dataTransfer.setData('text/plain', c.id);
@@ -141,7 +145,9 @@ export function CandidateCard({
                 className="muted"
                 style={{ marginLeft: '0.35rem', fontSize: '0.8rem' }}
               >
-                {hierarchyDetached ? 'complément orphelin' : 'complément'}
+                {hierarchyDetached
+                  ? t('candidates.card.orphanComplement')
+                  : t('candidates.card.complement')}
               </span>
             ) : null}
             {hierarchyDetached ? (
@@ -151,16 +157,16 @@ export function CandidateCard({
                   marginLeft: '0.35rem',
                   background: 'var(--warn-bg, #4a3a00)',
                 }}
-                title="Le parent référencé est absent : rattachez cette fiche à une racine dans le détail."
+                title={t('candidates.card.missingParentTitle')}
               >
-                Parent manquant
+                {t('candidates.card.missingParentBadge')}
               </span>
             ) : null}
             <div className="muted">
               {nested ? (
                 <>
                   <span className="candidate-version-line-prefix">
-                    Complément ·{' '}
+                    {t('candidates.card.complementPrefix')}{' '}
                   </span>
                   {[
                     displayVersionLabel(c),
@@ -183,7 +189,7 @@ export function CandidateCard({
         <div className="candidate-card-toolbar row icon-action-toolbar">
           <IconActionButton
             variant="secondary"
-            label="Dupliquer ce modèle"
+            label={t('candidates.card.duplicate')}
             onClick={() => void onDuplicate(c)}
           >
             <IconDuplicate />
@@ -191,7 +197,9 @@ export function CandidateCard({
           {canWrite && onRequestDelete ? (
             <IconActionButton
               variant="danger"
-              label={`Supprimer la fiche « ${formatCandidateListLabel(c)} »`}
+              label={t('candidates.card.deleteAria', {
+                label: formatCandidateListLabel(c),
+              })}
               onClick={() => onRequestDelete(c)}
             >
               <IconTrash />
@@ -199,7 +207,11 @@ export function CandidateCard({
           ) : null}
           <IconActionButton
             variant="secondary"
-            label={open ? 'Fermer le détail' : 'Afficher le détail'}
+            label={
+              open
+                ? t('candidates.card.closeDetail')
+                : t('candidates.card.showDetail')
+            }
             onClick={() => onToggleDetail(c.id)}
           >
             {open ? <IconChevronUp /> : <IconChevronDown />}

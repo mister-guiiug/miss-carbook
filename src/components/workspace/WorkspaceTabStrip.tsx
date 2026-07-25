@@ -5,6 +5,7 @@ import {
   type TabId,
 } from './workspaceTabs';
 import { WorkspaceTabIcon } from './WorkspaceTabIcons';
+import { useI18n } from '../../i18n';
 
 const TAB_IDS = WORKSPACE_TABS_STRIP.map(t => t.id);
 
@@ -17,6 +18,7 @@ export function WorkspaceTabStrip({
   setTab: (id: TabId) => void;
   tabListLabelId: string;
 }) {
+  const { t } = useI18n();
   const move = useCallback(
     (from: TabId, delta: number) => {
       const i = TAB_IDS.indexOf(from);
@@ -69,7 +71,7 @@ export function WorkspaceTabStrip({
     <>
       <div className="workspace-tabs-mobile">
         <label htmlFor="workspace-tab-select" className="sr-only">
-          Section du dossier
+          {t('workspace.sectionSelectLabel')}
         </label>
         <select
           id="workspace-tab-select"
@@ -78,21 +80,21 @@ export function WorkspaceTabStrip({
           aria-labelledby={tabListLabelId}
           onChange={e => setTab(e.target.value as TabId)}
         >
-          {WORKSPACE_TABS_STRIP.map(t => (
-            <option key={t.id} value={t.id}>
-              {t.label}
+          {WORKSPACE_TABS_STRIP.map(tabDef => (
+            <option key={tabDef.id} value={tabDef.id}>
+              {t(`workspace.tab_${tabDef.id}`)}
             </option>
           ))}
           {WORKSPACE_TABS.filter(
-            t => t.id === 'settings' || t.id === 'activity'
+            tabDef => tabDef.id === 'settings' || tabDef.id === 'activity'
           )
             .slice()
             .sort((a, b) =>
               a.id === 'settings' ? -1 : b.id === 'settings' ? 1 : 0
             )
-            .map(t => (
-              <option key={t.id} value={t.id}>
-                {t.label}
+            .map(tabDef => (
+              <option key={tabDef.id} value={tabDef.id}>
+                {t(`workspace.tab_${tabDef.id}`)}
               </option>
             ))}
         </select>
@@ -104,24 +106,28 @@ export function WorkspaceTabStrip({
         aria-labelledby={tabListLabelId}
         onKeyDown={onKeyDown}
       >
-        {WORKSPACE_TABS_STRIP.map(t => (
-          <li key={t.id} role="presentation">
+        {WORKSPACE_TABS_STRIP.map(tabDef => (
+          <li key={tabDef.id} role="presentation">
             <button
               type="button"
               role="tab"
-              id={`workspace-tab-btn-${t.id}`}
-              aria-selected={tab === t.id}
+              id={`workspace-tab-btn-${tabDef.id}`}
+              aria-selected={tab === tabDef.id}
               aria-controls="workspace-main-panel"
-              tabIndex={tab === t.id ? 0 : -1}
+              tabIndex={tab === tabDef.id ? 0 : -1}
               className={
-                tab === t.id ? 'active workspace-tab-btn' : 'workspace-tab-btn'
+                tab === tabDef.id
+                  ? 'active workspace-tab-btn'
+                  : 'workspace-tab-btn'
               }
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tabDef.id)}
             >
               <span className="workspace-tab-btn-inner" aria-hidden="true">
-                <WorkspaceTabIcon tabId={t.id} />
+                <WorkspaceTabIcon tabId={tabDef.id} />
               </span>
-              <span className="workspace-tab-btn-label">{t.label}</span>
+              <span className="workspace-tab-btn-label">
+                {t(`workspace.tab_${tabDef.id}`)}
+              </span>
             </button>
           </li>
         ))}

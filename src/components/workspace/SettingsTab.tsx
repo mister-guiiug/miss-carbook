@@ -22,6 +22,7 @@ import type {
   Member,
   Ws,
 } from './settings/settingsTypes';
+import { useI18n } from '../../i18n';
 
 type SettingsPanel = 'general' | 'access' | 'data';
 
@@ -38,6 +39,7 @@ export function SettingsTab({
   userId: string;
   onWorkspaceRefresh: () => void;
 }) {
+  const { t } = useI18n();
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
   const location = useLocation();
@@ -110,7 +112,7 @@ export function SettingsTab({
         .select('user_id, role')
         .eq('workspace_id', workspace.id);
       if (error) {
-        reportException(error, 'Chargement des membres du dossier');
+        reportException(error, t('settings.error.loadMembers'));
         return;
       }
       const list = (mems ?? []) as Member[];
@@ -207,7 +209,7 @@ export function SettingsTab({
       specs: vehicle.specs,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('settings.error.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setBusy(false);
       return;
@@ -245,9 +247,9 @@ export function SettingsTab({
         {}
       );
       onWorkspaceRefresh();
-      showToast('Véhicule actuel enregistré');
+      showToast(t('settings.toast.vehicleSaved'));
     } catch (e: unknown) {
-      reportException(e, 'Sauvegarde du véhicule actuel');
+      reportException(e, t('settings.error.saveVehicle'));
     } finally {
       setBusy(false);
     }
@@ -260,7 +262,7 @@ export function SettingsTab({
       .update({ role })
       .eq('workspace_id', workspace.id)
       .eq('user_id', uid);
-    if (error) reportException(error, 'Changement de rôle d’un membre');
+    if (error) reportException(error, t('settings.error.roleChange'));
     else {
       setMembers(m => m.map(x => (x.user_id === uid ? { ...x, role } : x)));
       await logActivity(
@@ -270,7 +272,7 @@ export function SettingsTab({
         uid,
         { role }
       );
-      showToast('Rôle mis à jour');
+      showToast(t('settings.toast.roleUpdated'));
     }
   };
 
@@ -281,7 +283,7 @@ export function SettingsTab({
       p_role: inviteRole,
       p_ttl_days: inviteDays,
     });
-    if (error) reportException(error, 'Création d’une invitation au dossier');
+    if (error) reportException(error, t('settings.error.createInvite'));
     else {
       setLastToken(data as string);
       await loadInvites();
@@ -291,9 +293,9 @@ export function SettingsTab({
       );
       try {
         await navigator.clipboard.writeText(link);
-        showToast('Invitation créée — lien copié');
+        showToast(t('settings.toast.inviteCreatedCopied'));
       } catch {
-        showToast('Invitation créée — copiez le lien affiché ci-dessous');
+        showToast(t('settings.toast.inviteCreatedManual'));
       }
     }
   };
@@ -302,26 +304,26 @@ export function SettingsTab({
     if (!isAdmin) return;
     await supabase.from('workspace_invites').delete().eq('id', id);
     await loadInvites();
-    showToast('Invitation révoquée');
+    showToast(t('settings.toast.inviteRevoked'));
   };
 
   const leave = async () => {
-    if (!confirm('Quitter ce dossier ?')) return;
+    if (!confirm(t('settings.confirm.leave'))) return;
     const { error } = await supabase.rpc('leave_workspace', {
       p_workspace_id: workspace.id,
     });
-    if (error) reportException(error, 'Quitter le dossier');
+    if (error) reportException(error, t('settings.error.leave'));
     else
       window.location.assign(`${origin}${base}`.replace(/([^:]\/)\/+/g, '$1'));
   };
 
   const removeMember = async (uid: string) => {
-    if (!isAdmin || !confirm('Retirer ce participant ?')) return;
+    if (!isAdmin || !confirm(t('settings.confirm.removeParticipant'))) return;
     const { error } = await supabase.rpc('remove_workspace_member', {
       p_workspace_id: workspace.id,
       p_user_id: uid,
     });
-    if (error) reportException(error, 'Retrait d’un membre du dossier');
+    if (error) reportException(error, t('settings.error.removeMember'));
     else {
       setMembers(m => m.filter(x => x.user_id !== uid));
       await logActivity(
@@ -331,7 +333,7 @@ export function SettingsTab({
         uid,
         {}
       );
-      showToast('Membre retiré');
+      showToast(t('settings.toast.memberRemoved'));
     }
   };
 
@@ -345,7 +347,7 @@ export function SettingsTab({
       p_notes: decisionNotes,
     });
     if (error)
-      reportException(error, 'Enregistrement de la décision (modèle retenu)');
+      reportException(error, t('settings.error.saveDecision'));
     else {
       await logActivity(
         workspace.id,
@@ -355,17 +357,17 @@ export function SettingsTab({
         {}
       );
       onWorkspaceRefresh();
-      showToast('Décision enregistrée');
+      showToast(t('settings.toast.decisionSaved'));
     }
   };
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      showToast('Lien copié');
+      showToast(t('settings.toast.linkCopied'));
     } catch {
       reportMessage(
-        'Copie impossible — sélectionnez le lien manuellement.',
+        t('settings.error.copyFailedTitle'),
         'navigator.clipboard.writeText a échoué (permissions navigateur ou contexte non sécurisé)'
       );
     }
@@ -379,7 +381,8 @@ export function SettingsTab({
       description: wsDesc,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Données invalides';
+      const msg =
+        parsed.error.issues[0]?.message ?? t('settings.error.invalidData');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -403,21 +406,18 @@ export function SettingsTab({
         }
       );
       onWorkspaceRefresh();
-      showToast('Nom et description enregistrés');
+      showToast(t('settings.toast.metaSaved'));
     } catch (err: unknown) {
-      reportException(
-        err,
-        'Mise à jour du nom ou de la description du dossier'
-      );
+      reportException(err, t('settings.error.saveMeta'));
     } finally {
       setBusyWorkspaceMeta(false);
     }
   };
 
   const panels: { id: SettingsPanel; label: string }[] = [
-    { id: 'general', label: 'Général' },
-    { id: 'access', label: 'Partage' },
-    { id: 'data', label: 'Données' },
+    { id: 'general', label: t('settings.page.tabGeneral') },
+    { id: 'access', label: t('settings.page.tabAccess') },
+    { id: 'data', label: t('settings.page.tabData') },
   ];
 
   return (
@@ -432,12 +432,12 @@ export function SettingsTab({
           className="workspace-settings-page-title"
           id="workspace-settings-main-heading"
         >
-          Réglages du dossier
+          {t('settings.page.title')}
         </h2>
         <div
           className="workspace-settings-tablist"
           role="tablist"
-          aria-label="Sections des réglages"
+          aria-label={t('settings.page.sectionsAria')}
         >
           {panels.map((p, index) => (
             <button

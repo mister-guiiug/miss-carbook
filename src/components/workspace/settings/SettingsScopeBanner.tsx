@@ -1,22 +1,25 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../../i18n';
 
 export function SettingsScopeBanner({
   workspaceName,
 }: {
   workspaceName: string;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="settings-scope-banner stack"
       role="region"
-      aria-label="Périmètre des réglages"
+      aria-label={t('settings.scope.aria')}
     >
       <p className="settings-scope-banner-text" style={{ margin: 0 }}>
         <span className="settings-scope-badge settings-scope-badge--workspace">
-          Ce dossier
+          {t('settings.scope.badge')}
         </span>{' '}
-        <strong>« {workspaceName} »</strong> — compte et app :{' '}
-        <Link to="/parametres">paramètres généraux</Link>.
+        <strong>{t('settings.scope.nameQuoted', { name: workspaceName })}</strong>
+        {t('settings.scope.middle')}
+        <Link to="/parametres">{t('settings.scope.link')}</Link>.
       </p>
     </div>
   );

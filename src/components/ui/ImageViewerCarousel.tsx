@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { IconActionButton, IconChevronRight, IconX } from './IconActionButton';
+import { useI18n } from '../../i18n';
 
 export type ImageViewerItem = { id: string; url: string };
 
@@ -18,6 +19,7 @@ export function ImageViewerCarousel({
   onClose: () => void;
   onNavigate: (i: number) => void;
 }) {
+  const { t } = useI18n();
   const open = index !== null && items.length > 0;
   const safeIndex = open ? Math.min(Math.max(0, index!), items.length - 1) : 0;
 
@@ -67,7 +69,10 @@ export function ImageViewerCarousel({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Visionneuse photo ${safeIndex + 1} sur ${items.length}`}
+        aria-label={t('ui.viewerAria', {
+          index: safeIndex + 1,
+          total: items.length,
+        })}
         onClick={e => e.stopPropagation()}
         style={{
           position: 'relative',
@@ -80,7 +85,7 @@ export function ImageViewerCarousel({
       >
         <IconActionButton
           variant="secondary"
-          label="Fermer la visionneuse"
+          label={t('ui.closeViewer')}
           onClick={onClose}
           style={{
             position: 'absolute',
@@ -95,7 +100,7 @@ export function ImageViewerCarousel({
         {several ? (
           <IconActionButton
             variant="secondary"
-            label="Photo précédente"
+            label={t('ui.prevPhoto')}
             onClick={e => {
               e.stopPropagation();
               goPrev();
@@ -117,7 +122,7 @@ export function ImageViewerCarousel({
         {several ? (
           <IconActionButton
             variant="secondary"
-            label="Photo suivante"
+            label={t('ui.nextPhoto')}
             onClick={e => {
               e.stopPropagation();
               goNext();
@@ -136,7 +141,7 @@ export function ImageViewerCarousel({
 
         <img
           src={item.url}
-          alt={`Photo ${safeIndex + 1} sur ${items.length}`}
+          alt={t('ui.photoAlt', { index: safeIndex + 1, total: items.length })}
           style={{
             maxWidth: 'min(92vw, 1200px)',
             maxHeight: 'min(88vh, 860px)',
@@ -161,14 +166,12 @@ export function ImageViewerCarousel({
             textAlign: 'center',
           }}
         >
-          {several ? (
-            <>
-              {safeIndex + 1} / {items.length} — flèches du clavier pour défiler
-              · Échap pour fermer
-            </>
-          ) : (
-            <>Échap pour fermer</>
-          )}
+          {several
+            ? t('ui.viewerHintMany', {
+                index: safeIndex + 1,
+                total: items.length,
+              })
+            : t('ui.viewerHintOne')}
         </div>
       </div>
     </div>

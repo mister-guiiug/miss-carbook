@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { IconActionButton, IconArchiveDown } from '../ui/IconActionButton';
 import { fetchWorkspaceExportBundle } from '../../lib/workspaceExportBundle';
+import { useI18n } from '../../i18n';
 
 const EXPORT_VERSION = '2';
 
@@ -11,6 +12,7 @@ export function ExportWorkspaceButton({
   workspaceId: string;
 }) {
   const { reportException } = useErrorDialog();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
@@ -79,7 +81,7 @@ export function ExportWorkspaceButton({
       a.click();
       URL.revokeObjectURL(url);
     } catch (e: unknown) {
-      reportException(e, 'Export ZIP du dossier');
+      reportException(e, t('workspace.ctxExportZip'));
     } finally {
       setBusy(false);
     }
@@ -89,21 +91,14 @@ export function ExportWorkspaceButton({
     <div className="stack">
       <IconActionButton
         variant="secondary"
-        label={
-          busy
-            ? 'Export du dossier en cours…'
-            : 'Exporter le dossier (archive ZIP JSON)'
-        }
+        label={busy ? t('workspace.exportBusy') : t('workspace.exportLabel')}
         disabled={busy}
         onClick={() => void run()}
       >
         <IconArchiveDown />
       </IconActionButton>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-        Archive locale : données du dossier (exigences, modèles, matrice, votes,
-        visites, rappels, invitations, membres, presets, véhicule actuel,
-        commentaires, avis, métadonnées des pièces jointes). Pas de photos
-        binaires.
+        {t('workspace.exportDesc')}
       </p>
     </div>
   );
