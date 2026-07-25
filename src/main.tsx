@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ErrorBoundary } from '@mister-guiiug/dev-wpa-config/react';
 import {
   installErrorReporter,
+  initSentry,
   recordError,
 } from '@mister-guiiug/dev-wpa-config/react/observability';
 import App from './App';
@@ -13,6 +14,11 @@ import './index.css';
 
 // Observabilité partagée : ring-buffer localStorage + listeners globaux.
 installErrorReporter();
+void initSentry({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  loader: () => import('@sentry/react'),
+});
 
 // Initialiser le thème
 initTheme();
