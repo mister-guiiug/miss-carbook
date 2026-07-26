@@ -134,7 +134,9 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                 variant="secondary"
                 className="error-dialog-details-toggle"
                 label={
-                  detailsOpen ? t('dialog.hideDetails') : t('dialog.showDetails')
+                  detailsOpen
+                    ? t('dialog.hideDetails')
+                    : t('dialog.showDetails')
                 }
                 onClick={() => setDetailsOpen(o => !o)}
                 aria-expanded={detailsOpen}
@@ -148,7 +150,9 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                   </pre>
                   <IconActionButton
                     variant="primary"
-                    label={copied ? t('dialog.copied') : t('dialog.copyDetails')}
+                    label={
+                      copied ? t('dialog.copied') : t('dialog.copyDetails')
+                    }
                     onClick={() => void copyTechnical()}
                   >
                     {copied ? <IconCheck /> : <IconCopy />}

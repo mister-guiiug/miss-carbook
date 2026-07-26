@@ -142,8 +142,7 @@ export const compareEn = {
     ctxLoad: 'Loading data for decision assistant',
     loading: 'Loading decision assistant...',
     emptyTitle: 'No models to analyse',
-    emptyText:
-      'Add candidates and requirements to use the decision assistant.',
+    emptyText: 'Add candidates and requirements to use the decision assistant.',
     intro:
       'The decision assistant analyses all candidates across several criteria and helps you identify the best trade-offs.',
     scenarioTitle: 'Analysis scenario',

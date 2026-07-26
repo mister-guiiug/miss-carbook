@@ -122,7 +122,8 @@ export const budgetEn = {
   },
   tco: {
     heading: 'Total Cost of Ownership (TCO)',
-    description: 'Compare total costs over the ownership period for each model.',
+    description:
+      'Compare total costs over the ownership period for each model.',
     emptyTitle: 'No models',
     emptyText: 'Add models to calculate their TCO.',
     purchasePriceWithValue: 'Purchase price: {price}',

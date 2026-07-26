@@ -72,8 +72,7 @@ export const workspaceFr = {
   onboardWelcomeTitle: 'Bienvenue dans « {name} »',
   onboardStep1a:
     'Ce dossier est partagé en temps réel. Invitez des participants depuis l’onglet ',
-  onboardStep1b:
-    ' (code, lien ou invitation avec rôle et date d’expiration).',
+  onboardStep1b: ' (code, lien ou invitation avec rôle et date d’expiration).',
   onboardStep2Title: 'Exigences, évaluations & modèles',
   onboardStep2a: 'Définissez vos critères dans ',
   onboardStep2b: ', ajoutez des véhicules dans ',
@@ -217,8 +216,7 @@ export const workspaceEn = {
   onboardWelcomeTitle: 'Welcome to “{name}”',
   onboardStep1a:
     'This workspace is shared in real time. Invite participants from the ',
-  onboardStep1b:
-    ' tab (code, link or invitation with role and expiry date).',
+  onboardStep1b: ' tab (code, link or invitation with role and expiry date).',
   onboardStep2Title: 'Requirements, evaluations & models',
   onboardStep2a: 'Define your criteria in ',
   onboardStep2b: ', add vehicles in ',

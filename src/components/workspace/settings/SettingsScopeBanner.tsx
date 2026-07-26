@@ -17,7 +17,9 @@ export function SettingsScopeBanner({
         <span className="settings-scope-badge settings-scope-badge--workspace">
           {t('settings.scope.badge')}
         </span>{' '}
-        <strong>{t('settings.scope.nameQuoted', { name: workspaceName })}</strong>
+        <strong>
+          {t('settings.scope.nameQuoted', { name: workspaceName })}
+        </strong>
         {t('settings.scope.middle')}
         <Link to="/parametres">{t('settings.scope.link')}</Link>.
       </p>

@@ -24,7 +24,6 @@ export const uiEn = {
   nextPhoto: 'Next photo',
   viewerAria: 'Photo viewer {index} of {total}',
   photoAlt: 'Photo {index} of {total}',
-  viewerHintMany:
-    '{index} / {total} — arrow keys to scroll · Esc to close',
+  viewerHintMany: '{index} / {total} — arrow keys to scroll · Esc to close',
   viewerHintOne: 'Esc to close',
 } as const;

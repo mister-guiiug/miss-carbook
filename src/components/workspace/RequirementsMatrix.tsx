@@ -373,9 +373,7 @@ export function RequirementsMatrix({
                   <option value="to_see">
                     {t('requirements.statusToSee')}
                   </option>
-                  <option value="tried">
-                    {t('requirements.statusTried')}
-                  </option>
+                  <option value="tried">{t('requirements.statusTried')}</option>
                   <option value="shortlist">
                     {t('requirements.statusShortlist')}
                   </option>

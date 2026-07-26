@@ -292,7 +292,9 @@ export function CandidatesAddSection({
                   />
                 </div>
                 <div style={{ flex: '1 1 160px' }}>
-                  <label htmlFor="cand-price">{t('candidates.add.price')}</label>
+                  <label htmlFor="cand-price">
+                    {t('candidates.add.price')}
+                  </label>
                   <input
                     id="cand-price"
                     type="text"

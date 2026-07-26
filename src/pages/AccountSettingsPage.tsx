@@ -78,7 +78,8 @@ export function AccountSettingsPage() {
     if (!user) return;
     const parsed = displayNameSchema.safeParse(pseudoDraft);
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? t('account.errPseudoInvalid');
+      const msg =
+        parsed.error.issues[0]?.message ?? t('account.errPseudoInvalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -105,7 +106,8 @@ export function AccountSettingsPage() {
     setEmailFeedback(null);
     const parsed = changeEmailSchema.safeParse({ email: emailDraft });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? t('account.errEmailInvalid');
+      const msg =
+        parsed.error.issues[0]?.message ?? t('account.errEmailInvalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -304,7 +306,9 @@ export function AccountSettingsPage() {
                 </p>
               ) : null}
               <button type="submit" disabled={emailBusy || emailUnchanged}>
-                {emailBusy ? t('common.sending') : t('account.requestEmailChange')}
+                {emailBusy
+                  ? t('common.sending')
+                  : t('account.requestEmailChange')}
               </button>
             </form>
           </div>

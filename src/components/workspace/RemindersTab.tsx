@@ -362,8 +362,7 @@ export function RemindersTab({
       .from('reminders')
       .update({ done: !r.done })
       .eq('id', r.id);
-    if (error)
-      reportException(error, t('reminders.err.toggleReminder'));
+    if (error) reportException(error, t('reminders.err.toggleReminder'));
     else {
       await load();
       showToast(
@@ -875,9 +874,7 @@ export function RemindersTab({
             </div>
           </div>
           <div className="row icon-action-toolbar" style={{ flexWrap: 'wrap' }}>
-            <button type="submit">
-              {t('reminders.form.submitReminder')}
-            </button>
+            <button type="submit">{t('reminders.form.submitReminder')}</button>
             <IconActionButton
               variant="secondary"
               label={t('reminders.actions.closeForm')}
@@ -1088,9 +1085,12 @@ export function RemindersTab({
                               <>
                                 <IconActionButton
                                   variant="primary"
-                                  label={t('reminders.actions.editReminderNamed', {
-                                    title: r.title,
-                                  })}
+                                  label={t(
+                                    'reminders.actions.editReminderNamed',
+                                    {
+                                      title: r.title,
+                                    }
+                                  )}
                                   onClick={() => {
                                     setView(r.done ? 'done' : 'open');
                                     startEdit(r);
@@ -1422,9 +1422,12 @@ export function RemindersTab({
                             <>
                               <IconActionButton
                                 variant="primary"
-                                label={t('reminders.actions.editReminderNamed', {
-                                  title: r.title,
-                                })}
+                                label={t(
+                                  'reminders.actions.editReminderNamed',
+                                  {
+                                    title: r.title,
+                                  }
+                                )}
                                 onClick={() => startEdit(r)}
                               >
                                 <IconPencil />
@@ -1501,7 +1504,9 @@ export function RemindersTab({
               <IconActionButton
                 variant="danger"
                 label={
-                  deleting ? t('reminders.confirm.deleting') : t('common.delete')
+                  deleting
+                    ? t('reminders.confirm.deleting')
+                    : t('common.delete')
                 }
                 onClick={() => void confirmDelete()}
                 disabled={deleting}

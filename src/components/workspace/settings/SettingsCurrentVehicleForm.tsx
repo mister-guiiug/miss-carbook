@@ -246,9 +246,7 @@ export function SettingsCurrentVehicleForm({
             />
           </div>
           <div style={{ flex: '1 1 180px' }}>
-            <label htmlFor="cv-spec-color">
-              {t('settings.vehicle.color')}
-            </label>
+            <label htmlFor="cv-spec-color">{t('settings.vehicle.color')}</label>
             <input
               id="cv-spec-color"
               value={

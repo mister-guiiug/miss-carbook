@@ -224,17 +224,13 @@ export function TopBar() {
             className={`app-topbar-right${showWorkspaceToolbar ? ' app-topbar-right--workspace' : ' app-topbar-right--minimal'}`}
             role={showWorkspaceToolbar ? 'toolbar' : undefined}
             aria-label={
-              showWorkspaceToolbar
-                ? t('nav.workspaceActionsAria')
-                : undefined
+              showWorkspaceToolbar ? t('nav.workspaceActionsAria') : undefined
             }
           >
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
               title={online ? t('common.online') : t('common.offline')}
-              aria-label={
-                online ? t('nav.networkActive') : t('common.offline')
-              }
+              aria-label={online ? t('nav.networkActive') : t('common.offline')}
             />
             {showWorkspaceToolbar ? (
               <WorkspaceHeaderToolbar
@@ -249,9 +245,7 @@ export function TopBar() {
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
               title={online ? t('common.online') : t('common.offline')}
-              aria-label={
-                online ? t('nav.networkActive') : t('common.offline')
-              }
+              aria-label={online ? t('nav.networkActive') : t('common.offline')}
             />
             <div ref={accountMenuRef} className="app-topbar-account-menu">
               <button

@@ -223,7 +223,8 @@ export function CandidateDetail({
       event_date: meta.event_date?.trim() || null,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? t('candidateDetail.invalid');
+      const msg =
+        parsed.error.issues[0]?.message ?? t('candidateDetail.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -237,10 +238,7 @@ export function CandidateDetail({
       return;
     }
     if (parentId && !rootCandidates.some(r => r.id === parentId)) {
-      reportMessage(
-        t('candidateDetail.parentNotFound'),
-        'parent not in roots'
-      );
+      reportMessage(t('candidateDetail.parentNotFound'), 'parent not in roots');
       return;
     }
 
@@ -487,8 +485,7 @@ export function CandidateDetail({
     const { error } = await supabase
       .from('candidate_specs')
       .upsert({ candidate_id: candidate.id, specs: parsed.data as Json });
-    if (error)
-      reportException(error, t('candidateDetail.errSaveSpecs'));
+    if (error) reportException(error, t('candidateDetail.errSaveSpecs'));
     else {
       await logActivity(
         workspaceId,
@@ -754,7 +751,9 @@ export function CandidateDetail({
                   });
                 }}
               >
-                <option value="">{t('candidateDetail.rootNoParentOption')}</option>
+                <option value="">
+                  {t('candidateDetail.rootNoParentOption')}
+                </option>
                 {rootCandidates.map(p => (
                   <option key={p.id} value={p.id}>
                     {formatCandidateListLabel(p)}
@@ -1331,9 +1330,7 @@ export function CandidateDetail({
                 />
               </div>
               {canWrite ? (
-                <button type="submit">
-                  {t('candidateDetail.saveSpecs')}
-                </button>
+                <button type="submit">{t('candidateDetail.saveSpecs')}</button>
               ) : null}
             </div>
           </details>

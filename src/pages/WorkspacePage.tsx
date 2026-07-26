@@ -152,8 +152,7 @@ export function WorkspacePage() {
     setWorkspaceChrome,
   ]);
 
-  if (!workspaceId)
-    return <p className="shell">{t('workspace.notFound')}</p>;
+  if (!workspaceId) return <p className="shell">{t('workspace.notFound')}</p>;
 
   if (!user) {
     return (

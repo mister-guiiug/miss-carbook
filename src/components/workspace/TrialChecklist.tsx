@@ -363,7 +363,9 @@ export function TrialChecklist({
               className="card stack"
               style={{ boxShadow: 'none', padding: '1rem' }}
             >
-              <h4 style={{ margin: 0 }}>{tr('checklist.newTemplateHeading')}</h4>
+              <h4 style={{ margin: 0 }}>
+                {tr('checklist.newTemplateHeading')}
+              </h4>
               <div>
                 <label>{tr('checklist.templateNameLabel')}</label>
                 <input

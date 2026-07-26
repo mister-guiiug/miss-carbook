@@ -296,9 +296,9 @@ export function PhotoComparisonGrid({
             className="muted"
             style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
           >
-            {t('compare.photo.hintZoomWheel')}{' '}
-            <kbd>+</kbd>/<kbd>-</kbd> {t('compare.photo.hintForZoom')}{' '}
-            <kbd>0</kbd> {t('compare.photo.hintToReset')}
+            {t('compare.photo.hintZoomWheel')} <kbd>+</kbd>/<kbd>-</kbd>{' '}
+            {t('compare.photo.hintForZoom')} <kbd>0</kbd>{' '}
+            {t('compare.photo.hintToReset')}
           </p>
         </div>
 

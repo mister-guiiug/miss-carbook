@@ -431,7 +431,8 @@ export function WorkspaceTemplates({
                       <span className="muted" style={{ fontSize: '0.85rem' }}>
                         {tr('templates.by', {
                           name:
-                            createdBy?.display_name || tr('templates.youAuthor'),
+                            createdBy?.display_name ||
+                            tr('templates.youAuthor'),
                         })}
                       </span>
                       {t.is_public && (
@@ -481,8 +482,8 @@ export function WorkspaceTemplates({
                       >
                         <strong>{t.name}</strong>
                         <span className="badge">
-                        {tr('templates.usedCount', { count: t.usage_count })}
-                      </span>
+                          {tr('templates.usedCount', { count: t.usage_count })}
+                        </span>
                       </div>
                       {t.description && (
                         <p

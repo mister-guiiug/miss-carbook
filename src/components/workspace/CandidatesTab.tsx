@@ -264,8 +264,7 @@ export function CandidatesTab({
         <strong>{t('candidates.tab.helpComplementWord')}</strong>
         {t('candidates.tab.helpCarries')}
         <strong>{t('candidates.tab.helpMultipleWord')}</strong>
-        {t('candidates.tab.helpDetailsSuffix')}{' '}
-        {CANDIDATE_HIERARCHY_HELP_FR}
+        {t('candidates.tab.helpDetailsSuffix')} {CANDIDATE_HIERARCHY_HELP_FR}
         {canWrite ? (
           <>
             {' '}

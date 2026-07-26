@@ -448,13 +448,11 @@ export function BudgetTab({
                         )
                       }
                     >
-                      {Object.entries(frequencyLabels).map(
-                        ([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        )
-                      )}
+                      {Object.entries(frequencyLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

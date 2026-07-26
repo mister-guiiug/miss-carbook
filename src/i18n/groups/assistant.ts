@@ -72,15 +72,13 @@ export const assistantEn = {
   whatCompareText: ' — a summary and a record of choices.',
   accountBody1: 'Your ',
   accountPseudo: 'nickname',
-  accountBody2:
-    ' is visible to the other members of a workspace. Link an ',
+  accountBody2: ' is visible to the other members of a workspace. Link an ',
   accountEmail: 'email',
   accountBody3:
     ' from home or settings to receive a link and sign back in on another device.',
   createBody1: 'On the ',
   createHome: 'home page',
-  createBody2:
-    ', create a workspace (vehicle project) or join one with a ',
+  createBody2: ', create a workspace (vehicle project) or join one with a ',
   createShareCode: 'share code',
   createBody3: '. You can invite other people afterwards.',
   doneBody:

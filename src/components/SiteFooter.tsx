@@ -12,7 +12,10 @@ export function SiteFooter() {
           <span className="site-footer-title">{t('common.appName')}</span>
           <span className="site-footer-tagline">{t('app.footerTagline')}</span>
         </div>
-        <nav className="site-footer-nav" aria-label={t('app.footerExternalLinks')}>
+        <nav
+          className="site-footer-nav"
+          aria-label={t('app.footerExternalLinks')}
+        >
           <ul className="site-footer-links">
             <li>
               <a href={REPO_URL} target="_blank" rel="noopener noreferrer">

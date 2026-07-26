@@ -421,9 +421,7 @@ export function RequirementsTab({
               </select>
             </div>
             <div style={{ flex: '1 1 140px' }}>
-              <label htmlFor="rq-weight">
-                {t('requirements.weightField')}
-              </label>
+              <label htmlFor="rq-weight">{t('requirements.weightField')}</label>
               <input
                 id="rq-weight"
                 type="number"
@@ -444,7 +442,9 @@ export function RequirementsTab({
             />
           </div>
           <button type="submit" disabled={saving?.kind === 'add'}>
-            {saving?.kind === 'add' ? t('requirements.adding') : t('common.add')}
+            {saving?.kind === 'add'
+              ? t('requirements.adding')
+              : t('common.add')}
           </button>
         </form>
       ) : null}

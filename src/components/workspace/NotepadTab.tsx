@@ -565,12 +565,9 @@ export function NotepadTab({
   return (
     <div className="stack">
       <p className="muted">
-        {t('notepad.intro.text1')}{' '}
-        <strong>{t('notepad.intro.strong1')}</strong>
-        {t('notepad.intro.text2')}{' '}
-        <strong>{t('notepad.intro.strong2')}</strong>{' '}
-        {t('notepad.intro.text3')}{' '}
-        <strong>{t('notepad.intro.strong3')}</strong>{' '}
+        {t('notepad.intro.text1')} <strong>{t('notepad.intro.strong1')}</strong>
+        {t('notepad.intro.text2')} <strong>{t('notepad.intro.strong2')}</strong>{' '}
+        {t('notepad.intro.text3')} <strong>{t('notepad.intro.strong3')}</strong>{' '}
         {t('notepad.intro.text4')}
       </p>
 

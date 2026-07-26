@@ -209,7 +209,8 @@ export function SettingsTab({
       specs: vehicle.specs,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? t('settings.error.invalid');
+      const msg =
+        parsed.error.issues[0]?.message ?? t('settings.error.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setBusy(false);
       return;
@@ -346,8 +347,7 @@ export function SettingsTab({
       p_candidate_id: cid,
       p_notes: decisionNotes,
     });
-    if (error)
-      reportException(error, t('settings.error.saveDecision'));
+    if (error) reportException(error, t('settings.error.saveDecision'));
     else {
       await logActivity(
         workspace.id,

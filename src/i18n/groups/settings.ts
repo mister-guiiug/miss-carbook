@@ -181,8 +181,7 @@ export const settingsEn = {
     codeSuffix: ' — any signed-in member can join with this link.',
     copyLink: 'Copy the link',
     invitesTitle: 'Invitations (single-use link)',
-    invitesLead:
-      'Role + expiry. The link is copied automatically on creation.',
+    invitesLead: 'Role + expiry. The link is copied automatically on creation.',
     roleAria: 'Role for the new invitation',
     roleRead: 'Read',
     roleWrite: 'Write',
