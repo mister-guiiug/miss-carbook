@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
 
 :root {
   color-scheme: light;

@@ -3,7 +3,7 @@
  * Installer : npm install web-vitals
  */
 
-import { Metric, onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
+import { type Metric, onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
 
 declare global {
   interface Window {
