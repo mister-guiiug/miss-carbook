@@ -6,6 +6,7 @@ import {
 } from '../../lib/activityLogLabels';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { EmptyState } from '../ui/EmptyState';
+import { useI18n } from '../../i18n';
 
 type Row = {
   id: string;
@@ -28,14 +29,17 @@ function dayKeyFromIso(iso: string): string {
   return localDayKey(new Date(iso));
 }
 
-function formatActivityDayHeading(iso: string): string {
+function formatActivityDayHeading(
+  iso: string,
+  labels: { today: string; yesterday: string }
+): string {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const k = dayKeyFromIso(iso);
-  if (k === localDayKey(today)) return "Aujourd'hui";
-  if (k === localDayKey(yesterday)) return 'Hier';
+  if (k === localDayKey(today)) return labels.today;
+  if (k === localDayKey(yesterday)) return labels.yesterday;
   return d.toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -47,6 +51,7 @@ function formatActivityDayHeading(iso: string): string {
 const ACTIVITY_PAGE_LIMIT = 120;
 
 export function ActivityTab({ workspaceId }: { workspaceId: string }) {
+  const { t } = useI18n();
   const { reportException } = useErrorDialog();
   const [rows, setRows] = useState<Row[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -62,7 +67,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         .limit(ACTIVITY_PAGE_LIMIT);
       if (cancelled) return;
       if (error) {
-        reportException(error, 'Chargement du journal d’activité');
+        reportException(error, t('activity.ctxLoadActivity'));
         return;
       }
       const list = (data ?? []) as Row[];
@@ -102,9 +107,13 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       cancelled = true;
       void supabase.removeChannel(ch);
     };
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   const groups = useMemo(() => {
+    const dayLabels = {
+      today: t('activity.today'),
+      yesterday: t('activity.yesterday'),
+    };
     const map = new Map<string, { heading: string; items: Row[] }>();
     for (const r of rows) {
       const key = dayKeyFromIso(r.created_at);
@@ -113,27 +122,30 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         cur.items.push(r);
       } else {
         map.set(key, {
-          heading: formatActivityDayHeading(r.created_at),
+          heading: formatActivityDayHeading(r.created_at, dayLabels),
           items: [r],
         });
       }
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [rows]);
+  }, [rows, t]);
 
   return (
     <div className="stack activity-tab-page">
       <header className="activity-tab-header">
-        <h2 className="activity-tab-title">Activité et historique</h2>
-        <p className="muted activity-tab-lead">
-          Actions récentes sur ce dossier (créations, modifications, partage…).
-          Les nouvelles entrées s’affichent en temps réel.
-        </p>
+        <h2 className="activity-tab-title">{t('activity.title')}</h2>
+        <p className="muted activity-tab-lead">{t('activity.lead')}</p>
         {rows.length > 0 ? (
           <p className="muted activity-tab-meta" role="status">
-            {rows.length} événement{rows.length > 1 ? 's' : ''} affiché
-            {rows.length > 1 ? 's' : ''} — jusqu’à {ACTIVITY_PAGE_LIMIT} au
-            maximum.
+            {rows.length > 1
+              ? t('activity.metaPlural', {
+                  count: rows.length,
+                  limit: ACTIVITY_PAGE_LIMIT,
+                })
+              : t('activity.metaSingular', {
+                  count: rows.length,
+                  limit: ACTIVITY_PAGE_LIMIT,
+                })}
           </p>
         ) : null}
       </header>
@@ -141,8 +153,8 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       {rows.length === 0 ? (
         <EmptyState
           icon="activity"
-          title="Aucune activité pour l’instant"
-          text="Dès que vous ou d’autres membres agirez dans le dossier, le détail apparaîtra ici avec la date et l’auteur."
+          title={t('activity.emptyTitle')}
+          text={t('activity.emptyText')}
         />
       ) : (
         <ul className="activity-timeline">
@@ -153,7 +165,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
                 {items.map(r => {
                   const who = r.user_id
                     ? (names[r.user_id] ?? r.user_id.slice(0, 8))
-                    : 'Système';
+                    : t('activity.systemAuthor');
                   const timeStr = new Date(r.created_at).toLocaleTimeString(
                     'fr-FR',
                     {

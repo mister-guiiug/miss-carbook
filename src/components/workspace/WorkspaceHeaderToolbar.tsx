@@ -10,11 +10,8 @@ import {
   type WorkspaceQuickAddTab,
 } from '../../lib/workspaceHeaderEvents';
 import { WorkspaceTabIcon } from './WorkspaceTabIcons';
-import {
-  WORKSPACE_ACTIVITY_TAB_TITLE,
-  WORKSPACE_SETTINGS_TAB_TITLE,
-  type TabId,
-} from './workspaceTabs';
+import { type TabId } from './workspaceTabs';
+import { useI18n } from '../../i18n';
 
 function IconPlus() {
   return (
@@ -298,8 +295,11 @@ function initialsFromDisplayName(name: string) {
   const t = name.trim();
   if (!t) return '?';
   const parts = t.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
+  const [firstWord, secondWord] = parts;
+  if (firstWord && secondWord)
+    return ((firstWord[0] ?? '') + (secondWord[0] ?? ''))
+      .toUpperCase()
+      .slice(0, 2);
   return t.slice(0, 2).toUpperCase();
 }
 
@@ -315,6 +315,7 @@ export function WorkspaceHeaderToolbar({
   onOpenSearch: () => void;
 }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { mode, toggle } = useTheme();
   const online = useOnlineStatus();
   const { reportException } = useErrorDialog();
@@ -339,13 +340,13 @@ export function WorkspaceHeaderToolbar({
       .eq('id', user.id)
       .maybeSingle();
     if (error) {
-      reportException(error, 'Chargement du pseudo (barre dossier)');
+      reportException(error, t('workspace.ctxLoadProfile'));
       setDisplayName(null);
     } else {
       setDisplayName(data?.display_name ?? null);
     }
     setLoadingProfile(false);
-  }, [reportException]);
+  }, [reportException, t]);
 
   useEffect(() => {
     void loadProfile();
@@ -393,8 +394,11 @@ export function WorkspaceHeaderToolbar({
     void supabase.auth.signOut().then(() => navigate('/', { replace: true }));
   };
 
-  const profileLabel = loadingProfile ? '…' : displayName?.trim() || 'Profil';
-  const themeLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre';
+  const profileLabel = loadingProfile
+    ? '…'
+    : displayName?.trim() || t('workspace.profile');
+  const themeLabel =
+    mode === 'dark' ? t('workspace.themeLight') : t('workspace.themeDark');
 
   return (
     <div ref={wrapRef} className="workspace-chrome-toolbar" role="presentation">
@@ -406,7 +410,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'plus'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-plus"
-            title="Ajouter dans le dossier"
+            title={t('workspace.addToWorkspace')}
             onClick={() => setOpen(m => (m === 'plus' ? null : 'plus'))}
           >
             <IconPlus />
@@ -416,60 +420,62 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-plus"
               className="workspace-toolbar-menu workspace-toolbar-menu--right chrome-menu-panel"
               role="menu"
-              aria-label="Ajouter"
+              aria-label={t('common.add')}
             >
-              <div className="workspace-toolbar-menu-label">Ajouter</div>
+              <div className="workspace-toolbar-menu-label">
+                {t('common.add')}
+              </div>
               <button
                 type="button"
                 role="menuitem"
                 className="workspace-toolbar-menu-item"
                 disabled={!canWrite}
-                title={!canWrite ? 'Lecture seule' : undefined}
+                title={!canWrite ? t('workspace.readOnly') : undefined}
                 onClick={() => quickAdd('notepad')}
               >
                 <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   <IconNote />
                 </span>
-                <span>Note (bloc-notes)</span>
+                <span>{t('workspace.quickAddNote')}</span>
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="workspace-toolbar-menu-item"
                 disabled={!canWrite}
-                title={!canWrite ? 'Lecture seule' : undefined}
+                title={!canWrite ? t('workspace.readOnly') : undefined}
                 onClick={() => quickAdd('requirements')}
               >
                 <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   <IconClipboard />
                 </span>
-                <span>Exigence</span>
+                <span>{t('workspace.requirement')}</span>
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="workspace-toolbar-menu-item"
                 disabled={!canWrite}
-                title={!canWrite ? 'Lecture seule' : undefined}
+                title={!canWrite ? t('workspace.readOnly') : undefined}
                 onClick={() => quickAdd('reminders')}
               >
                 <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   <IconBell />
                 </span>
-                <span>Visites et rappels</span>
+                <span>{t('workspace.tab_reminders')}</span>
               </button>
               <button
                 type="button"
                 role="menuitem"
                 className="workspace-toolbar-menu-item"
                 disabled={!canWrite}
-                title={!canWrite ? 'Lecture seule' : undefined}
+                title={!canWrite ? t('workspace.readOnly') : undefined}
                 onClick={() => quickAdd('candidates')}
               >
                 <span className="workspace-toolbar-menu-ic" aria-hidden="true">
                   <IconModel />
                 </span>
-                <span>Modèle</span>
+                <span>{t('workspace.model')}</span>
               </button>
             </div>
           ) : null}
@@ -479,8 +485,8 @@ export function WorkspaceHeaderToolbar({
           <button
             type="button"
             className="workspace-toolbar-btn"
-            title="Recherche — Ctrl+K ou ⌘K"
-            aria-label="Ouvrir la recherche dans ce dossier"
+            title={t('workspace.searchTitleShortcut')}
+            aria-label={t('workspace.openSearchInWorkspace')}
             onClick={() => void onOpenSearch()}
           >
             <IconSearch />
@@ -494,7 +500,7 @@ export function WorkspaceHeaderToolbar({
             aria-expanded={open === 'user'}
             aria-haspopup="menu"
             aria-controls="workspace-menu-user"
-            title={`${profileLabel} — dossier, compte et navigation`}
+            title={t('workspace.accountMenuTitle', { name: profileLabel })}
             onClick={() => setOpen(m => (m === 'user' ? null : 'user'))}
           >
             <span className="workspace-toolbar-avatar" aria-hidden="true">
@@ -522,37 +528,37 @@ export function WorkspaceHeaderToolbar({
               id="workspace-menu-user"
               className="app-topbar-account-flyout chrome-menu-panel workspace-toolbar-menu--right"
               role="menu"
-              aria-label="Menu dossier et compte"
+              aria-label={t('workspace.accountMenuLabel')}
             >
               <div className="app-topbar-flyout-meta">
                 <div className="app-topbar-flyout-ident">
                   <span className="app-topbar-flyout-name">{profileLabel}</span>
                   <span className="app-topbar-flyout-hint muted">
-                    Compte sur cet appareil
+                    {t('workspace.accountOnDevice')}
                   </span>
                 </div>
                 <div
                   className="app-topbar-flyout-online"
-                  title={online ? 'En ligne' : 'Hors ligne'}
+                  title={online ? t('common.online') : t('common.offline')}
                 >
                   <span
                     className={`online-dot ${online ? 'on' : 'off'}`}
                     aria-hidden="true"
                   />
                   <span className="app-topbar-flyout-online-txt">
-                    {online ? 'En ligne' : 'Hors ligne'}
+                    {online ? t('common.online') : t('common.offline')}
                   </span>
                 </div>
               </div>
               <div className="app-topbar-flyout-list">
                 <div className="workspace-toolbar-flyout-group-label">
-                  Ce dossier
+                  {t('workspace.thisWorkspace')}
                 </div>
                 <button
                   type="button"
                   role="menuitem"
                   className="app-topbar-flyout-row"
-                  title={WORKSPACE_SETTINGS_TAB_TITLE}
+                  title={t('workspace.tab_settings_title')}
                   onClick={() => {
                     onOpenTab('settings');
                     close();
@@ -562,14 +568,14 @@ export function WorkspaceHeaderToolbar({
                     <IconFolderSettings className={flyoutSvg} />
                   </span>
                   <span className="app-topbar-flyout-txt">
-                    Réglages du dossier
+                    {t('workspace.workspaceSettings')}
                   </span>
                 </button>
                 <button
                   type="button"
                   role="menuitem"
                   className="app-topbar-flyout-row"
-                  title={WORKSPACE_ACTIVITY_TAB_TITLE}
+                  title={t('workspace.tab_activity_title')}
                   onClick={() => {
                     onOpenTab('activity');
                     close();
@@ -582,7 +588,7 @@ export function WorkspaceHeaderToolbar({
                     <WorkspaceTabIcon tabId="activity" />
                   </span>
                   <span className="app-topbar-flyout-txt">
-                    Activité du dossier
+                    {t('workspace.activityOfWorkspace')}
                   </span>
                 </button>
                 <div
@@ -600,7 +606,7 @@ export function WorkspaceHeaderToolbar({
                     <IconHome className={flyoutSvg} />
                   </span>
                   <span className="app-topbar-flyout-txt">
-                    Accueil Miss Carbook
+                    {t('workspace.homeMissCarbook')}
                   </span>
                 </Link>
                 <div
@@ -618,7 +624,7 @@ export function WorkspaceHeaderToolbar({
                     <IconGear className={flyoutSvg} />
                   </span>
                   <span className="app-topbar-flyout-txt">
-                    Paramètres généraux
+                    {t('workspace.generalSettings')}
                   </span>
                 </Link>
                 <button
@@ -648,7 +654,9 @@ export function WorkspaceHeaderToolbar({
                   <span className="app-topbar-flyout-ic" aria-hidden="true">
                     <IconLogOut className={flyoutSvg} />
                   </span>
-                  <span className="app-topbar-flyout-txt">Déconnexion</span>
+                  <span className="app-topbar-flyout-txt">
+                    {t('workspace.signOut')}
+                  </span>
                 </button>
               </div>
             </nav>

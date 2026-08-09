@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { TabId } from './workspaceTabs';
+import { useI18n } from '../../i18n';
 
 const key = (workspaceId: string) => `mc_ws_journey_${workspaceId}`;
 
@@ -10,6 +11,7 @@ export function WorkspaceJourneyCard({
   workspaceId: string;
   setTab: (id: TabId) => void;
 }) {
+  const { t } = useI18n();
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -42,9 +44,9 @@ export function WorkspaceJourneyCard({
   return (
     <div className="card workspace-journey stack" style={{ boxShadow: 'none' }}>
       <div className="workspace-journey-head row">
-        <p className="workspace-journey-title">Parcours suggéré</p>
+        <p className="workspace-journey-title">{t('workspace.journeyTitle')}</p>
         <button type="button" className="secondary" onClick={dismiss}>
-          Masquer
+          {t('workspace.hide')}
         </button>
       </div>
       <ol className="workspace-journey-steps">
@@ -54,9 +56,9 @@ export function WorkspaceJourneyCard({
             className="workspace-journey-link"
             onClick={go('requirements')}
           >
-            1. Exigences
+            {t('workspace.journeyStep1')}
           </button>{' '}
-          — définir vos critères
+          {t('workspace.journeyStep1Desc')}
         </li>
         <li>
           <button
@@ -64,9 +66,9 @@ export function WorkspaceJourneyCard({
             className="workspace-journey-link"
             onClick={go('candidates')}
           >
-            2. Modèles
+            {t('workspace.journeyStep2')}
           </button>{' '}
-          — ajouter les véhicules
+          {t('workspace.journeyStep2Desc')}
         </li>
         <li>
           <button
@@ -74,9 +76,9 @@ export function WorkspaceJourneyCard({
             className="workspace-journey-link"
             onClick={go('compare')}
           >
-            3. Comparer
+            {t('workspace.journeyStep3')}
           </button>{' '}
-          — graphiques et synthèse
+          {t('workspace.journeyStep3Desc')}
         </li>
       </ol>
     </div>

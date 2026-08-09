@@ -18,6 +18,7 @@ import {
   IconX,
 } from '../ui/IconActionButton';
 import { EmptyState } from '../ui/EmptyState';
+import { useI18n } from '../../i18n';
 
 type Req = {
   id: string;
@@ -40,6 +41,7 @@ export function RequirementsTab({
 }) {
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
   const [rows, setRows] = useState<Req[]>([]);
   const [filter, setFilter] = useState<'all' | RequirementLevel>('all');
 
@@ -68,9 +70,9 @@ export function RequirementsTab({
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('sort_order', { ascending: true });
-    if (error) reportException(error, 'Chargement des exigences');
+    if (error) reportException(error, t('requirements.ctxLoad'));
     else setRows((data ?? []) as Req[]);
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -135,9 +137,9 @@ export function RequirementsTab({
             sort_order: i,
           }));
         });
-        showToast('Ordre des exigences mis à jour');
+        showToast(t('requirements.toastReordered'));
       } catch (e: unknown) {
-        reportException(e, 'Réordonnancement des exigences');
+        reportException(e, t('requirements.ctxReorder'));
         await load();
       } finally {
         setReordering(false);
@@ -145,7 +147,7 @@ export function RequirementsTab({
         setDragOverId(null);
       }
     },
-    [canWrite, workspaceId, load, reportException, showToast]
+    [canWrite, workspaceId, load, reportException, showToast, t]
   );
 
   const onDropReorder = useCallback(
@@ -190,7 +192,7 @@ export function RequirementsTab({
       tags,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('requirements.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setSaving(null);
       return;
@@ -224,9 +226,9 @@ export function RequirementsTab({
         data?.id ?? null,
         {}
       );
-      showToast('Exigence ajoutée');
+      showToast(t('requirements.toastAdded'));
     } catch (e: unknown) {
-      reportException(e, 'Ajout d’une exigence');
+      reportException(e, t('requirements.ctxAdd'));
     } finally {
       setSaving(null);
     }
@@ -244,7 +246,7 @@ export function RequirementsTab({
       tags: editTags,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('requirements.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       setSaving(null);
       return;
@@ -271,9 +273,9 @@ export function RequirementsTab({
         id,
         {}
       );
-      showToast('Exigence mise à jour');
+      showToast(t('requirements.toastUpdated'));
     } catch (e: unknown) {
-      reportException(e, 'Mise à jour d’une exigence');
+      reportException(e, t('requirements.ctxUpdate'));
     } finally {
       setSaving(null);
     }
@@ -281,14 +283,9 @@ export function RequirementsTab({
 
   const remove = async (id: string) => {
     if (!canWrite) return;
-    if (
-      !confirm(
-        'Supprimer cette exigence ? Les notes de matrice liées seront aussi supprimées.'
-      )
-    )
-      return;
+    if (!confirm(t('requirements.confirmDelete'))) return;
     const { error } = await supabase.from('requirements').delete().eq('id', id);
-    if (error) reportException(error, 'Suppression d’une exigence');
+    if (error) reportException(error, t('requirements.ctxDelete'));
     else {
       if (editingId === id) cancelEdit();
       await load();
@@ -299,7 +296,7 @@ export function RequirementsTab({
         id,
         {}
       );
-      showToast('Exigence supprimée');
+      showToast(t('requirements.toastDeleted'));
     }
   };
 
@@ -319,9 +316,7 @@ export function RequirementsTab({
   return (
     <div className="stack requirements-tab">
       <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-        Définissez les critères du projet. Vous pouvez les modifier à tout
-        moment ; la matrice d’évaluation et les votes suivent les libellés et
-        niveaux à jour.
+        {t('requirements.intro')}
       </p>
 
       <div
@@ -329,33 +324,41 @@ export function RequirementsTab({
         style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}
       >
         <div className="muted" style={{ fontSize: '0.9rem' }}>
-          <strong>{counts.total}</strong> exigence
-          {counts.total === 1 ? '' : 's'} · <strong>{counts.mandatory}</strong>{' '}
-          obligatoire{counts.mandatory === 1 ? '' : 's'} ·{' '}
-          <strong>{counts.discuss}</strong> à discuter
+          <strong>{counts.total}</strong>{' '}
+          {counts.total === 1
+            ? t('requirements.summaryReqOne')
+            : t('requirements.summaryReqMany')}
+          {' · '}
+          <strong>{counts.mandatory}</strong>{' '}
+          {counts.mandatory === 1
+            ? t('requirements.summaryMandatoryOne')
+            : t('requirements.summaryMandatoryMany')}
+          {' · '}
+          <strong>{counts.discuss}</strong> {t('requirements.summaryDiscuss')}
         </div>
         <div
           className="req-filter-pills row"
           role="group"
-          aria-label="Filtrer par niveau"
+          aria-label={t('requirements.filterAria')}
         >
-          {filterPill('all', 'Toutes')}
-          {filterPill('mandatory', 'Obligatoires')}
-          {filterPill('discuss', 'À discuter')}
+          {filterPill('all', t('requirements.filterAll'))}
+          {filterPill('mandatory', t('requirements.filterMandatory'))}
+          {filterPill('discuss', t('requirements.filterDiscuss'))}
         </div>
       </div>
 
       {canWrite && filter !== 'all' && rows.length > 0 ? (
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Glisser-déposer pour réordonner : affichez <strong>Toutes</strong> les
-          exigences.
+          {t('requirements.reorderHintBefore')}
+          <strong>{t('requirements.reorderHintAll')}</strong>
+          {t('requirements.reorderHintAfter')}
         </p>
       ) : null}
 
       {canWrite && !showAddForm ? (
         <IconActionButton
           variant="secondary"
-          label="Ajouter une exigence"
+          label={t('requirements.addButton')}
           onClick={() => setShowAddForm(true)}
         >
           <IconPlus />
@@ -372,17 +375,17 @@ export function RequirementsTab({
             className="row"
             style={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <h3 style={{ margin: 0 }}>Nouvelle exigence</h3>
+            <h3 style={{ margin: 0 }}>{t('requirements.addTitle')}</h3>
             <IconActionButton
               variant="secondary"
-              label="Fermer le formulaire d’ajout"
+              label={t('requirements.closeAddForm')}
               onClick={() => setShowAddForm(false)}
             >
               <IconX />
             </IconActionButton>
           </div>
           <div>
-            <label htmlFor="rq-label">Libellé</label>
+            <label htmlFor="rq-label">{t('requirements.labelField')}</label>
             <input
               id="rq-label"
               value={label}
@@ -392,7 +395,7 @@ export function RequirementsTab({
             />
           </div>
           <div>
-            <label htmlFor="rq-desc">Description</label>
+            <label htmlFor="rq-desc">{t('common.description')}</label>
             <textarea
               id="rq-desc"
               value={description}
@@ -403,18 +406,22 @@ export function RequirementsTab({
           </div>
           <div className="row" style={{ flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 160px' }}>
-              <label htmlFor="rq-level">Niveau</label>
+              <label htmlFor="rq-level">{t('requirements.levelField')}</label>
               <select
                 id="rq-level"
                 value={level}
                 onChange={e => setLevel(e.target.value as RequirementLevel)}
               >
-                <option value="mandatory">Obligatoire</option>
-                <option value="discuss">À discuter</option>
+                <option value="mandatory">
+                  {t('requirements.levelMandatory')}
+                </option>
+                <option value="discuss">
+                  {t('requirements.levelDiscuss')}
+                </option>
               </select>
             </div>
             <div style={{ flex: '1 1 140px' }}>
-              <label htmlFor="rq-weight">Poids (optionnel)</label>
+              <label htmlFor="rq-weight">{t('requirements.weightField')}</label>
               <input
                 id="rq-weight"
                 type="number"
@@ -427,7 +434,7 @@ export function RequirementsTab({
             </div>
           </div>
           <div>
-            <label htmlFor="rq-tags">Tags (virgules)</label>
+            <label htmlFor="rq-tags">{t('requirements.tagsField')}</label>
             <input
               id="rq-tags"
               value={tags}
@@ -435,7 +442,9 @@ export function RequirementsTab({
             />
           </div>
           <button type="submit" disabled={saving?.kind === 'add'}>
-            {saving?.kind === 'add' ? 'Ajout…' : 'Ajouter'}
+            {saving?.kind === 'add'
+              ? t('requirements.adding')
+              : t('common.add')}
           </button>
         </form>
       ) : null}
@@ -443,13 +452,13 @@ export function RequirementsTab({
       {rows.length === 0 ? (
         <EmptyState
           icon="requirements"
-          title="Aucune exigence définie"
-          text="Utilisez le bouton « Ajouter une exigence » pour créer des critères (obligatoires ou à discuter) et structurer la comparaison des modèles."
+          title={t('requirements.emptyTitle')}
+          text={t('requirements.emptyText')}
           action={
             canWrite ? (
               <IconActionButton
                 variant="primary"
-                label="Ajouter une exigence"
+                label={t('requirements.addButton')}
                 onClick={() => setShowAddForm(true)}
               >
                 <IconPlus />
@@ -460,8 +469,8 @@ export function RequirementsTab({
       ) : filtered.length === 0 ? (
         <EmptyState
           icon="search"
-          title="Aucune exigence pour ce filtre"
-          text="Changez de filtre ou créez une entrée de ce niveau."
+          title={t('requirements.emptyFilterTitle')}
+          text={t('requirements.emptyFilterText')}
         />
       ) : (
         <ul
@@ -505,7 +514,7 @@ export function RequirementsTab({
                     onSubmit={e => {
                       void saveEdit(e, r.id);
                     }}
-                    aria-label={`Modifier ${r.label}`}
+                    aria-label={t('requirements.editAria', { label: r.label })}
                   >
                     <div
                       className="row"
@@ -515,11 +524,15 @@ export function RequirementsTab({
                       }}
                     >
                       <span className="muted" style={{ fontSize: '0.85rem' }}>
-                        Modification · <kbd>Échap</kbd> pour annuler
+                        {t('requirements.editingBadgeBefore')}
+                        <kbd>{t('requirements.editingKbd')}</kbd>
+                        {t('requirements.editingBadgeAfter')}
                       </span>
                     </div>
                     <div>
-                      <label htmlFor={`rq-edit-label-${r.id}`}>Libellé</label>
+                      <label htmlFor={`rq-edit-label-${r.id}`}>
+                        {t('requirements.labelField')}
+                      </label>
                       <input
                         id={`rq-edit-label-${r.id}`}
                         value={editLabel}
@@ -531,7 +544,7 @@ export function RequirementsTab({
                     </div>
                     <div>
                       <label htmlFor={`rq-edit-desc-${r.id}`}>
-                        Description
+                        {t('common.description')}
                       </label>
                       <textarea
                         id={`rq-edit-desc-${r.id}`}
@@ -543,7 +556,9 @@ export function RequirementsTab({
                     </div>
                     <div className="row" style={{ flexWrap: 'wrap' }}>
                       <div style={{ flex: '1 1 160px' }}>
-                        <label htmlFor={`rq-edit-level-${r.id}`}>Niveau</label>
+                        <label htmlFor={`rq-edit-level-${r.id}`}>
+                          {t('requirements.levelField')}
+                        </label>
                         <select
                           id={`rq-edit-level-${r.id}`}
                           value={editLevel}
@@ -551,13 +566,17 @@ export function RequirementsTab({
                             setEditLevel(e.target.value as RequirementLevel)
                           }
                         >
-                          <option value="mandatory">Obligatoire</option>
-                          <option value="discuss">À discuter</option>
+                          <option value="mandatory">
+                            {t('requirements.levelMandatory')}
+                          </option>
+                          <option value="discuss">
+                            {t('requirements.levelDiscuss')}
+                          </option>
                         </select>
                       </div>
                       <div style={{ flex: '1 1 140px' }}>
                         <label htmlFor={`rq-edit-weight-${r.id}`}>
-                          Poids (optionnel)
+                          {t('requirements.weightField')}
                         </label>
                         <input
                           id={`rq-edit-weight-${r.id}`}
@@ -572,7 +591,7 @@ export function RequirementsTab({
                     </div>
                     <div>
                       <label htmlFor={`rq-edit-tags-${r.id}`}>
-                        Tags (virgules)
+                        {t('requirements.tagsField')}
                       </label>
                       <input
                         id={`rq-edit-tags-${r.id}`}
@@ -585,11 +604,11 @@ export function RequirementsTab({
                       style={{ flexWrap: 'wrap' }}
                     >
                       <button type="submit" disabled={editBusy}>
-                        {editBusy ? 'Enregistrement…' : 'Enregistrer'}
+                        {editBusy ? t('common.saving') : t('common.save')}
                       </button>
                       <IconActionButton
                         variant="secondary"
-                        label="Annuler la modification"
+                        label={t('requirements.cancelEdit')}
                         onClick={cancelEdit}
                         disabled={editBusy}
                       >
@@ -613,11 +632,13 @@ export function RequirementsTab({
                           className="reorder-drag-handle"
                           draggable={canReorder}
                           disabled={!canReorder}
-                          aria-label={`Réordonner : ${r.label}`}
+                          aria-label={t('requirements.reorderAria', {
+                            label: r.label,
+                          })}
                           title={
                             canReorder
-                              ? 'Glisser pour réordonner'
-                              : 'Réordonner : affichez « Toutes » les exigences'
+                              ? t('requirements.reorderTitleActive')
+                              : t('requirements.reorderTitleDisabled')
                           }
                           onDragStart={e => {
                             if (!canReorder) {
@@ -639,19 +660,25 @@ export function RequirementsTab({
                       <div className="requirement-card-body">
                         <span className={`badge ${r.level}`}>
                           {r.level === 'mandatory'
-                            ? 'Obligatoire'
-                            : 'À discuter'}
+                            ? t('requirements.levelMandatory')
+                            : t('requirements.levelDiscuss')}
                         </span>{' '}
                         <strong>{r.label}</strong>
                         {r.weight != null ? (
-                          <span className="muted"> · poids {r.weight}</span>
+                          <span className="muted">
+                            {t('requirements.weightInline', {
+                              weight: r.weight,
+                            })}
+                          </span>
                         ) : null}
                         {r.tags?.length ? (
                           <div
                             className="muted"
                             style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}
                           >
-                            Tags : {r.tags.join(', ')}
+                            {t('requirements.tagsInline', {
+                              tags: r.tags.join(', '),
+                            })}
                           </div>
                         ) : null}
                         {r.description ? (
@@ -669,7 +696,7 @@ export function RequirementsTab({
                               fontSize: '0.85rem',
                             }}
                           >
-                            Sans description
+                            {t('requirements.noDescription')}
                           </p>
                         )}
                       </div>
@@ -678,14 +705,18 @@ export function RequirementsTab({
                       <div className="requirement-card-actions">
                         <IconActionButton
                           variant="primary"
-                          label={`Modifier l’exigence « ${r.label} »`}
+                          label={t('requirements.editReqAria', {
+                            label: r.label,
+                          })}
                           onClick={() => startEdit(r)}
                         >
                           <IconPencil />
                         </IconActionButton>
                         <IconActionButton
                           variant="danger"
-                          label={`Supprimer l’exigence « ${r.label} »`}
+                          label={t('requirements.deleteReqAria', {
+                            label: r.label,
+                          })}
                           onClick={() => void remove(r.id)}
                         >
                           <IconTrash />

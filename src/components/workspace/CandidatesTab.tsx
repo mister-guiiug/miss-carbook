@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useI18n } from '../../i18n';
 import { logActivity } from '../../lib/activity';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import {
@@ -33,6 +34,7 @@ export function CandidatesTab({
   canWrite: boolean;
   userId: string;
 }) {
+  const { t } = useI18n();
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
   const {
@@ -153,13 +155,13 @@ export function CandidatesTab({
       await load();
       showToast(
         ids.length > 1
-          ? `Fiche et ${ids.length - 1} complément(s) supprimés`
-          : 'Fiche modèle supprimée'
+          ? t('candidates.tab.toastDeletedSubtree', { count: ids.length - 1 })
+          : t('candidates.tab.toastDeleted')
       );
       setOpen(o => (o && ids.includes(o) ? null : o));
       setConfirmingDelete(null);
     } catch (e: unknown) {
-      reportException(e, 'Suppression d’une fiche modèle');
+      reportException(e, t('candidates.tab.ctxDelete'));
       await load();
     } finally {
       setDeletingCandidate(false);
@@ -192,9 +194,9 @@ export function CandidatesTab({
         const failed = results.find(x => x.error);
         if (failed?.error) throw failed.error;
         await load();
-        showToast('Ordre des modèles mis à jour');
+        showToast(t('candidates.tab.toastOrderUpdated'));
       } catch (e: unknown) {
-        reportException(e, 'Réordonnancement des modèles candidats');
+        reportException(e, t('candidates.tab.ctxReorder'));
         await load();
       } finally {
         setReordering(false);
@@ -254,27 +256,28 @@ export function CandidatesTab({
   return (
     <div className="stack candidates-tab">
       <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-        Le <strong>modèle racine</strong> affiche une{' '}
-        <strong>version de base</strong> (« Générique » si le champ est vide) ;
-        chaque <strong>complément</strong> porte une version complémentaire.
-        Tant qu’il n’y a pas <strong>plusieurs compléments</strong>, les détails
-        (motorisation, prix, etc.) restent sur la même fiche ; avec au moins
-        deux compléments, seules ces lignes portent les détails comparables.{' '}
-        {CANDIDATE_HIERARCHY_HELP_FR}
+        {t('candidates.tab.helpRootPrefix')}
+        <strong>{t('candidates.tab.helpRootWord')}</strong>
+        {t('candidates.tab.helpShows')}{' '}
+        <strong>{t('candidates.tab.helpBaseWord')}</strong>
+        {t('candidates.tab.helpGenericMid')}
+        <strong>{t('candidates.tab.helpComplementWord')}</strong>
+        {t('candidates.tab.helpCarries')}
+        <strong>{t('candidates.tab.helpMultipleWord')}</strong>
+        {t('candidates.tab.helpDetailsSuffix')} {CANDIDATE_HIERARCHY_HELP_FR}
         {canWrite ? (
           <>
             {' '}
-            <strong>Glisser-déposer</strong> la poignée pour ordonner les
-            racines entre elles ou les compléments d’un même modèle.
+            <strong>{t('candidates.tab.helpDragWord')}</strong>
+            {t('candidates.tab.helpDragSuffix')}
           </>
         ) : null}
       </p>
 
       {orphanVariations.length ? (
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          <strong>Attention :</strong> {orphanVariations.length} complément(s)
-          référencent un parent absent (supprimé ou incohérent). Rattachez-les à
-          une racine depuis le détail ou supprimez-les.
+          <strong>{t('candidates.tab.warnLabel')}</strong>
+          {t('candidates.tab.orphanWarn', { count: orphanVariations.length })}
         </p>
       ) : null}
 
@@ -367,8 +370,7 @@ export function CandidatesTab({
       </ul>
 
       <p className="muted">
-        Les avis agrégés pour la comparaison proviennent des notes saisies
-        ci-dessous ({reviews.length} entrées chargées).
+        {t('candidates.tab.reviewsNote', { count: reviews.length })}
       </p>
 
       {confirmingDelete ? (
@@ -390,26 +392,27 @@ export function CandidatesTab({
               id="confirm-delete-candidate-title"
               className="error-dialog-title"
             >
-              Confirmer la suppression
+              {t('candidates.tab.confirmDeleteTitle')}
             </h2>
             <p
               id="confirm-delete-candidate-desc"
               className="error-dialog-message"
             >
-              Supprimer la fiche{' '}
-              <strong>{formatCandidateListLabel(confirmingDelete)}</strong> ?
-              Cette action est définitive.
+              {t('candidates.tab.confirmDeletePrefix')}{' '}
+              <strong>{formatCandidateListLabel(confirmingDelete)}</strong>
+              {t('candidates.tab.confirmDeleteSuffix')}
             </p>
             {subtreeDeleteIds.length > 1 ? (
               <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                {subtreeDeleteIds.length} fiche(s) au total seront supprimées
-                (compléments et sous-fiches inclus).
+                {t('candidates.tab.subtreeDeleteNote', {
+                  count: subtreeDeleteIds.length,
+                })}
               </p>
             ) : null}
             <div className="error-dialog-actions">
               <IconActionButton
                 variant="secondary"
-                label="Annuler"
+                label={t('common.cancel')}
                 onClick={dismissDeleteConfirm}
                 disabled={deletingCandidate}
                 ref={cancelDeleteRef}
@@ -418,7 +421,11 @@ export function CandidatesTab({
               </IconActionButton>
               <IconActionButton
                 variant="danger"
-                label={deletingCandidate ? 'Suppression en cours' : 'Supprimer'}
+                label={
+                  deletingCandidate
+                    ? t('candidates.tab.deleting')
+                    : t('common.delete')
+                }
                 onClick={() => void confirmDeleteCandidate()}
                 disabled={deletingCandidate}
               >

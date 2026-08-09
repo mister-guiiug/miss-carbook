@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ErrorDialogProvider, useErrorDialog } from './ErrorDialogContext';
+import { I18nProvider } from '../i18n';
 
 function Probe() {
   const { reportMessage } = useErrorDialog();
@@ -17,9 +18,11 @@ function Probe() {
 describe('ErrorDialogProvider', () => {
   it('affiche le message après reportMessage', async () => {
     render(
-      <ErrorDialogProvider>
-        <Probe />
-      </ErrorDialogProvider>
+      <I18nProvider>
+        <ErrorDialogProvider>
+          <Probe />
+        </ErrorDialogProvider>
+      </I18nProvider>
     );
     fireEvent.click(screen.getByRole('button', { name: /Déclencher erreur/i }));
     expect(await screen.findByRole('alertdialog')).toBeInTheDocument();

@@ -14,6 +14,7 @@ import {
   shareCodeSchema,
   workspaceCreateSchema,
 } from '../lib/validation/schemas';
+import { useI18n } from '../i18n';
 
 type Row = {
   workspace_id: string;
@@ -30,6 +31,7 @@ type Row = {
 export function HomePage() {
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,7 +63,7 @@ export function HomePage() {
       .order('joined_at', { ascending: false });
 
     if (error) {
-      reportException(error, 'Chargement de la liste des dossiers');
+      reportException(error, t('home.ctxLoadList'));
       setRows([]);
     } else {
       setRows((data ?? []) as unknown as Row[]);
@@ -93,10 +95,7 @@ export function HomePage() {
         p_token: token,
       });
       if (error) {
-        reportException(
-          error,
-          'Acceptation d’une invitation (paramètre invite)'
-        );
+        reportException(error, t('home.ctxAcceptInvite'));
         inviteHandled.current = false;
         return;
       }
@@ -109,7 +108,7 @@ export function HomePage() {
         } catch {
           /* ignore */
         }
-        showToast('Invitation acceptée');
+        showToast(t('home.toastInviteAccepted'));
         navigate(`/w/${data}`, { replace: true });
       }
     })();
@@ -135,7 +134,7 @@ export function HomePage() {
       replacement_enabled: replacement,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Formulaire invalide';
+      const msg = parsed.error.issues[0]?.message ?? t('common.invalidForm');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -154,11 +153,11 @@ export function HomePage() {
       const newId = typeof data === 'string' ? data : null;
       if (newId) {
         sessionStorage.setItem('mc_new_ws', newId);
-        showToast('Dossier créé');
+        showToast(t('home.toastCreated'));
         navigate(`/w/${newId}`);
       }
     } catch (e: unknown) {
-      reportException(e, 'Création d’un dossier');
+      reportException(e, t('home.ctxCreate'));
     } finally {
       setBusyCreate(false);
     }
@@ -170,7 +169,7 @@ export function HomePage() {
     const parsed = shareCodeSchema.safeParse(code);
     if (!parsed.success) {
       reportMessage(
-        'Code invalide',
+        t('home.errInvalidCode'),
         JSON.stringify(parsed.error.flatten(), null, 2)
       );
       return;
@@ -184,11 +183,11 @@ export function HomePage() {
       setCode('');
       await load();
       if (data) {
-        showToast('Vous avez rejoint le dossier');
+        showToast(t('home.toastJoined'));
         navigate(`/w/${data}`);
       }
     } catch (e: unknown) {
-      reportException(e, 'Rejoindre un dossier avec un code');
+      reportException(e, t('home.ctxJoin'));
     } finally {
       setBusyJoin(false);
     }
@@ -197,7 +196,7 @@ export function HomePage() {
   if (!user) {
     return (
       <div className="shell">
-        <p className="muted">Chargement…</p>
+        <p className="muted">{t('common.loading')}</p>
       </div>
     );
   }
@@ -205,33 +204,33 @@ export function HomePage() {
   return (
     <div className="shell home-page">
       <header className="home-hero stack">
-        <h1 className="home-hero-title">Miss Carbook</h1>
+        <h1 className="home-hero-title">{t('common.appName')}</h1>
         <p
           className="muted home-hero-lead"
           style={{ margin: 0, maxWidth: '36rem' }}
         >
-          Dossiers partagés pour comparer des véhicules, noter des exigences et
-          décider ensemble. Ouvrez un dossier ci-dessous ou utilisez les actions
-          pliables.
+          {t('home.heroLead')}
         </p>
         {!isGlobalAssistantDone() ? (
           <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-            <Link to="/assistant">Visite guidée</Link> — présentation rapide
-            (recommandée sur mobile).
+            <Link to="/assistant">{t('home.guidedTourLink')}</Link>
+            {t('home.guidedTourNote')}
           </p>
         ) : null}
       </header>
 
       <div className="home-actions-accordions stack">
         <details className="card home-accordion" name="home-action">
-          <summary className="home-accordion-summary">Créer un dossier</summary>
+          <summary className="home-accordion-summary">
+            {t('home.createTitle')}
+          </summary>
           <div className="home-accordion-body stack">
             <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-              Nouveau projet véhicule dont vous serez administrateur.
+              {t('home.createHint')}
             </p>
             <form onSubmit={createWs} className="stack">
               <div>
-                <label htmlFor="ws-name">Nom du projet</label>
+                <label htmlFor="ws-name">{t('home.nameLabel')}</label>
                 <input
                   id="ws-name"
                   value={name}
@@ -240,7 +239,7 @@ export function HomePage() {
                 />
               </div>
               <div>
-                <label htmlFor="ws-desc">Description</label>
+                <label htmlFor="ws-desc">{t('common.description')}</label>
                 <textarea
                   id="ws-desc"
                   value={desc}
@@ -253,10 +252,10 @@ export function HomePage() {
                   checked={replacement}
                   onChange={e => setReplacement(e.target.checked)}
                 />
-                Activer le bloc « véhicule actuel / remplacement »
+                {t('home.replacementToggle')}
               </label>
               <button type="submit" disabled={busyCreate}>
-                {busyCreate ? 'Création…' : 'Créer le dossier'}
+                {busyCreate ? t('home.creating') : t('home.createSubmit')}
               </button>
             </form>
           </div>
@@ -264,27 +263,26 @@ export function HomePage() {
 
         <details className="card home-accordion" name="home-action">
           <summary className="home-accordion-summary">
-            Rejoindre un dossier
+            {t('home.joinTitle')}
           </summary>
           <div className="home-accordion-body stack">
             <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-              Saisissez le code court partagé par un membre du dossier (6
-              caractères).
+              {t('home.joinHint')}
             </p>
             <form onSubmit={joinWs} className="stack">
               <div>
-                <label htmlFor="ws-code">Code de partage</label>
+                <label htmlFor="ws-code">{t('home.codeLabel')}</label>
                 <input
                   id="ws-code"
                   value={code}
                   onChange={e => setCode(e.target.value.toUpperCase())}
-                  placeholder="Ex. AB12CD"
+                  placeholder={t('home.codePlaceholder')}
                   autoComplete="off"
                   maxLength={12}
                 />
               </div>
               <button type="submit" className="secondary" disabled={busyJoin}>
-                {busyJoin ? 'Connexion…' : 'Rejoindre'}
+                {busyJoin ? t('home.joining') : t('home.joinSubmit')}
               </button>
             </form>
           </div>
@@ -292,10 +290,10 @@ export function HomePage() {
       </div>
 
       <section className="card stack home-workspaces">
-        <h2 className="home-section-title">Mes dossiers</h2>
-        {loading ? <p className="muted">Chargement…</p> : null}
+        <h2 className="home-section-title">{t('home.myWorkspaces')}</h2>
+        {loading ? <p className="muted">{t('common.loading')}</p> : null}
         {!loading && rows.length === 0 ? (
-          <p className="muted">Aucun dossier pour l’instant.</p>
+          <p className="muted">{t('home.empty')}</p>
         ) : null}
         <ul
           className="stack"
@@ -317,12 +315,12 @@ export function HomePage() {
                   <div>
                     <strong>{w.name}</strong>
                     <div className="muted">
-                      code&nbsp;: <code>{w.share_code}</code> · rôle&nbsp;:{' '}
-                      {r.role}
+                      {t('home.codeMeta')}&nbsp;: <code>{w.share_code}</code> ·{' '}
+                      {t('home.roleMeta')}&nbsp;: {r.role}
                     </div>
                   </div>
                   <Link className="btn" to={`/w/${w.id}`}>
-                    Ouvrir
+                    {t('common.open')}
                   </Link>
                 </div>
               </li>

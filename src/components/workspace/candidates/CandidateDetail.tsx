@@ -15,6 +15,7 @@ import {
 } from '../../../lib/storageUpload';
 import { compressImageToMaxBytes } from '../../../lib/imageCompress';
 import { renderMentions } from '../../../lib/renderMentions';
+import { useI18n } from '../../../i18n';
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext';
 import { useToast } from '../../../contexts/ToastContext';
 import {
@@ -153,6 +154,7 @@ export function CandidateDetail({
   onChanged: () => void;
   garageSuggestions: string[];
 }) {
+  const { t } = useI18n();
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
   const [meta, setMeta] = useState({
@@ -221,7 +223,8 @@ export function CandidateDetail({
       event_date: meta.event_date?.trim() || null,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Invalide';
+      const msg =
+        parsed.error.issues[0]?.message ?? t('candidateDetail.invalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -235,10 +238,7 @@ export function CandidateDetail({
       return;
     }
     if (parentId && !rootCandidates.some(r => r.id === parentId)) {
-      reportMessage(
-        'Le modèle racine choisi est introuvable dans ce dossier. Enregistrez d’abord la racine ou choisissez une autre fiche.',
-        'parent not in roots'
-      );
+      reportMessage(t('candidateDetail.parentNotFound'), 'parent not in roots');
       return;
     }
 
@@ -313,7 +313,7 @@ export function CandidateDetail({
       );
       await onChanged();
     } catch (err: unknown) {
-      reportException(err, 'Mise à jour de la fiche modèle');
+      reportException(err, t('candidateDetail.errUpdateSheet'));
     }
   };
 
@@ -477,7 +477,7 @@ export function CandidateDetail({
     const parsed = candidateSpecsSchema.safeParse(specs);
     if (!parsed.success) {
       reportMessage(
-        'Données constructeur invalides',
+        t('candidateDetail.specsInvalid'),
         JSON.stringify(parsed.error.flatten(), null, 2)
       );
       return;
@@ -485,8 +485,7 @@ export function CandidateDetail({
     const { error } = await supabase
       .from('candidate_specs')
       .upsert({ candidate_id: candidate.id, specs: parsed.data as Json });
-    if (error)
-      reportException(error, 'Enregistrement des données constructeur');
+    if (error) reportException(error, t('candidateDetail.errSaveSpecs'));
     else {
       await logActivity(
         workspaceId,
@@ -507,7 +506,8 @@ export function CandidateDetail({
       score: review.score,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Avis invalide';
+      const msg =
+        parsed.error.issues[0]?.message ?? t('candidateDetail.reviewInvalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -519,7 +519,7 @@ export function CandidateDetail({
       pros: parsed.data.pros,
       cons: parsed.data.cons,
     });
-    if (error) reportException(error, 'Enregistrement de l’avis sur le modèle');
+    if (error) reportException(error, t('candidateDetail.errSaveReview'));
     else {
       await logActivity(
         workspaceId,
@@ -538,7 +538,7 @@ export function CandidateDetail({
     const parsed = commentSchema.safeParse({ body: comment });
     if (!parsed.success) {
       reportMessage(
-        'Commentaire invalide',
+        t('candidateDetail.commentInvalid'),
         JSON.stringify(parsed.error.flatten(), null, 2)
       );
       return;
@@ -548,7 +548,7 @@ export function CandidateDetail({
       user_id: userId,
       body: parsed.data.body,
     });
-    if (error) reportException(error, 'Envoi d’un commentaire');
+    if (error) reportException(error, t('candidateDetail.errSendComment'));
     else {
       setComment('');
       await loadComments();
@@ -566,7 +566,7 @@ export function CandidateDetail({
       {}
     );
     if (compressedHint) {
-      showToast('Photo envoyée (image compressée automatiquement)');
+      showToast(t('candidateDetail.toastPhotoCompressed'));
     }
   };
 
@@ -575,14 +575,14 @@ export function CandidateDetail({
     if (
       !allowedImageMime.includes(file.type as (typeof allowedImageMime)[number])
     ) {
-      reportMessage('Type non autorisé (JPEG, PNG, WebP, GIF)');
+      reportMessage(t('candidateDetail.typeNotAllowed'));
       return;
     }
     if (file.size <= MAX_IMAGE_BYTES) {
       try {
         await runPhotoUpload(file, false);
       } catch (e: unknown) {
-        reportException(e, 'Upload d’une photo pour le modèle');
+        reportException(e, t('candidateDetail.errUploadPhoto'));
       }
       return;
     }
@@ -605,7 +605,7 @@ export function CandidateDetail({
       await runPhotoUpload(compressed, true);
       setPendingOversizedPhoto(null);
     } catch (e: unknown) {
-      reportException(e, 'Compression ou envoi de la photo');
+      reportException(e, t('candidateDetail.errCompressPhoto'));
     } finally {
       setCompressingPhoto(false);
     }
@@ -651,7 +651,7 @@ export function CandidateDetail({
           type="text"
           inputMode="numeric"
           autoComplete="off"
-          placeholder="ex. 4 620"
+          placeholder={t('candidateDetail.dimensionPlaceholder')}
           value={value}
           onFocus={() => {
             setSpecDimFocus(k);
@@ -703,12 +703,12 @@ export function CandidateDetail({
           className="card stack"
           style={{ boxShadow: 'none' }}
         >
-          <h4 style={{ margin: 0 }}>Fiche modèle</h4>
+          <h4 style={{ margin: 0 }}>{t('candidateDetail.modelSheet')}</h4>
 
           {showParentSelect ? (
             <div>
               <label htmlFor={`cand-meta-parent-${candidate.id}`}>
-                Rattaché au modèle racine
+                {t('candidateDetail.attachedToRoot')}
               </label>
               <p
                 className="muted"
@@ -751,7 +751,9 @@ export function CandidateDetail({
                   });
                 }}
               >
-                <option value="">— Racine (pas de parent) —</option>
+                <option value="">
+                  {t('candidateDetail.rootNoParentOption')}
+                </option>
                 {rootCandidates.map(p => (
                   <option key={p.id} value={p.id}>
                     {formatCandidateListLabel(p)}
@@ -762,13 +764,15 @@ export function CandidateDetail({
           ) : null}
 
           <div className="candidate-fiche-identity stack">
-            <h5 className="candidate-fiche-subtitle">Identité</h5>
+            <h5 className="candidate-fiche-subtitle">
+              {t('candidateDetail.identity')}
+            </h5>
             {identityIsRoot ? (
               <>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-brand-${candidate.id}`}>
-                      Marque
+                      {t('candidateDetail.brand')}
                     </label>
                     <input
                       id={`cand-meta-brand-${candidate.id}`}
@@ -780,7 +784,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-model-${candidate.id}`}>
-                      Modèle
+                      {t('candidateDetail.model')}
                     </label>
                     <input
                       id={`cand-meta-model-${candidate.id}`}
@@ -794,7 +798,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-trim-${candidate.id}`}>
-                      Version de base
+                      {t('candidateDetail.baseVersion')}
                     </label>
                     <input
                       id={`cand-meta-trim-${candidate.id}`}
@@ -802,12 +806,12 @@ export function CandidateDetail({
                       onChange={e =>
                         setMeta(m => ({ ...m, trim: e.target.value }))
                       }
-                      placeholder="Vide = « Générique » (version de base)"
+                      placeholder={t('candidateDetail.trimPlaceholderRoot')}
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-date-${candidate.id}`}>
-                      Année(s) / période / génération
+                      {t('candidateDetail.yearPeriodGen')}
                     </label>
                     <input
                       id={`cand-meta-date-${candidate.id}`}
@@ -817,14 +821,14 @@ export function CandidateDetail({
                       onChange={e =>
                         setMeta(m => ({ ...m, event_date: e.target.value }))
                       }
-                      placeholder="ex. 2024, 2020-2023, printemps 2025"
+                      placeholder={t('candidateDetail.datePlaceholder')}
                     />
                   </div>
                 </div>
                 <div className="row">
                   <div style={{ flex: '1 1 200px' }}>
                     <label htmlFor={`cand-meta-st-root-${candidate.id}`}>
-                      Statut
+                      {t('candidateDetail.status')}
                     </label>
                     <select
                       id={`cand-meta-st-root-${candidate.id}`}
@@ -847,7 +851,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 200px' }}>
                     <label htmlFor={`cand-meta-rej-root-${candidate.id}`}>
-                      Raison si rejet
+                      {t('candidateDetail.rejectReason')}
                     </label>
                     <input
                       id={`cand-meta-rej-root-${candidate.id}`}
@@ -864,7 +868,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-brand-${candidate.id}`}>
-                      Marque
+                      {t('candidateDetail.brand')}
                     </label>
                     <input
                       id={`cand-meta-brand-${candidate.id}`}
@@ -876,7 +880,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-model-${candidate.id}`}>
-                      Modèle
+                      {t('candidateDetail.model')}
                     </label>
                     <input
                       id={`cand-meta-model-${candidate.id}`}
@@ -890,7 +894,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-basever-${candidate.id}`}>
-                      Version de base
+                      {t('candidateDetail.baseVersion')}
                     </label>
                     <input
                       id={`cand-meta-basever-${candidate.id}`}
@@ -905,7 +909,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
-                      Année(s) / période / génération
+                      {t('candidateDetail.yearPeriodGen')}
                     </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
@@ -919,7 +923,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 100%' }}>
                     <label htmlFor={`cand-meta-trim-${candidate.id}`}>
-                      Version complémentaire
+                      {t('candidateDetail.additionalVersion')}
                     </label>
                     <input
                       id={`cand-meta-trim-${candidate.id}`}
@@ -927,7 +931,7 @@ export function CandidateDetail({
                       onChange={e =>
                         setMeta(m => ({ ...m, trim: e.target.value }))
                       }
-                      placeholder="ex. finition, pack, motorisation…"
+                      placeholder={t('candidateDetail.trimPlaceholderChild')}
                     />
                   </div>
                 </div>
@@ -935,13 +939,12 @@ export function CandidateDetail({
             ) : (
               <>
                 <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                  Parent introuvable : identité en lecture seule depuis cette
-                  ligne.
+                  {t('candidateDetail.parentMissingReadonly')}
                 </p>
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-brand-${candidate.id}`}>
-                      Marque
+                      {t('candidateDetail.brand')}
                     </label>
                     <input
                       id={`cand-meta-brand-${candidate.id}`}
@@ -953,7 +956,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-model-${candidate.id}`}>
-                      Modèle
+                      {t('candidateDetail.model')}
                     </label>
                     <input
                       id={`cand-meta-model-${candidate.id}`}
@@ -967,7 +970,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-period-ro-${candidate.id}`}>
-                      Année(s) / période / génération
+                      {t('candidateDetail.yearPeriodGen')}
                     </label>
                     <input
                       id={`cand-meta-period-ro-${candidate.id}`}
@@ -979,7 +982,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-trim-${candidate.id}`}>
-                      Version complémentaire
+                      {t('candidateDetail.additionalVersion')}
                     </label>
                     <input
                       id={`cand-meta-trim-${candidate.id}`}
@@ -999,8 +1002,7 @@ export function CandidateDetail({
               className="muted"
               style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.45 }}
             >
-              Plusieurs variations : ouvrez chaque ligne complément pour
-              renseigner détails véhicule, données constructeur, photos et avis.
+              {t('candidateDetail.multipleVariations')}
             </p>
           ) : null}
 
@@ -1013,13 +1015,13 @@ export function CandidateDetail({
               onToggle={e => setVehDetailsOpen(e.currentTarget.open)}
             >
               <summary className="home-accordion-summary">
-                Détails du véhicule
+                {t('candidateDetail.vehicleDetails')}
                 {isVehicleDetailMetaEmpty(meta) ? (
                   <span
                     className="muted"
                     style={{ fontWeight: 400, marginLeft: '0.35rem' }}
                   >
-                    (vide)
+                    {t('candidateDetail.empty')}
                   </span>
                 ) : null}
               </summary>
@@ -1027,7 +1029,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-engine-${candidate.id}`}>
-                      Motorisation
+                      {t('candidateDetail.engine')}
                     </label>
                     <input
                       id={`cand-meta-engine-${candidate.id}`}
@@ -1039,7 +1041,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-price-${candidate.id}`}>
-                      Prix
+                      {t('candidateDetail.price')}
                     </label>
                     <input
                       id={`cand-meta-price-${candidate.id}`}
@@ -1068,14 +1070,14 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-mileage-${candidate.id}`}>
-                      Kilométrage (km)
+                      {t('candidateDetail.mileage')}
                     </label>
                     <input
                       id={`cand-meta-mileage-${candidate.id}`}
                       type="text"
                       inputMode="numeric"
                       autoComplete="off"
-                      placeholder="ex. 45 000"
+                      placeholder={t('candidateDetail.mileagePlaceholder')}
                       value={meta.mileage_km}
                       onChange={e =>
                         setMeta(m => ({
@@ -1107,7 +1109,7 @@ export function CandidateDetail({
                 <div className="row" style={{ flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-circ-${candidate.id}`}>
-                      Mise en circulation
+                      {t('candidateDetail.firstRegistration')}
                     </label>
                     <input
                       id={`cand-meta-circ-${candidate.id}`}
@@ -1120,13 +1122,13 @@ export function CandidateDetail({
                           first_registration: e.target.value,
                         }))
                       }
-                      placeholder="ex. 12/03/2019, mars 2019…"
+                      placeholder={t('candidateDetail.firstRegPlaceholder')}
                       maxLength={120}
                     />
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-energy-${candidate.id}`}>
-                      Énergie / carburant
+                      {t('candidateDetail.energy')}
                     </label>
                     <input
                       id={`cand-meta-energy-${candidate.id}`}
@@ -1137,7 +1139,7 @@ export function CandidateDetail({
                       onChange={e =>
                         setMeta(m => ({ ...m, energy: e.target.value }))
                       }
-                      placeholder="ex. Essence, Électrique…"
+                      placeholder={t('candidateDetail.energyPlaceholder')}
                       maxLength={120}
                     />
                     <datalist id={`cand-meta-energy-dl-${candidate.id}`}>
@@ -1148,7 +1150,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 160px' }}>
                     <label htmlFor={`cand-meta-gear-${candidate.id}`}>
-                      Boîte de vitesses
+                      {t('candidateDetail.gearbox')}
                     </label>
                     <input
                       id={`cand-meta-gear-${candidate.id}`}
@@ -1159,7 +1161,7 @@ export function CandidateDetail({
                       onChange={e =>
                         setMeta(m => ({ ...m, gearbox: e.target.value }))
                       }
-                      placeholder="ex. Automatique, Manuelle…"
+                      placeholder={t('candidateDetail.gearboxPlaceholder')}
                       maxLength={120}
                     />
                     <datalist id={`cand-meta-gear-dl-${candidate.id}`}>
@@ -1172,11 +1174,11 @@ export function CandidateDetail({
                 <div>
                   <GarageLocationInput
                     id={`cand-meta-garage-${candidate.id}`}
-                    label="Garage / lieu"
+                    label={t('candidateDetail.garageLabel')}
                     value={meta.garage_location}
                     onChange={v => setMeta(m => ({ ...m, garage_location: v }))}
                     suggestions={garageSuggestions}
-                    placeholder="Saisie libre ou choix dans la liste"
+                    placeholder={t('candidateDetail.garagePlaceholder')}
                   />
                 </div>
                 <ManufacturerLinksEditor
@@ -1188,7 +1190,7 @@ export function CandidateDetail({
                 />
                 <div>
                   <label htmlFor={`cand-meta-opt-${candidate.id}`}>
-                    Options
+                    {t('candidateDetail.options')}
                   </label>
                   <textarea
                     id={`cand-meta-opt-${candidate.id}`}
@@ -1201,7 +1203,7 @@ export function CandidateDetail({
                 <div className="row">
                   <div style={{ flex: '1 1 200px' }}>
                     <label htmlFor={`cand-meta-st-${candidate.id}`}>
-                      Statut
+                      {t('candidateDetail.status')}
                     </label>
                     <select
                       id={`cand-meta-st-${candidate.id}`}
@@ -1224,7 +1226,7 @@ export function CandidateDetail({
                   </div>
                   <div style={{ flex: '1 1 200px' }}>
                     <label htmlFor={`cand-meta-rej-${candidate.id}`}>
-                      Raison si rejet
+                      {t('candidateDetail.rejectReason')}
                     </label>
                     <input
                       id={`cand-meta-rej-${candidate.id}`}
@@ -1239,7 +1241,7 @@ export function CandidateDetail({
             </details>
           ) : null}
 
-          <button type="submit">Enregistrer la fiche</button>
+          <button type="submit">{t('candidateDetail.saveSheet')}</button>
         </form>
       ) : null}
 
@@ -1247,7 +1249,7 @@ export function CandidateDetail({
       candidate.parent_candidate_id &&
       !manufacturerLinksAreEmpty(candidate.manufacturer_links) ? (
         <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h4 style={{ margin: 0 }}>Liens</h4>
+          <h4 style={{ margin: 0 }}>{t('candidateDetail.links')}</h4>
           <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
             {candidate.manufacturer_links.map((l, i) => (
               <li key={`${l.url}-${i}`}>
@@ -1274,13 +1276,13 @@ export function CandidateDetail({
             onToggle={e => setSpecsAccordionOpen(e.currentTarget.open)}
           >
             <summary className="home-accordion-summary">
-              Données constructeur
+              {t('candidateDetail.manufacturerData')}
               {!hasCandidateSpecVisibleData(specs) ? (
                 <span
                   className="muted"
                   style={{ fontWeight: 400, marginLeft: '0.35rem' }}
                 >
-                  (vide)
+                  {t('candidateDetail.empty')}
                 </span>
               ) : null}
             </summary>
@@ -1289,8 +1291,7 @@ export function CandidateDetail({
                 className="muted"
                 style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}
               >
-                Champs indicatifs (WLTP, NEDC ou données brochure). Les unités
-                sont rappelées dans les libellés.
+                {t('candidateDetail.specsHint')}
               </p>
               {candidateSpecFieldGroups.map(g => (
                 <div key={g.title} className="stack" style={{ gap: '0.5rem' }}>
@@ -1325,13 +1326,11 @@ export function CandidateDetail({
                   disabled={!canWrite}
                   rows={3}
                   maxLength={2000}
-                  placeholder="Norme, cycle, options, lien fiche PDF…"
+                  placeholder={t('candidateDetail.specsNotesPlaceholder')}
                 />
               </div>
               {canWrite ? (
-                <button type="submit">
-                  Enregistrer les données constructeur
-                </button>
+                <button type="submit">{t('candidateDetail.saveSpecs')}</button>
               ) : null}
             </div>
           </details>
@@ -1345,11 +1344,13 @@ export function CandidateDetail({
           open={reviewAccordionOpen}
           onToggle={e => setReviewAccordionOpen(e.currentTarget.open)}
         >
-          <summary className="home-accordion-summary">Mon avis (0–10)</summary>
+          <summary className="home-accordion-summary">
+            {t('candidateDetail.myReview')}
+          </summary>
           <div className="home-accordion-body stack">
             <div className="row">
               <div style={{ flex: '0 0 120px' }}>
-                <label>Note</label>
+                <label>{t('candidateDetail.score')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -1363,7 +1364,7 @@ export function CandidateDetail({
                 />
               </div>
               <div style={{ flex: '1 1 200px' }}>
-                <label>Commentaire</label>
+                <label>{t('candidateDetail.reviewComment')}</label>
                 <input
                   value={review.free_text}
                   onChange={e =>
@@ -1375,7 +1376,7 @@ export function CandidateDetail({
             </div>
             <div className="row">
               <div style={{ flex: '1 1 200px' }}>
-                <label>Points forts</label>
+                <label>{t('candidateDetail.pros')}</label>
                 <input
                   value={review.pros}
                   onChange={e =>
@@ -1385,7 +1386,7 @@ export function CandidateDetail({
                 />
               </div>
               <div style={{ flex: '1 1 200px' }}>
-                <label>Points faibles</label>
+                <label>{t('candidateDetail.cons')}</label>
                 <input
                   value={review.cons}
                   onChange={e =>
@@ -1396,7 +1397,7 @@ export function CandidateDetail({
               </div>
             </div>
             {canWrite ? (
-              <button type="submit">Enregistrer mon avis</button>
+              <button type="submit">{t('candidateDetail.saveReview')}</button>
             ) : null}
           </div>
         </details>
@@ -1410,12 +1411,13 @@ export function CandidateDetail({
         onToggle={e => setCommentsAccordionOpen(e.currentTarget.open)}
       >
         <summary className="home-accordion-summary">
-          Commentaires
+          {t('candidateDetail.comments')}
           <span
             className="muted"
             style={{ fontWeight: 400, marginLeft: '0.35rem' }}
           >
-            ({comments.length}){comments.length === 0 ? ' — vide' : ''}
+            ({comments.length})
+            {comments.length === 0 ? t('candidateDetail.emptySuffix') : ''}
           </span>
         </summary>
         <div className="home-accordion-body stack">
@@ -1441,7 +1443,7 @@ export function CandidateDetail({
               <IconActionButton
                 nativeType="submit"
                 variant="primary"
-                label="Envoyer le commentaire"
+                label={t('candidateDetail.sendComment')}
               >
                 <IconSend />
               </IconActionButton>
@@ -1459,14 +1461,13 @@ export function CandidateDetail({
           onToggle={e => setPhotosAccordionOpen(e.currentTarget.open)}
         >
           <summary className="home-accordion-summary">
-            Photos (max 5 Mo, JPEG/PNG/WebP/GIF — compression proposée si
-            besoin)
+            {t('candidateDetail.photosSummary')}
             {!photos.length ? (
               <span
                 className="muted"
                 style={{ fontWeight: 400, marginLeft: '0.35rem' }}
               >
-                (vide)
+                {t('candidateDetail.empty')}
               </span>
             ) : (
               <span
@@ -1486,9 +1487,7 @@ export function CandidateDetail({
                   onChange={e => void onFile(e.target.files?.[0] ?? null)}
                 />
                 <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
-                  Si le fichier dépasse 5 Mo, vous pourrez le compresser
-                  automatiquement (JPEG, taille et qualité ajustées) avant
-                  envoi.
+                  {t('candidateDetail.photoCompressHint')}
                 </p>
               </>
             ) : null}
@@ -1498,7 +1497,10 @@ export function CandidateDetail({
                   key={p.id}
                   type="button"
                   onClick={() => setPhotoViewerIndex(i)}
-                  aria-label={`Agrandir la photo ${i + 1} sur ${photos.length}`}
+                  aria-label={t('candidateDetail.enlargePhoto', {
+                    index: i + 1,
+                    total: photos.length,
+                  })}
                   style={{
                     padding: 0,
                     border: '1px solid var(--border, #333)',
@@ -1552,28 +1554,30 @@ export function CandidateDetail({
             aria-describedby="compress-photo-desc"
           >
             <h2 id="compress-photo-title" className="error-dialog-title">
-              Image trop volumineuse
+              {t('candidateDetail.imageTooLarge')}
             </h2>
             <p id="compress-photo-desc" className="error-dialog-message">
-              Ce fichier fait environ{' '}
+              {t('candidateDetail.oversizedIntro')}{' '}
               <strong>
-                {(pendingOversizedPhoto.size / (1024 * 1024))
-                  .toFixed(1)
-                  .replace('.', ',')}{' '}
-                Mo
+                {t('candidateDetail.oversizedApproxSize', {
+                  size: (pendingOversizedPhoto.size / (1024 * 1024))
+                    .toFixed(1)
+                    .replace('.', ','),
+                })}
               </strong>{' '}
-              (limite {MAX_IMAGE_BYTES / 1024 / 1024} Mo). Vous pouvez le{' '}
-              <strong>compresser automatiquement</strong> (réduction des
-              dimensions et qualité, export JPEG) pour l’envoyer.
+              {t('candidateDetail.oversizedLimit', {
+                limit: MAX_IMAGE_BYTES / 1024 / 1024,
+              })}{' '}
+              <strong>{t('candidateDetail.oversizedCompressStrong')}</strong>{' '}
+              {t('candidateDetail.oversizedSuffix')}
             </p>
             <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-              Les GIF animés deviennent une image fixe. La transparence des PNG
-              est remplacée par un fond.
+              {t('candidateDetail.oversizedNote')}
             </p>
             <div className="error-dialog-actions">
               <IconActionButton
                 variant="secondary"
-                label="Annuler"
+                label={t('common.cancel')}
                 onClick={dismissCompressOffer}
                 disabled={compressingPhoto}
                 ref={compressCancelRef}
@@ -1583,7 +1587,9 @@ export function CandidateDetail({
               <IconActionButton
                 variant="primary"
                 label={
-                  compressingPhoto ? 'Compression…' : 'Compresser et envoyer'
+                  compressingPhoto
+                    ? t('candidateDetail.compressing')
+                    : t('candidateDetail.compressAndSend')
                 }
                 onClick={() => void confirmCompressAndUpload()}
                 disabled={compressingPhoto}

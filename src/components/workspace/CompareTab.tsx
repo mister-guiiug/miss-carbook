@@ -27,6 +27,7 @@ import {
 } from '../ui/IconActionButton';
 import { EmptyState } from '../ui/EmptyState';
 import { PhotoComparisonGrid } from './compare/PhotoComparisonGrid';
+import { useI18n } from '../../i18n';
 
 const CompareTabRadar = lazy(() => import('./CompareTabRadar'));
 
@@ -58,15 +59,6 @@ function download(filename: string, mime: string, text: string) {
 }
 
 type ColDef = { key: string; header: string; align: 'left' | 'right' };
-
-const COMPARE_STATIC_COLS: ColDef[] = [
-  { key: 'libellé', header: 'Libellé', align: 'left' },
-  { key: 'marque', header: 'Marque', align: 'left' },
-  { key: 'modele', header: 'Modèle', align: 'left' },
-  { key: 'finition', header: 'Finition', align: 'left' },
-  { key: 'motorisation', header: 'Motorisation', align: 'left' },
-  { key: 'statut', header: 'Statut', align: 'left' },
-];
 
 function toCsv(
   columnOrder: string[],
@@ -141,6 +133,7 @@ export function CompareTab({
   workspaceId: string;
   canWrite: boolean;
 }) {
+  const { t } = useI18n();
   const { showToast } = useToast();
   const { reportException } = useErrorDialog();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -171,7 +164,7 @@ export function CompareTab({
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true });
     if (error) {
-      reportException(error, 'Chargement des modèles (comparer)');
+      reportException(error, t('compare.ctxLoadModels'));
       return;
     }
     const list = (data ?? []).map(row => ({
@@ -215,7 +208,7 @@ export function CompareTab({
       .select('candidate_id, score')
       .in('candidate_id', ids);
     setReviews(revs ?? []);
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void loadCandidates();
@@ -246,13 +239,12 @@ export function CompareTab({
   const avgByCand = useMemo(() => {
     const map: Record<string, { sum: number; n: number }> = {};
     for (const r of reviews) {
-      if (!map[r.candidate_id]) map[r.candidate_id] = { sum: 0, n: 0 };
-      map[r.candidate_id].sum += Number(r.score);
-      map[r.candidate_id].n += 1;
+      const agg = (map[r.candidate_id] ??= { sum: 0, n: 0 });
+      agg.sum += Number(r.score);
+      agg.n += 1;
     }
     const out: Record<string, number | null> = {};
-    for (const id of Object.keys(map)) {
-      const { sum, n } = map[id];
+    for (const [id, { sum, n }] of Object.entries(map)) {
       out[id] = n ? Math.round((sum / n) * 10) / 10 : null;
     }
     return out;
@@ -274,24 +266,38 @@ export function CompareTab({
   }, [workspaceId, picked, avgByCand]);
 
   const tableColumns = useMemo((): ColDef[] => {
+    const staticCols: ColDef[] = [
+      { key: 'libellé', header: t('compare.cols.libelle'), align: 'left' },
+      { key: 'marque', header: t('compare.cols.marque'), align: 'left' },
+      { key: 'modele', header: t('compare.cols.modele'), align: 'left' },
+      { key: 'finition', header: t('compare.cols.finition'), align: 'left' },
+      {
+        key: 'motorisation',
+        header: t('compare.cols.motorisation'),
+        align: 'left',
+      },
+      { key: 'statut', header: t('compare.cols.statut'), align: 'left' },
+    ];
     const crit: ColDef[] = CRITERIA.filter(c => criteria[c.key]).map(c => ({
       key: c.label,
       header: c.label,
       align: c.numeric ? 'right' : 'left',
     }));
-    return [...COMPARE_STATIC_COLS, ...crit];
-  }, [criteria]);
+    return [...staticCols, ...crit];
+  }, [criteria, t]);
 
   const tableRows = useMemo(() => {
     return picked.map(c => {
       const spec = (c.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       const row: Record<string, string | number | null> = {
-        libellé: c.is_current ? 'Véhicule actuel' : formatCandidateListLabel(c),
+        libellé: c.is_current
+          ? t('compare.currentVehicle')
+          : formatCandidateListLabel(c),
         marque: c.brand,
         modele: c.model,
         finition: c.trim,
         motorisation: c.engine,
-        statut: c.is_current ? 'Actuel' : c.status,
+        statut: c.is_current ? t('compare.statusCurrent') : c.status,
       };
       for (const def of CRITERIA) {
         if (!criteria[def.key]) continue;
@@ -312,7 +318,7 @@ export function CompareTab({
       }
       return row;
     });
-  }, [picked, criteria, avgByCand]);
+  }, [picked, criteria, avgByCand, t]);
 
   const csvColumnOrder = useMemo(
     () => tableColumns.map(c => c.key),
@@ -326,22 +332,23 @@ export function CompareTab({
     if (picked.length < 2 || keys.length < 2) return [];
     const raw: Record<string, Record<string, number>> = {};
     for (const p of picked) {
-      raw[p.id] = {};
+      const row: Record<string, number> = {};
+      raw[p.id] = row;
       const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       for (const k of keys) {
         let v = 0;
         if (k === 'price') v = p.price ?? 0;
         else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0;
         else v = Number(spec[k]) || 0;
-        raw[p.id][k] = v;
+        row[k] = v;
       }
     }
     const normKey = (k: string) => {
-      const vals = picked.map(p => raw[p.id][k]);
+      const vals = picked.map(p => raw[p.id]?.[k] ?? 0);
       const min = Math.min(...vals);
       const max = Math.max(...vals);
       const span = max - min || 1;
-      return (p: Candidate) => (raw[p.id][k] - min) / span;
+      return (p: Candidate) => ((raw[p.id]?.[k] ?? 0) - min) / span;
     };
     return keys.map(k => {
       const row: Record<string, string | number> = {
@@ -367,7 +374,7 @@ export function CompareTab({
       'application/json',
       JSON.stringify(tableRows, null, 2)
     );
-    showToast('Export JSON téléchargé');
+    showToast(t('compare.toastJson'));
   };
   const exportCsv = () => {
     download(
@@ -375,7 +382,7 @@ export function CompareTab({
       'text/csv;charset=utf-8',
       toCsv(csvColumnOrder, tableRows)
     );
-    showToast('Export CSV téléchargé');
+    showToast(t('compare.toastCsv'));
   };
 
   const savePreset = async () => {
@@ -398,14 +405,14 @@ export function CompareTab({
         .select('id, name, criteria_keys')
         .eq('workspace_id', workspaceId);
       setPresets((data ?? []) as Preset[]);
-      showToast('Profil de critères enregistré');
+      showToast(t('compare.toastPresetSaved'));
     }
   };
 
   const applyPreset = (p: Preset) => {
     const set = new Set(p.criteria_keys);
     setCriteria(Object.fromEntries(CRITERIA.map(c => [c.key, set.has(c.key)])));
-    showToast(`Profil « ${p.name} » appliqué`);
+    showToast(t('compare.toastPresetApplied', { name: p.name }));
   };
 
   const printCompare = () => {
@@ -414,13 +421,10 @@ export function CompareTab({
 
   return (
     <div className="stack compare-tab">
-      <p className="muted">
-        Profils de critères, graphique radar (valeurs normalisées), exports et
-        impression.
-      </p>
+      <p className="muted">{t('compare.intro')}</p>
 
       <div className="card stack no-print" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Profils enregistrés</h3>
+        <h3 style={{ margin: 0 }}>{t('compare.presetsTitle')}</h3>
         <div className="row" style={{ flexWrap: 'wrap', gap: '0.35rem' }}>
           {presets.map(p => (
             <button
@@ -439,14 +443,14 @@ export function CompareTab({
             style={{ alignItems: 'center' }}
           >
             <input
-              placeholder="Nom du profil"
+              placeholder={t('compare.presetNamePlaceholder')}
               value={presetName}
               onChange={e => setPresetName(e.target.value)}
               style={{ flex: 1 }}
             />
             <IconActionButton
               variant="primary"
-              label="Enregistrer le profil de critères actuels"
+              label={t('compare.savePresetLabel')}
               onClick={() => void savePreset()}
             >
               <IconSave />
@@ -463,13 +467,13 @@ export function CompareTab({
           className="compare-pick-heading row"
           style={{ justifyContent: 'space-between' }}
         >
-          <h3 style={{ margin: 0 }}>Modèles</h3>
+          <h3 style={{ margin: 0 }}>{t('compare.modelsTitle')}</h3>
           {candidates.length > 0 || currentVehicle ? (
             <span className="compare-pick-count muted" aria-live="polite">
               <strong className="compare-pick-count-num">
                 {selectedCount}
               </strong>{' '}
-              dans le tableau
+              {t('compare.inTable')}
             </span>
           ) : null}
         </div>
@@ -477,14 +481,13 @@ export function CompareTab({
           className="muted compare-pick-hint"
           style={{ margin: 0, fontSize: '0.88rem' }}
         >
-          Cartes surlignées = inclus dans la comparaison. Cochez au moins les
-          modèles à comparer.
+          {t('compare.pickHint')}
         </p>
         {candidates.length === 0 && !currentVehicle ? (
           <EmptyState
             icon="comparison"
-            title="Aucun modèle à comparer"
-            text="Ajoutez des véhicules dans l’onglet Modèles pour les comparer ici."
+            title={t('compare.emptyTitle')}
+            text={t('compare.emptyText')}
           />
         ) : (
           <div className="compare-pick-grid">
@@ -500,9 +503,11 @@ export function CompareTab({
                   onChange={() => toggleCand(currentVehicle.id)}
                 />
                 <span className="compare-pick-card-main">
-                  <span className="compare-pick-title">Véhicule actuel</span>
+                  <span className="compare-pick-title">
+                    {t('compare.currentVehicle')}
+                  </span>
                   <span className="compare-pick-sub muted">
-                    Référence dossier
+                    {t('compare.dossierRef')}
                   </span>
                 </span>
                 <span className="compare-pick-tick" aria-hidden="true">
@@ -543,7 +548,7 @@ export function CompareTab({
       </div>
 
       <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Critères</h3>
+        <h3 style={{ margin: 0 }}>{t('compare.criteriaTitle')}</h3>
         <div className="row" style={{ flexWrap: 'wrap' }}>
           {CRITERIA.map(c => (
             <label key={c.key} className="row" style={{ gap: '0.35rem' }}>
@@ -561,7 +566,7 @@ export function CompareTab({
       <div className="row no-print icon-action-toolbar">
         <IconActionButton
           variant="secondary"
-          label="Comparer les photos"
+          label={t('compare.comparePhotosLabel')}
           onClick={() => setShowPhotoComparison(true)}
           disabled={picked.length < 2}
         >
@@ -569,7 +574,7 @@ export function CompareTab({
         </IconActionButton>
         <IconActionButton
           variant="secondary"
-          label="Exporter la comparaison en JSON"
+          label={t('compare.exportJsonLabel')}
           onClick={exportJson}
           disabled={!tableRows.length}
         >
@@ -577,7 +582,7 @@ export function CompareTab({
         </IconActionButton>
         <IconActionButton
           variant="secondary"
-          label="Exporter la comparaison en CSV"
+          label={t('compare.exportCsvLabel')}
           onClick={exportCsv}
           disabled={!tableRows.length}
         >
@@ -585,7 +590,7 @@ export function CompareTab({
         </IconActionButton>
         <IconActionButton
           variant="secondary"
-          label="Imprimer ou enregistrer en PDF"
+          label={t('compare.printLabel')}
           onClick={printCompare}
           disabled={!tableRows.length}
         >
@@ -594,7 +599,7 @@ export function CompareTab({
       </div>
 
       <div ref={printRef} className="print-area">
-        <h2 className="print-only">Comparaison Miss Carbook</h2>
+        <h2 className="print-only">{t('compare.printTitle')}</h2>
         <div className="table-wrap compare-table-wrap">
           <table className="compare-table">
             <thead>
@@ -647,16 +652,14 @@ export function CompareTab({
                   alignItems: 'center',
                 }}
               >
-                Chargement du graphique…
+                {t('compare.chartLoading')}
               </p>
             }
           >
             <CompareTabRadar radarData={radarData} picked={picked} />
           </Suspense>
         ) : (
-          <p className="muted print-only">
-            Graphique : sélectionnez au moins 2 modèles et critères numériques.
-          </p>
+          <p className="muted print-only">{t('compare.chartHint')}</p>
         )}
       </div>
 

@@ -9,6 +9,7 @@ import { TrustBanner } from './components/TrustBanner';
 import { TopBar } from './components/TopBar';
 import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './pages/HomePage';
+import { useI18n } from './i18n';
 
 const AccountSettingsPage = lazy(() =>
   import('./pages/AccountSettingsPage').then(m => ({
@@ -25,19 +26,21 @@ const AssistantWelcomePage = lazy(() =>
 );
 
 function RouteFallback() {
+  const { t } = useI18n();
   return (
     <div className="shell">
-      <p className="muted">Chargement de la page…</p>
+      <p className="muted">{t('common.loadingPage')}</p>
     </div>
   );
 }
 
 export default function App() {
+  const { t } = useI18n();
   return (
     <ErrorDialogProvider>
       <ToastProvider>
         <a href="#contenu-principal" className="skip-link">
-          Aller au contenu principal
+          {t('app.skipToContent')}
         </a>
         <div className="app-shell">
           <PseudoGate>

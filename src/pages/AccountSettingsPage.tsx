@@ -19,6 +19,8 @@ import {
 } from '../lib/validation/schemas';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
+import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
+import { useI18n } from '../i18n';
 import type { ThemeMode } from '../lib/theme';
 
 export function AccountSettingsPage() {
@@ -28,6 +30,7 @@ export function AccountSettingsPage() {
   const { needRefresh, reloadToLatest } = useUpdatePrompt();
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
+  const { t, locale, setLocale, locales } = useI18n();
   const [reloadBusy, setReloadBusy] = useState(false);
 
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -75,7 +78,8 @@ export function AccountSettingsPage() {
     if (!user) return;
     const parsed = displayNameSchema.safeParse(pseudoDraft);
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'Pseudo invalide';
+      const msg =
+        parsed.error.issues[0]?.message ?? t('account.errPseudoInvalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -88,7 +92,7 @@ export function AccountSettingsPage() {
       if (error) throw error;
       setDisplayName(parsed.data);
       notifyProfileUpdated();
-      showToast('Pseudo mis à jour');
+      showToast(t('account.toastPseudoSaved'));
     } catch (err: unknown) {
       reportMessage(formatProfileSaveError(err), String(err));
     } finally {
@@ -102,7 +106,8 @@ export function AccountSettingsPage() {
     setEmailFeedback(null);
     const parsed = changeEmailSchema.safeParse({ email: emailDraft });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? 'E-mail invalide';
+      const msg =
+        parsed.error.issues[0]?.message ?? t('account.errEmailInvalid');
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
@@ -110,7 +115,7 @@ export function AccountSettingsPage() {
     if (next === user.email) {
       setEmailFeedback({
         variant: 'info',
-        text: 'C’est déjà l’adresse enregistrée sur ce compte.',
+        text: t('account.emailAlready'),
       });
       return;
     }
@@ -123,16 +128,16 @@ export function AccountSettingsPage() {
       if (error) throw error;
       setEmailFeedback({
         variant: 'info',
-        text: 'Si le projet l’exige, un e-mail de confirmation sera envoyé à la nouvelle adresse (et parfois à l’ancienne). Ouvrez le lien pour finaliser le changement.',
+        text: t('account.emailConfirmSent'),
       });
-      showToast('Demande de changement d’e-mail envoyée');
+      showToast(t('account.toastEmailRequested'));
     } catch (err: unknown) {
       const friendly =
         formatAuthCredentialError(err) ?? formatAuthEmailSendError(err);
       if (friendly) {
         setEmailFeedback({ variant: 'error', text: friendly });
       } else {
-        reportException(err, 'Changement d’adresse e-mail');
+        reportException(err, t('account.ctxEmailChange'));
       }
     } finally {
       setEmailBusy(false);
@@ -151,15 +156,15 @@ export function AccountSettingsPage() {
       if (error) throw error;
       setEmailFeedback({
         variant: 'info',
-        text: 'Nouveau lien magique envoyé sur votre adresse actuelle.',
+        text: t('account.magicResent'),
       });
-      showToast('Lien magique envoyé');
+      showToast(t('account.toastMagicSent'));
     } catch (err: unknown) {
       const friendly = formatAuthEmailSendError(err);
       if (friendly) {
         setEmailFeedback({ variant: 'error', text: friendly });
       } else {
-        reportException(err, 'Renvoi du lien magique');
+        reportException(err, t('account.ctxMagicResend'));
       }
     } finally {
       setBusyMagic(false);
@@ -178,26 +183,26 @@ export function AccountSettingsPage() {
   if (!user) {
     return (
       <div className="shell">
-        <p className="muted">Chargement…</p>
+        <p className="muted">{t('common.loading')}</p>
       </div>
     );
   }
 
   return (
     <div className="shell settings-page">
-      <nav className="settings-back" aria-label="Navigation">
-        <Link to="/">← Retour à l’accueil</Link>
+      <nav className="settings-back" aria-label={t('account.navAria')}>
+        <Link to="/">← {t('account.backHome')}</Link>
       </nav>
 
       <header className="account-settings-header">
         <span className="settings-scope-badge settings-scope-badge--global">
-          Toute l’application
+          {t('account.scopeGlobal')}
         </span>
-        <h1>Paramètres généraux</h1>
+        <h1>{t('account.title')}</h1>
         <p className="muted settings-lead">
-          Compte, affichage sur cet appareil et outils d’application. Les
-          dossiers de recherche se configurent dans chaque dossier, onglet{' '}
-          <strong>Réglages</strong>.
+          {t('account.leadBefore')}
+          <strong>{t('account.leadSettingsTab')}</strong>
+          {t('account.leadAfter')}
         </p>
       </header>
 
@@ -206,17 +211,18 @@ export function AccountSettingsPage() {
           className="card stack settings-card"
           aria-labelledby="settings-account-heading"
         >
-          <h2 id="settings-account-heading">Compte</h2>
+          <h2 id="settings-account-heading">{t('account.sectionAccount')}</h2>
 
           <div className="settings-subsection">
             <h3
               className="settings-subsection-title"
               id="settings-pseudo-title"
             >
-              Pseudo
+              {t('account.pseudoTitle')}
             </h3>
             <p className="muted settings-hint">
-              Visible dans les dossiers et les commentaires. {displayNameRules}
+              {t('account.pseudoHint')}
+              {displayNameRules}
             </p>
             <form
               onSubmit={savePseudo}
@@ -224,7 +230,9 @@ export function AccountSettingsPage() {
               aria-labelledby="settings-pseudo-title"
             >
               <div>
-                <label htmlFor="settings-pseudo">Pseudo affiché</label>
+                <label htmlFor="settings-pseudo">
+                  {t('account.pseudoLabel')}
+                </label>
                 <input
                   id="settings-pseudo"
                   value={pseudoDraft}
@@ -234,7 +242,7 @@ export function AccountSettingsPage() {
                 />
               </div>
               <button type="submit" disabled={pseudoBusy || !pseudoDirty}>
-                {pseudoBusy ? 'Enregistrement…' : 'Enregistrer le pseudo'}
+                {pseudoBusy ? t('common.saving') : t('account.savePseudo')}
               </button>
             </form>
           </div>
@@ -243,14 +251,14 @@ export function AccountSettingsPage() {
 
           <div className="settings-subsection">
             <h3 className="settings-subsection-title" id="settings-email-title">
-              E-mail et connexion
+              {t('account.emailTitle')}
             </h3>
             <p className="muted settings-hint">
-              Identifiant du compte&nbsp;:{' '}
+              {t('account.emailIdentifier')}&nbsp;:{' '}
               {user.email ? (
                 <code>{user.email}</code>
               ) : (
-                <span>non renseigné</span>
+                <span>{t('account.emailNotSet')}</span>
               )}
             </p>
             {user.email ? (
@@ -261,7 +269,7 @@ export function AccountSettingsPage() {
                   disabled={busyMagic}
                   onClick={() => void resendMagicLink()}
                 >
-                  {busyMagic ? 'Envoi…' : 'Renvoyer un lien magique'}
+                  {busyMagic ? t('common.sending') : t('account.resendMagic')}
                 </button>
               </div>
             ) : null}
@@ -271,7 +279,9 @@ export function AccountSettingsPage() {
               aria-labelledby="settings-email-title"
             >
               <div>
-                <label htmlFor="settings-email">Nouvelle adresse e-mail</label>
+                <label htmlFor="settings-email">
+                  {t('account.newEmailLabel')}
+                </label>
                 <input
                   id="settings-email"
                   type="email"
@@ -296,7 +306,9 @@ export function AccountSettingsPage() {
                 </p>
               ) : null}
               <button type="submit" disabled={emailBusy || emailUnchanged}>
-                {emailBusy ? 'Envoi…' : 'Demander le changement d’e-mail'}
+                {emailBusy
+                  ? t('common.sending')
+                  : t('account.requestEmailChange')}
               </button>
             </form>
           </div>
@@ -306,29 +318,54 @@ export function AccountSettingsPage() {
           className="card stack settings-card"
           aria-labelledby="settings-display-heading"
         >
-          <h2 id="settings-display-heading">Affichage</h2>
-          <p className="muted settings-hint">
-            Thème enregistré localement sur cet appareil (clair ou sombre).
-          </p>
+          <h2 id="settings-display-heading">{t('account.sectionDisplay')}</h2>
+          <p className="muted settings-hint">{t('account.themeHint')}</p>
           <div
             className="settings-theme-row"
             role="group"
-            aria-label="Choix du thème"
+            aria-label={t('account.themeGroupAria')}
           >
             <button
               type="button"
               className={mode === 'light' ? undefined : 'secondary'}
               onClick={() => applyTheme('light')}
             >
-              Clair
+              {t('account.themeLight')}
             </button>
             <button
               type="button"
               className={mode === 'dark' ? undefined : 'secondary'}
               onClick={() => applyTheme('dark')}
             >
-              Sombre
+              {t('account.themeDark')}
             </button>
+          </div>
+
+          <hr className="settings-divider" />
+
+          <div className="settings-subsection">
+            <h3 className="settings-subsection-title">
+              {t('account.languageTitle')}
+            </h3>
+            <p className="muted settings-hint">{t('account.languageHint')}</p>
+            <div
+              className="settings-theme-row settings-language-row"
+              role="group"
+              aria-label={t('account.languageGroupAria')}
+            >
+              {locales.map(l => (
+                <button
+                  key={l}
+                  type="button"
+                  lang={l}
+                  className={locale === l ? undefined : 'secondary'}
+                  aria-pressed={locale === l}
+                  onClick={() => setLocale(l)}
+                >
+                  {l === 'fr' ? t('account.langFr') : t('account.langEn')}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -336,19 +373,17 @@ export function AccountSettingsPage() {
           className="card stack settings-card"
           aria-labelledby="settings-app-heading"
         >
-          <h2 id="settings-app-heading">Application</h2>
+          <h2 id="settings-app-heading">{t('account.sectionApp')}</h2>
 
           <div className="settings-subsection">
-            <h3 className="settings-subsection-title">Mise à jour</h3>
-            <p className="muted settings-hint">
-              Après une mise en ligne du site, rechargez pour bénéficier de la
-              dernière version. Sur navigateur ou PWA, le cache du service
-              worker est réappliqué si nécessaire.
-            </p>
+            <h3 className="settings-subsection-title">
+              {t('account.updateTitle')}
+            </h3>
+            <p className="muted settings-hint">{t('account.updateHint')}</p>
             {needRefresh ? (
               <p className="muted settings-hint" role="status">
-                <strong>Mise à jour disponible</strong> — le bouton ci-dessous
-                installera la nouvelle version puis rechargera la page.
+                <strong>{t('account.updateReadyTitle')}</strong>
+                {t('account.updateReadyNote')}
               </p>
             ) : null}
             <button
@@ -356,21 +391,17 @@ export function AccountSettingsPage() {
               disabled={reloadBusy}
               onClick={onReloadLatest}
             >
-              {reloadBusy
-                ? 'Rechargement…'
-                : 'Recharger vers la dernière version'}
+              {reloadBusy ? t('account.reloading') : t('account.reloadLatest')}
             </button>
           </div>
 
           <hr className="settings-divider" />
 
           <div className="settings-subsection">
-            <h3 className="settings-subsection-title">Visite guidée</h3>
-            <p className="muted settings-hint">
-              Réinitialise les écrans « déjà vus » (accueil, invitation, premier
-              passage dans un dossier sur petit écran). Puis rouvrez l’accueil
-              ou lancez la visite ci-dessous.
-            </p>
+            <h3 className="settings-subsection-title">
+              {t('account.tourTitle')}
+            </h3>
+            <p className="muted settings-hint">{t('account.tourHint')}</p>
             <div className="settings-actions-row">
               <button
                 type="button"
@@ -382,16 +413,28 @@ export function AccountSettingsPage() {
                   } catch {
                     /* ignore */
                   }
-                  showToast('Visite guidée réinitialisée.');
+                  showToast(t('account.toastTourReset'));
                 }}
               >
-                Réinitialiser les indicateurs
+                {t('account.tourReset')}
               </button>
               <button type="button" onClick={() => navigate('/assistant')}>
-                Lancer la visite d’accueil
+                {t('account.tourStart')}
               </button>
             </div>
           </div>
+        </section>
+
+        <section
+          className="card stack settings-card mc-family"
+          aria-labelledby="settings-family-heading"
+        >
+          <FamilyApps
+            currentAppId="miss-carbook"
+            showSource={false}
+            showSponsor={false}
+            labels={{ otherApps: t('account.otherApps') }}
+          />
         </section>
       </div>
     </div>

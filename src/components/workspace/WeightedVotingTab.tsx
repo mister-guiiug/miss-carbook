@@ -5,6 +5,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus, RequirementLevel } from '../../types/database';
 import { EmptyState } from '../ui/EmptyState';
+import { useI18n } from '../../i18n';
 
 type Req = {
   id: string;
@@ -45,15 +46,6 @@ type Profile = {
   display_name: string;
 };
 
-const CATEGORIES = [
-  { value: 'overall', label: 'Global' },
-  { value: 'design', label: 'Design' },
-  { value: 'performance', label: 'Performances' },
-  { value: 'comfort', label: 'Confort' },
-  { value: 'value', label: 'Rapport qualité/prix' },
-  { value: 'reliability', label: 'Fiabilité' },
-] as const;
-
 type VoteTab = 'requirements' | 'candidates' | 'weights';
 
 export function WeightedVotingTab({
@@ -67,6 +59,15 @@ export function WeightedVotingTab({
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
+  const CATEGORIES = [
+    { value: 'overall', label: t('voting.categoryOverall') },
+    { value: 'design', label: t('voting.categoryDesign') },
+    { value: 'performance', label: t('voting.categoryPerformance') },
+    { value: 'comfort', label: t('voting.categoryComfort') },
+    { value: 'value', label: t('voting.categoryValue') },
+    { value: 'reliability', label: t('voting.categoryReliability') },
+  ];
   const [reqs, setReqs] = useState<Req[]>([]);
   const [cands, setCands] = useState<Cand[]>([]);
   const [reqVotes, setReqVotes] = useState<WeightedReqVote[]>([]);
@@ -97,7 +98,7 @@ export function WeightedVotingTab({
 
     const firstErr =
       r.error ?? c.error ?? rv.error ?? cv.error ?? vw.error ?? p.error;
-    if (firstErr) reportException(firstErr, 'Chargement des votes pondérés');
+    if (firstErr) reportException(firstErr, t('voting.ctxLoad'));
 
     setReqs((r.data ?? []) as Req[]);
     setCands((c.data ?? []) as Cand[]);
@@ -105,7 +106,7 @@ export function WeightedVotingTab({
     setCandVotes((cv.data ?? []) as WeightedCandVote[]);
     setVotingWeights((vw.data ?? []) as VotingWeight[]);
     setProfiles((p.data ?? []) as Profile[]);
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -129,10 +130,10 @@ export function WeightedVotingTab({
         { requirement_id: requirementId, user_id: userId, weight },
         { onConflict: 'requirement_id,user_id' }
       );
-    if (error) reportException(error, 'Mise à jour du vote pondéré');
+    if (error) reportException(error, t('voting.ctxUpdateVote'));
     else {
       await load();
-      showToast('Vote enregistré');
+      showToast(t('voting.toastVoteSaved'));
     }
   };
 
@@ -148,10 +149,10 @@ export function WeightedVotingTab({
         { candidate_id: candidateId, user_id: userId, category, weight },
         { onConflict: 'candidate_id,user_id,category' }
       );
-    if (error) reportException(error, 'Mise à jour du vote pondéré');
+    if (error) reportException(error, t('voting.ctxUpdateVote'));
     else {
       await load();
-      showToast('Vote enregistré');
+      showToast(t('voting.toastVoteSaved'));
     }
   };
 
@@ -207,8 +208,8 @@ export function WeightedVotingTab({
     return (
       <EmptyState
         icon="requirements"
-        title="Votes pondérés non disponibles"
-        text="Ajoutez des exigences ou des modèles pour commencer à voter."
+        title={t('voting.emptyTitle')}
+        text={t('voting.emptyText')}
       />
     );
   }
@@ -216,8 +217,7 @@ export function WeightedVotingTab({
   return (
     <div className="stack weighted-voting-tab">
       <p className="muted" style={{ margin: 0 }}>
-        Attribuez des poids à vos votes. Les membres avec un poids de vote plus
-        élevé ont plus d'influence sur le score final.
+        {t('voting.intro')}
       </p>
 
       <div
@@ -236,7 +236,7 @@ export function WeightedVotingTab({
               className={tab === 'requirements' ? 'active' : ''}
               onClick={() => setTab('requirements')}
             >
-              Exigences
+              {t('voting.tabRequirements')}
             </button>
             <button
               type="button"
@@ -245,7 +245,7 @@ export function WeightedVotingTab({
               className={tab === 'candidates' ? 'active' : ''}
               onClick={() => setTab('candidates')}
             >
-              Modèles
+              {t('voting.tabModels')}
             </button>
             <button
               type="button"
@@ -254,11 +254,12 @@ export function WeightedVotingTab({
               className={tab === 'weights' ? 'active' : ''}
               onClick={() => setTab('weights')}
             >
-              Poids des membres
+              {t('voting.tabWeights')}
             </button>
           </div>
           <div className="muted" style={{ fontSize: '0.85rem' }}>
-            Votre poids de vote : <strong>{myVotingWeight}x</strong>
+            {t('voting.myWeightBefore')}
+            <strong>{myVotingWeight}x</strong>
           </div>
         </div>
       </div>
@@ -267,19 +268,18 @@ export function WeightedVotingTab({
         reqs.length === 0 ? (
           <EmptyState
             icon="requirements"
-            title="Aucune exigence"
-            text="Ajoutez des exigences dans l'onglet Exigences pour commencer."
+            title={t('voting.reqEmptyTitle')}
+            text={t('voting.reqEmptyText')}
           />
         ) : (
           <div className="stack">
             <div className="card stack" style={{ boxShadow: 'none' }}>
-              <h4 style={{ margin: 0 }}>Votes pondérés par exigence</h4>
+              <h4 style={{ margin: 0 }}>{t('voting.reqSectionTitle')}</h4>
               <p
                 className="muted"
                 style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
               >
-                Attribuez un poids de 0 à 10 pour chaque exigence. Le score
-                final est calculé en pondérant les votes de tous les membres.
+                {t('voting.reqSectionHint')}
               </p>
             </div>
 
@@ -304,7 +304,9 @@ export function WeightedVotingTab({
                     >
                       <div style={{ flex: 1 }}>
                         <span className={`badge ${req.level}`}>
-                          {req.level === 'mandatory' ? 'Obl.' : 'Disc.'}
+                          {req.level === 'mandatory'
+                            ? t('voting.levelMandatoryShort')
+                            : t('voting.levelDiscussShort')}
                         </span>{' '}
                         <strong>{req.label}</strong>
                       </div>
@@ -321,7 +323,7 @@ export function WeightedVotingTab({
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Votre vote :
+                            {t('voting.yourVoteLabel')}
                           </label>
                           <input
                             id={`req-vote-${req.id}`}
@@ -354,7 +356,7 @@ export function WeightedVotingTab({
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Score final :
+                            {t('voting.finalScoreLabel')}
                           </span>
                           <span
                             className="badge success"
@@ -378,8 +380,8 @@ export function WeightedVotingTab({
         cands.length === 0 ? (
           <EmptyState
             icon="requirements"
-            title="Aucun modèle"
-            text="Ajoutez des modèles dans l'onglet Modèles pour commencer."
+            title={t('voting.candEmptyTitle')}
+            text={t('voting.candEmptyText')}
           />
         ) : (
           <div className="stack">
@@ -391,7 +393,7 @@ export function WeightedVotingTab({
                   alignItems: 'center',
                 }}
               >
-                <h4 style={{ margin: 0 }}>Votes pondérés par modèle</h4>
+                <h4 style={{ margin: 0 }}>{t('voting.candSectionTitle')}</h4>
                 <select
                   value={categoryFilter}
                   onChange={e => setCategoryFilter(e.target.value)}
@@ -408,8 +410,7 @@ export function WeightedVotingTab({
                 className="muted"
                 style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
               >
-                Attribuez un poids de 0 à 10 pour chaque modèle selon la
-                catégorie choisie.
+                {t('voting.candSectionHint')}
               </p>
             </div>
 
@@ -451,7 +452,9 @@ export function WeightedVotingTab({
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Votre vote ({categoryLabel}) :
+                            {t('voting.yourVoteCategoryLabel', {
+                              category: categoryLabel,
+                            })}
                           </label>
                           <input
                             id={`cand-vote-${cand.id}`}
@@ -485,7 +488,7 @@ export function WeightedVotingTab({
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Score final :
+                            {t('voting.finalScoreLabel')}
                           </span>
                           <span
                             className="badge success"
@@ -508,13 +511,12 @@ export function WeightedVotingTab({
       ) : (
         <div className="stack">
           <div className="card stack" style={{ boxShadow: 'none' }}>
-            <h4 style={{ margin: 0 }}>Poids de vote des membres</h4>
+            <h4 style={{ margin: 0 }}>{t('voting.weightsSectionTitle')}</h4>
             <p
               className="muted"
               style={{ margin: '0.25rem 0 0', fontSize: '0.9rem' }}
             >
-              Les administrateurs peuvent modifier le poids de vote de chaque
-              membre. Par défaut, tous les membres ont un poids de 1.
+              {t('voting.weightsSectionHint')}
             </p>
           </div>
 
@@ -541,7 +543,7 @@ export function WeightedVotingTab({
                           className="muted"
                           style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}
                         >
-                          (vous)
+                          {t('voting.youSuffix')}
                         </span>
                       ) : null}
                     </div>
@@ -550,7 +552,7 @@ export function WeightedVotingTab({
                       style={{ alignItems: 'center', gap: '0.5rem' }}
                     >
                       <span className="muted" style={{ fontSize: '0.85rem' }}>
-                        Poids :
+                        {t('voting.weightLabel')}
                       </span>
                       <span
                         className="badge"

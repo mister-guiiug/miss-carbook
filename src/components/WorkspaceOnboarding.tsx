@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AssistantFullscreenLayout } from './assistant/AssistantFullscreenLayout';
 import { shouldOfferAssistantUi } from '../lib/assistantDevice';
 import { setWorkspaceAssistantTourDone } from '../lib/assistantStorage';
+import { useI18n } from '../i18n';
 
 const doneKey = (id: string) => `mc_onboard_${id}`;
 
@@ -15,6 +16,7 @@ export function WorkspaceOnboarding({
   workspaceName: string;
   onDone: () => void;
 }) {
+  const { t } = useI18n();
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -37,35 +39,40 @@ export function WorkspaceOnboarding({
   const steps: { titleId: string; title: string; body: ReactNode }[] = [
     {
       titleId: 'ws-onboard-1',
-      title: `Bienvenue dans « ${workspaceName} »`,
+      title: t('workspace.onboardWelcomeTitle', { name: workspaceName }),
       body: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Ce dossier est partagé en temps réel. Invitez des participants depuis
-          l’onglet <strong>Réglages</strong> (code, lien ou invitation avec rôle
-          et date d’expiration).
+          {t('workspace.onboardStep1a')}
+          <strong>{t('workspace.tab_settings')}</strong>
+          {t('workspace.onboardStep1b')}
         </p>
       ),
     },
     {
       titleId: 'ws-onboard-2',
-      title: 'Exigences, évaluations & modèles',
+      title: t('workspace.onboardStep2Title'),
       body: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Définissez vos critères dans <strong>Exigences</strong>, ajoutez des
-          véhicules dans <strong>Modèles</strong>, reliez-les dans{' '}
-          <strong>Évaluations</strong> (statut + votes MoSCoW).
+          {t('workspace.onboardStep2a')}
+          <strong>{t('workspace.tab_requirements')}</strong>
+          {t('workspace.onboardStep2b')}
+          <strong>{t('workspace.tab_candidates')}</strong>
+          {t('workspace.onboardStep2c')}
+          <strong>{t('workspace.tab_evaluations')}</strong>
+          {t('workspace.onboardStep2d')}
         </p>
       ),
     },
     {
       titleId: 'ws-onboard-3',
-      title: 'Comparer, suivi & décision',
+      title: t('workspace.onboardStep3Title'),
       body: (
         <p className="muted" style={{ marginTop: 0 }}>
-          <strong>Comparer</strong> : graphiques, profils de critères,
-          impression. <strong>Visites et rappels</strong> pour le suivi (essais,
-          rappels, rendez-vous). Décision enregistrée dans{' '}
-          <strong>Réglages</strong>.
+          <strong>{t('workspace.tab_compare')}</strong>
+          {t('workspace.onboardStep3a')}
+          <strong>{t('workspace.tab_reminders')}</strong>
+          {t('workspace.onboardStep3b')}
+          <strong>{t('workspace.tab_settings')}</strong>.
         </p>
       ),
     },
@@ -76,6 +83,7 @@ export function WorkspaceOnboarding({
   if (fullscreen) {
     const s = steps[step];
     const isLast = step >= stepCount - 1;
+    if (!s) return null;
     return (
       <AssistantFullscreenLayout
         stepIndex={step}
@@ -85,7 +93,7 @@ export function WorkspaceOnboarding({
         showBack={step > 0}
         onBack={() => setStep(x => Math.max(0, x - 1))}
         onPrimary={isLast ? finish : () => setStep(x => x + 1)}
-        primaryLabel={isLast ? 'C’est parti' : 'Suivant'}
+        primaryLabel={isLast ? t('workspace.letsGo') : t('workspace.next')}
         onPassAll={finish}
         onNeverShowAgain={finish}
       >
@@ -105,24 +113,24 @@ export function WorkspaceOnboarding({
         ))}
       </div>
       <p className="onboarding-step-meta muted">
-        Étape {step + 1} sur {stepCount}
+        {t('workspace.stepOf', { current: step + 1, total: stepCount })}
       </p>
-      <h3 style={{ marginTop: 0 }}>{steps[step].title}</h3>
-      {steps[step].body}
+      <h3 style={{ marginTop: 0 }}>{steps[step]?.title}</h3>
+      {steps[step]?.body}
       <div
         className="row"
         style={{ justifyContent: 'flex-end', gap: '0.5rem' }}
       >
         <button type="button" className="secondary" onClick={finish}>
-          Ne plus afficher
+          {t('workspace.dontShowAgain')}
         </button>
         {step < steps.length - 1 ? (
           <button type="button" onClick={() => setStep(s => s + 1)}>
-            Suivant
+            {t('workspace.next')}
           </button>
         ) : (
           <button type="button" onClick={finish}>
-            C’est parti
+            {t('workspace.letsGo')}
           </button>
         )}
       </div>

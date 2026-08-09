@@ -10,6 +10,7 @@ import {
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import { COMPARE_RADAR_COLORS } from '../../lib/compareCriteria';
 import type { Json } from '../../types/database';
+import { useI18n } from '../../i18n';
 
 type Candidate = {
   id: string;
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export default function CompareTabRadar({ radarData, picked }: Props) {
+  const { t } = useI18n();
   return (
     <div className="radar-wrap" style={{ width: '100%', height: 320 }}>
       <ResponsiveContainer>
@@ -39,7 +41,7 @@ export default function CompareTabRadar({ radarData, picked }: Props) {
               key={p.id}
               name={
                 p.is_current
-                  ? 'Véhicule actuel'
+                  ? t('compare.currentVehicle')
                   : formatCandidateListLabel({
                       brand: p.brand,
                       model: p.model,

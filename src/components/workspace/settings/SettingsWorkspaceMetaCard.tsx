@@ -1,4 +1,5 @@
 import type { Ws } from './settingsTypes';
+import { useI18n } from '../../../i18n';
 
 export function SettingsWorkspaceMetaCard({
   workspace,
@@ -19,16 +20,19 @@ export function SettingsWorkspaceMetaCard({
   busyWorkspaceMeta: boolean;
   onSave: (e: React.FormEvent) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
-      <h3 style={{ margin: 0 }}>Identité</h3>
+      <h3 style={{ margin: 0 }}>{t('settings.meta.title')}</h3>
       <p className="muted settings-card-lead" style={{ margin: 0 }}>
-        En-tête et accueil — modification réservée aux administrateurs.
+        {t('settings.meta.lead')}
       </p>
       {isAdmin ? (
         <form onSubmit={onSave} className="stack">
           <div>
-            <label htmlFor="ws-settings-name">Nom du dossier</label>
+            <label htmlFor="ws-settings-name">
+              {t('settings.meta.nameLabel')}
+            </label>
             <input
               id="ws-settings-name"
               value={wsName}
@@ -38,7 +42,7 @@ export function SettingsWorkspaceMetaCard({
             />
           </div>
           <div>
-            <label htmlFor="ws-settings-desc">Description</label>
+            <label htmlFor="ws-settings-desc">{t('common.description')}</label>
             <textarea
               id="ws-settings-desc"
               value={wsDesc}
@@ -48,7 +52,7 @@ export function SettingsWorkspaceMetaCard({
             />
           </div>
           <button type="submit" disabled={busyWorkspaceMeta}>
-            {busyWorkspaceMeta ? 'Enregistrement…' : 'Enregistrer'}
+            {busyWorkspaceMeta ? t('common.saving') : t('common.save')}
           </button>
         </form>
       ) : (
@@ -59,7 +63,7 @@ export function SettingsWorkspaceMetaCard({
           <p className="muted" style={{ margin: 0 }}>
             {workspace.description?.trim()
               ? workspace.description
-              : 'Sans description'}
+              : t('settings.meta.noDescription')}
           </p>
         </div>
       )}

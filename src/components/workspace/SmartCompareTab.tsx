@@ -18,6 +18,7 @@ import {
   IconX,
   IconRefresh,
 } from '../ui/IconActionButton';
+import { useI18n } from '../../i18n';
 import './SmartCompareTab.css';
 
 type RawCandidate = {
@@ -45,6 +46,7 @@ type ReviewRow = {
 };
 
 export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
+  const { t } = useI18n();
   const { reportException } = useErrorDialog();
   const [candidates, setCandidates] = useState<RawCandidate[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationRow[]>([]);
@@ -90,11 +92,11 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
       setRequirements((reqs.data ?? []) as Requirement[]);
       setReviews((revs.data ?? []) as ReviewRow[]);
     } catch (err) {
-      reportException(err, 'Chargement des données pour assistant de décision');
+      reportException(err, t('compare.smart.ctxLoad'));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -197,7 +199,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
   if (loading) {
     return (
       <div className="stack">
-        <p className="muted">Chargement de l'assistant de décision...</p>
+        <p className="muted">{t('compare.smart.loading')}</p>
       </div>
     );
   }
@@ -206,8 +208,8 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
     return (
       <EmptyState
         icon="comparison"
-        title="Aucun modèle à analyser"
-        text="Ajoutez des candidats et des exigences pour utiliser l'assistant de décision."
+        title={t('compare.smart.emptyTitle')}
+        text={t('compare.smart.emptyText')}
       />
     );
   }
@@ -215,13 +217,12 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="stack smart-compare-tab">
       <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-        L'assistant de décision analyse tous les candidats selon plusieurs
-        critères et vous aide à identifier les meilleurs compromis.
+        {t('compare.smart.intro')}
       </p>
 
       {/* Sélection du scénario */}
       <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Scénario d'analyse</h3>
+        <h3 style={{ margin: 0 }}>{t('compare.smart.scenarioTitle')}</h3>
         <div className="row" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
           {SCENARIO_PRESETS.map(preset => (
             <button
@@ -241,7 +242,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
             className={isCustom ? 'primary' : 'secondary'}
             onClick={() => setSelectedScenario('custom')}
           >
-            Personnalisé
+            {t('compare.smart.custom')}
           </button>
         </div>
 
@@ -250,9 +251,9 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
             className="row"
             style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}
           >
-            <span className="muted">Poids :</span>
+            <span className="muted">{t('compare.smart.weightsLabel')}</span>
             <label className="row" style={{ gap: '0.35rem' }}>
-              <span>Évaluations</span>
+              <span>{t('compare.smart.evaluations')}</span>
               <input
                 type="number"
                 min={0}
@@ -269,7 +270,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
               />
             </label>
             <label className="row" style={{ gap: '0.35rem' }}>
-              <span>Avis</span>
+              <span>{t('compare.smart.reviews')}</span>
               <input
                 type="number"
                 min={0}
@@ -286,7 +287,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
               />
             </label>
             <label className="row" style={{ gap: '0.35rem' }}>
-              <span>Prix</span>
+              <span>{t('compare.smart.price')}</span>
               <input
                 type="number"
                 min={0}
@@ -303,7 +304,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
               />
             </label>
             <span className="muted">
-              (Total :{' '}
+              {t('compare.smart.totalLabel')}{' '}
               {Math.round(
                 (customWeights.evaluations +
                   customWeights.reviews +
@@ -317,7 +318,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
         {selectedScenario && (
           <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
             {SCENARIO_PRESETS.find(p => p.id === selectedScenario)
-              ?.description || 'Scénario personnalisé'}
+              ?.description || t('compare.smart.customScenario')}
           </p>
         )}
       </div>
@@ -336,7 +337,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
             }}
           >
             <div className="stack" style={{ flex: 1 }}>
-              <h3 style={{ margin: 0 }}>💡 Recommandation</h3>
+              <h3 style={{ margin: 0 }}>{t('compare.smart.recommendation')}</h3>
               <div
                 className="smart-recommendation-content"
                 dangerouslySetInnerHTML={{
@@ -353,24 +354,26 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                   className={`badge smart-confidence-${recommendation.confidence}`}
                   style={{ fontSize: '0.85rem' }}
                 >
-                  Confiance :{' '}
+                  {t('compare.smart.confidenceLabel')}{' '}
                   {recommendation.confidence === 'high'
-                    ? 'Élevée'
+                    ? t('compare.smart.confidenceHigh')
                     : recommendation.confidence === 'medium'
-                      ? 'Moyenne'
-                      : 'Faible'}
+                      ? t('compare.smart.confidenceMedium')
+                      : t('compare.smart.confidenceLow')}
                 </span>
                 {consensus.consensus !== 'low' && (
                   <span className="badge" style={{ fontSize: '0.85rem' }}>
-                    Consensus :{' '}
-                    {consensus.consensus === 'high' ? 'Élevé' : 'Moyen'}
+                    {t('compare.smart.consensusLabel')}{' '}
+                    {consensus.consensus === 'high'
+                      ? t('compare.smart.consensusHigh')
+                      : t('compare.smart.consensusMedium')}
                   </span>
                 )}
               </div>
             </div>
             <IconActionButton
               variant="secondary"
-              label="Masquer"
+              label={t('compare.smart.hide')}
               onClick={() => setShowRecommendation(false)}
             >
               <IconX />
@@ -386,16 +389,16 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
             className="secondary"
             onClick={() => setShowRecommendation(true)}
           >
-            Afficher la recommandation
+            {t('compare.smart.showRecommendation')}
           </button>
         </div>
       )}
 
       {/* Classement des candidats */}
       <div className="card stack" style={{ boxShadow: 'none' }}>
-        <h3 style={{ margin: 0 }}>Classement</h3>
+        <h3 style={{ margin: 0 }}>{t('compare.smart.ranking')}</h3>
         {scoredCandidates.length === 0 ? (
-          <p className="muted">Aucun score calculé</p>
+          <p className="muted">{t('compare.smart.noScore')}</p>
         ) : (
           <div className="smart-ranking-list stack">
             {scoredCandidates.map(candidate => {
@@ -436,26 +439,29 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Score global :{' '}
+                            {t('compare.smart.globalScoreLabel')}{' '}
                             <strong>{candidate.compositeScore}</strong>/100
                           </span>
                           <span
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Évaluations : {candidate.scores.evaluations}%
+                            {t('compare.smart.evaluationsColon')}{' '}
+                            {candidate.scores.evaluations}%
                           </span>
                           <span
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Avis : {candidate.scores.reviews}%
+                            {t('compare.smart.reviewsColon')}{' '}
+                            {candidate.scores.reviews}%
                           </span>
                           <span
                             className="muted"
                             style={{ fontSize: '0.85rem' }}
                           >
-                            Prix : {candidate.scores.price}%
+                            {t('compare.smart.priceColon')}{' '}
+                            {candidate.scores.price}%
                           </span>
                         </div>
                       </div>
@@ -463,7 +469,9 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                     <IconActionButton
                       variant="secondary"
                       label={
-                        detailsOpen ? 'Masquer les détails' : 'Voir les détails'
+                        detailsOpen
+                          ? t('compare.smart.hideDetails')
+                          : t('compare.smart.showDetails')
                       }
                       onClick={() => toggleDetails(candidate.id)}
                     >
@@ -477,7 +485,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                         {/* Barres de score */}
                         <div className="smart-score-bars">
                           <div className="smart-score-bar">
-                            <label>Évaluations</label>
+                            <label>{t('compare.smart.evaluations')}</label>
                             <div className="smart-score-bar-track">
                               <div
                                 className="smart-score-bar-fill smart-score-bar-fill--evaluations"
@@ -489,7 +497,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                             <span>{candidate.scores.evaluations}%</span>
                           </div>
                           <div className="smart-score-bar">
-                            <label>Avis membres</label>
+                            <label>{t('compare.smart.reviewMembers')}</label>
                             <div className="smart-score-bar-track">
                               <div
                                 className="smart-score-bar-fill smart-score-bar-fill--reviews"
@@ -501,7 +509,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
                             <span>{candidate.scores.reviews}%</span>
                           </div>
                           <div className="smart-score-bar">
-                            <label>Prix</label>
+                            <label>{t('compare.smart.price')}</label>
                             <div className="smart-score-bar-track">
                               <div
                                 className="smart-score-bar-fill smart-score-bar-fill--price"
@@ -538,7 +546,7 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
       <div className="row icon-action-toolbar">
         <IconActionButton
           variant="secondary"
-          label="Actualiser les données"
+          label={t('compare.smart.refresh')}
           onClick={() => void load()}
         >
           <IconRefresh />

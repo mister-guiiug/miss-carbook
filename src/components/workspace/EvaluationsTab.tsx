@@ -6,6 +6,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus, RequirementLevel } from '../../types/database';
 import { EmptyState } from '../ui/EmptyState';
+import { useI18n } from '../../i18n';
 
 type Req = { id: string; label: string; level: RequirementLevel };
 type Cand = {
@@ -23,13 +24,6 @@ type EvalRow = {
   note: string;
 };
 type Vote = { requirement_id: string; user_id: string; vote: string };
-
-const statusOpts = [
-  { v: 'unknown', l: '?' },
-  { v: 'ok', l: 'OK' },
-  { v: 'partial', l: 'Partiel' },
-  { v: 'ko', l: 'Non' },
-] as const;
 
 const moscow = [
   { v: 'must', l: 'Must' },
@@ -49,6 +43,13 @@ export function EvaluationsTab({
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t } = useI18n();
+  const statusOpts = [
+    { v: 'unknown', l: t('evaluations.statusUnknown') },
+    { v: 'ok', l: t('evaluations.statusOk') },
+    { v: 'partial', l: t('evaluations.statusPartial') },
+    { v: 'ko', l: t('evaluations.statusKo') },
+  ];
   const [reqs, setReqs] = useState<Req[]>([]);
   const [cands, setCands] = useState<Cand[]>([]);
   const [evals, setEvals] = useState<EvalRow[]>([]);
@@ -82,8 +83,7 @@ export function EvaluationsTab({
         .select('requirement_id, user_id, vote'),
     ]);
     const firstErr = r.error ?? c.error ?? e.error ?? v.error;
-    if (firstErr)
-      reportException(firstErr, 'Chargement de la matrice d’évaluation');
+    if (firstErr) reportException(firstErr, t('evaluations.ctxLoad'));
     const reqRows = (r.data ?? []) as Req[];
     const candRows = (c.data ?? []).map(row => ({
       ...(row as Cand),
@@ -106,7 +106,7 @@ export function EvaluationsTab({
     setVotes(
       (v.data ?? []).filter((x: Vote) => reqIds.has(x.requirement_id)) as Vote[]
     );
-  }, [workspaceId, reportException]);
+  }, [workspaceId, reportException, t]);
 
   useEffect(() => {
     void load();
@@ -125,7 +125,7 @@ export function EvaluationsTab({
       if (!m.has(v.requirement_id))
         m.set(v.requirement_id, { must: 0, should: 0, could: 0, wont: 0 });
       const o = m.get(v.requirement_id)!;
-      if (v.vote in o) o[v.vote] += 1;
+      if (v.vote in o) o[v.vote] = (o[v.vote] ?? 0) + 1;
     }
     return m;
   }, [votes]);
@@ -163,11 +163,7 @@ export function EvaluationsTab({
         },
         { onConflict: 'requirement_id,candidate_id' }
       );
-    if (error)
-      reportException(
-        error,
-        'Mise à jour du statut d’évaluation (exigence / modèle)'
-      );
+    if (error) reportException(error, t('evaluations.ctxUpdateStatus'));
     else {
       await load();
       await logActivity(
@@ -205,10 +201,10 @@ export function EvaluationsTab({
         },
         { onConflict: 'requirement_id,candidate_id' }
       );
-    if (error) reportException(error, 'Mise à jour de la note d’évaluation');
+    if (error) reportException(error, t('evaluations.ctxUpdateNote'));
     else {
       await load();
-      showToast('Note enregistrée');
+      showToast(t('evaluations.toastNoteSaved'));
     }
   };
 
@@ -220,10 +216,10 @@ export function EvaluationsTab({
         { requirement_id: requirementId, vote },
         { onConflict: 'requirement_id,user_id' }
       );
-    if (error) reportException(error, 'Enregistrement du vote MoSCoW');
+    if (error) reportException(error, t('evaluations.ctxSaveVote'));
     else {
       await load();
-      showToast('Vote MoSCoW enregistré');
+      showToast(t('evaluations.toastVoteSaved'));
     }
   };
 
@@ -234,13 +230,13 @@ export function EvaluationsTab({
     return (
       <EmptyState
         icon="requirements"
-        title="Matrice d’évaluation non disponible"
+        title={t('evaluations.emptyTitle')}
         text={
           !reqs.length && !cands.length
-            ? 'Ajoutez des exigences (onglet Exigences) et des modèles (onglet Modèles) pour remplir la matrice d’évaluation.'
+            ? t('evaluations.emptyBoth')
             : !reqs.length
-              ? 'Ajoutez des exigences (onglet Exigences) pour remplir la matrice d’évaluation.'
-              : 'Ajoutez des modèles (onglet Modèles) pour remplir la matrice d’évaluation.'
+              ? t('evaluations.emptyReqs')
+              : t('evaluations.emptyCands')
         }
       />
     );
@@ -248,23 +244,20 @@ export function EvaluationsTab({
 
   return (
     <div className="stack eval-tab">
-      <p className="muted">
-        Pour chaque exigence : votre vote MoSCoW (priorisation) et, par modèle,
-        si l’exigence est satisfaite.
-      </p>
+      <p className="muted">{t('evaluations.intro')}</p>
 
       <div
         className="row"
         style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}
       >
-        <strong>Masquer</strong>
+        <strong>{t('evaluations.hideLabel')}</strong>
         <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
           <input
             type="checkbox"
             checked={hide.excluded}
             onChange={e => setHide(h => ({ ...h, excluded: e.target.checked }))}
           />
-          Exclus
+          {t('evaluations.hideExcluded')}
         </label>
         <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
           <input
@@ -272,7 +265,7 @@ export function EvaluationsTab({
             checked={hide.toSee}
             onChange={e => setHide(h => ({ ...h, toSee: e.target.checked }))}
           />
-          À voir
+          {t('evaluations.hideToSee')}
         </label>
         <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
           <input
@@ -280,7 +273,7 @@ export function EvaluationsTab({
             checked={hide.parents}
             onChange={e => setHide(h => ({ ...h, parents: e.target.checked }))}
           />
-          Modèles pères
+          {t('evaluations.hideParents')}
         </label>
         <label className="row" style={{ gap: '0.35rem', alignItems: 'center' }}>
           <input
@@ -288,10 +281,13 @@ export function EvaluationsTab({
             checked={hide.children}
             onChange={e => setHide(h => ({ ...h, children: e.target.checked }))}
           />
-          Modèles fils
+          {t('evaluations.hideChildren')}
         </label>
         <span className="muted" style={{ fontSize: '0.9rem' }}>
-          {filteredCands.length} / {cands.length} affichés
+          {t('evaluations.shownCount', {
+            shown: filteredCands.length,
+            total: cands.length,
+          })}
         </span>
       </div>
 
@@ -299,9 +295,9 @@ export function EvaluationsTab({
         <table className="eval-matrix">
           <thead>
             <tr>
-              <th>Exigence</th>
-              <th>MoSCoW (vous)</th>
-              <th>Votes agrégés</th>
+              <th>{t('evaluations.colRequirement')}</th>
+              <th>{t('evaluations.colMoscowYou')}</th>
+              <th>{t('evaluations.colVotesAggregated')}</th>
               {filteredCands.map(c => (
                 <th key={c.id}>{formatCandidateListLabel(c)}</th>
               ))}
@@ -312,7 +308,9 @@ export function EvaluationsTab({
               <tr key={r.id}>
                 <td>
                   <span className={`badge ${r.level}`}>
-                    {r.level === 'mandatory' ? 'Obl.' : 'Disc.'}
+                    {r.level === 'mandatory'
+                      ? t('evaluations.levelMandatoryShort')
+                      : t('evaluations.levelDiscussShort')}
                   </span>{' '}
                   {r.label}
                 </td>
@@ -355,7 +353,7 @@ export function EvaluationsTab({
                       </select>
                       <input
                         className="eval-note"
-                        placeholder="Note"
+                        placeholder={t('evaluations.notePlaceholder')}
                         defaultValue={cell?.note ?? ''}
                         disabled={!canWrite}
                         onBlur={e => {

@@ -88,7 +88,9 @@ export function useCandidateMutations({
         const text = await file.text();
         const lines = text.split(/\r?\n/).filter(l => l.trim());
         if (lines.length < 2) throw new Error('CSV vide');
-        const head = lines[0].split(',').map(s => s.trim().toLowerCase());
+        const head = (lines[0] ?? '')
+          .split(',')
+          .map(s => s.trim().toLowerCase());
         const col = (name: string, ...alts: string[]) => {
           const i = head.indexOf(name);
           if (i >= 0) return i;
@@ -116,7 +118,7 @@ export function useCandidateMutations({
         const lastSo = (lastRoot as { sort_order?: number } | null)?.sort_order;
         let nextOrder = (lastSo == null ? -1 : lastSo) + 1;
         for (let li = 1; li < lines.length; li++) {
-          const cols = lines[li].split(',').map(s => s.trim());
+          const cols = (lines[li] ?? '').split(',').map(s => s.trim());
           const brand = cols[iBrand] ?? '';
           const model = cols[iModel] ?? '';
           if (!brand && !model) continue;

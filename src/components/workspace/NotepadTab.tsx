@@ -19,6 +19,7 @@ import {
   IconSave,
 } from '../ui/IconActionButton';
 import { useToast } from '../../contexts/ToastContext';
+import { useI18n } from '../../i18n';
 
 type UserNoteRow = {
   workspace_id: string;
@@ -37,6 +38,7 @@ export function NotepadTab({
   workspaceId: string;
   canWrite: boolean;
 }) {
+  const { t } = useI18n();
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
   const [myId, setMyId] = useState<string | null>(null);
@@ -200,9 +202,9 @@ export function NotepadTab({
           return [...rest, { ...base, peer_order: orderedIds }];
         });
         setPeerOrderOverride(null);
-        showToast('Ordre des notes mis à jour');
+        showToast(t('notepad.toastOrderUpdated'));
       } catch (e: unknown) {
-        reportException(e, 'Enregistrement de l’ordre du bloc-notes');
+        reportException(e, t('notepad.ctxSaveOrder'));
       } finally {
         setReordering(false);
         setDraggingId(null);
@@ -217,6 +219,7 @@ export function NotepadTab({
       workspaceId,
       reportException,
       showToast,
+      t,
     ]
   );
 
@@ -243,7 +246,7 @@ export function NotepadTab({
         .eq('workspace_id', workspaceId);
       if (cancelled) return;
       if (error) {
-        reportException(error, 'Chargement des membres du dossier');
+        reportException(error, t('notepad.ctxLoadMembers'));
         return;
       }
       const ids = (mems ?? []).map(m => (m as { user_id: string }).user_id);
@@ -270,7 +273,7 @@ export function NotepadTab({
         .order('updated_at', { ascending: false });
       if (cancelled) return;
       if (notesErr) {
-        reportException(notesErr, 'Chargement des notes');
+        reportException(notesErr, t('notepad.ctxLoadNotes'));
         return;
       }
       const list = (notes ?? []) as UserNoteRow[];
@@ -291,7 +294,7 @@ export function NotepadTab({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, reportException, myId]);
+  }, [workspaceId, reportException, myId, t]);
 
   const saveMyNote = async () => {
     if (!canWrite || !myId) return;
@@ -318,9 +321,9 @@ export function NotepadTab({
       await logActivity(workspaceId, 'user_note.update', 'user_note', null, {
         chars: body.length,
       });
-      showToast('Note enregistrée');
+      showToast(t('notepad.toastNoteSaved'));
     } catch (e: unknown) {
-      reportException(e, 'Sauvegarde de la note');
+      reportException(e, t('notepad.ctxSaveNote'));
     } finally {
       setBusyUserId(null);
     }
@@ -394,8 +397,8 @@ export function NotepadTab({
               type="button"
               className="reorder-drag-handle"
               draggable
-              aria-label={`Réordonner : ${m.display_name}`}
-              title="Glisser pour réordonner"
+              aria-label={t('notepad.reorderAria', { name: m.display_name })}
+              title={t('notepad.dragToReorder')}
               onDragStart={e => {
                 setDraggingId(m.user_id);
                 e.dataTransfer.setData('text/plain', m.user_id);
@@ -412,7 +415,7 @@ export function NotepadTab({
           <div
             className="notepad-peer-inline-meta"
             role="group"
-            aria-label={`Note partagée de ${m.display_name}`}
+            aria-label={t('notepad.sharedNoteAria', { name: m.display_name })}
           >
             <span className="notepad-peer-inline-name">{m.display_name}</span>
             {dateLabel ? (
@@ -431,7 +434,9 @@ export function NotepadTab({
                 </time>
               </>
             ) : null}
-            <span className="notepad-peer-inline-ro muted">Lecture seule</span>
+            <span className="notepad-peer-inline-ro muted">
+              {t('notepad.readOnly')}
+            </span>
           </div>
         </div>
         <div
@@ -439,14 +444,16 @@ export function NotepadTab({
           tabIndex={0}
           role="region"
           aria-label={
-            trimmed ? `Contenu de la note de ${m.display_name}` : 'Note vide'
+            trimmed
+              ? t('notepad.noteContentAria', { name: m.display_name })
+              : t('notepad.emptyNoteAria')
           }
         >
           {trimmed ? (
             value
           ) : (
             <span className="notepad-peer-inline-empty muted">
-              Pas encore de note
+              {t('notepad.noNoteYet')}
             </span>
           )}
         </div>
@@ -482,13 +489,15 @@ export function NotepadTab({
               <strong className="notepad-accordion-name">
                 {m.display_name}
               </strong>
-              <span className="badge notepad-accordion-badge-moi">Moi</span>
+              <span className="badge notepad-accordion-badge-moi">
+                {t('notepad.me')}
+              </span>
               {opts.pinned ? (
                 <span
                   className="muted notepad-accordion-pinned-hint"
-                  title="Votre bloc reste toujours affiché en premier"
+                  title={t('notepad.pinnedTitle')}
                 >
-                  1er
+                  {t('notepad.firstBadge')}
                 </span>
               ) : null}
               <span className="muted notepad-accordion-status">
@@ -499,15 +508,17 @@ export function NotepadTab({
                   ·
                 </span>
                 {updatedAt
-                  ? `Modifié ${new Date(updatedAt).toLocaleString('fr-FR', {
-                      dateStyle: 'short',
-                      timeStyle: 'short',
-                    })}`
-                  : 'Aucune note'}
+                  ? t('notepad.modifiedAt', {
+                      date: new Date(updatedAt).toLocaleString('fr-FR', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      }),
+                    })
+                  : t('notepad.noNote')}
               </span>
             </span>
             <span className="muted notepad-accordion-toggle-label">
-              {isOpen ? 'Réduire' : 'Afficher'}
+              {isOpen ? t('notepad.collapse') : t('notepad.expand')}
             </span>
           </button>
         </div>
@@ -524,22 +535,24 @@ export function NotepadTab({
                 setBodies(b => ({ ...b, [m.user_id]: e.target.value }))
               }
               disabled={!canWrite}
-              placeholder="Votre note…"
+              placeholder={t('notepad.myNotePlaceholder')}
             />
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="primary"
                 label={
                   busyUserId
-                    ? 'Enregistrement en cours…'
-                    : 'Enregistrer ma note'
+                    ? t('notepad.saveInProgress')
+                    : t('notepad.saveMyNote')
                 }
                 disabled={!canWrite || busyUserId !== null}
                 onClick={() => void saveMyNote()}
               >
                 <IconSave />
               </IconActionButton>
-              {!canWrite ? <span className="muted">Lecture seule</span> : null}
+              {!canWrite ? (
+                <span className="muted">{t('notepad.readOnly')}</span>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -552,18 +565,19 @@ export function NotepadTab({
   return (
     <div className="stack">
       <p className="muted">
-        Chaque participant a son propre bloc-notes. La vôtre reste{' '}
-        <strong>en premier</strong> ; les notes des autres sont affichées{' '}
-        <strong>tout de suite</strong> en dessous. Avec l’édition, vous pouvez{' '}
-        <strong>réordonner les autres</strong> via la poignée (ordre enregistré
-        sur votre compte).
+        {t('notepad.intro.text1')} <strong>{t('notepad.intro.strong1')}</strong>
+        {t('notepad.intro.text2')} <strong>{t('notepad.intro.strong2')}</strong>{' '}
+        {t('notepad.intro.text3')} <strong>{t('notepad.intro.strong3')}</strong>{' '}
+        {t('notepad.intro.text4')}
       </p>
 
       <div className="stack notepad-tab-layout">
         {myMember ? renderMyAccordion(myMember, { pinned: true }) : null}
         {orderedOthers.length ? (
           <div className="notepad-peers-block stack">
-            <h3 className="notepad-peers-heading">Autres participants</h3>
+            <h3 className="notepad-peers-heading">
+              {t('notepad.otherParticipants')}
+            </h3>
             <div className="notepad-peers-list">
               {orderedOthers.map(m =>
                 renderPeerInline(m, { dragReorder: { siblingIds: otherIds } })

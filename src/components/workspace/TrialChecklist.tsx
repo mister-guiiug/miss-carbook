@@ -11,6 +11,7 @@ import {
   IconTrash,
   IconX,
 } from '../ui/IconActionButton';
+import { useI18n } from '../../i18n';
 
 type ChecklistTemplate = {
   id: string;
@@ -55,13 +56,6 @@ const CATEGORIES = [
   { value: 'performance', label: 'Performances', color: 'accent' },
 ] as const;
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'À vérifier',
-  pass: 'OK',
-  fail: 'Non OK',
-  na: 'N/A',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   pending: 'muted',
   pass: 'success',
@@ -86,6 +80,23 @@ export function TrialChecklist({
 }: TrialChecklistProps) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const { t: tr } = useI18n();
+  const categoryLabels: Record<string, string> = {
+    general: tr('checklist.categories.general'),
+    exterior: tr('checklist.categories.exterior'),
+    interior: tr('checklist.categories.interior'),
+    driving: tr('checklist.categories.driving'),
+    comfort: tr('checklist.categories.comfort'),
+    technology: tr('checklist.categories.technology'),
+    safety: tr('checklist.categories.safety'),
+    performance: tr('checklist.categories.performance'),
+  };
+  const statusLabels: Record<string, string> = {
+    pending: tr('checklist.status.pending'),
+    pass: tr('checklist.status.pass'),
+    fail: tr('checklist.status.fail'),
+    na: tr('checklist.status.na'),
+  };
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -118,7 +129,7 @@ export function TrialChecklist({
     ]);
 
     const firstErr = t.error ?? i.error ?? c.error ?? r.error;
-    if (firstErr) reportException(firstErr, 'Chargement des checklists');
+    if (firstErr) reportException(firstErr, tr('checklist.ctxLoad'));
 
     setTemplates((t.data ?? []) as ChecklistTemplate[]);
     setItems((i.data ?? []) as ChecklistItem[]);
@@ -132,7 +143,7 @@ export function TrialChecklist({
       setSelectedTemplate((c.data ?? [])[0].template_id);
       setCompletionNotes((c.data ?? [])[0].notes ?? '');
     }
-  }, [workspaceId, visitId, reportException]);
+  }, [workspaceId, visitId, reportException, tr]);
 
   useEffect(() => {
     void load();
@@ -168,8 +179,7 @@ export function TrialChecklist({
   const groupedItems = useMemo(() => {
     const groups: Record<string, ChecklistItem[]> = {};
     for (const item of filteredItems) {
-      if (!groups[item.category]) groups[item.category] = [];
-      groups[item.category].push(item);
+      (groups[item.category] ??= []).push(item);
     }
     return groups;
   }, [filteredItems]);
@@ -186,12 +196,12 @@ export function TrialChecklist({
       })
       .select('id')
       .single();
-    if (error) reportException(error, 'Création du modèle');
+    if (error) reportException(error, tr('checklist.ctxCreateTemplate'));
     else {
       setNewTemplateName('');
       setNewTemplateDesc('');
       await load();
-      showToast('Modèle créé');
+      showToast(tr('checklist.toastTemplateCreated'));
     }
   };
 
@@ -203,11 +213,11 @@ export function TrialChecklist({
       category: newItemCategory,
       sort_order: templateItems.length,
     });
-    if (error) reportException(error, "Ajout de l'élément");
+    if (error) reportException(error, tr('checklist.ctxAddItem'));
     else {
       setNewItemLabel('');
       await load();
-      showToast('Élément ajouté');
+      showToast(tr('checklist.toastItemAdded'));
     }
   };
 
@@ -217,7 +227,7 @@ export function TrialChecklist({
       .from('trial_checklist_items')
       .delete()
       .eq('id', itemId);
-    if (error) reportException(error, "Suppression de l'élément");
+    if (error) reportException(error, tr('checklist.ctxDeleteItem'));
     else await load();
   };
 
@@ -232,7 +242,7 @@ export function TrialChecklist({
       })
       .select('id')
       .single();
-    if (error) reportException(error, 'Démarrage du checklist');
+    if (error) reportException(error, tr('checklist.ctxStartCompletion'));
     else await load();
   };
 
@@ -244,7 +254,7 @@ export function TrialChecklist({
         .from('trial_checklist_item_responses')
         .update({ status })
         .eq('id', existing.id);
-      if (error) reportException(error, 'Mise à jour du statut');
+      if (error) reportException(error, tr('checklist.ctxUpdateStatus'));
       else await load();
     } else {
       const { error } = await supabase
@@ -254,7 +264,7 @@ export function TrialChecklist({
           item_id: itemId,
           status,
         });
-      if (error) reportException(error, 'Enregistrement du statut');
+      if (error) reportException(error, tr('checklist.ctxSaveStatus'));
       else await load();
     }
   };
@@ -267,7 +277,7 @@ export function TrialChecklist({
         .from('trial_checklist_item_responses')
         .update({ notes: notes.slice(0, 1000) })
         .eq('id', existing.id);
-      if (error) reportException(error, 'Mise à jour des notes');
+      if (error) reportException(error, tr('checklist.ctxUpdateNotes'));
     }
   };
 
@@ -277,9 +287,9 @@ export function TrialChecklist({
       .from('trial_checklist_completions')
       .update({ notes: completionNotes.slice(0, 5000) })
       .eq('id', myCompletion.id);
-    if (error) reportException(error, 'Mise à jour des notes');
+    if (error) reportException(error, tr('checklist.ctxUpdateNotes'));
     else {
-      showToast('Notes enregistrées');
+      showToast(tr('checklist.toastNotesSaved'));
       await load();
     }
   };
@@ -295,13 +305,13 @@ export function TrialChecklist({
       <div className="stack trial-checklist">
         <EmptyState
           icon="requirements"
-          title="Aucun modèle de checklist"
-          text="Créez un modèle de checklist pour évaluer vos essais de véhicules."
+          title={tr('checklist.emptyNoTemplateTitle')}
+          text={tr('checklist.emptyNoTemplateText')}
           action={
             canWrite ? (
               <IconActionButton
                 variant="primary"
-                label="Créer un modèle"
+                label={tr('checklist.createTemplateBtn')}
                 onClick={() => setShowTemplateEditor(true)}
               >
                 <IconPlus />
@@ -320,13 +330,15 @@ export function TrialChecklist({
           className="row"
           style={{ justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <h3 style={{ margin: 0 }}>Checklist d'essai</h3>
+          <h3 style={{ margin: 0 }}>{tr('checklist.title')}</h3>
           {canWrite && (
             <div className="row icon-action-toolbar">
               <IconActionButton
                 variant="secondary"
                 label={
-                  showTemplateEditor ? "Fermer l'éditeur" : 'Éditer les modèles'
+                  showTemplateEditor
+                    ? tr('checklist.closeEditor')
+                    : tr('checklist.editTemplates')
                 }
                 onClick={() => setShowTemplateEditor(v => !v)}
               >
@@ -335,7 +347,7 @@ export function TrialChecklist({
               {!showTemplateEditor && onClose && (
                 <IconActionButton
                   variant="secondary"
-                  label="Fermer"
+                  label={tr('common.close')}
                   onClick={onClose}
                 >
                   <IconX />
@@ -351,22 +363,24 @@ export function TrialChecklist({
               className="card stack"
               style={{ boxShadow: 'none', padding: '1rem' }}
             >
-              <h4 style={{ margin: 0 }}>Nouveau modèle</h4>
+              <h4 style={{ margin: 0 }}>
+                {tr('checklist.newTemplateHeading')}
+              </h4>
               <div>
-                <label>Nom du modèle</label>
+                <label>{tr('checklist.templateNameLabel')}</label>
                 <input
                   value={newTemplateName}
                   onChange={e => setNewTemplateName(e.target.value)}
-                  placeholder="ex. Checklist SUV familial"
+                  placeholder={tr('checklist.templateNamePlaceholder')}
                   maxLength={200}
                 />
               </div>
               <div>
-                <label>Description (optionnel)</label>
+                <label>{tr('checklist.descriptionOptional')}</label>
                 <textarea
                   value={newTemplateDesc}
                   onChange={e => setNewTemplateDesc(e.target.value)}
-                  placeholder="Points à vérifier lors de l'essai..."
+                  placeholder={tr('checklist.templateDescPlaceholder')}
                   rows={2}
                   maxLength={2000}
                 />
@@ -376,7 +390,7 @@ export function TrialChecklist({
                 disabled={!canWrite || !newTemplateName.trim()}
                 onClick={() => void createTemplate()}
               >
-                Créer le modèle
+                {tr('checklist.submitCreateTemplate')}
               </button>
             </div>
 
@@ -384,12 +398,14 @@ export function TrialChecklist({
               className="card stack"
               style={{ boxShadow: 'none', padding: '1rem' }}
             >
-              <h4 style={{ margin: 0 }}>Ajouter un élément</h4>
+              <h4 style={{ margin: 0 }}>{tr('checklist.addItemHeading')}</h4>
               <select
                 value={selectedTemplate ?? ''}
                 onChange={e => setSelectedTemplate(e.target.value || null)}
               >
-                <option value="">Sélectionner un modèle...</option>
+                <option value="">
+                  {tr('checklist.selectTemplatePlaceholder')}
+                </option>
                 {templates.map(t => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -400,7 +416,7 @@ export function TrialChecklist({
                 <input
                   value={newItemLabel}
                   onChange={e => setNewItemLabel(e.target.value)}
-                  placeholder="Nouvel élément..."
+                  placeholder={tr('checklist.newItemPlaceholder')}
                   style={{ flex: 1 }}
                   disabled={!selectedTemplate}
                 />
@@ -412,13 +428,13 @@ export function TrialChecklist({
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.value} value={c.value}>
-                      {c.label}
+                      {categoryLabels[c.value]}
                     </option>
                   ))}
                 </select>
                 <IconActionButton
                   variant="primary"
-                  label="Ajouter"
+                  label={tr('common.add')}
                   disabled={
                     !canWrite || !selectedTemplate || !newItemLabel.trim()
                   }
@@ -430,9 +446,11 @@ export function TrialChecklist({
             </div>
 
             <div className="stack" style={{ gap: '0.5rem' }}>
-              <h4 style={{ margin: 0 }}>Éléments existants</h4>
+              <h4 style={{ margin: 0 }}>
+                {tr('checklist.existingItemsHeading')}
+              </h4>
               {templates.length === 0 ? (
-                <p className="muted">Aucun modèle créé.</p>
+                <p className="muted">{tr('checklist.noTemplateCreated')}</p>
               ) : (
                 templates.map(template => (
                   <details
@@ -476,14 +494,15 @@ export function TrialChecklist({
                                     marginRight: '0.5rem',
                                   }}
                                 >
-                                  {cat?.label ?? item.category}
+                                  {categoryLabels[item.category] ??
+                                    item.category}
                                 </span>
                                 {item.label}
                               </span>
                               {canWrite ? (
                                 <IconActionButton
                                   variant="danger"
-                                  label="Supprimer"
+                                  label={tr('common.delete')}
                                   onClick={() => void deleteItem(item.id)}
                                 >
                                   <IconTrash />
@@ -495,7 +514,7 @@ export function TrialChecklist({
                       {items.filter(i => i.template_id === template.id)
                         .length === 0 && (
                         <p className="muted" style={{ fontSize: '0.85rem' }}>
-                          Aucun élément dans ce modèle.
+                          {tr('checklist.noItemInTemplate')}
                         </p>
                       )}
                     </div>
@@ -511,12 +530,12 @@ export function TrialChecklist({
               style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}
             >
               <div style={{ flex: '1 1 200px' }}>
-                <label>Modèle de checklist</label>
+                <label>{tr('checklist.checklistTemplateLabel')}</label>
                 <select
                   value={selectedTemplate ?? ''}
                   onChange={e => setSelectedTemplate(e.target.value || null)}
                 >
-                  <option value="">Sélectionner...</option>
+                  <option value="">{tr('checklist.selectPlaceholder')}</option>
                   {templates.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.name}
@@ -530,7 +549,7 @@ export function TrialChecklist({
                   style={{ alignSelf: 'flex-end' }}
                   onClick={() => void startCompletion()}
                 >
-                  Commencer le checklist
+                  {tr('checklist.startChecklist')}
                 </button>
               )}
             </div>
@@ -560,13 +579,15 @@ export function TrialChecklist({
             }}
           >
             <div>
-              <h4 style={{ margin: 0 }}>Progression</h4>
+              <h4 style={{ margin: 0 }}>{tr('checklist.progress')}</h4>
               <div
                 className="muted"
                 style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}
               >
-                {templateItems.filter(i => myResponses.has(i.id)).length} /{' '}
-                {templateItems.length} vérifiés
+                {tr('checklist.checkedCount', {
+                  done: templateItems.filter(i => myResponses.has(i.id)).length,
+                  total: templateItems.length,
+                })}
               </div>
             </div>
             <div
@@ -605,7 +626,7 @@ export function TrialChecklist({
                 className={`secondary ${categoryFilter === cat.value ? 'active' : ''}`}
                 onClick={() => setCategoryFilter(cat.value)}
               >
-                {cat.label}
+                {categoryLabels[cat.value]}
               </button>
             ))}
             <button
@@ -615,7 +636,7 @@ export function TrialChecklist({
               }
               onClick={() => setCategoryFilter('all')}
             >
-              Toutes
+              {tr('checklist.allFilter')}
             </button>
           </div>
         </div>
@@ -636,7 +657,7 @@ export function TrialChecklist({
               >
                 <h4 style={{ margin: 0 }}>
                   <span className={`badge ${catInfo?.color ?? 'muted'}`}>
-                    {catInfo?.label ?? category}
+                    {categoryLabels[category] ?? category}
                   </span>
                 </h4>
                 <div
@@ -697,13 +718,13 @@ export function TrialChecklist({
                                       opacity: status === s ? 1 : 0.7,
                                     }}
                                   >
-                                    {STATUS_LABELS[s]}
+                                    {statusLabels[s]}
                                   </button>
                                 )
                               )}
                             </div>
                             <input
-                              placeholder="Notes (optionnel)"
+                              placeholder={tr('checklist.notesOptional')}
                               defaultValue={response?.notes ?? ''}
                               disabled={!canWrite}
                               onBlur={e =>
@@ -727,7 +748,7 @@ export function TrialChecklist({
                               >
                                 <IconCheck />
                               </span>
-                              {STATUS_LABELS[status]}
+                              {statusLabels[status]}
                             </span>
                           )}
                         </div>
@@ -742,18 +763,18 @@ export function TrialChecklist({
       ) : selectedTemplate && !showTemplateEditor && myCompletion ? (
         <EmptyState
           icon="search"
-          title="Aucun élément"
-          text="Aucun élément ne correspond aux filtres actuels."
+          title={tr('checklist.emptyNoItemTitle')}
+          text={tr('checklist.emptyNoItemText')}
         />
       ) : null}
 
       {selectedTemplate && !showTemplateEditor && myCompletion && (
         <div className="card stack" style={{ boxShadow: 'none' }}>
-          <h4 style={{ margin: 0 }}>Notes globales</h4>
+          <h4 style={{ margin: 0 }}>{tr('checklist.globalNotesHeading')}</h4>
           <textarea
             value={completionNotes}
             onChange={e => setCompletionNotes(e.target.value)}
-            placeholder="Impressions générales, points forts, points à améliorer..."
+            placeholder={tr('checklist.globalNotesPlaceholder')}
             rows={4}
             maxLength={5000}
             disabled={!canWrite}
@@ -761,7 +782,7 @@ export function TrialChecklist({
           {canWrite && (
             <div className="row icon-action-toolbar">
               <button type="button" onClick={() => void saveCompletionNotes()}>
-                Enregistrer les notes
+                {tr('checklist.saveNotes')}
               </button>
             </div>
           )}

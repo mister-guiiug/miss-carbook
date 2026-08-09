@@ -12,6 +12,7 @@ import {
   formatGroupedIntegerFrDisplay,
   parseGroupedIntegerFrInput,
 } from '../../../lib/formatGroupedIntegerFr';
+import { useI18n } from '../../../i18n';
 
 type VehicleState = {
   brand: string;
@@ -39,6 +40,7 @@ export function SettingsCurrentVehicleForm({
   setVehicleSpecStr: (key: string, value: string) => void;
   onSubmit: (e: FormEvent) => void;
 }) {
+  const { t } = useI18n();
   const [dimFocus, setDimFocus] = useState<string | null>(null);
   const [dimDraft, setDimDraft] = useState<Record<string, string>>({});
 
@@ -48,11 +50,13 @@ export function SettingsCurrentVehicleForm({
       className="card stack"
       style={{ boxShadow: 'none' }}
     >
-      <h3 style={{ margin: 0 }}>Véhicule actuel (remplacement)</h3>
-      {!canWrite ? <p className="muted">Lecture seule</p> : null}
+      <h3 style={{ margin: 0 }}>{t('settings.vehicle.title')}</h3>
+      {!canWrite ? (
+        <p className="muted">{t('settings.vehicle.readOnly')}</p>
+      ) : null}
       <div className="row">
         <div style={{ flex: '1 1 140px' }}>
-          <label>Marque</label>
+          <label>{t('settings.vehicle.brand')}</label>
           <input
             value={vehicle.brand}
             onChange={e => setVehicle(v => ({ ...v, brand: e.target.value }))}
@@ -60,7 +64,7 @@ export function SettingsCurrentVehicleForm({
           />
         </div>
         <div style={{ flex: '1 1 140px' }}>
-          <label>Modèle</label>
+          <label>{t('settings.vehicle.model')}</label>
           <input
             value={vehicle.model}
             onChange={e => setVehicle(v => ({ ...v, model: e.target.value }))}
@@ -70,7 +74,7 @@ export function SettingsCurrentVehicleForm({
       </div>
       <div className="row">
         <div style={{ flex: '1 1 140px' }}>
-          <label>Motorisation</label>
+          <label>{t('settings.vehicle.engine')}</label>
           <input
             value={vehicle.engine}
             onChange={e => setVehicle(v => ({ ...v, engine: e.target.value }))}
@@ -78,7 +82,7 @@ export function SettingsCurrentVehicleForm({
           />
         </div>
         <div style={{ flex: '1 1 120px' }}>
-          <label>Année</label>
+          <label>{t('settings.vehicle.year')}</label>
           <input
             type="number"
             value={vehicle.year}
@@ -89,12 +93,10 @@ export function SettingsCurrentVehicleForm({
       </div>
       <div className="stack" style={{ gap: '0.35rem' }}>
         <h4 style={{ margin: 0, fontSize: '1rem' }}>
-          Données techniques (flexibles)
+          {t('settings.vehicle.techTitle')}
         </h4>
         <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-          Même principe que les fiches modèles : champs optionnels, stockés en
-          JSON. Les dimensions reprennent les valeurs catalogue (millimètres),
-          comme sur une fiche constructeur.
+          {t('settings.vehicle.techLead')}
         </p>
         <h5
           style={{
@@ -103,7 +105,7 @@ export function SettingsCurrentVehicleForm({
             fontWeight: 600,
           }}
         >
-          Dimensions (constructeur, mm)
+          {t('settings.vehicle.dimensionsTitle')}
         </h5>
         <div className="row" style={{ flexWrap: 'wrap' }}>
           {candidateSpecDimensionKeys.map(k => {
@@ -124,7 +126,7 @@ export function SettingsCurrentVehicleForm({
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
-                  placeholder="ex. 4 620"
+                  placeholder={t('settings.vehicle.dimPlaceholder')}
                   value={display}
                   onFocus={() => {
                     setDimFocus(k);
@@ -161,7 +163,7 @@ export function SettingsCurrentVehicleForm({
         </div>
         <div className="row" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 140px' }}>
-            <label htmlFor="cv-spec-doors">Nombre de portes</label>
+            <label htmlFor="cv-spec-doors">{t('settings.vehicle.doors')}</label>
             <input
               id="cv-spec-doors"
               type="number"
@@ -177,7 +179,7 @@ export function SettingsCurrentVehicleForm({
             />
           </div>
           <div style={{ flex: '1 1 140px' }}>
-            <label htmlFor="cv-spec-hp">Puissance (ch)</label>
+            <label htmlFor="cv-spec-hp">{t('settings.vehicle.powerHp')}</label>
             <input
               id="cv-spec-hp"
               type="number"
@@ -192,7 +194,9 @@ export function SettingsCurrentVehicleForm({
             />
           </div>
           <div style={{ flex: '1 1 140px' }}>
-            <label htmlFor="cv-spec-fiscal">Puissance fiscale (CV)</label>
+            <label htmlFor="cv-spec-fiscal">
+              {t('settings.vehicle.fiscalCv')}
+            </label>
             <input
               id="cv-spec-fiscal"
               type="number"
@@ -208,7 +212,7 @@ export function SettingsCurrentVehicleForm({
             />
           </div>
           <div style={{ flex: '1 1 140px' }}>
-            <label htmlFor="cv-spec-trunk">Volume du coffre (L)</label>
+            <label htmlFor="cv-spec-trunk">{t('settings.vehicle.trunk')}</label>
             <input
               id="cv-spec-trunk"
               type="number"
@@ -226,7 +230,9 @@ export function SettingsCurrentVehicleForm({
         </div>
         <div className="row" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 180px' }}>
-            <label htmlFor="cv-spec-gearbox">Boîte de vitesses</label>
+            <label htmlFor="cv-spec-gearbox">
+              {t('settings.vehicle.gearbox')}
+            </label>
             <input
               id="cv-spec-gearbox"
               value={
@@ -235,12 +241,12 @@ export function SettingsCurrentVehicleForm({
                   : ''
               }
               onChange={e => setVehicleSpecStr('gearbox', e.target.value)}
-              placeholder="ex. Manuelle 6, BVA8…"
+              placeholder={t('settings.vehicle.gearboxPlaceholder')}
               disabled={!canWrite}
             />
           </div>
           <div style={{ flex: '1 1 180px' }}>
-            <label htmlFor="cv-spec-color">Couleur extérieure</label>
+            <label htmlFor="cv-spec-color">{t('settings.vehicle.color')}</label>
             <input
               id="cv-spec-color"
               value={
@@ -255,7 +261,7 @@ export function SettingsCurrentVehicleForm({
         </div>
       </div>
       <div>
-        <label>Options</label>
+        <label>{t('settings.vehicle.options')}</label>
         <textarea
           value={vehicle.options}
           onChange={e => setVehicle(v => ({ ...v, options: e.target.value }))}
@@ -264,7 +270,7 @@ export function SettingsCurrentVehicleForm({
       </div>
       {canWrite ? (
         <button type="submit" disabled={busy}>
-          {busy ? '…' : 'Enregistrer le véhicule actuel'}
+          {busy ? '…' : t('settings.vehicle.saveVehicle')}
         </button>
       ) : null}
     </form>

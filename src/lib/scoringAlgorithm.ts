@@ -238,6 +238,15 @@ export function generateRecommendation(
 
   const top = scoredCandidates[0];
   const second = scoredCandidates[1];
+  // Garde noUncheckedIndexedAccess : la liste est non vide (early-return
+  // ci-dessus), mais l'accès indexé reste `T | undefined` pour le compilateur.
+  if (!top) {
+    return {
+      topCandidate: null,
+      reasoning: 'Aucun candidat à analyser.',
+      confidence: 'low',
+    };
+  }
 
   // Calculer l'écart avec le second
   const gap = second ? top.compositeScore - second.compositeScore : 0;
@@ -338,8 +347,8 @@ export function analyzeGroupConsensus(candidates: CandidateScore[]): {
   return {
     consensus,
     details: {
-      mostAgreed: candidates[0],
-      mostDisputed: candidates[candidates.length - 1],
+      mostAgreed: candidates[0] ?? null,
+      mostDisputed: candidates.at(-1) ?? null,
       varianceScore: variance,
     },
   };

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCandidateListLabel } from '../lib/candidateLabel';
 import { supabase } from '../lib/supabase';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useI18n } from '../i18n';
 import { IconActionButton, IconX } from './ui/IconActionButton';
 
 type Item = { type: string; label: string; tab: string; hint?: string };
@@ -17,6 +18,7 @@ export function WorkspaceSearchModal({
   onClose: () => void;
   onPick: (tab: string) => void;
 }) {
+  const { t } = useI18n();
   const [q, setQ] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -55,14 +57,14 @@ export function WorkspaceSearchModal({
       const list: Item[] = [];
       for (const r of req.data ?? [])
         list.push({
-          type: 'Exigence',
+          type: t('workspace.requirement'),
           label: r.label,
           tab: 'requirements',
           hint: r.id.slice(0, 8),
         });
       for (const c of cand.data ?? [])
         list.push({
-          type: 'Modèle',
+          type: t('workspace.model'),
           label: formatCandidateListLabel({
             brand: c.brand,
             model: c.model,
@@ -74,7 +76,7 @@ export function WorkspaceSearchModal({
         });
       for (const r of rem.data ?? [])
         list.push({
-          type: 'Rappel',
+          type: t('workspace.reminder'),
           label: r.title,
           tab: 'reminders',
           hint: r.id.slice(0, 8),
@@ -86,7 +88,7 @@ export function WorkspaceSearchModal({
           ? `${loc} · ${new Date(dt).toLocaleDateString('fr-FR')}`
           : new Date(dt).toLocaleDateString('fr-FR');
         list.push({
-          type: 'Visite',
+          type: t('workspace.visit'),
           label,
           tab: 'reminders',
           hint: (v as { id: string }).id.slice(0, 8),
@@ -97,7 +99,7 @@ export function WorkspaceSearchModal({
     return () => {
       cancelled = true;
     };
-  }, [open, workspaceId]);
+  }, [open, workspaceId, t]);
 
   useEffect(() => {
     if (!open) setQ('');
@@ -121,14 +123,14 @@ export function WorkspaceSearchModal({
       className="search-modal-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label="Recherche dossier"
+      aria-label={t('workspace.searchDialogLabel')}
     >
       <div ref={panelRef} className="search-modal card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <strong>Recherche dans le dossier</strong>
+          <strong>{t('workspace.searchInWorkspace')}</strong>
           <IconActionButton
             variant="secondary"
-            label="Fermer la recherche"
+            label={t('workspace.closeSearch')}
             onClick={onClose}
           >
             <IconX />
@@ -136,7 +138,7 @@ export function WorkspaceSearchModal({
         </div>
         <input
           autoFocus
-          placeholder="Exigence, modèle, rappel, visite…"
+          placeholder={t('workspace.searchPlaceholder')}
           value={q}
           onChange={e => setQ(e.target.value)}
         />
@@ -157,7 +159,7 @@ export function WorkspaceSearchModal({
           ))}
         </ul>
         <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
-          Raccourci : Ctrl+K
+          {t('workspace.shortcutCtrlK')}
         </p>
       </div>
     </div>

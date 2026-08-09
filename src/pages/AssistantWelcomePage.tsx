@@ -3,11 +3,13 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AssistantFullscreenLayout } from '../components/assistant/AssistantFullscreenLayout';
 import { setGlobalAssistantDone } from '../lib/assistantStorage';
+import { useI18n } from '../i18n';
 
 const STEP_COUNT = 5;
 
 export function AssistantWelcomePage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [step, setStep] = useState(0);
 
   const goHome = useCallback(() => {
@@ -29,11 +31,11 @@ export function AssistantWelcomePage() {
   }, [goHome]);
 
   const titles = [
-    'Bienvenue sur Miss Carbook',
-    'Ce que vous ferez ici',
-    'Votre compte',
-    'Créer ou rejoindre un dossier',
-    'C’est parti',
+    t('assistant.welcomeTitle'),
+    t('assistant.whatTitle'),
+    t('assistant.accountTitle'),
+    t('assistant.createTitle'),
+    t('assistant.doneTitle'),
   ];
 
   const bodies: { titleId: string; content: ReactNode }[] = [
@@ -41,8 +43,7 @@ export function AssistantWelcomePage() {
       titleId: 'assistant-welcome-title',
       content: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Un carnet partagé pour comparer des véhicules, structurer vos
-          exigences et décider à plusieurs sans vous perdre dans les messages.
+          {t('assistant.welcomeBody')}
         </p>
       ),
     },
@@ -51,13 +52,16 @@ export function AssistantWelcomePage() {
       content: (
         <ul className="assistant-bullet-list">
           <li>
-            <strong>Exigences</strong> — ce qui compte vraiment pour vous.
+            <strong>{t('assistant.reqLabel')}</strong>
+            {t('assistant.whatReqText')}
           </li>
           <li>
-            <strong>Modèles</strong> — les véhicules étudiés, photos et avis.
+            <strong>{t('assistant.modelsLabel')}</strong>
+            {t('assistant.whatModelsText')}
           </li>
           <li>
-            <strong>Comparer & décider</strong> — synthèse et trace des choix.
+            <strong>{t('assistant.whatCompareLabel')}</strong>
+            {t('assistant.whatCompareText')}
           </li>
         </ul>
       ),
@@ -66,10 +70,11 @@ export function AssistantWelcomePage() {
       titleId: 'assistant-account-title',
       content: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Votre <strong>pseudo</strong> est visible par les autres membres d’un
-          dossier. Associez un <strong>e-mail</strong> depuis l’accueil ou les
-          paramètres pour recevoir un lien et vous reconnecter sur un autre
-          appareil.
+          {t('assistant.accountBody1')}
+          <strong>{t('assistant.accountPseudo')}</strong>
+          {t('assistant.accountBody2')}
+          <strong>{t('assistant.accountEmail')}</strong>
+          {t('assistant.accountBody3')}
         </p>
       ),
     },
@@ -77,9 +82,11 @@ export function AssistantWelcomePage() {
       titleId: 'assistant-create-title',
       content: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Sur l’<strong>accueil</strong>, créez un dossier (projet véhicule) ou
-          rejoignez-en un avec un <strong>code de partage</strong>. Vous pourrez
-          inviter d’autres personnes ensuite.
+          {t('assistant.createBody1')}
+          <strong>{t('assistant.createHome')}</strong>
+          {t('assistant.createBody2')}
+          <strong>{t('assistant.createShareCode')}</strong>
+          {t('assistant.createBody3')}
         </p>
       ),
     },
@@ -87,8 +94,7 @@ export function AssistantWelcomePage() {
       titleId: 'assistant-done-title',
       content: (
         <p className="muted" style={{ marginTop: 0 }}>
-          Retournez à l’accueil pour créer votre premier dossier ou ouvrir un
-          dossier existant.
+          {t('assistant.doneBody')}
         </p>
       ),
     },
@@ -96,14 +102,21 @@ export function AssistantWelcomePage() {
 
   const primary =
     step < STEP_COUNT - 1 ? () => setStep(s => s + 1) : finishCompleted;
-  const primaryLabel = step < STEP_COUNT - 1 ? 'Suivant' : 'Aller à l’accueil';
+  const primaryLabel =
+    step < STEP_COUNT - 1 ? t('assistant.next') : t('assistant.goHome');
+
+  // Garde noUncheckedIndexedAccess : `step` est borné par la navigation,
+  // mais l'accès indexé reste `T | undefined` pour le compilateur.
+  const currentBody = bodies[step];
+  const currentTitle = titles[step];
+  if (!currentBody || currentTitle === undefined) return null;
 
   return (
     <AssistantFullscreenLayout
       stepIndex={step}
       stepCount={STEP_COUNT}
-      titleId={bodies[step].titleId}
-      title={titles[step]}
+      titleId={currentBody.titleId}
+      title={currentTitle}
       showBack={step > 0}
       onBack={() => setStep(s => Math.max(0, s - 1))}
       onPrimary={primary}
@@ -111,7 +124,7 @@ export function AssistantWelcomePage() {
       onPassAll={passAll}
       onNeverShowAgain={neverShow}
     >
-      {bodies[step].content}
+      {currentBody.content}
     </AssistantFullscreenLayout>
   );
 }

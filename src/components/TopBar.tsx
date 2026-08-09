@@ -8,6 +8,7 @@ import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useWorkspaceChrome } from '../contexts/useWorkspaceChrome';
 import { WorkspaceHeaderToolbar } from './workspace/WorkspaceHeaderToolbar';
+import { useI18n } from '../i18n';
 
 const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
 
@@ -106,8 +107,11 @@ function initialsFromDisplayName(name: string) {
   const t = name.trim();
   if (!t) return '?';
   const parts = t.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
+  const [firstWord, secondWord] = parts;
+  if (firstWord && secondWord)
+    return ((firstWord[0] ?? '') + (secondWord[0] ?? ''))
+      .toUpperCase()
+      .slice(0, 2);
   return t.slice(0, 2).toUpperCase();
 }
 
@@ -123,6 +127,7 @@ export function TopBar() {
   const { mode, toggle } = useTheme();
   const online = useOnlineStatus();
   const { reportException } = useErrorDialog();
+  const { t } = useI18n();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -141,7 +146,7 @@ export function TopBar() {
       .eq('id', user.id)
       .maybeSingle();
     if (error) {
-      reportException(error, 'Chargement du pseudo (en-tête)');
+      reportException(error, t('nav.ctxLoadPseudo'));
       setDisplayName(null);
     } else {
       setDisplayName(data?.display_name ?? null);
@@ -188,9 +193,10 @@ export function TopBar() {
 
   if (!user) return null;
 
-  const label = loading ? '…' : displayName?.trim() || 'Profil';
+  const label = loading ? '…' : displayName?.trim() || t('nav.profile');
   /** Libellé d’action (aligné barre dossier) : ce qui s’applique au clic. */
-  const themeActionLabel = mode === 'dark' ? 'Thème clair' : 'Thème sombre';
+  const themeActionLabel =
+    mode === 'dark' ? t('nav.themeLight') : t('nav.themeDark');
   const onWorkspace = isWorkspacePath(location.pathname);
   const hideAccountCluster = onWorkspace;
   const showWorkspaceToolbar = onWorkspace && workspaceChrome;
@@ -210,7 +216,7 @@ export function TopBar() {
             height={36}
             decoding="async"
           />
-          <span className="app-brand-title">Miss Carbook</span>
+          <span className="app-brand-title">{t('common.appName')}</span>
         </Link>
         <div className="app-topbar-spacer" aria-hidden="true" />
         {hideAccountCluster ? (
@@ -218,15 +224,13 @@ export function TopBar() {
             className={`app-topbar-right${showWorkspaceToolbar ? ' app-topbar-right--workspace' : ' app-topbar-right--minimal'}`}
             role={showWorkspaceToolbar ? 'toolbar' : undefined}
             aria-label={
-              showWorkspaceToolbar
-                ? 'Actions : ajouter, recherche, menu dossier et compte'
-                : undefined
+              showWorkspaceToolbar ? t('nav.workspaceActionsAria') : undefined
             }
           >
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
-              title={online ? 'En ligne' : 'Hors ligne'}
-              aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
+              title={online ? t('common.online') : t('common.offline')}
+              aria-label={online ? t('nav.networkActive') : t('common.offline')}
             />
             {showWorkspaceToolbar ? (
               <WorkspaceHeaderToolbar
@@ -240,8 +244,8 @@ export function TopBar() {
           <div className="app-topbar-right app-topbar-right--account">
             <span
               className={`online-dot ${online ? 'on' : 'off'}`}
-              title={online ? 'En ligne' : 'Hors ligne'}
-              aria-label={online ? 'Connexion réseau active' : 'Hors ligne'}
+              title={online ? t('common.online') : t('common.offline')}
+              aria-label={online ? t('nav.networkActive') : t('common.offline')}
             />
             <div ref={accountMenuRef} className="app-topbar-account-menu">
               <button
@@ -250,7 +254,7 @@ export function TopBar() {
                 aria-expanded={accountMenuOpen}
                 aria-haspopup="menu"
                 aria-controls="topbar-account-menu"
-                title={`${label} — menu compte`}
+                title={t('nav.accountMenuTitle', { name: label })}
                 onClick={() => setAccountMenuOpen(o => !o)}
               >
                 <span
@@ -280,25 +284,25 @@ export function TopBar() {
                   id="topbar-account-menu"
                   className="app-topbar-account-flyout chrome-menu-panel"
                   role="menu"
-                  aria-label="Compte et paramètres"
+                  aria-label={t('nav.accountMenuAria')}
                 >
                   <div className="app-topbar-flyout-meta">
                     <div className="app-topbar-flyout-ident">
                       <span className="app-topbar-flyout-name">{label}</span>
                       <span className="app-topbar-flyout-hint muted">
-                        Compte sur cet appareil
+                        {t('nav.accountOnDevice')}
                       </span>
                     </div>
                     <div
                       className="app-topbar-flyout-online"
-                      title={online ? 'En ligne' : 'Hors ligne'}
+                      title={online ? t('common.online') : t('common.offline')}
                     >
                       <span
                         className={`online-dot ${online ? 'on' : 'off'}`}
                         aria-hidden="true"
                       />
                       <span className="app-topbar-flyout-online-txt">
-                        {online ? 'En ligne' : 'Hors ligne'}
+                        {online ? t('common.online') : t('common.offline')}
                       </span>
                     </div>
                   </div>
@@ -313,7 +317,7 @@ export function TopBar() {
                         <IconGear className="app-topbar-flyout-svg" />
                       </span>
                       <span className="app-topbar-flyout-txt">
-                        Paramètres généraux
+                        {t('nav.generalSettings')}
                       </span>
                     </Link>
                     <button
@@ -348,7 +352,9 @@ export function TopBar() {
                       <span className="app-topbar-flyout-ic" aria-hidden="true">
                         <IconLogOut className="app-topbar-flyout-svg" />
                       </span>
-                      <span className="app-topbar-flyout-txt">Déconnexion</span>
+                      <span className="app-topbar-flyout-txt">
+                        {t('nav.signOut')}
+                      </span>
                     </button>
                   </div>
                 </nav>

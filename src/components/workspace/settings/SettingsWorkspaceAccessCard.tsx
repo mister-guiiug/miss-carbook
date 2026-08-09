@@ -6,6 +6,7 @@ import {
   IconPlus,
 } from '../../ui/IconActionButton';
 import type { InviteRow, Ws } from './settingsTypes';
+import { useI18n } from '../../../i18n';
 
 /** Lien permanent + invitations (admin), regroupés pour limiter le défilement. */
 export function SettingsWorkspaceAccessCard({
@@ -39,6 +40,7 @@ export function SettingsWorkspaceAccessCard({
   onCreateInvite: () => void;
   onRevokeInvite: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const lastLink = lastToken
     ? `${origin}${base}?invite=${lastToken}`.replace(/([^:]\/)\/+/g, '$1')
     : null;
@@ -48,13 +50,16 @@ export function SettingsWorkspaceAccessCard({
       className="card stack settings-access-card"
       style={{ boxShadow: 'none' }}
     >
-      <h3 style={{ margin: 0 }}>Accès au dossier</h3>
+      <h3 style={{ margin: 0 }}>{t('settings.access.title')}</h3>
 
       <div className="settings-access-block stack">
-        <h4 className="settings-access-subtitle">Lien permanent</h4>
+        <h4 className="settings-access-subtitle">
+          {t('settings.access.permaTitle')}
+        </h4>
         <p className="muted settings-access-lead" style={{ margin: 0 }}>
-          Code <code>{workspace.share_code}</code> — tout membre déjà connecté
-          peut rejoindre avec ce lien.
+          {t('settings.access.codePrefix')}
+          <code>{workspace.share_code}</code>
+          {t('settings.access.codeSuffix')}
         </p>
         <p className="settings-access-url muted" title={inviteUrl}>
           {inviteUrl}
@@ -62,7 +67,7 @@ export function SettingsWorkspaceAccessCard({
         <div>
           <IconActionButton
             variant="secondary"
-            label="Copier le lien"
+            label={t('settings.access.copyLink')}
             onClick={() => void onCopy()}
           >
             <IconCopy />
@@ -75,11 +80,10 @@ export function SettingsWorkspaceAccessCard({
           <hr className="settings-access-sep" />
           <div className="settings-access-block stack">
             <h4 className="settings-access-subtitle">
-              Invitations (lien à usage unique)
+              {t('settings.access.invitesTitle')}
             </h4>
             <p className="muted settings-access-lead" style={{ margin: 0 }}>
-              Rôle + expiration. Le lien est copié automatiquement à la
-              création.
+              {t('settings.access.invitesLead')}
             </p>
             <div className="settings-invite-toolbar row">
               <select
@@ -87,18 +91,18 @@ export function SettingsWorkspaceAccessCard({
                 onChange={e =>
                   setInviteRole(e.target.value as typeof inviteRole)
                 }
-                aria-label="Rôle pour la nouvelle invitation"
+                aria-label={t('settings.access.roleAria')}
               >
-                <option value="read">Lecture</option>
-                <option value="write">Écriture</option>
-                <option value="admin">Admin</option>
+                <option value="read">{t('settings.access.roleRead')}</option>
+                <option value="write">{t('settings.access.roleWrite')}</option>
+                <option value="admin">{t('settings.access.roleAdmin')}</option>
               </select>
               <div
                 className="settings-invite-days row"
                 style={{ alignItems: 'center', gap: '0.35rem' }}
               >
                 <span className="muted" style={{ fontSize: '0.85rem' }}>
-                  Expire dans
+                  {t('settings.access.expiresIn')}
                 </span>
                 <input
                   type="number"
@@ -107,15 +111,15 @@ export function SettingsWorkspaceAccessCard({
                   value={inviteDays}
                   onChange={e => setInviteDays(Number(e.target.value))}
                   style={{ width: '4.25rem' }}
-                  aria-label="Durée de validité en jours"
+                  aria-label={t('settings.access.daysAria')}
                 />
                 <span className="muted" style={{ fontSize: '0.85rem' }}>
-                  j
+                  {t('settings.access.daysUnit')}
                 </span>
               </div>
               <IconActionButton
                 variant="primary"
-                label="Créer une invitation"
+                label={t('settings.access.createInvite')}
                 onClick={() => void onCreateInvite()}
               >
                 <IconPlus />
@@ -127,7 +131,8 @@ export function SettingsWorkspaceAccessCard({
                 style={{ margin: 0 }}
                 title={lastLink}
               >
-                Dernière : <code>{lastLink}</code>
+                {t('settings.access.lastPrefix')}
+                <code>{lastLink}</code>
               </p>
             ) : null}
             <ul className="settings-invite-list">
@@ -137,14 +142,17 @@ export function SettingsWorkspaceAccessCard({
                     <code>{i.token.slice(0, 8)}…</code>
                     <span className="muted">{i.role}</span>
                     <span className="muted">
-                      exp. {new Date(i.expires_at).toLocaleDateString('fr-FR')}
-                      {i.used_at ? ' · utilisée' : ''}
+                      {t('settings.access.expPrefix')}
+                      {new Date(i.expires_at).toLocaleDateString('fr-FR')}
+                      {i.used_at ? t('settings.access.used') : ''}
                     </span>
                   </span>
                   {!i.used_at ? (
                     <IconActionButton
                       variant="danger"
-                      label={`Révoquer l’invitation ${i.token.slice(0, 8)}…`}
+                      label={t('settings.access.revokeInvite', {
+                        token: i.token.slice(0, 8),
+                      })}
                       onClick={() => void onRevokeInvite(i.id)}
                     >
                       <IconBan />

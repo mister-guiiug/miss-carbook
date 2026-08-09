@@ -10,6 +10,7 @@ import {
   IconX,
   IconDuplicate,
 } from './ui/IconActionButton';
+import { useI18n } from '../i18n';
 
 type Workspace = {
   id: string;
@@ -55,8 +56,20 @@ export function WorkspaceTemplates({
   onCreateWorkspace,
 }: WorkspaceTemplatesProps) {
   const navigate = useNavigate();
+  const { t: tr } = useI18n();
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
+  const categoryLabels: Record<string, string> = {
+    general: tr('templates.categories.general'),
+    suv: tr('templates.categories.suv'),
+    berline: tr('templates.categories.berline'),
+    citadine: tr('templates.categories.citadine'),
+    utilitaire: tr('templates.categories.utilitaire'),
+    sportive: tr('templates.categories.sportive'),
+    electrique: tr('templates.categories.electrique'),
+    hybride: tr('templates.categories.hybride'),
+    familiale: tr('templates.categories.familiale'),
+  };
   const [templates, setTemplates] = useState<Template[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -89,13 +102,13 @@ export function WorkspaceTemplates({
     ]);
 
     const firstErr = t.error ?? w.error ?? p.error;
-    if (firstErr) reportException(firstErr, 'Chargement des modèles');
+    if (firstErr) reportException(firstErr, tr('templates.ctxLoadTemplates'));
 
     setTemplates((t.data ?? []) as Template[]);
     setWorkspaces((w.data ?? []) as Workspace[]);
     setProfiles((p.data ?? []) as Profile[]);
     setCurrentUserId(userResp.data.user?.id ?? null);
-  }, [reportException]);
+  }, [reportException, tr]);
 
   useEffect(() => {
     void load();
@@ -132,7 +145,7 @@ export function WorkspaceTemplates({
       p_is_public: templateIsPublic,
     });
 
-    if (error) reportException(error, 'Création du modèle');
+    if (error) reportException(error, tr('templates.ctxCreateTemplate'));
     else {
       setTemplateName('');
       setTemplateDesc('');
@@ -141,7 +154,7 @@ export function WorkspaceTemplates({
       setSourceWorkspace(null);
       setShowCreateForm(false);
       await load();
-      showToast('Modèle créé avec succès');
+      showToast(tr('templates.toastTemplateCreated'));
     }
   };
 
@@ -157,13 +170,13 @@ export function WorkspaceTemplates({
       }
     );
 
-    if (error) reportException(error, 'Création du dossier');
+    if (error) reportException(error, tr('templates.ctxCreateWorkspace'));
     else {
       setShowCreateFromTemplate(false);
       setNewWorkspaceName('');
       setNewWorkspaceDesc('');
       setSelectedTemplate(null);
-      showToast('Dossier créé avec succès');
+      showToast(tr('templates.toastWorkspaceCreated'));
       if (onCreateWorkspace && data) {
         onCreateWorkspace(data as string);
       } else {
@@ -178,11 +191,11 @@ export function WorkspaceTemplates({
         className="row"
         style={{ justifyContent: 'space-between', alignItems: 'center' }}
       >
-        <h2 style={{ margin: 0 }}>Modèles de dossiers</h2>
+        <h2 style={{ margin: 0 }}>{tr('templates.title')}</h2>
         {onClose && (
           <IconActionButton
             variant="secondary"
-            label="Fermer"
+            label={tr('common.close')}
             onClick={onClose}
           >
             <IconX />
@@ -191,8 +204,7 @@ export function WorkspaceTemplates({
       </div>
 
       <p className="muted" style={{ margin: 0 }}>
-        Créez des modèles à partir de vos dossiers existants pour gagner du
-        temps sur vos futurs projets.
+        {tr('templates.intro')}
       </p>
 
       <div className="row" style={{ gap: '1rem', flexWrap: 'wrap' }}>
@@ -201,14 +213,14 @@ export function WorkspaceTemplates({
           className="primary"
           onClick={() => setShowCreateForm(true)}
         >
-          <IconPlus /> Créer un modèle
+          <IconPlus /> {tr('templates.createTemplateBtn')}
         </button>
         <button
           type="button"
           className="secondary"
           onClick={() => setShowCreateFromTemplate(true)}
         >
-          <IconDuplicate /> Nouveau dossier à partir d'un modèle
+          <IconDuplicate /> {tr('templates.newFromTemplate')}
         </button>
       </div>
 
@@ -217,49 +229,49 @@ export function WorkspaceTemplates({
           className="card stack"
           style={{ boxShadow: 'none', padding: '1rem' }}
         >
-          <h4 style={{ margin: 0 }}>Créer un modèle</h4>
+          <h4 style={{ margin: 0 }}>{tr('templates.createTemplateBtn')}</h4>
           <div>
-            <label>Nom du modèle</label>
+            <label>{tr('templates.templateNameLabel')}</label>
             <input
               value={templateName}
               onChange={e => setTemplateName(e.target.value)}
-              placeholder="ex. SUV familial électrique"
+              placeholder={tr('templates.templateNamePlaceholder')}
               required
               maxLength={120}
             />
           </div>
           <div>
-            <label>Description (optionnel)</label>
+            <label>{tr('templates.descriptionOptional')}</label>
             <textarea
               value={templateDesc}
               onChange={e => setTemplateDesc(e.target.value)}
-              placeholder="Ce modèle inclut les critères typiques pour..."
+              placeholder={tr('templates.templateDescPlaceholder')}
               rows={2}
               maxLength={2000}
             />
           </div>
           <div className="row" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ flex: '1 1 200px' }}>
-              <label>Catégorie</label>
+              <label>{tr('templates.categoryLabel')}</label>
               <select
                 value={templateCategory}
                 onChange={e => setTemplateCategory(e.target.value)}
               >
                 {CATEGORIES.map(c => (
                   <option key={c.value} value={c.value}>
-                    {c.label}
+                    {categoryLabels[c.value]}
                   </option>
                 ))}
               </select>
             </div>
             <div style={{ flex: '1 1 200px' }}>
-              <label>Dossier source</label>
+              <label>{tr('templates.sourceWorkspaceLabel')}</label>
               <select
                 value={sourceWorkspace ?? ''}
                 onChange={e => setSourceWorkspace(e.target.value || null)}
                 required
               >
-                <option value="">Sélectionner...</option>
+                <option value="">{tr('templates.selectPlaceholder')}</option>
                 {workspaces.map(w => (
                   <option key={w.id} value={w.id}>
                     {w.name}
@@ -277,7 +289,7 @@ export function WorkspaceTemplates({
               checked={templateIsPublic}
               onChange={e => setTemplateIsPublic(e.target.checked)}
             />
-            Rendre ce modèle public (visible par tous les utilisateurs)
+            {tr('templates.makePublic')}
           </label>
           <div className="row icon-action-toolbar">
             <button
@@ -285,11 +297,11 @@ export function WorkspaceTemplates({
               disabled={!templateName.trim() || !sourceWorkspace}
               onClick={() => void createTemplate()}
             >
-              Créer le modèle
+              {tr('templates.submitCreateTemplate')}
             </button>
             <IconActionButton
               variant="secondary"
-              label="Annuler"
+              label={tr('common.cancel')}
               onClick={() => setShowCreateForm(false)}
             >
               <IconX />
@@ -303,43 +315,43 @@ export function WorkspaceTemplates({
           className="card stack"
           style={{ boxShadow: 'none', padding: '1rem' }}
         >
-          <h4 style={{ margin: 0 }}>Nouveau dossier à partir d'un modèle</h4>
+          <h4 style={{ margin: 0 }}>{tr('templates.newFromTemplate')}</h4>
           <div>
-            <label>Nom du dossier</label>
+            <label>{tr('templates.workspaceNameLabel')}</label>
             <input
               value={newWorkspaceName}
               onChange={e => setNewWorkspaceName(e.target.value)}
-              placeholder="ex. Projet véhicule familial"
+              placeholder={tr('templates.workspaceNamePlaceholder')}
               required
               maxLength={120}
             />
           </div>
           <div>
-            <label>Description (optionnel)</label>
+            <label>{tr('templates.descriptionOptional')}</label>
             <textarea
               value={newWorkspaceDesc}
               onChange={e => setNewWorkspaceDesc(e.target.value)}
-              placeholder="Description de votre projet..."
+              placeholder={tr('templates.workspaceDescPlaceholder')}
               rows={2}
               maxLength={2000}
             />
           </div>
           <div>
-            <label>Modèle à utiliser</label>
+            <label>{tr('templates.templateToUseLabel')}</label>
             <select
               value={selectedTemplate ?? ''}
               onChange={e => setSelectedTemplate(e.target.value || null)}
               required
             >
-              <option value="">Sélectionner...</option>
-              <optgroup label="Mes modèles">
+              <option value="">{tr('templates.selectPlaceholder')}</option>
+              <optgroup label={tr('templates.myTemplates')}>
                 {myTemplates.map(t => (
                   <option key={t.id} value={t.id}>
-                    {t.name} {t.is_public && '(public)'}
+                    {t.name} {t.is_public && tr('templates.publicSuffix')}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Modèles publics">
+              <optgroup label={tr('templates.publicTemplates')}>
                 {publicTemplates
                   .filter(t => !myTemplates.some(mt => mt.id === t.id))
                   .map(t => (
@@ -356,11 +368,11 @@ export function WorkspaceTemplates({
               disabled={!newWorkspaceName.trim() || !selectedTemplate}
               onClick={() => void createWorkspaceFromTemplate()}
             >
-              Créer le dossier
+              {tr('templates.submitCreateWorkspace')}
             </button>
             <IconActionButton
               variant="secondary"
-              label="Annuler"
+              label={tr('common.cancel')}
               onClick={() => setShowCreateFromTemplate(false)}
             >
               <IconX />
@@ -370,12 +382,12 @@ export function WorkspaceTemplates({
       )}
 
       <div className="stack">
-        <h3 style={{ margin: 0 }}>Mes modèles</h3>
+        <h3 style={{ margin: 0 }}>{tr('templates.myTemplates')}</h3>
         {myTemplates.length === 0 ? (
           <EmptyState
             icon="requirements"
-            title="Aucun modèle personnel"
-            text="Créez votre premier modèle à partir d'un dossier existant."
+            title={tr('templates.emptyMyTitle')}
+            text={tr('templates.emptyMyText')}
           />
         ) : (
           <div className="row" style={{ flexWrap: 'wrap', gap: '1rem' }}>
@@ -400,7 +412,9 @@ export function WorkspaceTemplates({
                       }}
                     >
                       <strong>{t.name}</strong>
-                      <span className="badge">Utilisé {t.usage_count}x</span>
+                      <span className="badge">
+                        {tr('templates.usedCount', { count: t.usage_count })}
+                      </span>
                     </div>
                     {t.description && (
                       <p
@@ -415,13 +429,19 @@ export function WorkspaceTemplates({
                       style={{ gap: '0.5rem', flexWrap: 'wrap' }}
                     >
                       <span className="muted" style={{ fontSize: '0.85rem' }}>
-                        Par {createdBy?.display_name || 'Vous'}
+                        {tr('templates.by', {
+                          name:
+                            createdBy?.display_name ||
+                            tr('templates.youAuthor'),
+                        })}
                       </span>
                       {t.is_public && (
-                        <span className="badge success">Public</span>
+                        <span className="badge success">
+                          {tr('templates.publicBadge')}
+                        </span>
                       )}
                       <span className="badge">
-                        {CATEGORIES.find(c => c.value === t.category)?.label}
+                        {categoryLabels[t.category]}
                       </span>
                     </div>
                   </div>
@@ -433,9 +453,9 @@ export function WorkspaceTemplates({
       </div>
 
       <div className="stack">
-        <h3 style={{ margin: 0 }}>Modèles publics</h3>
+        <h3 style={{ margin: 0 }}>{tr('templates.publicTemplates')}</h3>
         {publicTemplates.length === 0 ? (
-          <p className="muted">Aucun modèle public disponible.</p>
+          <p className="muted">{tr('templates.emptyPublic')}</p>
         ) : (
           <div className="row" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             {publicTemplates
@@ -461,7 +481,9 @@ export function WorkspaceTemplates({
                         }}
                       >
                         <strong>{t.name}</strong>
-                        <span className="badge">Utilisé {t.usage_count}x</span>
+                        <span className="badge">
+                          {tr('templates.usedCount', { count: t.usage_count })}
+                        </span>
                       </div>
                       {t.description && (
                         <p
@@ -476,10 +498,14 @@ export function WorkspaceTemplates({
                         style={{ gap: '0.5rem', flexWrap: 'wrap' }}
                       >
                         <span className="muted" style={{ fontSize: '0.85rem' }}>
-                          Par {createdBy?.display_name || 'Inconnu'}
+                          {tr('templates.by', {
+                            name:
+                              createdBy?.display_name ||
+                              tr('templates.unknownAuthor'),
+                          })}
                         </span>
                         <span className="badge">
-                          {CATEGORIES.find(c => c.value === t.category)?.label}
+                          {categoryLabels[t.category]}
                         </span>
                       </div>
                     </div>
