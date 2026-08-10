@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus, RequirementLevel } from '../../types/database';
@@ -88,19 +88,19 @@ export function RequirementsMatrix({
 
   const load = useCallback(async () => {
     const [r, c, e] = await Promise.all([
-      supabase
+      getSupabase()
         .from('requirements')
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('sort_order', { ascending: true }),
-      supabase
+      getSupabase()
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id, status, price')
         .eq('workspace_id', workspaceId)
         .order('parent_candidate_id', { ascending: true, nullsFirst: true })
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true }),
-      supabase
+      getSupabase()
         .from('requirement_candidate_evaluations')
         .select('requirement_id, candidate_id, status, note'),
     ]);
@@ -144,7 +144,7 @@ export function RequirementsMatrix({
   ) => {
     if (!canWrite) return;
     const cur = evalMap.get(evalKey(requirementId, candidateId));
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('requirement_candidate_evaluations')
       .upsert(
         {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
@@ -50,7 +50,7 @@ export function HomePage() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('workspace_members')
       .select(
         `
@@ -91,9 +91,12 @@ export function HomePage() {
     if (!token || !user || inviteHandled.current) return;
     inviteHandled.current = true;
     void (async () => {
-      const { data, error } = await supabase.rpc('accept_workspace_invite', {
-        p_token: token,
-      });
+      const { data, error } = await getSupabase().rpc(
+        'accept_workspace_invite',
+        {
+          p_token: token,
+        }
+      );
       if (error) {
         reportException(error, t('home.ctxAcceptInvite'));
         inviteHandled.current = false;
@@ -140,7 +143,7 @@ export function HomePage() {
     }
     setBusyCreate(true);
     try {
-      const { data, error } = await supabase.rpc('create_workspace', {
+      const { data, error } = await getSupabase().rpc('create_workspace', {
         p_name: parsed.data.name,
         p_description: parsed.data.description,
         p_replacement_enabled: parsed.data.replacement_enabled,
@@ -176,7 +179,7 @@ export function HomePage() {
     }
     setBusyJoin(true);
     try {
-      const { data, error } = await supabase.rpc('join_workspace', {
+      const { data, error } = await getSupabase().rpc('join_workspace', {
         p_code: parsed.data,
       });
       if (error) throw error;

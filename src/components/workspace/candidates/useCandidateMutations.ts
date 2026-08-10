@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { getSupabase } from '../../../lib/supabase';
 import { logActivity } from '../../../lib/activity';
 import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks';
 import type { Json } from '../../../types/database';
@@ -20,7 +20,7 @@ export function useCandidateMutations({
     async (c: CandidateRow) => {
       if (!canWrite) return;
       try {
-        let q = supabase
+        let q = getSupabase()
           .from('candidates')
           .select('sort_order')
           .eq('workspace_id', workspaceId);
@@ -34,7 +34,7 @@ export function useCandidateMutations({
         const prev = (lastSort as { sort_order?: number } | null)?.sort_order;
         const nextOrder = (prev == null ? -1 : prev) + 1;
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
           .from('candidates')
           .insert({
             workspace_id: workspaceId,
@@ -63,7 +63,7 @@ export function useCandidateMutations({
           .single();
         if (error) throw error;
         const specs = (c.candidate_specs?.specs ?? {}) as Json;
-        await supabase
+        await getSupabase()
           .from('candidate_specs')
           .insert({ candidate_id: data.id, specs });
         await logActivity(
@@ -107,7 +107,7 @@ export function useCandidateMutations({
         const iPrice = col('price', 'prix');
         if (iBrand < 0 || iModel < 0)
           throw new Error('Colonnes brand et model requises');
-        const { data: lastRoot } = await supabase
+        const { data: lastRoot } = await getSupabase()
           .from('candidates')
           .select('sort_order')
           .eq('workspace_id', workspaceId)
@@ -124,7 +124,7 @@ export function useCandidateMutations({
           if (!brand && !model) continue;
           const priceRaw = iPrice >= 0 ? cols[iPrice] : '';
           const price = priceRaw ? Number(priceRaw.replace(',', '.')) : null;
-          const { data, error } = await supabase
+          const { data, error } = await getSupabase()
             .from('candidates')
             .insert({
               workspace_id: workspaceId,
@@ -138,7 +138,7 @@ export function useCandidateMutations({
             .select('id')
             .single();
           if (error) throw error;
-          await supabase
+          await getSupabase()
             .from('candidate_specs')
             .insert({ candidate_id: data.id, specs: {} });
           nextOrder += 1;

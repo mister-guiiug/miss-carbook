@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import type { TabId } from './workspaceTabs';
 import { useI18n } from '../../i18n';
@@ -21,7 +21,7 @@ export function WorkspaceDecisionSummaryCard({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { count, error } = await supabase
+      const { count, error } = await getSupabase()
         .from('reminders')
         .select('*', { count: 'exact', head: true })
         .eq('workspace_id', workspaceId)

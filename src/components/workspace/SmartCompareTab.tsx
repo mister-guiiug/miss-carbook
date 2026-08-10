@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import {
   calculateCompositeScores,
@@ -63,20 +63,20 @@ export function SmartCompareTab({ workspaceId }: { workspaceId: string }) {
     setLoading(true);
     try {
       const [cands, evals, reqs, revs] = await Promise.all([
-        supabase
+        getSupabase()
           .from('candidates')
           .select('id, brand, model, trim, price')
           .eq('workspace_id', workspaceId)
           .order('created_at', { ascending: true }),
-        supabase
+        getSupabase()
           .from('requirement_candidate_evaluations')
           .select('requirement_id, candidate_id, status')
           .eq('workspace_id', workspaceId),
-        supabase
+        getSupabase()
           .from('requirements')
           .select('id, level')
           .eq('workspace_id', workspaceId),
-        supabase
+        getSupabase()
           .from('candidate_reviews')
           .select('candidate_id, score')
           .eq('workspace_id', workspaceId),

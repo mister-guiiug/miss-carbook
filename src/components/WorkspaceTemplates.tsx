@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
 import { EmptyState } from './ui/EmptyState';
@@ -89,16 +89,16 @@ export function WorkspaceTemplates({
 
   const load = useCallback(async () => {
     const [t, w, p, userResp] = await Promise.all([
-      supabase
+      getSupabase()
         .from('workspace_templates')
         .select('*')
         .order('usage_count', { ascending: false }),
-      supabase
+      getSupabase()
         .from('workspaces')
         .select('id, name, description')
         .order('created_at', { ascending: false }),
-      supabase.from('profiles').select('id, display_name'),
-      supabase.auth.getUser(),
+      getSupabase().from('profiles').select('id, display_name'),
+      getSupabase().auth.getUser(),
     ]);
 
     const firstErr = t.error ?? w.error ?? p.error;
@@ -134,16 +134,19 @@ export function WorkspaceTemplates({
 
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await getSupabase().auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase.rpc('create_template_from_workspace', {
-      p_workspace_id: sourceWorkspace,
-      p_name: templateName.trim(),
-      p_description: templateDesc.trim(),
-      p_category: templateCategory,
-      p_is_public: templateIsPublic,
-    });
+    const { error } = await getSupabase().rpc(
+      'create_template_from_workspace',
+      {
+        p_workspace_id: sourceWorkspace,
+        p_name: templateName.trim(),
+        p_description: templateDesc.trim(),
+        p_category: templateCategory,
+        p_is_public: templateIsPublic,
+      }
+    );
 
     if (error) reportException(error, tr('templates.ctxCreateTemplate'));
     else {
@@ -161,7 +164,7 @@ export function WorkspaceTemplates({
   const createWorkspaceFromTemplate = async () => {
     if (!selectedTemplate || !newWorkspaceName.trim()) return;
 
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await getSupabase().rpc(
       'create_workspace_from_template',
       {
         p_template_id: selectedTemplate,

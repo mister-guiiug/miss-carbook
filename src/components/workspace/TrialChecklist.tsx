@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import { EmptyState } from '../ui/EmptyState';
@@ -112,20 +112,20 @@ export function TrialChecklist({
 
   const load = useCallback(async () => {
     const [t, i, c, r] = await Promise.all([
-      supabase
+      getSupabase()
         .from('trial_checklist_templates')
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false }),
-      supabase
+      getSupabase()
         .from('trial_checklist_items')
         .select('*')
         .order('sort_order', { ascending: true }),
-      supabase
+      getSupabase()
         .from('trial_checklist_completions')
         .select('*')
         .eq('visit_id', visitId),
-      supabase.from('trial_checklist_item_responses').select('*'),
+      getSupabase().from('trial_checklist_item_responses').select('*'),
     ]);
 
     const firstErr = t.error ?? i.error ?? c.error ?? r.error;
@@ -186,7 +186,7 @@ export function TrialChecklist({
 
   const createTemplate = async () => {
     if (!canWrite || !newTemplateName.trim()) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('trial_checklist_templates')
       .insert({
         workspace_id: workspaceId,
@@ -207,7 +207,7 @@ export function TrialChecklist({
 
   const addItem = async () => {
     if (!canWrite || !selectedTemplate || !newItemLabel.trim()) return;
-    const { error } = await supabase.from('trial_checklist_items').insert({
+    const { error } = await getSupabase().from('trial_checklist_items').insert({
       template_id: selectedTemplate,
       label: newItemLabel.trim(),
       category: newItemCategory,
@@ -223,7 +223,7 @@ export function TrialChecklist({
 
   const deleteItem = async (itemId: string) => {
     if (!canWrite) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('trial_checklist_items')
       .delete()
       .eq('id', itemId);
@@ -233,7 +233,7 @@ export function TrialChecklist({
 
   const startCompletion = async () => {
     if (!canWrite || !selectedTemplate || myCompletion) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('trial_checklist_completions')
       .insert({
         visit_id: visitId,
@@ -250,14 +250,14 @@ export function TrialChecklist({
     if (!canWrite || !myCompletion) return;
     const existing = myResponses.get(itemId);
     if (existing) {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('trial_checklist_item_responses')
         .update({ status })
         .eq('id', existing.id);
       if (error) reportException(error, tr('checklist.ctxUpdateStatus'));
       else await load();
     } else {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('trial_checklist_item_responses')
         .insert({
           completion_id: myCompletion.id,
@@ -273,7 +273,7 @@ export function TrialChecklist({
     if (!canWrite || !myCompletion) return;
     const existing = myResponses.get(itemId);
     if (existing) {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('trial_checklist_item_responses')
         .update({ notes: notes.slice(0, 1000) })
         .eq('id', existing.id);
@@ -283,7 +283,7 @@ export function TrialChecklist({
 
   const saveCompletionNotes = async () => {
     if (!canWrite || !myCompletion) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('trial_checklist_completions')
       .update({ notes: completionNotes.slice(0, 5000) })
       .eq('id', myCompletion.id);

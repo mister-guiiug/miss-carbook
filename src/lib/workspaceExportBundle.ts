@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 /** Données brutes alignées sur l’export ZIP (hors fichiers binaires). */
 export type WorkspaceExportBundle = {
@@ -46,50 +46,53 @@ export async function fetchWorkspaceExportBundle(
     presets,
     currVehicle,
   ] = await Promise.all([
-    supabase.from('workspaces').select('*').eq('id', workspaceId).single(),
-    supabase
+    getSupabase().from('workspaces').select('*').eq('id', workspaceId).single(),
+    getSupabase()
       .from('requirements')
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('sort_order', { ascending: true }),
-    supabase
+    getSupabase()
       .from('candidates')
       .select('*, candidate_specs ( specs )')
       .eq('workspace_id', workspaceId)
       .order('parent_candidate_id', { ascending: true, nullsFirst: true })
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true }),
-    supabase
+    getSupabase()
       .from('notes')
       .select('*')
       .eq('workspace_id', workspaceId)
       .maybeSingle(),
-    supabase.from('user_notes').select('*').eq('workspace_id', workspaceId),
-    supabase
+    getSupabase()
+      .from('user_notes')
+      .select('*')
+      .eq('workspace_id', workspaceId),
+    getSupabase()
       .from('activity_log')
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
       .limit(500),
-    supabase
+    getSupabase()
       .from('visits')
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('visit_at', { ascending: false }),
-    supabase.from('reminders').select('*').eq('workspace_id', workspaceId),
-    supabase
+    getSupabase().from('reminders').select('*').eq('workspace_id', workspaceId),
+    getSupabase()
       .from('workspace_invites')
       .select('*')
       .eq('workspace_id', workspaceId),
-    supabase
+    getSupabase()
       .from('workspace_members')
       .select('*')
       .eq('workspace_id', workspaceId),
-    supabase
+    getSupabase()
       .from('comparison_presets')
       .select('*')
       .eq('workspace_id', workspaceId),
-    supabase
+    getSupabase()
       .from('current_vehicle')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -101,27 +104,33 @@ export async function fetchWorkspaceExportBundle(
 
   const [evals, votes, comments, reviews, attachments] = await Promise.all([
     requirementIds.length
-      ? supabase
+      ? getSupabase()
           .from('requirement_candidate_evaluations')
           .select('*')
           .in('requirement_id', requirementIds)
       : Promise.resolve(empty),
     requirementIds.length
-      ? supabase
+      ? getSupabase()
           .from('requirement_priority_votes')
           .select('*')
           .in('requirement_id', requirementIds)
       : Promise.resolve(empty),
     candidateIds.length
-      ? supabase.from('comments').select('*').in('candidate_id', candidateIds)
+      ? getSupabase()
+          .from('comments')
+          .select('*')
+          .in('candidate_id', candidateIds)
       : Promise.resolve(empty),
     candidateIds.length
-      ? supabase
+      ? getSupabase()
           .from('candidate_reviews')
           .select('*')
           .in('candidate_id', candidateIds)
       : Promise.resolve(empty),
-    supabase.from('attachments').select('*').eq('workspace_id', workspaceId),
+    getSupabase()
+      .from('attachments')
+      .select('*')
+      .eq('workspace_id', workspaceId),
   ]);
 
   const userIds = new Set<string>();
@@ -167,7 +176,7 @@ export async function fetchWorkspaceExportBundle(
   const ids = [...userIds];
   const profileNames: Record<string, string> = {};
   if (ids.length) {
-    const { data: profs } = await supabase
+    const { data: profs } = await getSupabase()
       .from('profiles')
       .select('id, display_name')
       .in('id', ids);

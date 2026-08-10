@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useTheme } from '../hooks/useTheme';
@@ -140,7 +140,7 @@ export function TopBar() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
@@ -186,7 +186,9 @@ export function TopBar() {
   }, [accountMenuOpen]);
 
   const signOut = () => {
-    void supabase.auth.signOut().then(() => navigate('/', { replace: true }));
+    void getSupabase()
+      .auth.signOut()
+      .then(() => navigate('/', { replace: true }));
   };
 
   const closeAccountMenu = () => setAccountMenuOpen(false);

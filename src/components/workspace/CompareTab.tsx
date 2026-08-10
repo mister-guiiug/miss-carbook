@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import { formatPriceEur } from '../../lib/formatPrice';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { CRITERIA } from '../../lib/compareCriteria';
 import { isCandidateSpecDimensionKey } from '../../lib/candidateSpecsUi';
 import { formatGroupedIntegerFrDisplay } from '../../lib/formatGroupedIntegerFr';
@@ -154,7 +154,7 @@ export function CompareTab({
   }, [workspaceId]);
 
   const loadCandidates = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('candidates')
       .select(
         'id, brand, model, trim, parent_candidate_id, engine, price, status, candidate_specs ( specs )'
@@ -175,7 +175,7 @@ export function CompareTab({
     }));
     setCandidates(list);
 
-    const { data: cvData } = await supabase
+    const { data: cvData } = await getSupabase()
       .from('current_vehicle')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -203,7 +203,7 @@ export function CompareTab({
       setReviews([]);
       return;
     }
-    const { data: revs } = await supabase
+    const { data: revs } = await getSupabase()
       .from('candidate_reviews')
       .select('candidate_id, score')
       .in('candidate_id', ids);
@@ -216,7 +216,7 @@ export function CompareTab({
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from('comparison_presets')
         .select('id, name, criteria_keys')
         .eq('workspace_id', workspaceId)
@@ -390,9 +390,9 @@ export function CompareTab({
     const keys = CRITERIA.filter(c => criteria[c.key]).map(c => c.key);
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await getSupabase().auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from('comparison_presets').insert({
+    const { error } = await getSupabase().from('comparison_presets').insert({
       workspace_id: workspaceId,
       name: presetName.trim(),
       criteria_keys: keys,
@@ -400,7 +400,7 @@ export function CompareTab({
     });
     if (!error) {
       setPresetName('');
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from('comparison_presets')
         .select('id, name, criteria_keys')
         .eq('workspace_id', workspaceId);

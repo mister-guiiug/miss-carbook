@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { useTheme } from '../../hooks/useTheme';
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents';
@@ -328,13 +328,13 @@ export function WorkspaceHeaderToolbar({
     setLoadingProfile(true);
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await getSupabase().auth.getUser();
     if (!user) {
       setDisplayName(null);
       setLoadingProfile(false);
       return;
     }
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
@@ -391,7 +391,9 @@ export function WorkspaceHeaderToolbar({
 
   const signOut = () => {
     close();
-    void supabase.auth.signOut().then(() => navigate('/', { replace: true }));
+    void getSupabase()
+      .auth.signOut()
+      .then(() => navigate('/', { replace: true }));
   };
 
   const profileLabel = loadingProfile

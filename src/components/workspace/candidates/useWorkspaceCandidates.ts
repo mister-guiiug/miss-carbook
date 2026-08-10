@@ -5,7 +5,7 @@ import {
   listRootCandidates,
 } from '../../../lib/candidateTree';
 import { parseManufacturerLinksFromDb } from '../../../lib/manufacturerLinks';
-import { supabase } from '../../../lib/supabase';
+import { getSupabase } from '../../../lib/supabase';
 import type { CandidateRow } from './candidateTypes';
 
 export function useWorkspaceCandidates(
@@ -18,7 +18,7 @@ export function useWorkspaceCandidates(
   >([]);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('candidates')
       .select('*, candidate_specs ( specs )')
       .eq('workspace_id', workspaceId)
@@ -57,7 +57,7 @@ export function useWorkspaceCandidates(
       );
     const ids = (data ?? []).map((c: { id: string }) => c.id);
     if (ids.length) {
-      const { data: revs } = await supabase
+      const { data: revs } = await getSupabase()
         .from('candidate_reviews')
         .select('candidate_id, score')
         .in('candidate_id', ids);

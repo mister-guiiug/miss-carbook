@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import {
   WORKSPACE_QUICK_ADD_EVENT,
@@ -65,7 +65,7 @@ export function RequirementsTab({
   const [reordering, setReordering] = useState(false);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('requirements')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -121,7 +121,7 @@ export function RequirementsTab({
       try {
         const results = await Promise.all(
           orderedIds.map((id, sort_order) =>
-            supabase
+            getSupabase()
               .from('requirements')
               .update({ sort_order })
               .eq('id', id)
@@ -198,7 +198,7 @@ export function RequirementsTab({
       return;
     }
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('requirements')
         .insert({
           workspace_id: workspaceId,
@@ -252,7 +252,7 @@ export function RequirementsTab({
       return;
     }
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('requirements')
         .update({
           label: parsed.data.label,
@@ -284,7 +284,10 @@ export function RequirementsTab({
   const remove = async (id: string) => {
     if (!canWrite) return;
     if (!confirm(t('requirements.confirmDelete'))) return;
-    const { error } = await supabase.from('requirements').delete().eq('id', id);
+    const { error } = await getSupabase()
+      .from('requirements')
+      .delete()
+      .eq('id', id);
     if (error) reportException(error, t('requirements.ctxDelete'));
     else {
       if (editingId === id) cancelEdit();

@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { authEmailRedirectUrl } from '../lib/authRedirect';
 import {
@@ -56,7 +56,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     }
     setBusyMagic(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await getSupabase().auth.signInWithOtp({
         email: trimmed,
         options: { emailRedirectTo: authEmailRedirectUrl() },
       });
@@ -89,7 +89,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     }
     setBusyPassword(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await getSupabase().auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,
       });
@@ -123,7 +123,7 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     }
     setBusyPassword(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await getSupabase().auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
         options: { emailRedirectTo: authEmailRedirectUrl() },

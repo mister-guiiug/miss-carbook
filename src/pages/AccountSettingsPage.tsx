@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useUpdatePrompt } from '../hooks/useUpdatePrompt';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { authEmailRedirectUrl } from '../lib/authRedirect';
@@ -48,7 +48,7 @@ export function AccountSettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    void supabase
+    void getSupabase()
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
@@ -85,7 +85,7 @@ export function AccountSettingsPage() {
     }
     setPseudoBusy(true);
     try {
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await getSupabase().from('profiles').upsert({
         id: user.id,
         display_name: parsed.data,
       });
@@ -121,7 +121,7 @@ export function AccountSettingsPage() {
     }
     setEmailBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser(
+      const { error } = await getSupabase().auth.updateUser(
         { email: next },
         { emailRedirectTo: authEmailRedirectUrl() }
       );
@@ -149,7 +149,7 @@ export function AccountSettingsPage() {
     setEmailFeedback(null);
     setBusyMagic(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await getSupabase().auth.signInWithOtp({
         email: user.email,
         options: { emailRedirectTo: authEmailRedirectUrl() },
       });
