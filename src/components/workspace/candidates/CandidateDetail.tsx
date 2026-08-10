@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { getSupabase } from '../../../lib/supabase';
 import { logActivity } from '../../../lib/activity';
 import {
   allowedImageMime,
@@ -279,7 +279,7 @@ export function CandidateDetail({
             garage_location: parsed.data.garage_location,
           };
 
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('candidates')
         .update({
           parent_candidate_id: parentId,
@@ -297,7 +297,7 @@ export function CandidateDetail({
       if (error) throw error;
 
       if (savesAsRoot) {
-        const { error: specErr } = await supabase
+        const { error: specErr } = await getSupabase()
           .from('candidate_specs')
           .upsert({ candidate_id: candidate.id, specs: {} as Json });
         if (specErr) throw specErr;
@@ -375,7 +375,7 @@ export function CandidateDetail({
   }, [candidate]);
 
   const loadComments = async () => {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('comments')
       .select('*')
       .eq('candidate_id', candidate.id)
@@ -384,7 +384,7 @@ export function CandidateDetail({
     setComments(list);
     const ids = [...new Set(list.map(x => x.user_id))];
     if (ids.length) {
-      const { data: profs } = await supabase
+      const { data: profs } = await getSupabase()
         .from('profiles')
         .select('id, display_name')
         .in('id', ids);
@@ -395,7 +395,7 @@ export function CandidateDetail({
   };
 
   const loadPhotos = async () => {
-    const { data: atts } = await supabase
+    const { data: atts } = await getSupabase()
       .from('attachments')
       .select('id, storage_path')
       .eq('candidate_id', candidate.id);
@@ -418,7 +418,7 @@ export function CandidateDetail({
     } else {
       void loadPhotos();
     }
-    const ch = supabase
+    const ch = getSupabase()
       .channel(`comments-${candidate.id}`)
       .on(
         'postgres_changes',
@@ -432,7 +432,7 @@ export function CandidateDetail({
       )
       .subscribe();
     return () => {
-      void supabase.removeChannel(ch);
+      void getSupabase().removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidate.id]);
@@ -482,7 +482,7 @@ export function CandidateDetail({
       );
       return;
     }
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('candidate_specs')
       .upsert({ candidate_id: candidate.id, specs: parsed.data as Json });
     if (error) reportException(error, t('candidateDetail.errSaveSpecs'));
@@ -511,7 +511,7 @@ export function CandidateDetail({
       reportMessage(msg, JSON.stringify(parsed.error.flatten(), null, 2));
       return;
     }
-    const { error } = await supabase.from('candidate_reviews').upsert({
+    const { error } = await getSupabase().from('candidate_reviews').upsert({
       candidate_id: candidate.id,
       user_id: userId,
       score: parsed.data.score,
@@ -543,7 +543,7 @@ export function CandidateDetail({
       );
       return;
     }
-    const { error } = await supabase.from('comments').insert({
+    const { error } = await getSupabase().from('comments').insert({
       candidate_id: candidate.id,
       user_id: userId,
       body: parsed.data.body,

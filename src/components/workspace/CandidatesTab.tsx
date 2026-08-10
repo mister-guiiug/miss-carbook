@@ -15,7 +15,7 @@ import {
   CANDIDATE_HIERARCHY_HELP_FR,
   postOrderDeleteIds,
 } from '../../lib/candidateTree';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { IconActionButton, IconTrash, IconX } from '../ui/IconActionButton';
 import { CandidateCard } from './candidates/CandidateCard';
 import { CandidatesAddSection } from './candidates/CandidatesAddSection';
@@ -58,7 +58,7 @@ export function CandidatesTab({
 
   const refreshGarageSuggestions = useMemo(() => {
     return async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('reminders')
         .select('place')
         .eq('workspace_id', workspaceId);
@@ -76,7 +76,7 @@ export function CandidatesTab({
 
   useEffect(() => {
     void refreshGarageSuggestions();
-    const ch = supabase
+    const ch = getSupabase()
       .channel(`reminders-places-${workspaceId}`)
       .on(
         'postgres_changes',
@@ -90,7 +90,7 @@ export function CandidatesTab({
       )
       .subscribe();
     return () => {
-      void supabase.removeChannel(ch);
+      void getSupabase().removeChannel(ch);
     };
   }, [workspaceId, refreshGarageSuggestions]);
 
@@ -142,7 +142,7 @@ export function CandidatesTab({
     setDeletingCandidate(true);
     try {
       for (const id of ids) {
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('candidates')
           .delete()
           .eq('id', id)
@@ -184,7 +184,7 @@ export function CandidatesTab({
       try {
         const results = await Promise.all(
           orderedIds.map((id, sort_order) =>
-            supabase
+            getSupabase()
               .from('candidates')
               .update({ sort_order })
               .eq('id', id)

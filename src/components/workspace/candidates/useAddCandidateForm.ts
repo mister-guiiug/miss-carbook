@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { getSupabase } from '../../../lib/supabase';
 import { logActivity } from '../../../lib/activity';
 import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks';
 import type { ManufacturerLink } from '../../../lib/manufacturerLinks';
@@ -68,7 +68,7 @@ export function useAddCandidateForm({
       }
       try {
         const parentId = parsed.data.parent_candidate_id;
-        let q = supabase
+        let q = getSupabase()
           .from('candidates')
           .select('sort_order')
           .eq('workspace_id', workspaceId);
@@ -85,7 +85,7 @@ export function useAddCandidateForm({
         const manufacturer_links: ManufacturerLink[] = isRootRow
           ? []
           : parsed.data.manufacturer_links;
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
           .from('candidates')
           .insert({
             workspace_id: workspaceId,
@@ -108,7 +108,7 @@ export function useAddCandidateForm({
           .select('id')
           .single();
         if (error) throw error;
-        await supabase
+        await getSupabase()
           .from('candidate_specs')
           .insert({ candidate_id: data.id, specs: {} });
         await logActivity(

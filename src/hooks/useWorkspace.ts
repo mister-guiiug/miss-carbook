@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatCandidateListLabel } from '../lib/candidateLabel';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import type { Database } from '../types/database';
 
 type Ws = Database['public']['Tables']['workspaces']['Row'];
@@ -23,7 +23,7 @@ export function useWorkspace(
     setLoading(true);
     try {
       setAccessBlocked(false);
-      const { data: ws, error: wErr } = await supabase
+      const { data: ws, error: wErr } = await getSupabase()
         .from('workspaces')
         .select('*')
         .eq('id', workspaceId)
@@ -48,7 +48,7 @@ export function useWorkspace(
       setWorkspace(ws as Ws);
       const sid = (ws as Ws).selected_candidate_id;
       if (sid) {
-        const { data: cand } = await supabase
+        const { data: cand } = await getSupabase()
           .from('candidates')
           .select('brand, model, trim, parent_candidate_id')
           .eq('id', sid)
@@ -65,7 +65,7 @@ export function useWorkspace(
         );
       } else setDecisionLabel(null);
 
-      const { data: mem, error: mErr } = await supabase
+      const { data: mem, error: mErr } = await getSupabase()
         .from('workspace_members')
         .select('role')
         .eq('workspace_id', workspaceId)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus, RequirementLevel } from '../../types/database';
@@ -79,21 +79,21 @@ export function WeightedVotingTab({
 
   const load = useCallback(async () => {
     const [r, c, rv, cv, vw, p] = await Promise.all([
-      supabase
+      getSupabase()
         .from('requirements')
         .select('id, label, level, weight')
         .eq('workspace_id', workspaceId)
         .order('sort_order', { ascending: true }),
-      supabase
+      getSupabase()
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id, status')
         .eq('workspace_id', workspaceId)
         .order('parent_candidate_id', { ascending: true, nullsFirst: true })
         .order('sort_order', { ascending: true }),
-      supabase.from('weighted_requirement_votes').select('*'),
-      supabase.from('weighted_candidate_votes').select('*'),
-      supabase.from('workspace_voting_weights').select('*'),
-      supabase.from('profiles').select('id, display_name'),
+      getSupabase().from('weighted_requirement_votes').select('*'),
+      getSupabase().from('weighted_candidate_votes').select('*'),
+      getSupabase().from('workspace_voting_weights').select('*'),
+      getSupabase().from('profiles').select('id, display_name'),
     ]);
 
     const firstErr =
@@ -124,7 +124,7 @@ export function WeightedVotingTab({
 
   const setReqVote = async (requirementId: string, weight: number) => {
     if (!canWrite) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('weighted_requirement_votes')
       .upsert(
         { requirement_id: requirementId, user_id: userId, weight },
@@ -143,7 +143,7 @@ export function WeightedVotingTab({
     weight: number
   ) => {
     if (!canWrite) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('weighted_candidate_votes')
       .upsert(
         { candidate_id: candidateId, user_id: userId, category, weight },

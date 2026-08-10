@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import {
   currentVehicleSchema,
@@ -97,7 +97,7 @@ export function SettingsTab({
   };
 
   const loadInvites = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('workspace_invites')
       .select('id, token, role, expires_at, used_at')
       .eq('workspace_id', workspace.id)
@@ -107,7 +107,7 @@ export function SettingsTab({
 
   useEffect(() => {
     void (async () => {
-      const { data: mems, error } = await supabase
+      const { data: mems, error } = await getSupabase()
         .from('workspace_members')
         .select('user_id, role')
         .eq('workspace_id', workspace.id);
@@ -117,7 +117,7 @@ export function SettingsTab({
       }
       const list = (mems ?? []) as Member[];
       const ids = list.map(m => m.user_id);
-      const { data: profs } = await supabase
+      const { data: profs } = await getSupabase()
         .from('profiles')
         .select('id, display_name')
         .in('id', ids);
@@ -127,7 +127,7 @@ export function SettingsTab({
     })();
     void loadInvites();
     void (async () => {
-      const { data: cand } = await supabase
+      const { data: cand } = await getSupabase()
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id')
         .eq('workspace_id', workspace.id)
@@ -173,7 +173,7 @@ export function SettingsTab({
   useEffect(() => {
     if (!workspace.replacement_enabled) return;
     void (async () => {
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from('current_vehicle')
         .select('*')
         .eq('workspace_id', workspace.id)
@@ -226,13 +226,13 @@ export function SettingsTab({
         specs: parsed.data.specs as Json,
       };
       if (vehicleId) {
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('current_vehicle')
           .update(row)
           .eq('id', vehicleId);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
           .from('current_vehicle')
           .insert(row)
           .select('id')
@@ -258,7 +258,7 @@ export function SettingsTab({
 
   const setRole = async (uid: string, role: Member['role']) => {
     if (!isAdmin) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('workspace_members')
       .update({ role })
       .eq('workspace_id', workspace.id)
@@ -279,7 +279,7 @@ export function SettingsTab({
 
   const createInvite = async () => {
     if (!isAdmin) return;
-    const { data, error } = await supabase.rpc('create_workspace_invite', {
+    const { data, error } = await getSupabase().rpc('create_workspace_invite', {
       p_workspace_id: workspace.id,
       p_role: inviteRole,
       p_ttl_days: inviteDays,
@@ -303,14 +303,14 @@ export function SettingsTab({
 
   const revokeInvite = async (id: string) => {
     if (!isAdmin) return;
-    await supabase.from('workspace_invites').delete().eq('id', id);
+    await getSupabase().from('workspace_invites').delete().eq('id', id);
     await loadInvites();
     showToast(t('settings.toast.inviteRevoked'));
   };
 
   const leave = async () => {
     if (!confirm(t('settings.confirm.leave'))) return;
-    const { error } = await supabase.rpc('leave_workspace', {
+    const { error } = await getSupabase().rpc('leave_workspace', {
       p_workspace_id: workspace.id,
     });
     if (error) reportException(error, t('settings.error.leave'));
@@ -320,7 +320,7 @@ export function SettingsTab({
 
   const removeMember = async (uid: string) => {
     if (!isAdmin || !confirm(t('settings.confirm.removeParticipant'))) return;
-    const { error } = await supabase.rpc('remove_workspace_member', {
+    const { error } = await getSupabase().rpc('remove_workspace_member', {
       p_workspace_id: workspace.id,
       p_user_id: uid,
     });
@@ -342,7 +342,7 @@ export function SettingsTab({
     e.preventDefault();
     if (!canWrite) return;
     const cid = decisionCand || null;
-    const { error } = await supabase.rpc('update_workspace_decision', {
+    const { error } = await getSupabase().rpc('update_workspace_decision', {
       p_workspace_id: workspace.id,
       p_candidate_id: cid,
       p_notes: decisionNotes,
@@ -388,7 +388,7 @@ export function SettingsTab({
     }
     setBusyWorkspaceMeta(true);
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('workspaces')
         .update({
           name: parsed.data.name,

@@ -5,7 +5,7 @@ import {
   type WorkspaceQuickAddDetail,
 } from '../../lib/workspaceHeaderEvents';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -186,17 +186,17 @@ export function RemindersTab({
 
   const load = useCallback(async () => {
     const [rem, vs, cand] = await Promise.all([
-      supabase
+      getSupabase()
         .from('reminders')
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('due_at', { ascending: true, nullsFirst: false }),
-      supabase
+      getSupabase()
         .from('visits')
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('visit_at', { ascending: false }),
-      supabase
+      getSupabase()
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id')
         .eq('workspace_id', workspaceId)
@@ -283,15 +283,17 @@ export function RemindersTab({
   const add = async (e: FormEvent) => {
     e.preventDefault();
     if (!canWrite || !title.trim()) return;
-    const { error } = await supabase.from('reminders').insert({
-      workspace_id: workspaceId,
-      title: title.trim(),
-      body: body.trim(),
-      due_at: due ? new Date(due).toISOString() : null,
-      candidate_id: candId || null,
-      place: place.trim(),
-      kind,
-    });
+    const { error } = await getSupabase()
+      .from('reminders')
+      .insert({
+        workspace_id: workspaceId,
+        title: title.trim(),
+        body: body.trim(),
+        due_at: due ? new Date(due).toISOString() : null,
+        candidate_id: candId || null,
+        place: place.trim(),
+        kind,
+      });
     if (error) reportException(error, t('reminders.err.createReminder'));
     else {
       setTitle('');
@@ -309,13 +311,15 @@ export function RemindersTab({
   const addVisit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canWrite || !visitAt) return;
-    const { error } = await supabase.from('visits').insert({
-      workspace_id: workspaceId,
-      candidate_id: visitCandId || null,
-      visit_at: new Date(visitAt).toISOString(),
-      location: visitLocation.trim(),
-      notes: visitNotes.trim(),
-    });
+    const { error } = await getSupabase()
+      .from('visits')
+      .insert({
+        workspace_id: workspaceId,
+        candidate_id: visitCandId || null,
+        visit_at: new Date(visitAt).toISOString(),
+        location: visitLocation.trim(),
+        notes: visitNotes.trim(),
+      });
     if (error) reportException(error, t('reminders.err.createVisit'));
     else {
       setVisitAt(isoToDatetimeLocal(new Date().toISOString()));
@@ -333,7 +337,7 @@ export function RemindersTab({
     if (!canWrite || !editTitle.trim()) return;
     setSavingEdit(true);
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('reminders')
         .update({
           title: editTitle.trim(),
@@ -358,7 +362,7 @@ export function RemindersTab({
 
   const toggle = async (r: Row) => {
     if (!canWrite) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('reminders')
       .update({ done: !r.done })
       .eq('id', r.id);
@@ -415,7 +419,7 @@ export function RemindersTab({
     setDeleting(true);
     try {
       if (confirming.kind === 'reminder') {
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('reminders')
           .delete()
           .eq('id', confirming.id);
@@ -424,7 +428,7 @@ export function RemindersTab({
         await load();
         showToast(t('reminders.toast.reminderDeleted'));
       } else {
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('visits')
           .delete()
           .eq('id', confirming.id);

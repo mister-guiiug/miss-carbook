@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { getSupabase } from '../../../lib/supabase';
 import { formatCandidateListLabel } from '../../../lib/candidateLabel';
 import { signedUrlForPath } from '../../../lib/storageUpload';
 import { EmptyState } from '../../ui/EmptyState';
@@ -81,7 +81,7 @@ export function PhotoComparisonGrid({
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('attachments')
         .select('id, storage_path, candidate_id, mime_type')
         .eq('workspace_id', workspaceId)

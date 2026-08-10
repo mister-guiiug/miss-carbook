@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import {
   activityActionLabel,
   activityEntityLabel,
@@ -59,7 +59,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('activity_log')
         .select('*')
         .eq('workspace_id', workspaceId)
@@ -76,7 +76,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         ...new Set(list.map(r => r.user_id).filter(Boolean)),
       ] as string[];
       if (ids.length) {
-        const { data: profs } = await supabase
+        const { data: profs } = await getSupabase()
           .from('profiles')
           .select('id, display_name')
           .in('id', ids);
@@ -87,7 +87,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
         setNames({});
       }
     })();
-    const ch = supabase
+    const ch = getSupabase()
       .channel(`act-${workspaceId}`)
       .on(
         'postgres_changes',
@@ -105,7 +105,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
       .subscribe();
     return () => {
       cancelled = true;
-      void supabase.removeChannel(ch);
+      void getSupabase().removeChannel(ch);
     };
   }, [workspaceId, reportException, t]);
 

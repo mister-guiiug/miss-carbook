@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCandidateListLabel } from '../lib/candidateLabel';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useI18n } from '../i18n';
 import { IconActionButton, IconX } from './ui/IconActionButton';
@@ -29,24 +29,24 @@ export function WorkspaceSearchModal({
     let cancelled = false;
     void (async () => {
       const [req, cand, rem, visits] = await Promise.all([
-        supabase
+        getSupabase()
           .from('requirements')
           .select('id, label')
           .eq('workspace_id', workspaceId)
           .order('sort_order', { ascending: true }),
-        supabase
+        getSupabase()
           .from('candidates')
           .select('id, brand, model, trim, parent_candidate_id')
           .eq('workspace_id', workspaceId)
           .order('parent_candidate_id', { ascending: true, nullsFirst: true })
           .order('sort_order', { ascending: true })
           .order('created_at', { ascending: true }),
-        supabase
+        getSupabase()
           .from('reminders')
           .select('id, title')
           .eq('workspace_id', workspaceId)
           .eq('done', false),
-        supabase
+        getSupabase()
           .from('visits')
           .select('id, location, visit_at')
           .eq('workspace_id', workspaceId)

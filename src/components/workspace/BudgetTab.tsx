@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import { formatPriceEur } from '../../lib/formatPrice';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus } from '../../types/database';
@@ -145,22 +145,22 @@ export function BudgetTab({
 
   const load = useCallback(async () => {
     const [c, cat, i, tcoRes] = await Promise.all([
-      supabase
+      getSupabase()
         .from('candidates')
         .select('id, brand, model, trim, parent_candidate_id, status, price')
         .eq('workspace_id', workspaceId)
         .order('parent_candidate_id', { ascending: true, nullsFirst: true })
         .order('sort_order', { ascending: true }),
-      supabase
+      getSupabase()
         .from('budget_categories')
         .select('*')
         .eq('workspace_id', workspaceId)
         .order('sort_order', { ascending: true }),
-      supabase
+      getSupabase()
         .from('budget_items')
         .select('*')
         .order('sort_order', { ascending: true }),
-      supabase.from('tco_parameters').select('*'),
+      getSupabase().from('tco_parameters').select('*'),
     ]);
 
     const firstErr = c.error ?? cat.error ?? i.error ?? tcoRes.error;
@@ -175,7 +175,7 @@ export function BudgetTab({
     // Calculate TCO for each candidate
     for (const cand of candidatesData) {
       try {
-        const { data } = await supabase.rpc('calculate_candidate_tco', {
+        const { data } = await getSupabase().rpc('calculate_candidate_tco', {
           p_candidate_id: cand.id,
         });
         if (data) {
@@ -216,19 +216,21 @@ export function BudgetTab({
     const amount = parseFloat(itemAmount);
     if (Number.isNaN(amount) || amount < 0) return;
 
-    const { error } = await supabase.from('budget_items').upsert({
-      id: editItemId ?? undefined,
-      workspace_id: workspaceId,
-      category_id: itemCategory,
-      candidate_id: itemCandidate,
-      name: itemName.trim(),
-      amount,
-      frequency: itemFrequency,
-      is_recurring: itemFrequency !== 'one_time',
-      is_planned: false,
-      notes: itemNotes.trim(),
-      sort_order: editItemId ? undefined : items.length,
-    });
+    const { error } = await getSupabase()
+      .from('budget_items')
+      .upsert({
+        id: editItemId ?? undefined,
+        workspace_id: workspaceId,
+        category_id: itemCategory,
+        candidate_id: itemCandidate,
+        name: itemName.trim(),
+        amount,
+        frequency: itemFrequency,
+        is_recurring: itemFrequency !== 'one_time',
+        is_planned: false,
+        notes: itemNotes.trim(),
+        sort_order: editItemId ? undefined : items.length,
+      });
 
     if (error) reportException(error, t('budget.errors.saveItem'));
     else {
@@ -247,7 +249,10 @@ export function BudgetTab({
 
   const deleteItem = async (id: string) => {
     if (!canWrite) return;
-    const { error } = await supabase.from('budget_items').delete().eq('id', id);
+    const { error } = await getSupabase()
+      .from('budget_items')
+      .delete()
+      .eq('id', id);
     if (error) reportException(error, t('budget.errors.deleteItem'));
     else {
       await load();
@@ -269,23 +274,27 @@ export function BudgetTab({
   const saveTcoParams = async (candidateId: string) => {
     if (!canWrite) return;
     const existing = tcoParams.find(t => t.candidate_id === candidateId);
-    const { error } = await supabase.from('tco_parameters').upsert({
-      id: existing?.id,
-      workspace_id: workspaceId,
-      candidate_id: candidateId,
-      annual_km: parseInt(tcoAnnualKm) || 15000,
-      ownership_years: parseInt(tcoOwnershipYears) || 5,
-      insurance_cost: tcoInsuranceCost
-        ? parseFloat(tcoInsuranceCost) || null
-        : null,
-      fuel_price: tcoFuelPrice ? parseFloat(tcoFuelPrice) || null : null,
-      electricity_price: null,
-      residual_value_percent: tcoResidualValue
-        ? parseFloat(tcoResidualValue) || null
-        : null,
-      loan_interest_rate: tcoLoanRate ? parseFloat(tcoLoanRate) || null : null,
-      loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
-    });
+    const { error } = await getSupabase()
+      .from('tco_parameters')
+      .upsert({
+        id: existing?.id,
+        workspace_id: workspaceId,
+        candidate_id: candidateId,
+        annual_km: parseInt(tcoAnnualKm) || 15000,
+        ownership_years: parseInt(tcoOwnershipYears) || 5,
+        insurance_cost: tcoInsuranceCost
+          ? parseFloat(tcoInsuranceCost) || null
+          : null,
+        fuel_price: tcoFuelPrice ? parseFloat(tcoFuelPrice) || null : null,
+        electricity_price: null,
+        residual_value_percent: tcoResidualValue
+          ? parseFloat(tcoResidualValue) || null
+          : null,
+        loan_interest_rate: tcoLoanRate
+          ? parseFloat(tcoLoanRate) || null
+          : null,
+        loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
+      });
 
     if (error) reportException(error, t('budget.errors.saveTcoParams'));
     else {

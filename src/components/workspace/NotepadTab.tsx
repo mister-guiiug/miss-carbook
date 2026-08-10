@@ -10,7 +10,7 @@ import {
   WORKSPACE_QUICK_ADD_EVENT,
   type WorkspaceQuickAddDetail,
 } from '../../lib/workspaceHeaderEvents';
-import { supabase } from '../../lib/supabase';
+import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import {
@@ -65,7 +65,7 @@ export function NotepadTab({
     void (async () => {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await getSupabase().auth.getUser();
       if (!cancelled) setMyId(user?.id ?? null);
     })();
     return () => {
@@ -74,7 +74,7 @@ export function NotepadTab({
   }, [workspaceId, canWrite, reportException]);
 
   useEffect(() => {
-    const ch = supabase
+    const ch = getSupabase()
       .channel(`user-notes-${workspaceId}`)
       .on(
         'postgres_changes',
@@ -113,7 +113,7 @@ export function NotepadTab({
       )
       .subscribe();
     return () => {
-      void supabase.removeChannel(ch);
+      void getSupabase().removeChannel(ch);
     };
   }, [workspaceId]);
 
@@ -176,14 +176,14 @@ export function NotepadTab({
         const existing = rowsByUser.get(myId);
         const bodyNow = (bodies[myId] ?? existing?.body ?? '').toString();
         if (existing) {
-          const { error } = await supabase
+          const { error } = await getSupabase()
             .from('user_notes')
             .update({ peer_order: orderedIds })
             .eq('workspace_id', workspaceId)
             .eq('user_id', myId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('user_notes').insert({
+          const { error } = await getSupabase().from('user_notes').insert({
             workspace_id: workspaceId,
             user_id: myId,
             body: bodyNow,
@@ -240,7 +240,7 @@ export function NotepadTab({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data: mems, error } = await supabase
+      const { data: mems, error } = await getSupabase()
         .from('workspace_members')
         .select('user_id')
         .eq('workspace_id', workspaceId);
@@ -250,7 +250,7 @@ export function NotepadTab({
         return;
       }
       const ids = (mems ?? []).map(m => (m as { user_id: string }).user_id);
-      const { data: profs } = await supabase
+      const { data: profs } = await getSupabase()
         .from('profiles')
         .select('id, display_name')
         .in('id', ids);
@@ -266,7 +266,7 @@ export function NotepadTab({
         }))
       );
 
-      const { data: notes, error: notesErr } = await supabase
+      const { data: notes, error: notesErr } = await getSupabase()
         .from('user_notes')
         .select('workspace_id, user_id, body, updated_at, peer_order')
         .eq('workspace_id', workspaceId)
@@ -303,14 +303,14 @@ export function NotepadTab({
       const body = (bodies[myId] ?? '').toString();
       const existing = rowsByUser.get(myId);
       if (existing) {
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('user_notes')
           .update({ body })
           .eq('workspace_id', workspaceId)
           .eq('user_id', myId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('user_notes').insert({
+        const { error } = await getSupabase().from('user_notes').insert({
           workspace_id: workspaceId,
           user_id: myId,
           body,
