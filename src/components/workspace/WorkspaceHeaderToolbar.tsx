@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../../lib/supabase';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { useOnline } from '@mister-guiiug/dev-wpa-config/react/use-online';
 import { useTheme } from '../../hooks/useTheme';
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
@@ -317,7 +317,7 @@ export function WorkspaceHeaderToolbar({
   const navigate = useNavigate();
   const { t } = useI18n();
   const { mode, toggle } = useTheme();
-  const online = useOnlineStatus();
+  const online = useOnline();
   const { reportException } = useErrorDialog();
   const [open, setOpen] = useState<Menu>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);

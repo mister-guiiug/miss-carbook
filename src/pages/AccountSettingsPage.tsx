@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useUpdatePrompt } from '../hooks/useUpdatePrompt';
+import { registerSW } from 'virtual:pwa-register';
+import { useUpdatePrompt } from '@mister-guiiug/dev-wpa-config/react/use-update-prompt';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -27,7 +28,7 @@ export function AccountSettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { mode, setMode } = useTheme();
-  const { needRefresh, reloadToLatest } = useUpdatePrompt();
+  const { needRefresh, update } = useUpdatePrompt({ registerSW });
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
   const { t, locale, setLocale, locales } = useI18n();
@@ -177,7 +178,7 @@ export function AccountSettingsPage() {
 
   const onReloadLatest = () => {
     setReloadBusy(true);
-    void reloadToLatest();
+    void update();
   };
 
   if (!user) {
