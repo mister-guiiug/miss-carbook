@@ -7,10 +7,10 @@ import {
   initSentry,
   recordError,
 } from '@mister-guiiug/dev-wpa-config/react/observability';
+import { initWebVitals } from '@mister-guiiug/dev-wpa-config/web-vitals';
 import App from './App';
 import { I18nProvider } from './i18n';
 import { initTheme } from './lib/theme';
-import { initWebVitals } from './monitoring/web-vitals';
 import './index.css';
 
 // Observabilité partagée : ring-buffer localStorage + listeners globaux.
@@ -24,8 +24,16 @@ void initSentry({
 // Initialiser le thème
 initTheme();
 
-// Initialiser le monitoring des Web Vitals
-initWebVitals();
+// Web Vitals via le socle (INP au lieu de FID, métriques indépendantes) :
+// journal en dev uniquement — pas d'analytics tiers dans cette app.
+void initWebVitals({
+  loader: () => import('web-vitals'),
+  onMetric: metric => {
+    if (import.meta.env.DEV) {
+      console.log('[Web Vitals]', metric);
+    }
+  },
+});
 
 const base = import.meta.env.BASE_URL;
 
