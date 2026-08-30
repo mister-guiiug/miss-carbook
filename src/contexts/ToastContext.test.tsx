@@ -24,8 +24,9 @@ describe('ToastProvider', () => {
     const region = screen.getByRole('status');
     expect(region).toHaveTextContent('Message test');
 
+    // Durée du socle : 5 s (l'ancienne copie locale effaçait à 3,2 s).
     await act(async () => {
-      vi.advanceTimersByTime(3300);
+      vi.advanceTimersByTime(5100);
     });
     expect(region).not.toHaveTextContent('Message test');
 
