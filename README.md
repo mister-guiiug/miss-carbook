@@ -32,6 +32,7 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 - **Collaboration en direct** : les mises à jour et commentaires se synchronisent entre participants.
 - **Transparence** : exigences, candidats et échanges restent visibles pour les membres du dossier.
 - **Décision progressive** : vous pouvez faire évoluer les poids, les avis (par ex. ce qui est indispensable vs. souhaitable) et la short-list au fil des échanges.
+- **Photos sans métadonnées** : les photos **JPEG** et **WebP** sont ré-encodées dans le navigateur avant d’être envoyées, ce qui retire les données EXIF — dont la **position GPS** du lieu de la prise de vue et le **numéro de série de l’appareil**. Le format est conservé, la définition ramenée à 2560 px au plus. Les PNG et les GIF, qui ne transportent pas ces données, partent tels quels (un GIF animé garde donc son animation).
 
 ---
 
@@ -51,6 +52,7 @@ Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvri
 
 - L’outil est pensé pour **aider à la décision** entre personnes informées ; il ne remplace pas un essai routier, une expertise mécanique ou des conseils professionnels.
 - Hébergement type **site web classique** : ne placez pas d’informations hautement sensibles (données bancaires, pièces d’identité, etc.) dans les dossiers.
+- Le retrait des métadonnées des photos ne vaut que pour les **nouveaux envois** : les photos déjà présentes dans un dossier n’ont pas été retraitées. Supprimez-les et renvoyez-les si leur position GPS vous gêne.
 
 ---
 

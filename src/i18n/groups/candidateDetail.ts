@@ -16,6 +16,7 @@ export const candidateDetailFr = {
   typeNotAllowed: 'Type non autorisé (JPEG, PNG, WebP, GIF)',
   errUploadPhoto: 'Upload d’une photo pour le modèle',
   errCompressPhoto: 'Compression ou envoi de la photo',
+  errStripPhotoMetadata: 'Retrait des métadonnées de la photo',
 
   // Identité / fiche modèle
   modelSheet: 'Fiche modèle',
@@ -79,9 +80,9 @@ export const candidateDetailFr = {
 
   // Photos
   photosSummary:
-    'Photos (max 5 Mo, JPEG/PNG/WebP/GIF — compression proposée si besoin)',
+    'Photos (max 5 Mo, JPEG/PNG/WebP/GIF — métadonnées retirées, compression proposée si besoin)',
   photoCompressHint:
-    'Si le fichier dépasse 5 Mo, vous pourrez le compresser automatiquement (JPEG, taille et qualité ajustées) avant envoi.',
+    'Les photos JPEG et WebP sont ré-encodées avant l’envoi : les métadonnées (EXIF, position GPS de la prise de vue, numéro de série de l’appareil) sont retirées. Le format est conservé, la définition ramenée à 2560 px au plus. Les PNG et les GIF, qui ne portent pas ces données, partent tels quels. Au-delà de 5 Mo, une compression automatique (JPEG, taille et qualité ajustées) vous est proposée.',
   enlargePhoto: 'Agrandir la photo {index} sur {total}',
 
   // Boîte de dialogue « image trop volumineuse »
@@ -114,6 +115,7 @@ export const candidateDetailEn = {
   typeNotAllowed: 'Type not allowed (JPEG, PNG, WebP, GIF)',
   errUploadPhoto: 'Uploading a photo for the model',
   errCompressPhoto: 'Compressing or sending the photo',
+  errStripPhotoMetadata: 'Removing the photo metadata',
 
   // Identity / model sheet
   modelSheet: 'Model sheet',
@@ -177,9 +179,9 @@ export const candidateDetailEn = {
 
   // Photos
   photosSummary:
-    'Photos (max 5 Mo, JPEG/PNG/WebP/GIF — compression offered if needed)',
+    'Photos (max 5 Mo, JPEG/PNG/WebP/GIF — metadata stripped, compression offered if needed)',
   photoCompressHint:
-    'If the file exceeds 5 Mo, you’ll be able to compress it automatically (JPEG, adjusted size and quality) before sending.',
+    'JPEG and WebP photos are re-encoded before being sent: metadata (EXIF, GPS location of the shot, device serial number) is stripped. The format is preserved and the resolution capped at 2560 px. PNG and GIF files, which carry none of that data, are sent as is. Above 5 Mo, automatic compression (JPEG, adjusted size and quality) is offered.',
   enlargePhoto: 'Enlarge photo {index} of {total}',
 
   // "Image too large" dialog
