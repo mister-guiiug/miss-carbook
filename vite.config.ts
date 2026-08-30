@@ -84,6 +84,15 @@ export default defineConfig({
     pwaSeoPlugin({
       siteName: 'Miss Carbook',
       gtmContainerId: GTM_CONTAINER_ID,
+      // Script anti-FOUC engendré par le socle (theme-boot), injecté en tête
+      // de <head>. Avant, le thème n'était posé que par initTheme() dans
+      // main.tsx : la page s'affichait en clair le temps du bundle, puis
+      // basculait en sombre.
+      // `legacyKeys` doit rester aligné sur THEME_LEGACY_KEYS
+      // (src/lib/theme.ts) : ce fichier s'exécute côté Node, hors du projet
+      // TypeScript de l'app, il ne peut pas l'importer. Deux valeurs
+      // divergentes = le script pose un thème que React repeint aussitôt.
+      themeBoot: { legacyKeys: ['mc-theme'] },
     }),
     react(),
     tailwindcss(),
