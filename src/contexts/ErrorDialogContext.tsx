@@ -2,14 +2,12 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { explainUnknownError } from '../lib/errorReporting';
-import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useI18n } from '../i18n';
 import {
   IconActionButton,
@@ -17,7 +15,6 @@ import {
   IconChevronRight,
   IconChevronUp,
   IconCopy,
-  IconX,
 } from '../components/ui/IconActionButton';
 
 type ErrorPayload = {
@@ -45,12 +42,31 @@ export function useErrorDialog() {
   return ctx;
 }
 
+/**
+ * Boîte d'erreur de l'application, rendue par le `ConfirmDialog` du socle en
+ * MODE MONO-ACTION (`cancelLabel={null}` — et non `undefined`, qui garderait le
+ * repli « Annuler »).
+ *
+ * Cette boîte est l'une des trois que la campagne `components.css` n'avait pas
+ * pu migrer : le composant partagé rendait alors deux boutons, et une alerte
+ * n'a rien à annuler. La 3.23.0 du socle lève exactement ce blocage. Le rôle
+ * `alertdialog` est conservé, le focus initial va sur l'action unique, et Échap
+ * comme le clic sur le voile valent « OK » — ils passent par `onConfirm`, donc
+ * par `dismiss`. Piège de focus, restitution du focus et verrou de scroll
+ * viennent du socle : c'est ce que la copie locale n'avait pas.
+ *
+ * CE QUI RESTE APPLICATIF, et pourquoi : les détails techniques dépliables et
+ * le bouton « copier » n'existent que chez nous — le socle ne les embarque pas
+ * et le dit. Ils passent donc en `children`, la voie qu'il prévoit. Attention,
+ * `children` REMPLACE `message` côté socle (`children ?? message`) : le message
+ * utilisateur est rendu ici, dans le même bloc.
+ *
+ * L'API du contexte est inchangée : aucun écran n'est touché.
+ */
 export function ErrorDialogProvider({ children }: { children: ReactNode }) {
   const [payload, setPayload] = useState<ErrorPayload | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(panelRef, !!payload);
   const { t } = useI18n();
 
   const dismiss = useCallback(() => {
@@ -83,15 +99,6 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
     [reportException, reportMessage, dismiss]
   );
 
-  useEffect(() => {
-    if (!payload) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismiss();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [payload, dismiss]);
-
   const copyTechnical = useCallback(async () => {
     if (!payload?.technical) return;
     try {
@@ -106,28 +113,15 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
   return (
     <ErrorDialogContext.Provider value={value}>
       {children}
-      {payload ? (
-        <div
-          className="error-dialog-backdrop"
-          role="presentation"
-          onClick={e => {
-            if (e.target === e.currentTarget) dismiss();
-          }}
-        >
-          <div
-            ref={panelRef}
-            className="error-dialog"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="error-dialog-title"
-            aria-describedby="error-dialog-desc"
-          >
-            <h2 id="error-dialog-title" className="error-dialog-title">
-              {t('dialog.title')}
-            </h2>
-            <p id="error-dialog-desc" className="error-dialog-message">
-              {payload.userMessage}
-            </p>
+      <ConfirmDialog
+        open={!!payload}
+        title={t('dialog.title')}
+        cancelLabel={null}
+        onConfirm={dismiss}
+      >
+        {payload ? (
+          <>
+            <p className="error-dialog-message">{payload.userMessage}</p>
 
             <div className="error-dialog-details">
               <IconActionButton
@@ -160,19 +154,9 @@ export function ErrorDialogProvider({ children }: { children: ReactNode }) {
                 </div>
               ) : null}
             </div>
-
-            <div className="error-dialog-actions">
-              <IconActionButton
-                variant="secondary"
-                label={t('dialog.closeDialog')}
-                onClick={dismiss}
-              >
-                <IconX />
-              </IconActionButton>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ConfirmDialog>
     </ErrorDialogContext.Provider>
   );
 }

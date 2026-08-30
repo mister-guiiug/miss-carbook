@@ -1735,6 +1735,52 @@ th {
   color: var(--text);
 }
 
+/* Identité Carbook sur le ConfirmDialog du socle en mode mono-action
+   (`react/confirm-dialog`, `cancelLabel={null}`), qui rend la boîte d'erreur
+   d'`ErrorDialogContext`. Ne figurent ici que les écarts VOULUS par rapport à
+   `components.css` : ceux qui reproduisent la copie locale `.error-dialog`
+   (voile, panneau, titre, corps) — dont les règles restent plus haut, encore
+   portées par trois dialogues écrits à la main. */
+[data-dwc='confirm'] {
+  /* La copie locale montait à 110 : au-dessus des toasts (91), de la recherche
+     (100) et du menu de compte (105). La base socle (60) passerait dessous. */
+  z-index: 110;
+}
+
+[data-dwc='confirm-backdrop'] {
+  background: rgb(15 23 42 / 0.5);
+}
+
+[data-dwc='confirm-panel'] {
+  max-width: 420px;
+  max-height: min(90vh, 560px);
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 48px rgb(15 23 42 / 0.2);
+}
+
+[data-dwc='confirm-title'] {
+  font-size: 1.15rem;
+}
+
+/* Le corps porte le message ET le bloc de détails techniques (passés en
+   `children`) : il redevient une colonne, à l'encre du texte et non en gris
+   doux — c'est le message d'erreur, pas une légende. */
+[data-dwc='confirm-body'] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+[data-dwc='confirm-actions'] {
+  margin-top: 0.75rem;
+}
+
 /* Identité Carbook sur l'EmptyState du socle (`react/empty-state`).
    Ne figurent ici que les écarts VOULUS par rapport à `components.css` :
    cadre 2 px, fond surface, icône flottante et réaction au survol — ce que
