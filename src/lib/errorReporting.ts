@@ -4,6 +4,13 @@ const RLS_HINT = /row-level security|violates row-level security/i;
 const JWT_HINT =
   /jwt expired|invalid jwt|session (expired|not found)|refresh token/i;
 
+/**
+ * Le socle préfixe ses messages d'erreur par `[dwc]` (ex. « [dwc] Impossible de
+ * lire cette image. »). Utile comme marqueur d'origine dans le bloc technique,
+ * qui le garde ; du bruit dans le message montré à l'utilisateur, qui le perd.
+ */
+const DWC_PREFIX = /^\[dwc\]\s*/;
+
 function extractMessage(err: unknown): string {
   if (err == null) return '';
   if (typeof err === 'string') return err;
@@ -52,10 +59,10 @@ function serialized(err: unknown): string {
 }
 
 function toUserMessage(err: unknown): string {
-  const msg = extractMessage(err);
+  const msg = extractMessage(err).replace(DWC_PREFIX, '');
   const code = extractCode(err);
 
-  if (typeof err === 'string') return err;
+  if (typeof err === 'string') return msg;
 
   if (
     err instanceof TypeError &&
