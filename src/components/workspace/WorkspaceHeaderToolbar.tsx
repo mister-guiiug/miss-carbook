@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../../lib/supabase';
 import { useOnline } from '@mister-guiiug/dev-wpa-config/react/use-online';
-import { useTheme } from '../../hooks/useTheme';
+import { useThemeContext } from '@mister-guiiug/dev-wpa-config/react';
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import {
@@ -316,7 +316,11 @@ export function WorkspaceHeaderToolbar({
 }) {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { mode, toggle } = useTheme();
+  // Même état partagé que la barre principale : le ThemeProvider de main.tsx.
+  // Hors fournisseur (test isolé), repli inerte sur le thème clair.
+  const themeCtx = useThemeContext();
+  const mode = themeCtx?.resolved ?? 'light';
+  const toggle = () => themeCtx?.toggle();
   const online = useOnline();
   const { reportException } = useErrorDialog();
   const [open, setOpen] = useState<Menu>(null);

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useOnline } from '@mister-guiiug/dev-wpa-config/react/use-online';
-import { useTheme } from '../hooks/useTheme';
+import { useThemeContext } from '@mister-guiiug/dev-wpa-config/react';
 import { PROFILE_UPDATED_EVENT } from '../lib/profileEvents';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useWorkspaceChrome } from '../contexts/useWorkspaceChrome';
@@ -124,7 +124,12 @@ export function TopBar() {
   const location = useLocation();
   const { api: workspaceChrome } = useWorkspaceChrome();
   const { user } = useAuth();
-  const { mode, toggle } = useTheme();
+  // État partagé du ThemeProvider monté dans main.tsx : persistance, écoute
+  // du thème système et écriture de `data-theme` s'y font une seule fois.
+  // Hors fournisseur (test isolé), repli inerte sur le thème clair.
+  const themeCtx = useThemeContext();
+  const mode = themeCtx?.resolved ?? 'light';
+  const toggle = () => themeCtx?.toggle();
   const online = useOnline();
   const { reportException } = useErrorDialog();
   const { t } = useI18n();

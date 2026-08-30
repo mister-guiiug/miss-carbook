@@ -4,7 +4,6 @@ import { useUpdatePrompt } from '@mister-guiiug/dev-wpa-config/react/use-update-
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
 import { authEmailRedirectUrl } from '../lib/authRedirect';
 import {
   formatAuthCredentialError,
@@ -20,14 +19,21 @@ import {
 } from '../lib/validation/schemas';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
-import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
+import {
+  FamilyApps,
+  useThemeContext,
+  type ThemePreference,
+} from '@mister-guiiug/dev-wpa-config/react';
 import { useI18n } from '../i18n';
-import type { ThemeMode } from '../lib/theme';
 
 export function AccountSettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { mode, setMode } = useTheme();
+  // État partagé du ThemeProvider monté dans main.tsx. On lit `theme` (la
+  // PRÉFÉRENCE, `system` compris) et non `resolved` : sans quoi le bouton
+  // « Système » ne pourrait jamais s'afficher comme actif.
+  const themeCtx = useThemeContext();
+  const mode = themeCtx?.theme ?? 'system';
   const { needRefresh, update } = useUpdatePrompt({ registerSW });
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
@@ -172,8 +178,8 @@ export function AccountSettingsPage() {
     }
   };
 
-  const applyTheme = (next: ThemeMode) => {
-    setMode(next);
+  const applyTheme = (next: ThemePreference) => {
+    themeCtx?.setTheme(next);
   };
 
   const onReloadLatest = () => {
@@ -339,6 +345,16 @@ export function AccountSettingsPage() {
               onClick={() => applyTheme('dark')}
             >
               {t('account.themeDark')}
+            </button>
+            {/* Troisième état, apporté par le socle : sans ce bouton, un
+                utilisateur qui a choisi clair ou sombre ne pourrait plus jamais
+                revenir au réglage de son appareil. */}
+            <button
+              type="button"
+              className={mode === 'system' ? undefined : 'secondary'}
+              onClick={() => applyTheme('system')}
+            >
+              {t('account.themeSystem')}
             </button>
           </div>
 
