@@ -1,11 +1,5 @@
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useI18n } from '../../i18n';
@@ -17,7 +11,6 @@ import {
 } from '../../lib/candidateTree';
 import { getSupabase } from '../../lib/supabase';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
-import { IconActionButton, IconTrash, IconX } from '../ui/IconActionButton';
 import { CandidateCard } from './candidates/CandidateCard';
 import { CandidatesAddSection } from './candidates/CandidatesAddSection';
 import { useAddCandidateForm } from './candidates/useAddCandidateForm';
@@ -55,7 +48,6 @@ export function CandidatesTab({
     null
   );
   const [deletingCandidate, setDeletingCandidate] = useState(false);
-  const cancelDeleteRef = useRef<HTMLButtonElement | null>(null);
 
   const refreshGarageSuggestions = useMemo(() => {
     return async () => {
@@ -113,16 +105,6 @@ export function CandidatesTab({
     if (deletingCandidate) return;
     setConfirmingDelete(null);
   }, [deletingCandidate]);
-
-  useEffect(() => {
-    if (!confirmingDelete) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismissDeleteConfirm();
-    };
-    window.addEventListener('keydown', onKey);
-    window.setTimeout(() => cancelDeleteRef.current?.focus(), 0);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [confirmingDelete, dismissDeleteConfirm]);
 
   const subtreeDeleteIds = useMemo(() => {
     if (!confirmingDelete) return [];
@@ -367,31 +349,28 @@ export function CandidatesTab({
         {t('candidates.tab.reviewsNote', { count: reviews.length })}
       </p>
 
-      {confirmingDelete ? (
-        <div
-          className="error-dialog-backdrop"
-          role="presentation"
-          onClick={e => {
-            if (e.target === e.currentTarget) dismissDeleteConfirm();
-          }}
-        >
-          <div
-            className="error-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-delete-candidate-title"
-            aria-describedby="confirm-delete-candidate-desc"
-          >
-            <h2
-              id="confirm-delete-candidate-title"
-              className="error-dialog-title"
-            >
-              {t('candidates.tab.confirmDeleteTitle')}
-            </h2>
-            <p
-              id="confirm-delete-candidate-desc"
-              className="error-dialog-message"
-            >
+      {/* Suppression d'une fiche : confirmation à DEUX actions, et destructive
+          — la fiche part, son sous-arbre avec elle. `destructive` porte la
+          teinte, `loading` remplace le `disabled` des deux boutons : la boîte
+          reste ouverte pendant la suppression, comme avant. Échap, le clic sur
+          le fond, le focus initial sur « Annuler » (le choix sûr, que la copie
+          locale posait à la main), le piège de focus et la restitution du focus
+          viennent désormais du socle. */}
+      <ConfirmDialog
+        open={!!confirmingDelete}
+        title={t('candidates.tab.confirmDeleteTitle')}
+        destructive
+        loading={deletingCandidate}
+        confirmLabel={
+          deletingCandidate ? t('candidates.tab.deleting') : t('common.delete')
+        }
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void confirmDeleteCandidate()}
+        onCancel={dismissDeleteConfirm}
+      >
+        {confirmingDelete ? (
+          <>
+            <p style={{ margin: 0 }}>
               {t('candidates.tab.confirmDeletePrefix')}{' '}
               <strong>{formatCandidateListLabel(confirmingDelete)}</strong>
               {t('candidates.tab.confirmDeleteSuffix')}
@@ -403,32 +382,9 @@ export function CandidatesTab({
                 })}
               </p>
             ) : null}
-            <div className="error-dialog-actions">
-              <IconActionButton
-                variant="secondary"
-                label={t('common.cancel')}
-                onClick={dismissDeleteConfirm}
-                disabled={deletingCandidate}
-                ref={cancelDeleteRef}
-              >
-                <IconX />
-              </IconActionButton>
-              <IconActionButton
-                variant="danger"
-                label={
-                  deletingCandidate
-                    ? t('candidates.tab.deleting')
-                    : t('common.delete')
-                }
-                onClick={() => void confirmDeleteCandidate()}
-                disabled={deletingCandidate}
-              >
-                <IconTrash />
-              </IconActionButton>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ConfirmDialog>
     </div>
   );
 }

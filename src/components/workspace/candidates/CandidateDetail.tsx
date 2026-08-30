@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { logActivity } from '../../../lib/activity';
@@ -46,12 +47,7 @@ import {
   formatPriceInputDisplay,
   parsePriceInput,
 } from '../../../lib/formatPrice';
-import {
-  IconActionButton,
-  IconCheck,
-  IconSend,
-  IconX,
-} from '../../ui/IconActionButton';
+import { IconActionButton, IconSend } from '../../ui/IconActionButton';
 import { ImageViewerCarousel } from '../../ui/ImageViewerCarousel';
 import { GarageLocationInput } from './GarageLocationInput';
 import { ManufacturerLinksEditor } from './ManufacturerLinksEditor';
@@ -358,7 +354,6 @@ export function CandidateDetail({
   const [pendingOversizedPhoto, setPendingOversizedPhoto] =
     useState<File | null>(null);
   const [compressingPhoto, setCompressingPhoto] = useState(false);
-  const compressCancelRef = useRef<HTMLButtonElement | null>(null);
   const [photoViewerIndex, setPhotoViewerIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -453,17 +448,6 @@ export function CandidateDetail({
       setPhotoViewerIndex(photos.length - 1);
     }
   }, [photos, photoViewerIndex]);
-
-  useEffect(() => {
-    if (!pendingOversizedPhoto) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !compressingPhoto)
-        setPendingOversizedPhoto(null);
-    };
-    window.addEventListener('keydown', onKey);
-    window.setTimeout(() => compressCancelRef.current?.focus(), 0);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [pendingOversizedPhoto, compressingPhoto]);
 
   const saveSpecs = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1532,25 +1516,29 @@ export function CandidateDetail({
         onNavigate={setPhotoViewerIndex}
       />
 
-      {pendingOversizedPhoto ? (
-        <div
-          className="error-dialog-backdrop"
-          role="presentation"
-          onClick={e => {
-            if (e.target === e.currentTarget) dismissCompressOffer();
-          }}
-        >
-          <div
-            className="error-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="compress-photo-title"
-            aria-describedby="compress-photo-desc"
-          >
-            <h2 id="compress-photo-title" className="error-dialog-title">
-              {t('candidateDetail.imageTooLarge')}
-            </h2>
-            <p id="compress-photo-desc" className="error-dialog-message">
+      {/* Offre de compression d'une photo trop lourde : confirmation à DEUX
+          actions, mais NON destructive — rien n'est supprimé, on propose une
+          conversion. Pas de `destructive`, donc, et un `confirmLabel` explicite
+          plutôt que le « Confirmer » par défaut du socle. `loading` remplace le
+          `disabled` des deux boutons pendant la compression, et neutralise du
+          même coup Échap et le clic sur le fond — ce que la copie locale
+          faisait déjà pour Échap seule. */}
+      <ConfirmDialog
+        open={!!pendingOversizedPhoto}
+        title={t('candidateDetail.imageTooLarge')}
+        loading={compressingPhoto}
+        confirmLabel={
+          compressingPhoto
+            ? t('candidateDetail.compressing')
+            : t('candidateDetail.compressAndSend')
+        }
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void confirmCompressAndUpload()}
+        onCancel={dismissCompressOffer}
+      >
+        {pendingOversizedPhoto ? (
+          <>
+            <p style={{ margin: 0 }}>
               {t('candidateDetail.oversizedIntro')}{' '}
               <strong>
                 {t('candidateDetail.oversizedApproxSize', {
@@ -1568,32 +1556,9 @@ export function CandidateDetail({
             <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
               {t('candidateDetail.oversizedNote')}
             </p>
-            <div className="error-dialog-actions">
-              <IconActionButton
-                variant="secondary"
-                label={t('common.cancel')}
-                onClick={dismissCompressOffer}
-                disabled={compressingPhoto}
-                ref={compressCancelRef}
-              >
-                <IconX />
-              </IconActionButton>
-              <IconActionButton
-                variant="primary"
-                label={
-                  compressingPhoto
-                    ? t('candidateDetail.compressing')
-                    : t('candidateDetail.compressAndSend')
-                }
-                onClick={() => void confirmCompressAndUpload()}
-                disabled={compressingPhoto}
-              >
-                <IconCheck />
-              </IconActionButton>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ConfirmDialog>
     </div>
   );
 }
