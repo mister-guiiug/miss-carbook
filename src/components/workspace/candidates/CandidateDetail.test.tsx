@@ -29,6 +29,16 @@ const uploadCandidateImage = vi.fn(
 const compressImageToMaxBytes = vi.fn((_file: File) =>
   Promise.resolve(new File(['x'], 'photo.jpg', { type: 'image/jpeg' }))
 );
+/** Le ré-encodage rend un blob du type demandé, sans métadonnées. */
+const stripImageMetadata = vi.fn(
+  (
+    _file: Blob,
+    options?: { maxDimension?: number; type?: string; quality?: number }
+  ) =>
+    Promise.resolve(
+      new Blob(['reencode'], { type: options?.type ?? 'image/webp' })
+    )
+);
 
 /** Constructeur de requête Supabase minimal, chaînable et toujours vide. */
 function queryBuilder() {
@@ -68,15 +78,20 @@ vi.mock('../../../lib/storageUpload', () => ({
 }));
 
 /**
- * Seule la compression est doublée — elle a besoin de `canvas.toBlob`, que
- * jsdom n'implémente pas. `validateImageFile` reste le VRAI code du socle :
- * c'est lui qui trie le fichier ci-dessous en « trop lourd ».
+ * Seules les deux fonctions qui passent par un canvas sont doublées — elles ont
+ * besoin de `createImageBitmap` et `canvas.toBlob`, que jsdom n'implémente pas.
+ * `validateImageFile` reste le VRAI code du socle : c'est lui qui trie le
+ * fichier ci-dessous en « trop lourd ».
  */
 vi.mock('@mister-guiiug/dev-wpa-config/image', async importOriginal => ({
   ...(await importOriginal<
     typeof import('@mister-guiiug/dev-wpa-config/image')
   >()),
   compressImageToMaxBytes: (file: File) => compressImageToMaxBytes(file),
+  stripImageMetadata: (
+    file: Blob,
+    options?: { maxDimension?: number; type?: string; quality?: number }
+  ) => stripImageMetadata(file, options),
 }));
 
 const { CandidateDetail } = await import('./CandidateDetail');
@@ -151,14 +166,32 @@ async function openOffer() {
   return await screen.findByRole('alertdialog');
 }
 
+/** Le fichier réellement remis à l'envoi (`noUncheckedIndexedAccess` oblige). */
+function sentFile(): File {
+  const call = uploadCandidateImage.mock.calls.at(-1);
+  if (!call) throw new Error('aucun envoi enregistré');
+  return call[2];
+}
+
+/** Les options passées au ré-encodage. */
+function stripOptions() {
+  const call = stripImageMetadata.mock.calls.at(-1);
+  if (!call) throw new Error('aucun ré-encodage enregistré');
+  return { file: call[0], options: call[1] };
+}
+
+/** Remet à zéro les trois doublures avant chaque cas. */
+function resetImageMocks() {
+  // Hors navigateur, la détection tombe sur `navigator.language` (en-US) :
+  // on fixe la langue, les libellés attendus plus bas sont les français.
+  localStorage.setItem('carbook_locale', 'fr');
+  uploadCandidateImage.mockClear();
+  compressImageToMaxBytes.mockClear();
+  stripImageMetadata.mockClear();
+}
+
 describe('CandidateDetail — offre de compression d’une photo trop lourde', () => {
-  beforeEach(() => {
-    // Hors navigateur, la détection tombe sur `navigator.language` (en-US) :
-    // on fixe la langue, les libellés attendus plus bas sont les français.
-    localStorage.setItem('carbook_locale', 'fr');
-    uploadCandidateImage.mockClear();
-    compressImageToMaxBytes.mockClear();
-  });
+  beforeEach(resetImageMocks);
 
   it('ouvre la boîte du socle en donnant la taille du fichier refusé', async () => {
     const dialog = await openOffer();
@@ -199,11 +232,7 @@ describe('CandidateDetail — offre de compression d’une photo trop lourde', (
  * refusé sans jamais atteindre l'envoi.
  */
 describe('CandidateDetail — tri du fichier choisi', () => {
-  beforeEach(() => {
-    localStorage.setItem('carbook_locale', 'fr');
-    uploadCandidateImage.mockClear();
-    compressImageToMaxBytes.mockClear();
-  });
+  beforeEach(resetImageMocks);
 
   it('envoie un GIF sous la limite sans proposer de compression', async () => {
     pickPhoto(imageOfSize('anime.gif', 'image/gif', 1024));
@@ -216,6 +245,115 @@ describe('CandidateDetail — tri du fichier choisi', () => {
     pickPhoto(imageOfSize('scan.avif', 'image/avif', 1024));
     expect(
       await screen.findByText('Type non autorisé (JPEG, PNG, WebP, GIF)')
+    ).toBeInTheDocument();
+    expect(uploadCandidateImage).not.toHaveBeenCalled();
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Retrait des métadonnées avant l'envoi au bucket, partagé entre les membres du
+ * dossier. Une photo prise au smartphone porte l'EXIF de l'appareil : position
+ * GPS du lieu de la prise de vue, numéro de série. Jusqu'ici, tout fichier sous
+ * les 5 Mo partait tel quel — seuls les trop lourds étaient ré-encodés par la
+ * compression, qui supprime l'EXIF au passage.
+ *
+ * Le ré-encodage ne vise QUE les formats qui portent de l'EXIF (JPEG, WebP) :
+ * le GIF n'en a pas et perdrait son animation, le PNG n'en a pas en pratique et
+ * perdrait sa netteté. Le format d'origine est conservé, contrairement aux
+ * valeurs par défaut du socle (WebP / 0,85 / 2048 px).
+ */
+describe('CandidateDetail — retrait des métadonnées avant envoi', () => {
+  beforeEach(resetImageMocks);
+
+  it('ré-encode un JPEG sous la limite, dans son format, avant l’envoi', async () => {
+    const original = imageOfSize('IMG_4242.jpg', 'image/jpeg', 2 * 1024 * 1024);
+    pickPhoto(original);
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+
+    const { file, options } = stripOptions();
+    expect(file).toBe(original);
+    // Pas les défauts du socle : même type en sortie qu'en entrée, qualité
+    // haute, et les 2560 px de la compression déjà en place.
+    expect(options).toEqual({
+      type: 'image/jpeg',
+      quality: 0.92,
+      maxDimension: 2560,
+    });
+
+    // Ce n'est plus le fichier d'origine qui part, mais la copie ré-encodée.
+    expect(sentFile()).not.toBe(original);
+    expect(sentFile().type).toBe('image/jpeg');
+    expect(sentFile().name).toBe('IMG_4242.jpg');
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+  });
+
+  it('ré-encode aussi un WebP, qui porte lui aussi de l’EXIF', async () => {
+    pickPhoto(imageOfSize('photo.webp', 'image/webp', 1024));
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+    expect(stripOptions().options?.type).toBe('image/webp');
+    expect(sentFile().type).toBe('image/webp');
+    expect(sentFile().name).toBe('photo.webp');
+  });
+
+  it('envoie un PNG et un GIF tels quels, sans les ré-encoder', async () => {
+    const png = imageOfSize('capture.png', 'image/png', 1024);
+    pickPhoto(png);
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+    expect(sentFile()).toBe(png);
+
+    const gif = imageOfSize('anime.gif', 'image/gif', 1024);
+    pickPhoto(gif);
+    await waitFor(() => expect(sentFile()).toBe(gif));
+
+    expect(stripImageMetadata).not.toHaveBeenCalled();
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+  });
+
+  it('nomme le fichier d’après ce qui sort vraiment du ré-encodage', async () => {
+    // `canvas.toBlob` retombe sur le PNG quand il ne sait pas produire le type
+    // demandé : le nom doit suivre, pas rester en `.webp`.
+    stripImageMetadata.mockImplementationOnce(() =>
+      Promise.resolve(new Blob(['reencode'], { type: 'image/png' }))
+    );
+    pickPhoto(imageOfSize('photo.webp', 'image/webp', 1024));
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+    expect(sentFile().name).toBe('photo.png');
+    expect(sentFile().type).toBe('image/png');
+  });
+
+  it('repasse par la compression si le ré-encodage dépasse la limite', async () => {
+    // Un JPEG déjà très compressé peut grossir au ré-encodage et sortir du
+    // budget du bucket : la compression, elle, le garantit.
+    stripImageMetadata.mockImplementationOnce(() =>
+      Promise.resolve(
+        new Blob([new Uint8Array(6 * 1024 * 1024)], { type: 'image/jpeg' })
+      )
+    );
+    const original = imageOfSize('photo.jpg', 'image/jpeg', 4 * 1024 * 1024);
+    pickPhoto(original);
+
+    await waitFor(() => expect(compressImageToMaxBytes).toHaveBeenCalled());
+    expect(compressImageToMaxBytes).toHaveBeenCalledWith(original);
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+    expect(sentFile().size).toBeLessThanOrEqual(5 * 1024 * 1024);
+    // Le poids change vraiment : on le dit, comme sur l'autre chemin compressé.
+    expect(
+      await screen.findByText(
+        'Photo envoyée (image compressée automatiquement)'
+      )
+    ).toBeInTheDocument();
+    // Aucune boîte de confirmation : le fichier choisi tenait sous la limite.
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('n’envoie rien si le ré-encodage échoue, plutôt que l’original', async () => {
+    stripImageMetadata.mockImplementationOnce(() =>
+      Promise.reject(new Error('[dwc] Canvas 2D indisponible.'))
+    );
+    pickPhoto(imageOfSize('IMG_4242.jpg', 'image/jpeg', 1024));
+    expect(
+      await screen.findByText('Canvas 2D indisponible.')
     ).toBeInTheDocument();
     expect(uploadCandidateImage).not.toHaveBeenCalled();
     expect(compressImageToMaxBytes).not.toHaveBeenCalled();

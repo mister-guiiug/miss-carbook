@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import {
   compressImageToMaxBytes,
+  stripImageMetadata,
   validateImageFile,
 } from '@mister-guiiug/dev-wpa-config/image';
 import { getSupabase } from '../../../lib/supabase';
@@ -86,6 +87,55 @@ const ENERGY_SUGGESTIONS = [
   'Hydrogène',
   'Autre / NC',
 ] as const;
+
+/**
+ * Formats acceptés qui peuvent transporter des métadonnées EXIF — position GPS
+ * du lieu de la prise de vue, numéro de série de l'appareil. Une photo prise au
+ * smartphone en porte presque toujours, et le bucket `workspace-media` est
+ * partagé entre les membres du dossier : ces formats-là sont ré-encodés avant
+ * l'envoi, quelle que soit leur taille.
+ *
+ * Le PNG et le GIF n'y sont pas, et c'est délibéré. Le GIF n'a pas d'EXIF du
+ * tout ; le PNG ne le prévoit que par un morceau optionnel qu'aucun appareil
+ * photo n'écrit. Les ré-encoder coûterait sans rien protéger : un GIF animé
+ * perdrait son animation, une capture d'écran d'annonce sa netteté. Ils partent
+ * donc tels quels.
+ */
+const METADATA_BEARING_MIME: readonly string[] = ['image/jpeg', 'image/webp'];
+
+/** Extension de fichier par type d'image, pour que le nom reste honnête. */
+const EXTENSION_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+/**
+ * Copie ré-encodée de `file`, sans métadonnées, DANS SON FORMAT D'ORIGINE.
+ *
+ * Les valeurs par défaut du socle (WebP, qualité 0,85, 2048 px) changeraient le
+ * format et l'extension de toutes les photos : on les remplace par le type
+ * d'entrée et une qualité haute, pour que la conversion ne se voie pas.
+ *
+ * Le plafond de 2560 px, lui, est celui de la compression déjà en place : une
+ * photo plus grande est donc réduite. C'est assumé — au-delà, le ré-encodage
+ * ressortirait souvent au-dessus des 5 Mo du bucket et retomberait sur la
+ * compression, qui réduit bien davantage.
+ */
+async function strippedCopy(file: File): Promise<File> {
+  const blob = await stripImageMetadata(file, {
+    type: file.type,
+    quality: 0.92,
+    maxDimension: 2560,
+  });
+  // `canvas.toBlob` retombe sur le PNG quand il ne sait pas produire le type
+  // demandé : le nom suit ce qui sort vraiment, pas ce qui a été demandé.
+  const type = blob.type || file.type;
+  const stem = file.name.replace(/\.[^.]+$/, '') || 'photo';
+  return new File([blob], `${stem}.${EXTENSION_BY_MIME[type] ?? 'img'}`, {
+    type,
+  });
+}
 
 function isBlank(s: string | null | undefined): boolean {
   return !s || String(s).trim() === '';
@@ -554,7 +604,8 @@ export function CandidateDetail({
   const onFile = async (file: File | null) => {
     if (!file || !canWrite || !candidate.parent_candidate_id) return;
     // Tri du socle : type d'abord, taille ensuite. Un type refusé s'arrête là ;
-    // un fichier trop lourd n'est pas refusé, il ouvre l'offre de compression.
+    // un fichier trop lourd n'est pas refusé, il ouvre l'offre de compression —
+    // qui ré-encode, et retire donc les métadonnées par la même occasion.
     const refusal = validateImageFile(file, {
       maxBytes: MAX_IMAGE_BYTES,
       acceptedTypes: allowedImageMime,
@@ -563,7 +614,14 @@ export function CandidateDetail({
       reportMessage(t('candidateDetail.typeNotAllowed'));
       return;
     }
-    if (refusal === null) {
+    if (refusal === 'size') {
+      setPendingOversizedPhoto(file);
+      return;
+    }
+
+    // Sous la limite : rien à retirer d'un PNG ou d'un GIF, ils partent tels
+    // quels — c'est le comportement de toujours.
+    if (!METADATA_BEARING_MIME.includes(file.type)) {
       try {
         await runPhotoUpload(file, false);
       } catch (e: unknown) {
@@ -571,7 +629,30 @@ export function CandidateDetail({
       }
       return;
     }
-    setPendingOversizedPhoto(file);
+
+    let stripped: File;
+    try {
+      stripped = await strippedCopy(file);
+    } catch (e: unknown) {
+      // Aucun repli sur le fichier d'origine : mieux vaut ne rien envoyer que
+      // de publier la position GPS de la prise de vue dans un bucket partagé.
+      reportException(e, t('candidateDetail.errStripPhotoMetadata'));
+      return;
+    }
+
+    try {
+      if (stripped.size > MAX_IMAGE_BYTES) {
+        // Un JPEG déjà très compressé peut grossir au ré-encodage et dépasser
+        // la limite du bucket. La compression, elle, garantit le budget — et
+        // supprime les métadonnées par la même mécanique.
+        const compressed = await compressImageToMaxBytes(file, MAX_IMAGE_BYTES);
+        await runPhotoUpload(compressed, true);
+        return;
+      }
+      await runPhotoUpload(stripped, false);
+    } catch (e: unknown) {
+      reportException(e, t('candidateDetail.errUploadPhoto'));
+    }
   };
 
   const dismissCompressOffer = () => {
