@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { logActivity } from '../../../lib/activity';
 import {
   allowedImageMime,
@@ -418,24 +419,17 @@ export function CandidateDetail({
     } else {
       void loadPhotos();
     }
-    const ch = getSupabase()
-      .channel(`comments-${candidate.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'comments',
-          filter: `candidate_id=eq.${candidate.id}`,
-        },
-        () => void loadComments()
-      )
-      .subscribe();
-    return () => {
-      void getSupabase().removeChannel(ch);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidate.id]);
+
+  useRealtimeTable({
+    table: 'comments',
+    filter: `candidate_id=eq.${candidate.id}`,
+    // Le fil est relu en entier à chaque changement : une reconnexion se
+    // traite donc exactement comme un changement.
+    onChange: () => void loadComments(),
+    onResync: () => void loadComments(),
+  });
 
   useEffect(() => {
     if (comments.length > 0) setCommentsAccordionOpen(true);

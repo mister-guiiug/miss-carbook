@@ -16,6 +16,7 @@ import {
   postOrderDeleteIds,
 } from '../../lib/candidateTree';
 import { getSupabase } from '../../lib/supabase';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { IconActionButton, IconTrash, IconX } from '../ui/IconActionButton';
 import { CandidateCard } from './candidates/CandidateCard';
 import { CandidatesAddSection } from './candidates/CandidatesAddSection';
@@ -76,23 +77,16 @@ export function CandidatesTab({
 
   useEffect(() => {
     void refreshGarageSuggestions();
-    const ch = getSupabase()
-      .channel(`reminders-places-${workspaceId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'reminders',
-          filter: `workspace_id=eq.${workspaceId}`,
-        },
-        () => void refreshGarageSuggestions()
-      )
-      .subscribe();
-    return () => {
-      void getSupabase().removeChannel(ch);
-    };
-  }, [workspaceId, refreshGarageSuggestions]);
+  }, [refreshGarageSuggestions]);
+
+  useRealtimeTable({
+    table: 'reminders',
+    filter: `workspace_id=eq.${workspaceId}`,
+    // Les suggestions sont un agrégat de toute la table : un changement, quel
+    // qu'il soit, se répercute par un rechargement — la reconnexion aussi.
+    onChange: () => void refreshGarageSuggestions(),
+    onResync: () => void refreshGarageSuggestions(),
+  });
 
   useCandidatesQuickAdd();
 
