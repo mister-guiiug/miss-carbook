@@ -1,9 +1,5 @@
-// Primitives d'interface : visionneuse photo, bascule de thème.
+// Primitives d'interface : visionneuse photo.
 export const uiFr = {
-  toDarkMode: 'Passer au mode sombre',
-  toLightMode: 'Passer au mode clair',
-  darkMode: 'Mode sombre',
-  lightMode: 'Mode clair',
   closeViewer: 'Fermer la visionneuse',
   prevPhoto: 'Photo précédente',
   nextPhoto: 'Photo suivante',
@@ -15,10 +11,6 @@ export const uiFr = {
 } as const;
 
 export const uiEn = {
-  toDarkMode: 'Switch to dark mode',
-  toLightMode: 'Switch to light mode',
-  darkMode: 'Dark mode',
-  lightMode: 'Light mode',
   closeViewer: 'Close the viewer',
   prevPhoto: 'Previous photo',
   nextPhoto: 'Next photo',
