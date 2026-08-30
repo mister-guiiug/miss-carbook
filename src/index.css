@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 @import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
+/* Habillage partagé des composants [data-dwc] (ErrorBoundary, FamilyApps,
+   Toast, EmptyState…). Tout est en `@layer components` : le CSS non « layered »
+   de ce fichier l'emporte, règle par règle. */
+@import '@mister-guiiug/dev-wpa-config/components.css';
 
 :root {
   color-scheme: light;
@@ -70,6 +74,30 @@
   font-weight: 400;
   color: var(--text);
   background: var(--bg);
+}
+
+/* Contrat des composants partagés : les jetons `--dwc-*` branchés une seule
+   fois sur les variables Carbook. Chaque valeur pointe une variable redéfinie
+   par `[data-theme='dark']` plus bas : les jetons suivent le thème tout seuls. */
+:root {
+  --dwc-surface: var(--surface);
+  --dwc-surface-2: var(--bg);
+  --dwc-text: var(--text);
+  --dwc-text-soft: var(--muted);
+  --dwc-border: var(--border);
+  /* Le pourtour d'un CONTRÔLE (champ, bouton secondaire), pas un filet de
+     séparation : WCAG 1.4.11 lui demande 3:1, que `--border` (#e2e8f0) ne
+     tient pas. `--muted` donne 4,8:1 en clair et 6,6:1 en sombre. */
+  --dwc-border-strong: var(--muted);
+  --dwc-primary: var(--primary);
+  --dwc-primary-contrast: var(--primary-contrast);
+  --dwc-primary-soft: var(--primary-light);
+  --dwc-success: var(--success);
+  --dwc-danger: var(--danger);
+  --dwc-warning: var(--warning);
+  --dwc-info: var(--info);
+  --dwc-radius: var(--radius);
+  --dwc-shadow: var(--shadow-elevation-1);
 }
 
 *,
@@ -4335,6 +4363,11 @@ button.workspace-journey-link {
   font-size: 0.78rem;
   color: var(--muted);
   line-height: 1.4;
+  /* La base socle tronque à une ligne (ellipsis) ; ici la description se
+     replie sur plusieurs lignes, comme avant l'import de components.css. */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 .mc-family [data-dwc='family-app-arrow'] {
   color: var(--muted);
@@ -4373,33 +4406,4 @@ button.workspace-journey-link {
 }
 [data-theme='dark'] .mc-family [data-maturity='alpha'] {
   color: #c9a6f0;
-}
-
-/* Écran de secours du composant partagé ErrorBoundary (dev-wpa-config).
-   Sans variable de thème : doit rester lisible même si le CSS applicatif
-   n'est pas chargé. */
-[data-dwc='error-boundary'] {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  text-align: center;
-}
-
-[data-dwc='error-boundary-title'] {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-[data-dwc='error-boundary-reset'] {
-  border: 1px solid currentColor;
-  border-radius: 0.75rem;
-  padding: 0.6rem 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: inherit;
 }
