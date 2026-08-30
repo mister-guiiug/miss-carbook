@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
 import {
   WORKSPACE_QUICK_ADD_EVENT,
   type WorkspaceQuickAddDetail,
@@ -174,7 +176,6 @@ export function RemindersTab({
 
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const [deleting, setDeleting] = useState(false);
-  const cancelBtnRef = useRef<HTMLButtonElement>(null);
 
   const [view, setView] = useState<View>('open');
   const [query, setQuery] = useState('');
@@ -258,17 +259,6 @@ export function RemindersTab({
     if (deleting) return;
     setConfirming(null);
   }, [deleting]);
-
-  useEffect(() => {
-    if (!confirming) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismissConfirm();
-    };
-    window.addEventListener('keydown', onKey);
-    // Focus par défaut sur “Annuler” (évite la suppression accidentelle au clavier).
-    window.setTimeout(() => cancelBtnRef.current?.focus(), 0);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [confirming, dismissConfirm]);
 
   const startEdit = (r: Row) => {
     setEditingId(r.id);
@@ -1467,25 +1457,25 @@ export function RemindersTab({
         </div>
       )}
 
-      {confirming ? (
-        <div
-          className="error-dialog-backdrop"
-          role="presentation"
-          onClick={e => {
-            if (e.target === e.currentTarget) dismissConfirm();
-          }}
-        >
-          <div
-            className="error-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-dialog-title"
-            aria-describedby="confirm-dialog-desc"
-          >
-            <h2 id="confirm-dialog-title" className="error-dialog-title">
-              {t('reminders.confirm.title')}
-            </h2>
-            <p id="confirm-dialog-desc" className="error-dialog-message">
+      {/* Suppression d'un rappel ou d'une visite : confirmation à DEUX actions,
+          et destructive. Le focus initial sur « Annuler » — que la copie locale
+          posait à la main, en le documentant comme la parade à la suppression
+          accidentelle au clavier — est le comportement par défaut du socle. */}
+      <ConfirmDialog
+        open={!!confirming}
+        title={t('reminders.confirm.title')}
+        destructive
+        loading={deleting}
+        confirmLabel={
+          deleting ? t('reminders.confirm.deleting') : t('common.delete')
+        }
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => void confirmDelete()}
+        onCancel={dismissConfirm}
+      >
+        {confirming ? (
+          <>
+            <p style={{ margin: 0 }}>
               {t('reminders.confirm.deletePrefix')}
               <strong>{confirming.title}</strong>
               {t('reminders.confirm.deleteSuffix')}
@@ -1495,75 +1485,34 @@ export function RemindersTab({
                 {confirming.subtitle}
               </p>
             ) : null}
-            <div className="error-dialog-actions">
-              <IconActionButton
-                variant="secondary"
-                label={t('common.cancel')}
-                onClick={dismissConfirm}
-                disabled={deleting}
-                ref={cancelBtnRef}
-              >
-                <IconX />
-              </IconActionButton>
-              <IconActionButton
-                variant="danger"
-                label={
-                  deleting
-                    ? t('reminders.confirm.deleting')
-                    : t('common.delete')
-                }
-                onClick={() => void confirmDelete()}
-                disabled={deleting}
-              >
-                <IconTrash />
-              </IconActionButton>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ConfirmDialog>
 
-      {checklistVisit && (
-        <div
-          className="error-dialog-backdrop"
-          role="presentation"
-          onClick={() => setChecklistVisit(null)}
-        >
-          <div
-            className="error-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="checklist-dialog-title"
-            onClick={e => e.stopPropagation()}
-          >
-            <div
-              className="row"
-              style={{ justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <h2
-                id="checklist-dialog-title"
-                className="error-dialog-title"
-                style={{ margin: 0 }}
-              >
-                {t('reminders.checklist.title')}
-              </h2>
-              <IconActionButton
-                variant="secondary"
-                label={t('common.close')}
-                onClick={() => setChecklistVisit(null)}
-              >
-                <IconX />
-              </IconActionButton>
-            </div>
-            <TrialChecklist
-              workspaceId={workspaceId}
-              visitId={checklistVisit}
-              canWrite={canWrite}
-              userId={userId}
-              onClose={() => setChecklistVisit(null)}
-            />
-          </div>
-        </div>
-      )}
+      {/* La checklist d'essai n'est PAS une confirmation : rien à confirmer ni
+          à annuler, c'est un panneau de contenu (liste cochable, éditeur de
+          modèles) avec une seule issue — fermer. Le ConfirmDialog ne convient
+          donc pas ; `react/sheet` correspond, et apporte ce que la copie locale
+          n'avait pas : Échap, piège de focus, focus restitué et verrou du
+          scroll de fond. L'en-tête (titre + croix) est rendu par la feuille ;
+          `onClose` reste passé à TrialChecklist, qui garde son propre bouton de
+          fermeture en bas de liste, comme avant. */}
+      <Sheet
+        open={!!checklistVisit}
+        title={t('reminders.checklist.title')}
+        closeLabel={t('common.close')}
+        onClose={() => setChecklistVisit(null)}
+      >
+        {checklistVisit ? (
+          <TrialChecklist
+            workspaceId={workspaceId}
+            visitId={checklistVisit}
+            canWrite={canWrite}
+            userId={userId}
+            onClose={() => setChecklistVisit(null)}
+          />
+        ) : null}
+      </Sheet>
     </div>
   );
 }

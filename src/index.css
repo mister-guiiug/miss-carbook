@@ -1410,40 +1410,13 @@ th {
   box-shadow: 0 -6px 28px rgb(0 0 0 / 0.35);
 }
 
-.error-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  background: rgb(15 23 42 / 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: max(1rem, env(safe-area-inset-top, 0px))
-    max(1rem, env(safe-area-inset-right, 0px))
-    max(1rem, env(safe-area-inset-bottom, 0px))
-    max(1rem, env(safe-area-inset-left, 0px));
-}
-
-.error-dialog {
-  width: min(420px, 100%);
-  max-height: min(90vh, 560px);
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  margin: 0;
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  box-shadow: 0 24px 48px rgb(15 23 42 / 0.2);
-}
-
-.error-dialog-title {
-  margin: 0;
-  font-size: 1.15rem;
-}
+/* Ce qui RESTE de la copie locale `.error-dialog` : le CONTENU de la boîte
+   d'erreur — message, détails techniques dépliables, bouton copier — que le
+   socle ne rend pas et qui lui est passé en `children` (voir
+   `ErrorDialogContext.tsx`, seul porteur de ces classes). Le voile, le panneau,
+   le titre et la barre d'actions sont partis avec le dernier dialogue écrit à
+   la main : ils sont maintenant rendus, et habillés, par
+   `[data-dwc='confirm-*']` — voir le bloc d'identité plus bas. */
 
 .error-dialog-message {
   margin: 0;
@@ -1480,13 +1453,6 @@ th {
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
-}
-
-.error-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
 }
 
 .search-modal-backdrop {
@@ -1735,12 +1701,14 @@ th {
   color: var(--text);
 }
 
-/* Identité Carbook sur le ConfirmDialog du socle en mode mono-action
-   (`react/confirm-dialog`, `cancelLabel={null}`), qui rend la boîte d'erreur
-   d'`ErrorDialogContext`. Ne figurent ici que les écarts VOULUS par rapport à
-   `components.css` : ceux qui reproduisent la copie locale `.error-dialog`
-   (voile, panneau, titre, corps) — dont les règles restent plus haut, encore
-   portées par trois dialogues écrits à la main. */
+/* Identité Carbook sur le ConfirmDialog du socle (`react/confirm-dialog`), qui
+   rend MAINTENANT TOUTES les boîtes de l'application : la boîte d'erreur
+   d'`ErrorDialogContext` en mono-action (`cancelLabel={null}`), et les trois
+   confirmations à deux actions — suppression d'une fiche, suppression d'un
+   rappel ou d'une visite, offre de compression d'une photo. Ne figurent ici que
+   les écarts VOULUS par rapport à `components.css` : ceux qui reproduisaient la
+   copie locale `.error-dialog` (voile, panneau, titre, corps, barre d'actions),
+   dont les règles sont parties avec le dernier dialogue écrit à la main. */
 [data-dwc='confirm'] {
   /* La copie locale montait à 110 : au-dessus des toasts (91), de la recherche
      (100) et du menu de compte (105). La base socle (60) passerait dessous. */
@@ -1779,6 +1747,16 @@ th {
 
 [data-dwc='confirm-actions'] {
   margin-top: 0.75rem;
+}
+
+/* Identité Carbook sur le Sheet du socle (`react/sheet`), qui rend la checklist
+   d'essai — un panneau de contenu, pas une confirmation. Seul écart voulu : la
+   hauteur d'empilement. La base socle (50) passerait SOUS la recherche (100) et
+   sous le menu de compte (105), que la copie locale (110) surmontait. On monte
+   donc à 106 : au-dessus des deux, mais toujours SOUS le ConfirmDialog (110) —
+   la checklist peut lever une boîte d'erreur, qui doit rester devant elle. */
+[data-dwc='sheet'] {
+  z-index: 106;
 }
 
 /* Identité Carbook sur l'EmptyState du socle (`react/empty-state`).
