@@ -1379,37 +1379,6 @@ th {
   margin-left: auto;
 }
 
-.pwa-update-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 90;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px))
-    max(0.75rem, env(safe-area-inset-bottom, 0px))
-    max(1rem, env(safe-area-inset-left, 0px));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -6px 24px rgb(15 23 42 / 0.12);
-}
-
-.pwa-update-banner-text {
-  margin: 0;
-  font-size: 0.875rem;
-  text-align: center;
-  max-width: 28rem;
-  color: var(--text);
-}
-
-[data-theme='dark'] .pwa-update-banner {
-  box-shadow: 0 -6px 28px rgb(0 0 0 / 0.35);
-}
-
 /* Ce qui RESTE de la copie locale `.error-dialog` : le CONTENU de la boîte
    d'erreur — message, détails techniques dépliables, bouton copier — que le
    socle ne rend pas et qui lui est passé en `children` (voir
@@ -1673,9 +1642,60 @@ th {
   left: max(0.5rem, env(safe-area-inset-left, 0px));
 }
 
+/* Identité Carbook sur l'UpdatePromptBanner du socle
+   (`react/update-prompt-banner`), qui a remplacé la bannière écrite à la main.
+   `components.css` en fait une carte posée dans le flux ; Carbook l'a toujours
+   affichée en barre fixée en bas de l'écran, bord à bord. Ces règles ne sont
+   pas dans `@layer components` : elles l'emportent donc sur la base du socle
+   sans surenchère de spécificité. */
+[data-dwc='update-banner'] {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px))
+    max(0.75rem, env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
+  background: var(--surface);
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: 0 -6px 24px rgb(15 23 42 / 0.12);
+}
+
+[data-dwc='update-banner-title'] {
+  flex: 0 1 auto;
+  font-size: 0.875rem;
+  text-align: center;
+  max-width: 28rem;
+  color: var(--text);
+}
+
+[data-theme='dark'] [data-dwc='update-banner'] {
+  box-shadow: 0 -6px 28px rgb(0 0 0 / 0.35);
+}
+
+/* La règle globale `button` peint TOUT bouton en aplat primaire : le second
+   bouton du socle (« Plus tard ») arriverait au même niveau que « Mettre à
+   jour ». On le ramène au rendu secondaire, comme `button.secondary`. */
+[data-dwc='update-banner-dismiss'] {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-dwc='update-banner-dismiss']:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Notifications : rendu par le composant partagé Toast (`react/toast`),
    habillé par components.css. Seul écart voulu : la copie locale (z-index 90,
-   rendue après la bannière) passait AU-DESSUS de `.pwa-update-banner`
+   rendue après la bannière) passait AU-DESSUS du bandeau de mise à jour
    (z-index 90) — la base socle (70) passerait dessous. */
 [data-dwc='toast-viewport'] {
   z-index: 91;
