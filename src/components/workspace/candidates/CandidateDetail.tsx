@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import {
+  compressImageToMaxBytes,
+  validateImageFile,
+} from '@mister-guiiug/dev-wpa-config/image';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { logActivity } from '../../../lib/activity';
@@ -15,7 +19,6 @@ import {
   uploadCandidateImage,
   signedUrlForPath,
 } from '../../../lib/storageUpload';
-import { compressImageToMaxBytes } from '../../../lib/imageCompress';
 import { renderMentions } from '../../../lib/renderMentions';
 import { useI18n } from '../../../i18n';
 import { useErrorDialog } from '../../../contexts/ErrorDialogContext';
@@ -550,13 +553,17 @@ export function CandidateDetail({
 
   const onFile = async (file: File | null) => {
     if (!file || !canWrite || !candidate.parent_candidate_id) return;
-    if (
-      !allowedImageMime.includes(file.type as (typeof allowedImageMime)[number])
-    ) {
+    // Tri du socle : type d'abord, taille ensuite. Un type refusé s'arrête là ;
+    // un fichier trop lourd n'est pas refusé, il ouvre l'offre de compression.
+    const refusal = validateImageFile(file, {
+      maxBytes: MAX_IMAGE_BYTES,
+      acceptedTypes: allowedImageMime,
+    });
+    if (refusal === 'type') {
       reportMessage(t('candidateDetail.typeNotAllowed'));
       return;
     }
-    if (file.size <= MAX_IMAGE_BYTES) {
+    if (refusal === null) {
       try {
         await runPhotoUpload(file, false);
       } catch (e: unknown) {
@@ -576,6 +583,8 @@ export function CandidateDetail({
     if (!pendingOversizedPhoto || !canWrite) return;
     setCompressingPhoto(true);
     try {
+      // `maxBytes` explicite (limite du bucket) ; le `maxDimension` par défaut
+      // du socle vaut 2560 px, exactement ce que faisait la copie locale.
       const compressed = await compressImageToMaxBytes(
         pendingOversizedPhoto,
         MAX_IMAGE_BYTES

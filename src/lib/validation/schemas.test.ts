@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertImageFile,
   authPasswordLoginSchema,
   authPasswordSignUpSchema,
   candidateSchema,
   changeEmailSchema,
   displayNameSchema,
+  MAX_IMAGE_BYTES,
   requirementSchema,
   shareCodeSchema,
   workspaceMetaUpdateSchema,
@@ -139,5 +141,43 @@ describe('candidateSchema', () => {
     const r = candidateSchema.safeParse({ mileage_km: '45 000' });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.mileage_km).toBe(45000);
+  });
+});
+
+/**
+ * Le tri lui-même vient du socle (`validateImageFile`). Ce qui est vérifié ici
+ * est le CONTRAT DE L'APP : la liste de types de Miss Carbook — GIF compris,
+ * ce que le socle ne fait pas par défaut — et la limite du bucket (5 Mo).
+ */
+describe('assertImageFile', () => {
+  function fakeImage(type: string, size: number) {
+    const file = new File(['x'], 'photo', { type });
+    Object.defineProperty(file, 'size', { value: size });
+    return file;
+  }
+
+  it('accepte un GIF sous la limite (absent du défaut du socle)', () => {
+    expect(() => assertImageFile(fakeImage('image/gif', 1024))).not.toThrow();
+  });
+
+  it('accepte JPEG, PNG et WebP sous la limite', () => {
+    for (const type of ['image/jpeg', 'image/png', 'image/webp']) {
+      expect(() => assertImageFile(fakeImage(type, 1024))).not.toThrow();
+    }
+  });
+
+  it('refuse un type hors liste', () => {
+    expect(() => assertImageFile(fakeImage('image/avif', 1024))).toThrow(
+      /Type non autorisé/
+    );
+  });
+
+  it('refuse au-delà de la limite du bucket', () => {
+    expect(() =>
+      assertImageFile(fakeImage('image/jpeg', MAX_IMAGE_BYTES + 1))
+    ).toThrow(/trop volumineux/);
+    expect(() =>
+      assertImageFile(fakeImage('image/jpeg', MAX_IMAGE_BYTES))
+    ).not.toThrow();
   });
 });

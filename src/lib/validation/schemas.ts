@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validateImageFile } from '@mister-guiiug/dev-wpa-config/image';
 import { parsePriceInput } from '../formatPrice';
 
 const authEmailField = z.string().trim().email('Adresse e-mail invalide');
@@ -219,9 +220,23 @@ export const currentVehicleSchema = z.object({
   specs: currentVehicleSpecsSchema.optional().default({}),
 });
 
-/** Limite client alignée sur le bucket (5 Mo) */
+/**
+ * Limite client alignée sur le bucket `workspace-media` (5 Mo).
+ *
+ * Même VALEUR que `IMAGE_MAX_BYTES` du socle, mais pas la même NATURE : cette
+ * limite-ci est dictée par la configuration Supabase, pas par le socle. Elle
+ * reste donc écrite ici et passée en option explicite aux fonctions du socle —
+ * si le socle changeait son défaut, l'app continuerait de refuser ce que le
+ * bucket refuse.
+ */
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+/**
+ * Le GIF n'est PAS dans `IMAGE_ACCEPTED_TYPES` du socle (JPEG / PNG / WebP).
+ * Miss Carbook l'accepte depuis toujours — l'aide écran le promet et la
+ * compression sait le ramener à une image fixe. On garde donc la liste locale
+ * et on la passe en option ; candidat à une évolution du socle.
+ */
 export const allowedImageMime = [
   'image/jpeg',
   'image/png',
@@ -229,15 +244,22 @@ export const allowedImageMime = [
   'image/gif',
 ] as const;
 
+/**
+ * Garde-fou du dernier mètre, juste avant l'envoi au bucket. La décision est
+ * déléguée à `validateImageFile` du socle (pure, testable sans DOM) ; les
+ * messages, eux, restent ceux de l'app.
+ */
 export function assertImageFile(file: File) {
-  if (file.size > MAX_IMAGE_BYTES) {
+  const refusal = validateImageFile(file, {
+    maxBytes: MAX_IMAGE_BYTES,
+    acceptedTypes: allowedImageMime,
+  });
+  if (refusal === 'size') {
     throw new Error(
       `Fichier trop volumineux (max ${MAX_IMAGE_BYTES / 1024 / 1024} Mo)`
     );
   }
-  if (
-    !allowedImageMime.includes(file.type as (typeof allowedImageMime)[number])
-  ) {
+  if (refusal === 'type') {
     throw new Error('Type non autorisé (JPEG, PNG, WebP, GIF)');
   }
 }

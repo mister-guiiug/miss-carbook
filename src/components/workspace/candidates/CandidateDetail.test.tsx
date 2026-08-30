@@ -67,7 +67,15 @@ vi.mock('../../../lib/storageUpload', () => ({
   signedUrlForPath: () => Promise.resolve(''),
 }));
 
-vi.mock('../../../lib/imageCompress', () => ({
+/**
+ * Seule la compression est doublée — elle a besoin de `canvas.toBlob`, que
+ * jsdom n'implémente pas. `validateImageFile` reste le VRAI code du socle :
+ * c'est lui qui trie le fichier ci-dessous en « trop lourd ».
+ */
+vi.mock('@mister-guiiug/dev-wpa-config/image', async importOriginal => ({
+  ...(await importOriginal<
+    typeof import('@mister-guiiug/dev-wpa-config/image')
+  >()),
   compressImageToMaxBytes: (file: File) => compressImageToMaxBytes(file),
 }));
 
@@ -101,15 +109,19 @@ const candidate: CandidateRow = {
   candidate_specs: null,
 };
 
-/** Un JPEG de 6 Mo : au-dessus de la limite de 5 Mo, donc refusé tel quel. */
-function oversizedJpeg() {
-  const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
-  Object.defineProperty(file, 'size', { value: 6 * 1024 * 1024 });
+function imageOfSize(name: string, type: string, size: number) {
+  const file = new File(['x'], name, { type });
+  Object.defineProperty(file, 'size', { value: size });
   return file;
 }
 
-/** Choisit une photo trop lourde et retourne la boîte ouverte. */
-async function openOffer() {
+/** Un JPEG de 6 Mo : au-dessus de la limite de 5 Mo, donc refusé tel quel. */
+function oversizedJpeg() {
+  return imageOfSize('photo.jpg', 'image/jpeg', 6 * 1024 * 1024);
+}
+
+/** Rend la fiche et choisit `file` dans le champ photo. */
+function pickPhoto(file: File) {
   const { container } = render(
     <I18nProvider>
       <ErrorDialogProvider>
@@ -130,7 +142,12 @@ async function openOffer() {
   );
   const input = container.querySelector<HTMLInputElement>('input[type="file"]');
   if (!input) throw new Error('champ de sélection de photo introuvable');
-  fireEvent.change(input, { target: { files: [oversizedJpeg()] } });
+  fireEvent.change(input, { target: { files: [file] } });
+}
+
+/** Choisit une photo trop lourde et retourne la boîte ouverte. */
+async function openOffer() {
+  pickPhoto(oversizedJpeg());
   return await screen.findByRole('alertdialog');
 }
 
@@ -172,5 +189,35 @@ describe('CandidateDetail — offre de compression d’une photo trop lourde', (
     await waitFor(() => expect(compressImageToMaxBytes).toHaveBeenCalled());
     await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+  });
+});
+
+/**
+ * Le tri des fichiers est celui du socle (`validateImageFile`), mais nourri
+ * avec la liste de types de Miss Carbook. Ces deux cas gardent ce câblage : le
+ * GIF, que le défaut du socle refuserait, passe ; un type hors liste est
+ * refusé sans jamais atteindre l'envoi.
+ */
+describe('CandidateDetail — tri du fichier choisi', () => {
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    uploadCandidateImage.mockClear();
+    compressImageToMaxBytes.mockClear();
+  });
+
+  it('envoie un GIF sous la limite sans proposer de compression', async () => {
+    pickPhoto(imageOfSize('anime.gif', 'image/gif', 1024));
+    await waitFor(() => expect(uploadCandidateImage).toHaveBeenCalled());
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('refuse un type hors liste sans rien envoyer', async () => {
+    pickPhoto(imageOfSize('scan.avif', 'image/avif', 1024));
+    expect(
+      await screen.findByText('Type non autorisé (JPEG, PNG, WebP, GIF)')
+    ).toBeInTheDocument();
+    expect(uploadCandidateImage).not.toHaveBeenCalled();
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
   });
 });
