@@ -13,6 +13,7 @@ import {
 import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import {
   IconActionButton,
   IconGripVertical,
@@ -72,50 +73,6 @@ export function NotepadTab({
       cancelled = true;
     };
   }, [workspaceId, canWrite, reportException]);
-
-  useEffect(() => {
-    const ch = getSupabase()
-      .channel(`user-notes-${workspaceId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_notes',
-          filter: `workspace_id=eq.${workspaceId}`,
-        },
-        payload => {
-          const row = payload.new as Partial<UserNoteRow>;
-          if (!row.user_id) return;
-          setRows(prev => {
-            const next = prev.filter(x => x.user_id !== row.user_id);
-            if (
-              payload.eventType !== 'DELETE' &&
-              row.workspace_id &&
-              row.updated_at
-            ) {
-              const prevRow = prev.find(x => x.user_id === row.user_id);
-              next.push({
-                ...(prevRow ?? {}),
-                ...row,
-                body: row.body ?? prevRow?.body ?? '',
-                peer_order: row.peer_order ?? prevRow?.peer_order ?? [],
-              } as UserNoteRow);
-            }
-            return next;
-          });
-          if (row.body != null)
-            setBodies(b => ({
-              ...b,
-              [row.user_id as string]: String(row.body),
-            }));
-        }
-      )
-      .subscribe();
-    return () => {
-      void getSupabase().removeChannel(ch);
-    };
-  }, [workspaceId]);
 
   useEffect(() => {
     const onQuick = (ev: Event) => {
@@ -237,6 +194,46 @@ export function NotepadTab({
     [canReorderOthers, persistPeerOrder]
   );
 
+  // Numéro de la dernière demande : une réponse arrivée après un changement
+  // d'espace, ou après un rechargement plus récent, ne doit pas s'installer.
+  const loadSeq = useRef(0);
+
+  /**
+   * Recharge les notes de l'espace. Rend `false` si la lecture a échoué ou si
+   * une demande plus récente l'a devancée.
+   *
+   * `preserveMyDraft` protège le seul texte que le rechargement pourrait faire
+   * disparaître : celui que l'utilisateur est peut-être en train de taper dans
+   * SA zone. Les notes des autres, elles, doivent bien être rafraîchies.
+   */
+  const loadNotes = useCallback(
+    async (preserveMyDraft = false): Promise<boolean> => {
+      const seq = ++loadSeq.current;
+      const { data: notes, error } = await getSupabase()
+        .from('user_notes')
+        .select('workspace_id, user_id, body, updated_at, peer_order')
+        .eq('workspace_id', workspaceId)
+        .order('updated_at', { ascending: false });
+      if (seq !== loadSeq.current) return false;
+      if (error) {
+        reportException(error, t('notepad.ctxLoadNotes'));
+        return false;
+      }
+      const list = (notes ?? []) as UserNoteRow[];
+      setRows(list);
+      setBodies(prev => {
+        const next = { ...prev };
+        for (const r of list) {
+          if (preserveMyDraft && r.user_id === myId) continue;
+          next[r.user_id] = r.body ?? '';
+        }
+        return next;
+      });
+      return true;
+    },
+    [workspaceId, reportException, myId, t]
+  );
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -266,23 +263,8 @@ export function NotepadTab({
         }))
       );
 
-      const { data: notes, error: notesErr } = await getSupabase()
-        .from('user_notes')
-        .select('workspace_id, user_id, body, updated_at, peer_order')
-        .eq('workspace_id', workspaceId)
-        .order('updated_at', { ascending: false });
-      if (cancelled) return;
-      if (notesErr) {
-        reportException(notesErr, t('notepad.ctxLoadNotes'));
-        return;
-      }
-      const list = (notes ?? []) as UserNoteRow[];
-      setRows(list);
-      setBodies(prev => {
-        const next = { ...prev };
-        for (const r of list) next[r.user_id] = r.body ?? '';
-        return next;
-      });
+      const loaded = await loadNotes();
+      if (cancelled || !loaded) return;
 
       setOpen(prev => {
         if (Object.keys(prev).length) return prev;
@@ -294,7 +276,41 @@ export function NotepadTab({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, reportException, myId, t]);
+  }, [workspaceId, reportException, myId, t, loadNotes]);
+
+  useRealtimeTable({
+    table: 'user_notes',
+    filter: `workspace_id=eq.${workspaceId}`,
+    onChange: change => {
+      const row = (change.new ?? {}) as Partial<UserNoteRow>;
+      if (!row.user_id) return;
+      setRows(prev => {
+        const next = prev.filter(x => x.user_id !== row.user_id);
+        if (
+          change.eventType !== 'DELETE' &&
+          row.workspace_id &&
+          row.updated_at
+        ) {
+          const prevRow = prev.find(x => x.user_id === row.user_id);
+          next.push({
+            ...(prevRow ?? {}),
+            ...row,
+            body: row.body ?? prevRow?.body ?? '',
+            peer_order: row.peer_order ?? prevRow?.peer_order ?? [],
+          } as UserNoteRow);
+        }
+        return next;
+      });
+      if (row.body != null)
+        setBodies(b => ({
+          ...b,
+          [row.user_id as string]: String(row.body),
+        }));
+    },
+    // Les notes des autres ont pu bouger pendant la coupure sans qu'aucun
+    // évènement n'arrive : on relit, en épargnant le brouillon en cours.
+    onResync: () => void loadNotes(true),
+  });
 
   const saveMyNote = async () => {
     if (!canWrite || !myId) return;

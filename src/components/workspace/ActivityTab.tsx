@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
 import {
   activityActionLabel,
   activityEntityLabel,
 } from '../../lib/activityLogLabels';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
+import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { EmptyState } from '../ui/EmptyState';
 import { useI18n } from '../../i18n';
 
@@ -56,58 +57,61 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const { data, error } = await getSupabase()
-        .from('activity_log')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false })
-        .limit(ACTIVITY_PAGE_LIMIT);
-      if (cancelled) return;
-      if (error) {
-        reportException(error, t('activity.ctxLoadActivity'));
-        return;
-      }
-      const list = (data ?? []) as Row[];
-      setRows(list);
-      const ids = [
-        ...new Set(list.map(r => r.user_id).filter(Boolean)),
-      ] as string[];
-      if (ids.length) {
-        const { data: profs } = await getSupabase()
-          .from('profiles')
-          .select('id, display_name')
-          .in('id', ids);
-        const map: Record<string, string> = {};
-        for (const p of profs ?? []) map[p.id] = p.display_name;
-        setNames(map);
-      } else {
-        setNames({});
-      }
-    })();
-    const ch = getSupabase()
-      .channel(`act-${workspaceId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'activity_log',
-          filter: `workspace_id=eq.${workspaceId}`,
-        },
-        payload => {
-          const row = payload.new as Row;
-          setRows(prev => [row, ...prev].slice(0, ACTIVITY_PAGE_LIMIT));
-        }
-      )
-      .subscribe();
-    return () => {
-      cancelled = true;
-      void getSupabase().removeChannel(ch);
-    };
+  // Numéro de la dernière demande : une réponse arrivée après un changement
+  // d'espace, ou après un rechargement plus récent, ne doit pas s'installer.
+  const loadSeq = useRef(0);
+
+  const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const { data, error } = await getSupabase()
+      .from('activity_log')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false })
+      .limit(ACTIVITY_PAGE_LIMIT);
+    if (seq !== loadSeq.current) return;
+    if (error) {
+      reportException(error, t('activity.ctxLoadActivity'));
+      return;
+    }
+    const list = (data ?? []) as Row[];
+    setRows(list);
+    const ids = [
+      ...new Set(list.map(r => r.user_id).filter(Boolean)),
+    ] as string[];
+    if (ids.length) {
+      const { data: profs } = await getSupabase()
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', ids);
+      if (seq !== loadSeq.current) return;
+      const map: Record<string, string> = {};
+      for (const p of profs ?? []) map[p.id] = p.display_name;
+      setNames(map);
+    } else {
+      setNames({});
+    }
   }, [workspaceId, reportException, t]);
+
+  useEffect(() => {
+    void (async () => {
+      await load();
+    })();
+  }, [load]);
+
+  useRealtimeTable({
+    table: 'activity_log',
+    event: 'INSERT',
+    filter: `workspace_id=eq.${workspaceId}`,
+    onChange: change => {
+      const row = change.new as Row | undefined;
+      if (!row) return;
+      setRows(prev => [row, ...prev].slice(0, ACTIVITY_PAGE_LIMIT));
+    },
+    // Le journal est en append-only : après une coupure, seul un rechargement
+    // rattrape les lignes insérées pendant qu'on ne regardait pas.
+    onResync: () => void load(),
+  });
 
   const groups = useMemo(() => {
     const dayLabels = {
