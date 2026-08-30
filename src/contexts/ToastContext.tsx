@@ -2,12 +2,24 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from 'react';
+import {
+  ToastProvider as DwcToastProvider,
+  useToast as useDwcToast,
+} from '@mister-guiiug/dev-wpa-config/react/toast';
 
+/**
+ * Pont vers le composant partagé Toast (`react/toast` de dev-wpa-config).
+ *
+ * L'API `showToast(message)` est conservée : dix-sept écrans l'appellent.
+ * Le rendu, la file (bornée à 4, le plus ancien cède), la durée (5 s),
+ * la suspension au survol/focus et l'accessibilité (régions vivantes
+ * permanentes, bouton de fermeture nommé) viennent du socle — qui documente
+ * justement l'ancienne copie locale comme l'un de ses modèles corrigés
+ * (un seul message à la fois : le suivant écrasait le précédent).
+ */
 type ToastContextValue = {
   showToast: (message: string) => void;
 };
@@ -21,33 +33,27 @@ export function useToast() {
   return ctx;
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
+function ToastBridge({ children }: { children: ReactNode }) {
+  const toast = useDwcToast();
 
-  const showToast = useCallback((msg: string) => {
-    setMessage(msg);
-  }, []);
-
-  useEffect(() => {
-    if (!message) return;
-    const t = window.setTimeout(() => setMessage(null), 3200);
-    return () => window.clearTimeout(t);
-  }, [message]);
+  const showToast = useCallback(
+    (message: string) => {
+      toast.show(message);
+    },
+    [toast]
+  );
 
   const value = useMemo(() => ({ showToast }), [showToast]);
 
   return (
-    <ToastContext.Provider value={value}>
-      {children}
-      <div
-        className="toast-region"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        aria-relevant="additions text"
-      >
-        {message ? <div className="toast-card">{message}</div> : null}
-      </div>
-    </ToastContext.Provider>
+    <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
+  );
+}
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  return (
+    <DwcToastProvider>
+      <ToastBridge>{children}</ToastBridge>
+    </DwcToastProvider>
   );
 }

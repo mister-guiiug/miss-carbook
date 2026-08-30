@@ -1,3 +1,5 @@
+import { EmptyState as DwcEmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+
 interface EmptyStateProps {
   icon?:
     | 'candidates'
@@ -12,14 +14,20 @@ interface EmptyStateProps {
   action?: React.ReactNode;
 }
 
+/**
+ * Adaptateur : API locale inchangée (icône métier par clé, `title`/`text`),
+ * rendu par l'EmptyState du socle (`role="note"`, icône `aria-hidden`).
+ * L'identité visuelle (cadre 2 px, icône flottante, survol) est portée par
+ * `index.css` sur les sélecteurs `[data-dwc='empty-state…']`.
+ */
 export function EmptyState({ icon, title, text, action }: EmptyStateProps) {
   return (
-    <div className="empty-state">
-      {icon && <EmptyStateIcon type={icon} />}
-      <h3 className="empty-state-title">{title}</h3>
-      <p className="empty-state-text">{text}</p>
-      {action && <div className="empty-state-action">{action}</div>}
-    </div>
+    <DwcEmptyState
+      icon={icon ? <EmptyStateIcon type={icon} /> : undefined}
+      title={title}
+      description={text}
+      action={action}
+    />
   );
 }
 

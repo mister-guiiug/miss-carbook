@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 @import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
+/* Habillage partagé des composants [data-dwc] (ErrorBoundary, FamilyApps,
+   Toast, EmptyState…). Tout est en `@layer components` : le CSS non « layered »
+   de ce fichier l'emporte, règle par règle. */
+@import '@mister-guiiug/dev-wpa-config/components.css';
 
 :root {
   color-scheme: light;
@@ -70,6 +74,30 @@
   font-weight: 400;
   color: var(--text);
   background: var(--bg);
+}
+
+/* Contrat des composants partagés : les jetons `--dwc-*` branchés une seule
+   fois sur les variables Carbook. Chaque valeur pointe une variable redéfinie
+   par `[data-theme='dark']` plus bas : les jetons suivent le thème tout seuls. */
+:root {
+  --dwc-surface: var(--surface);
+  --dwc-surface-2: var(--bg);
+  --dwc-text: var(--text);
+  --dwc-text-soft: var(--muted);
+  --dwc-border: var(--border);
+  /* Le pourtour d'un CONTRÔLE (champ, bouton secondaire), pas un filet de
+     séparation : WCAG 1.4.11 lui demande 3:1, que `--border` (#e2e8f0) ne
+     tient pas. `--muted` donne 4,8:1 en clair et 6,6:1 en sombre. */
+  --dwc-border-strong: var(--muted);
+  --dwc-primary: var(--primary);
+  --dwc-primary-contrast: var(--primary-contrast);
+  --dwc-primary-soft: var(--primary-light);
+  --dwc-success: var(--success);
+  --dwc-danger: var(--danger);
+  --dwc-warning: var(--warning);
+  --dwc-info: var(--info);
+  --dwc-radius: var(--radius);
+  --dwc-shadow: var(--shadow-elevation-1);
 }
 
 *,
@@ -1679,45 +1707,60 @@ th {
   left: max(0.5rem, env(safe-area-inset-left, 0px));
 }
 
-.toast-region {
-  position: fixed;
-  right: max(1rem, env(safe-area-inset-right, 0px));
-  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
-  z-index: 90;
-  max-width: min(22rem, calc(100vw - 1.5rem));
-  pointer-events: none;
+/* Notifications : rendu par le composant partagé Toast (`react/toast`),
+   habillé par components.css. Seul écart voulu : la copie locale (z-index 90,
+   rendue après la bannière) passait AU-DESSUS de `.pwa-update-banner`
+   (z-index 90) — la base socle (70) passerait dessous. */
+[data-dwc='toast-viewport'] {
+  z-index: 91;
 }
 
-.toast-card {
-  pointer-events: auto;
-  padding: 0.65rem 1rem;
-  background: var(--text);
-  color: var(--surface);
-  border-radius: var(--radius);
-  font-size: 0.9rem;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+/* La règle globale `button` (aplat dégradé primaire, reflet, survol) ferait du
+   bouton de fermeture un bouton d'action : on le ramène au rendu discret
+   prévu par components.css. */
+[data-dwc='toast-close'] {
+  padding: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
 }
 
-.empty-state {
+[data-dwc='toast-close']::before {
+  content: none;
+}
+
+[data-dwc='toast-close']:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--text);
+}
+
+/* Identité Carbook sur l'EmptyState du socle (`react/empty-state`).
+   Ne figurent ici que les écarts VOULUS par rapport à `components.css` :
+   cadre 2 px, fond surface, icône flottante et réaction au survol — ce que
+   la copie locale faisait. */
+[data-dwc='empty-state'] {
+  gap: 1rem;
   padding: 2rem 1rem;
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
   transition:
     border-color var(--transition-normal),
     background var(--transition-normal);
 }
 
-.empty-state:hover {
+[data-dwc='empty-state']:hover {
   border-color: var(--primary);
   background: var(--primary-light);
 }
 
+/* L'icône garde l'encre du texte (la base socle la peint en primaire). */
+[data-dwc='empty-state-icon'] {
+  color: inherit;
+}
+
+/* Classe portée par les SVG métier de `EmptyState.tsx` : taille et flottement. */
 .empty-state-icon {
   width: 64px;
   height: 64px;
@@ -1728,26 +1771,26 @@ th {
     opacity var(--transition-normal);
 }
 
-.empty-state:hover .empty-state-icon {
+[data-dwc='empty-state']:hover .empty-state-icon {
   transform: scale(1.1);
   opacity: 0.8;
 }
 
-.empty-state-title {
+[data-dwc='empty-state-title'] {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.empty-state-text {
+[data-dwc='empty-state-desc'] {
   margin: 0;
   font-size: 0.95rem;
   color: var(--muted);
   max-width: 28rem;
 }
 
-.empty-state-action {
+[data-dwc='empty-state-action'] {
   margin-top: 0.5rem;
 }
 
@@ -2032,12 +2075,6 @@ label.compare-pick-card input[type='checkbox'] {
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--bg);
-}
-
-[data-theme='dark'] .toast-card {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
 .auth-gate-tabs {
@@ -4335,6 +4372,11 @@ button.workspace-journey-link {
   font-size: 0.78rem;
   color: var(--muted);
   line-height: 1.4;
+  /* La base socle tronque à une ligne (ellipsis) ; ici la description se
+     replie sur plusieurs lignes, comme avant l'import de components.css. */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 .mc-family [data-dwc='family-app-arrow'] {
   color: var(--muted);
@@ -4373,33 +4415,4 @@ button.workspace-journey-link {
 }
 [data-theme='dark'] .mc-family [data-maturity='alpha'] {
   color: #c9a6f0;
-}
-
-/* Écran de secours du composant partagé ErrorBoundary (dev-wpa-config).
-   Sans variable de thème : doit rester lisible même si le CSS applicatif
-   n'est pas chargé. */
-[data-dwc='error-boundary'] {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  text-align: center;
-}
-
-[data-dwc='error-boundary-title'] {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-[data-dwc='error-boundary-reset'] {
-  border: 1px solid currentColor;
-  border-radius: 0.75rem;
-  padding: 0.6rem 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: inherit;
 }
