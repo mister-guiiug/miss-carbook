@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fireEvent,
   render,
@@ -357,5 +357,58 @@ describe('CandidateDetail — retrait des métadonnées avant envoi', () => {
     ).toBeInTheDocument();
     expect(uploadCandidateImage).not.toHaveBeenCalled();
     expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * L'ENVOI DE PHOTO HORS CONNEXION.
+ *
+ * C'est l'écriture la plus coûteuse de l'application, et la seule en deux
+ * temps : le fichier vers le bucket, puis la ligne `attachments`. Sans garde,
+ * hors connexion, l'utilisateur choisit un fichier, attend une compression de
+ * plusieurs secondes, et récolte une erreur.
+ *
+ * Le champ est ici VRAIMENT désactivé, pas seulement `aria-disabled` : le
+ * socle préfère `aria-disabled` pour qu'un bouton bloqué reste focusable et
+ * que son motif reste découvrable, mais un sélecteur de fichier ouvrirait
+ * l'explorateur du système pour ne rien en faire. Le motif est écrit juste en
+ * dessous, en toutes lettres — donc rien ne se perd.
+ */
+describe('CandidateDetail — envoi de photo hors connexion', () => {
+  beforeEach(() => {
+    resetImageMocks();
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+  });
+
+  it('désactive le champ photo ET affiche le motif', () => {
+    pickPhoto(oversizedJpeg());
+
+    // `document`, pas `screen` : l'accordéon « Photos » est replié au montage,
+    // et une requête par rôle sur du contenu masqué est une fausse piste.
+    const input =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input).toBeDisabled();
+    expect(input).toHaveAttribute('aria-disabled', 'true');
+
+    const reason = document.querySelector('[role="status"]');
+    expect(reason).toHaveTextContent('Indisponible hors ligne');
+  });
+
+  it('ne compresse ni n’envoie rien, même si un fichier est déposé', () => {
+    pickPhoto(oversizedJpeg());
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(compressImageToMaxBytes).not.toHaveBeenCalled();
+    expect(uploadCandidateImage).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useI18n } from '../../i18n';
@@ -48,6 +49,17 @@ export function CandidatesTab({
     null
   );
   const [deletingCandidate, setDeletingCandidate] = useState(false);
+
+  /**
+   * SUPPRIMER UNE FICHE EST IRRÉVERSIBLE, et supprime aussi ses compléments :
+   * c'est la boucle `for` de `confirmDeleteCandidate`, une requête par ligne.
+   * Hors connexion, la première échoue et la boîte reste ouverte sur une
+   * erreur — après avoir demandé confirmation d'une suppression qui ne pouvait
+   * pas avoir lieu. Le garde est calculé UNE fois ici et descendu aux cartes :
+   * `useActionGuard` pose un écouteur `online`/`offline`, il serait dommage
+   * d'en poser un par candidat affiché.
+   */
+  const deleteGuard = useActionGuard({ online: true });
 
   const refreshGarageSuggestions = useMemo(() => {
     return async () => {
@@ -283,6 +295,7 @@ export function CandidatesTab({
               onRequestDelete={
                 canWrite ? c => setConfirmingDelete(c) : undefined
               }
+              deleteGuard={deleteGuard}
               rootCandidatesForParent={rootCandidates.filter(
                 x => x.id !== root.id
               )}
@@ -305,6 +318,7 @@ export function CandidatesTab({
                 onRequestDelete={
                   canWrite ? c => setConfirmingDelete(c) : undefined
                 }
+                deleteGuard={deleteGuard}
                 rootCandidatesForParent={rootCandidates.filter(
                   x => x.id !== child.id
                 )}
@@ -330,6 +344,7 @@ export function CandidatesTab({
               onRequestDelete={
                 canWrite ? row => setConfirmingDelete(row) : undefined
               }
+              deleteGuard={deleteGuard}
               rootCandidatesForParent={rootCandidates.filter(
                 x => x.id !== c.id
               )}
@@ -365,11 +380,19 @@ export function CandidatesTab({
           deletingCandidate ? t('candidates.tab.deleting') : t('common.delete')
         }
         cancelLabel={t('common.cancel')}
-        onConfirm={() => void confirmDeleteCandidate()}
+        onConfirm={deleteGuard.wrap(() => void confirmDeleteCandidate())}
         onCancel={dismissDeleteConfirm}
       >
         {confirmingDelete ? (
           <>
+            {/* Le réseau peut tomber PENDANT que la boîte est ouverte : le
+                motif s'affiche alors ici, et `wrap` rend « Supprimer » inerte
+                — la boîte ne se referme pas sur une erreur inutile. */}
+            {deleteGuard.reason ? (
+              <p role="status" className="muted" style={{ margin: 0 }}>
+                {deleteGuard.reason}
+              </p>
+            ) : null}
             <p style={{ margin: 0 }}>
               {t('candidates.tab.confirmDeletePrefix')}{' '}
               <strong>{formatCandidateListLabel(confirmingDelete)}</strong>

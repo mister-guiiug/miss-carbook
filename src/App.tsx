@@ -7,6 +7,7 @@ import { PseudoGate } from './components/PseudoGate';
 import { SiteFooter } from './components/SiteFooter';
 import { TrustBanner } from './components/TrustBanner';
 import { TopBar } from './components/TopBar';
+import { OfflineBanner } from './components/OfflineBanner';
 import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './pages/HomePage';
 import { useI18n } from './i18n';
@@ -43,6 +44,17 @@ export default function App() {
           {t('app.skipToContent')}
         </a>
         <div className="app-shell">
+          {/* UN SEUL bandeau réseau, ici et nulle part ailleurs, et EN HAUT.
+
+              POURQUOI PAS EN BAS. `UpdateBanner` (rendu plus bas dans cette
+              même coquille) est fixé en bas de l'écran par index.css
+              (`[data-dwc='update-banner']`, z-index 90). Deux bandeaux au même
+              endroit se recouvrent — un défaut qu'aucun test ne verrait.
+
+              POURQUOI HORS DE `PseudoGate`. La porte d'entrée demande un
+              pseudo, ce qui est déjà une écriture réseau : être prévenu AVANT
+              d'essayer vaut mieux qu'un formulaire qui échoue. */}
+          <OfflineBanner />
           <PseudoGate>
             <WorkspaceChromeProvider>
               <TrustBanner />

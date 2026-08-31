@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import {
   IconActionButton,
   IconBan,
@@ -41,6 +42,16 @@ export function SettingsWorkspaceAccessCard({
   onRevokeInvite: (id: string) => void;
 }) {
   const { t } = useI18n();
+
+  /**
+   * Créer une invitation appelle `create_workspace_invite`, la révoquer
+   * supprime la ligne : deux allers-retours réseau, aucun repli local. Hors
+   * connexion, un jeton « créé » n'existerait nulle part — et le code affiché
+   * serait un mensonge. Copier le lien permanent, en revanche, reste possible :
+   * c'est du texte déjà en mémoire, aucun réseau n'est nécessaire.
+   */
+  const guard = useActionGuard({ online: true });
+
   const lastLink = lastToken
     ? `${origin}${base}?invite=${lastToken}`.replace(/([^:]\/)\/+/g, '$1')
     : null;
@@ -119,8 +130,9 @@ export function SettingsWorkspaceAccessCard({
               </div>
               <IconActionButton
                 variant="primary"
-                label={t('settings.access.createInvite')}
-                onClick={() => void onCreateInvite()}
+                label={guard.reason ?? t('settings.access.createInvite')}
+                {...guard.disabledProps}
+                onClick={guard.wrap(() => void onCreateInvite())}
               >
                 <IconPlus />
               </IconActionButton>
@@ -150,10 +162,14 @@ export function SettingsWorkspaceAccessCard({
                   {!i.used_at ? (
                     <IconActionButton
                       variant="danger"
-                      label={t('settings.access.revokeInvite', {
-                        token: i.token.slice(0, 8),
-                      })}
-                      onClick={() => void onRevokeInvite(i.id)}
+                      label={
+                        guard.reason ??
+                        t('settings.access.revokeInvite', {
+                          token: i.token.slice(0, 8),
+                        })
+                      }
+                      {...guard.disabledProps}
+                      onClick={guard.wrap(() => void onRevokeInvite(i.id))}
                     >
                       <IconBan />
                     </IconActionButton>

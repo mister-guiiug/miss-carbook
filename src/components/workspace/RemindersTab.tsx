@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
 import {
   WORKSPACE_QUICK_ADD_EVENT,
@@ -176,6 +177,18 @@ export function RemindersTab({
 
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const [deleting, setDeleting] = useState(false);
+
+  /**
+   * Supprimer un rappel ou une visite part droit chez Supabase, sans filet :
+   * il n'existe aucune copie locale de ces lignes. Hors connexion, la seule
+   * chose honnête est de ne pas ouvrir la confirmation. Un seul garde pour les
+   * quatre corbeilles de l'onglet (deux vues, rappels et visites).
+   *
+   * NON GARDÉS ICI, ET ASSUMÉ : créer, éditer, cocher « fait ». Ce sont des
+   * écritures elles aussi, mais réparables — l'erreur remonte, le formulaire
+   * garde sa saisie, on recommence. Une suppression, non.
+   */
+  const deleteGuard = useActionGuard({ online: true });
 
   const [view, setView] = useState<View>('open');
   const [query, setQuery] = useState('');
@@ -1012,8 +1025,14 @@ export function RemindersTab({
                               {canWrite ? (
                                 <IconActionButton
                                   variant="danger"
-                                  label={t('reminders.actions.deleteVisit')}
-                                  onClick={() => void removeVisit(v.id)}
+                                  label={
+                                    deleteGuard.reason ??
+                                    t('reminders.actions.deleteVisit')
+                                  }
+                                  {...deleteGuard.disabledProps}
+                                  onClick={deleteGuard.wrap(
+                                    () => void removeVisit(v.id)
+                                  )}
                                 >
                                   <IconTrash />
                                 </IconActionButton>
@@ -1105,8 +1124,14 @@ export function RemindersTab({
                                 </IconActionButton>
                                 <IconActionButton
                                   variant="danger"
-                                  label={t('reminders.actions.deleteReminder')}
-                                  onClick={() => void remove(r.id)}
+                                  label={
+                                    deleteGuard.reason ??
+                                    t('reminders.actions.deleteReminder')
+                                  }
+                                  {...deleteGuard.disabledProps}
+                                  onClick={deleteGuard.wrap(
+                                    () => void remove(r.id)
+                                  )}
                                 >
                                   <IconTrash />
                                 </IconActionButton>
@@ -1178,8 +1203,14 @@ export function RemindersTab({
                       {canWrite ? (
                         <IconActionButton
                           variant="danger"
-                          label={t('reminders.actions.deleteVisit')}
-                          onClick={() => void removeVisit(v.id)}
+                          label={
+                            deleteGuard.reason ??
+                            t('reminders.actions.deleteVisit')
+                          }
+                          {...deleteGuard.disabledProps}
+                          onClick={deleteGuard.wrap(
+                            () => void removeVisit(v.id)
+                          )}
                         >
                           <IconTrash />
                         </IconActionButton>
@@ -1439,8 +1470,14 @@ export function RemindersTab({
                               </IconActionButton>
                               <IconActionButton
                                 variant="danger"
-                                label={t('reminders.actions.deleteReminder')}
-                                onClick={() => void remove(r.id)}
+                                label={
+                                  deleteGuard.reason ??
+                                  t('reminders.actions.deleteReminder')
+                                }
+                                {...deleteGuard.disabledProps}
+                                onClick={deleteGuard.wrap(
+                                  () => void remove(r.id)
+                                )}
                               >
                                 <IconTrash />
                               </IconActionButton>
@@ -1470,11 +1507,17 @@ export function RemindersTab({
           deleting ? t('reminders.confirm.deleting') : t('common.delete')
         }
         cancelLabel={t('common.cancel')}
-        onConfirm={() => void confirmDelete()}
+        onConfirm={deleteGuard.wrap(() => void confirmDelete())}
         onCancel={dismissConfirm}
       >
         {confirming ? (
           <>
+            {/* Le réseau peut tomber pendant que la boîte est ouverte. */}
+            {deleteGuard.reason ? (
+              <p role="status" className="muted" style={{ margin: 0 }}>
+                {deleteGuard.reason}
+              </p>
+            ) : null}
             <p style={{ margin: 0 }}>
               {t('reminders.confirm.deletePrefix')}
               <strong>{confirming.title}</strong>

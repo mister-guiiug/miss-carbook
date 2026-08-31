@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+import type { ActionGuardResult } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import { useI18n } from '../../../i18n';
 import {
   displayVersionLabel,
@@ -26,6 +27,7 @@ export function CandidateCard({
   onToggleDetail,
   onDuplicate,
   onRequestDelete,
+  deleteGuard,
   rootCandidatesForParent,
   variationCount,
   childrenOf,
@@ -45,6 +47,12 @@ export function CandidateCard({
   onDuplicate: (c: CandidateRow) => void;
   /** Ouvre la confirmation de suppression (fiche + compléments le cas échéant). */
   onRequestDelete?: (c: CandidateRow) => void;
+  /**
+   * Garde de l'action « supprimer », calculé une seule fois par l'onglet (voir
+   * `CandidatesTab`) : la suppression part directement chez Supabase, elle ne
+   * peut pas aboutir hors connexion.
+   */
+  deleteGuard?: ActionGuardResult;
   rootCandidatesForParent: CandidateRow[];
   variationCount?: number;
   childrenOf: (parentId: string) => CandidateRow[];
@@ -195,12 +203,26 @@ export function CandidateCard({
             <IconDuplicate />
           </IconActionButton>
           {canWrite && onRequestDelete ? (
+            // UNE ICÔNE SEULE NE PEUT PAS PORTER DE PHRASE. `IconActionButton`
+            // impose `aria-label` ET `title` à partir de `label` : c'est donc
+            // `label` qui devient le porteur du motif quand l'action est
+            // bloquée. Le lecteur d'écran l'annonce, la souris le voit en
+            // infobulle, `aria-disabled` dit l'état, et `wrap` neutralise le
+            // clic — plutôt que d'ouvrir une confirmation sans issue.
             <IconActionButton
               variant="danger"
-              label={t('candidates.card.deleteAria', {
-                label: formatCandidateListLabel(c),
-              })}
-              onClick={() => onRequestDelete(c)}
+              label={
+                deleteGuard?.reason ??
+                t('candidates.card.deleteAria', {
+                  label: formatCandidateListLabel(c),
+                })
+              }
+              {...(deleteGuard?.disabledProps ?? {})}
+              onClick={
+                deleteGuard
+                  ? deleteGuard.wrap(() => onRequestDelete(c))
+                  : () => onRequestDelete(c)
+              }
             >
               <IconTrash />
             </IconActionButton>
