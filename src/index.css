@@ -1379,6 +1379,24 @@ th {
   margin-left: auto;
 }
 
+/* Bandeau réseau du socle (`react/connection-banner`), posé tout en haut de la
+   coquille. `components.css` en fait une CARTE (bordure sur quatre côtés, coins
+   arrondis) : collée au bord de la fenêtre, une carte flotte de travers. On la
+   ramène au format des autres bandeaux pleine largeur de Carbook — même
+   rythme que `.trust-banner` juste au-dessus, dont il prend la place quand il
+   apparaît. Règle hors `@layer` : elle l'emporte sur la base du socle sans
+   surenchère de spécificité. */
+.app-connection-banner {
+  border: 0;
+  /* La bordure ambre RESTE, en bas seulement : c'est elle qui distingue un
+     avertissement d'un simple bandeau d'information. Le fond du socle est un
+     mélange à 14 % — très discret, et seul il passerait pour du gris. */
+  border-bottom: 1px solid var(--warning);
+  border-radius: 0;
+  padding: 0.65rem max(1rem, env(safe-area-inset-right, 0px)) 0.65rem
+    max(1rem, env(safe-area-inset-left, 0px));
+}
+
 /* Ce qui RESTE de la copie locale `.error-dialog` : le CONTENU de la boîte
    d'erreur — message, détails techniques dépliables, bouton copier — que le
    socle ne rend pas et qui lui est passé en `children` (voir

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
 import {
@@ -51,6 +52,13 @@ export function RequirementsTab({
   const [weight, setWeight] = useState('');
   const [tags, setTags] = useState('');
   const [saving, setSaving] = useState<SavingState>(null);
+
+  /**
+   * Supprimer un critère supprime aussi, en cascade côté base, toutes les
+   * évaluations qui s'y rapportaient. Rien de tout cela n'existe en local :
+   * hors connexion, le `confirm()` s'ouvrirait pour rien.
+   */
+  const deleteGuard = useActionGuard({ online: true });
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -717,10 +725,14 @@ export function RequirementsTab({
                         </IconActionButton>
                         <IconActionButton
                           variant="danger"
-                          label={t('requirements.deleteReqAria', {
-                            label: r.label,
-                          })}
-                          onClick={() => void remove(r.id)}
+                          label={
+                            deleteGuard.reason ??
+                            t('requirements.deleteReqAria', {
+                              label: r.label,
+                            })
+                          }
+                          {...deleteGuard.disabledProps}
+                          onClick={deleteGuard.wrap(() => void remove(r.id))}
                         >
                           <IconTrash />
                         </IconActionButton>

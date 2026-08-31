@@ -1,3 +1,4 @@
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import {
   IconActionButton,
   IconEye,
@@ -25,6 +26,17 @@ export function SettingsParticipantsCard({
   onLeave: () => void;
 }) {
   const { t } = useI18n();
+
+  /**
+   * DEUX ACTIONS SANS RETOUR EN ARRIÈRE : retirer quelqu'un du dossier, et le
+   * quitter soi-même. Les deux passent par une fonction RPC — il n'y a rien à
+   * en faire hors connexion. « Quitter » est la pire des deux : elle redirige
+   * vers l'accueil dès que l'appel réussit, si bien qu'un échec silencieux
+   * laisserait l'utilisateur croire qu'il est parti. Les changements de rôle,
+   * eux, ne sont pas gardés : ils se refont d'un clic une fois reconnecté.
+   */
+  const guard = useActionGuard({ online: true });
+
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
       <h3 style={{ margin: 0 }}>{t('settings.participants.title')}</h3>
@@ -66,10 +78,14 @@ export function SettingsParticipantsCard({
                 </IconActionButton>
                 <IconActionButton
                   variant="danger"
-                  label={t('settings.participants.removeFromWorkspace', {
-                    name: m.display_name ?? m.user_id.slice(0, 8),
-                  })}
-                  onClick={() => void onRemoveMember(m.user_id)}
+                  label={
+                    guard.reason ??
+                    t('settings.participants.removeFromWorkspace', {
+                      name: m.display_name ?? m.user_id.slice(0, 8),
+                    })
+                  }
+                  {...guard.disabledProps}
+                  onClick={guard.wrap(() => void onRemoveMember(m.user_id))}
                 >
                   <IconUserMinus />
                 </IconActionButton>
@@ -80,11 +96,17 @@ export function SettingsParticipantsCard({
       </ul>
       <IconActionButton
         variant="secondary"
-        label={t('settings.participants.leave')}
-        onClick={() => void onLeave()}
+        label={guard.reason ?? t('settings.participants.leave')}
+        {...guard.disabledProps}
+        onClick={guard.wrap(() => void onLeave())}
       >
         <IconLogOut />
       </IconActionButton>
+      {guard.reason ? (
+        <p role="status" className="muted" style={{ margin: 0 }}>
+          {guard.reason}
+        </p>
+      ) : null}
     </div>
   );
 }

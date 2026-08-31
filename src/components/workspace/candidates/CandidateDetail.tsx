@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import {
   compressImageToMaxBytes,
   stripImageMetadata,
@@ -408,6 +409,18 @@ export function CandidateDetail({
     useState<File | null>(null);
   const [compressingPhoto, setCompressingPhoto] = useState(false);
   const [photoViewerIndex, setPhotoViewerIndex] = useState<number | null>(null);
+
+  /**
+   * L'ENVOI DE PHOTO EST L'ÉCRITURE LA PLUS COÛTEUSE DE CARBOOK, et la seule
+   * qui parte en DEUX temps : le fichier vers le bucket `workspace-media`,
+   * puis la ligne `attachments`. Hors connexion, la première étape échoue —
+   * mais pas avant d'avoir fait choisir un fichier, parfois compresser une
+   * image de plusieurs mégaoctets. Autant le dire avant de faire travailler la
+   * machine pour rien. Le motif `offline` du socle suffit : il est déjà câblé
+   * sur `useOnline`, et son texte suit la locale via le `LabelsProvider` que
+   * monte `I18nProvider`.
+   */
+  const photoGuard = useActionGuard({ online: true });
 
   useEffect(() => {
     setVehDetailsOpen(
@@ -1549,11 +1562,32 @@ export function CandidateDetail({
           <div className="home-accordion-body stack">
             {canWrite ? (
               <>
+                {/* `disabled` ET `wrap` : ceinture et bretelles, mais pas pour
+                    la même raison. Le socle préfère `aria-disabled` afin que le
+                    bouton reste focusable et que le motif reste découvrable —
+                    excellent pour un bouton, mauvais pour un sélecteur de
+                    fichier, qui ouvrirait l'explorateur du système pour ne rien
+                    en faire. Ici, le motif est écrit JUSTE EN DESSOUS, en
+                    clair : rien ne se perd à désactiver vraiment le champ. */}
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={e => void onFile(e.target.files?.[0] ?? null)}
+                  disabled={photoGuard.disabled}
+                  {...photoGuard.disabledProps}
+                  onChange={photoGuard.wrap(
+                    (e: React.ChangeEvent<HTMLInputElement>) =>
+                      void onFile(e.target.files?.[0] ?? null)
+                  )}
                 />
+                {photoGuard.reason ? (
+                  <p
+                    role="status"
+                    className="muted"
+                    style={{ margin: 0, fontSize: '0.8rem' }}
+                  >
+                    {photoGuard.reason}
+                  </p>
+                ) : null}
                 <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
                   {t('candidateDetail.photoCompressHint')}
                 </p>

@@ -2,6 +2,8 @@
 export const appFr = {
   skipToContent: 'Aller au contenu principal',
   updateAvailable: 'Une nouvelle version de l’application est disponible.',
+  offlineBanner:
+    'Hors connexion — Miss Carbook ne peut ni charger ni enregistrer tant que le réseau ne revient pas.',
   footerTagline: 'Choix de véhicule collaboratif',
   footerAria: 'Pied de page',
   footerExternalLinks: 'Liens externes',
@@ -16,6 +18,8 @@ export const appFr = {
 export const appEn = {
   skipToContent: 'Skip to main content',
   updateAvailable: 'A new version of the app is available.',
+  offlineBanner:
+    'Offline — Miss Carbook can neither load nor save until the network is back.',
   footerTagline: 'Collaborative car choice',
   footerAria: 'Footer',
   footerExternalLinks: 'External links',

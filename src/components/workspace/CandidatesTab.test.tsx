@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -143,5 +144,98 @@ describe('CandidatesTab — confirmation de suppression', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Supprimer' }));
     await waitFor(() => expect(deleted).toContain('candidates'));
     await waitFor(() => expect(load).toHaveBeenCalled());
+  });
+});
+
+/**
+ * LE GARDE HORS CONNEXION, ÉPROUVÉ PAR L'USAGE.
+ *
+ * Carbook ne garde aucune copie locale : supprimer une fiche est une requête
+ * réseau, une par ligne de l'arbre. Hors connexion, ouvrir la confirmation ne
+ * mène nulle part — le clic sur « Supprimer » échouerait à la première
+ * requête, après avoir demandé confirmation d'un geste impossible.
+ *
+ * Ce qui est vérifié n'est PAS « le socle sait griser un bouton » (il a ses
+ * propres tests) mais l'usage : la corbeille est-elle inerte, et DIT-ELLE
+ * pourquoi ? Un bouton bloqué et muet est le défaut que `useActionGuard`
+ * existe pour empêcher ; une icône seule ne peut porter de phrase, alors c'est
+ * son nom accessible (`aria-label`, doublé en infobulle) qui devient le motif.
+ */
+describe('CandidatesTab — suppression hors connexion', () => {
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    deleted.length = 0;
+    load.mockClear();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+  });
+
+  function renderOffline() {
+    // Avant le rendu : `useOnline` lit `navigator.onLine` à l'initialisation.
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+    render(
+      <I18nProvider>
+        <ErrorDialogProvider>
+          <ToastProvider>
+            <CandidatesTab workspaceId="w1" canWrite userId="u1" />
+          </ToastProvider>
+        </ErrorDialogProvider>
+      </I18nProvider>
+    );
+  }
+
+  it('la corbeille est désactivée ET porte le motif, plutôt que le libellé habituel', async () => {
+    renderOffline();
+
+    const trash = await screen.findByRole('button', {
+      name: 'Indisponible hors ligne',
+    });
+    expect(trash).toHaveAttribute('aria-disabled', 'true');
+    // `aria-disabled` et non `disabled` : le bouton reste atteignable au
+    // clavier, donc le motif reste DÉCOUVRABLE.
+    expect(trash).not.toBeDisabled();
+    expect(trash).toHaveAttribute('title', 'Indisponible hors ligne');
+    expect(
+      screen.queryByRole('button', { name: /^Supprimer la fiche « / })
+    ).toBeNull();
+  });
+
+  it('le clic n’ouvre pas la confirmation et ne supprime rien', async () => {
+    renderOffline();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Indisponible hors ligne' })
+    );
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(deleted).toEqual([]);
+  });
+
+  it('le retour du réseau rend la corbeille à son libellé et à son action', async () => {
+    renderOffline();
+    await screen.findByRole('button', { name: 'Indisponible hors ligne' });
+
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => true,
+    });
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+
+    const trash = await screen.findByRole('button', {
+      name: /^Supprimer la fiche « /,
+    });
+    expect(trash).not.toHaveAttribute('aria-disabled');
+    fireEvent.click(trash);
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
   });
 });
