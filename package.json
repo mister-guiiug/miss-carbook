@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/copy-404.mjs",
+    "build": "tsc -b && vite build && node scripts/copy-404.mjs && pwa-bundle-budget",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -17,6 +17,9 @@
     "gen:types": "npx supabase gen types typescript --linked > src/types/database.gen.ts",
     "type-check": "tsc -b",
     "build:analyze": "cross-env ANALYZE=1 npm run build"
+  },
+  "bundleBudget": {
+    "totalGzipKb": 505
   },
   "dependencies": {
     "@sentry/react": "^8.45.0",
