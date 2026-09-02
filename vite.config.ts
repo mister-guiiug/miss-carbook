@@ -82,6 +82,9 @@ export default defineConfig({
   },
   plugins: [
     pwaSeoPlugin({
+      // Deux <meta name="theme-color"> par schéma : la barre du navigateur suit
+      // le mode sombre dès le premier rendu (relevé du 02/09/2026 : 5 apps sur 16).
+      themeColor: { light: '#f8fafc', dark: '#0f172a' },
       siteName: 'Miss Carbook',
       gtmContainerId: GTM_CONTAINER_ID,
       // Script anti-FOUC engendré par le socle (theme-boot), injecté en tête
@@ -108,6 +111,7 @@ export default defineConfig({
         background_color: '#f8fafc',
         display: 'standalone',
         orientation: 'portrait-primary',
+        id: base,
         start_url: base,
         scope: base,
         lang: 'fr',
