@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCandidateListLabel } from '../lib/candidateLabel';
 import { getSupabase } from '../lib/supabase';
-import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useFocusTrap } from '@mister-guiiug/dev-wpa-config/react/a11y';
 import { useI18n } from '../i18n';
 import { IconActionButton, IconX } from './ui/IconActionButton';
 
@@ -22,7 +22,12 @@ export function WorkspaceSearchModal({
   const [q, setQ] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(panelRef, open);
+  const searchRef = useRef<HTMLInputElement>(null);
+  // `initialFocusRef` remplace l'`autoFocus` de l'input, et corrige au passage
+  // où le focus atterrissait : la copie locale focalisait le PREMIER élément
+  // focusable du panneau, c'est-à-dire le bouton « fermer » qui le précède
+  // dans le DOM. On ouvrait une recherche pour tomber sur sa croix.
+  useFocusTrap(panelRef, { active: open, initialFocusRef: searchRef });
 
   useEffect(() => {
     if (!open) return;
@@ -125,7 +130,9 @@ export function WorkspaceSearchModal({
       aria-modal="true"
       aria-label={t('workspace.searchDialogLabel')}
     >
-      <div ref={panelRef} className="search-modal card">
+      {/* `tabIndex={-1}` : contrat du piège de focus du socle — le conteneur
+          doit pouvoir recevoir le focus s'il ne contient rien de focusable. */}
+      <div ref={panelRef} tabIndex={-1} className="search-modal card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <strong>{t('workspace.searchInWorkspace')}</strong>
           <IconActionButton
@@ -137,7 +144,7 @@ export function WorkspaceSearchModal({
           </IconActionButton>
         </div>
         <input
-          autoFocus
+          ref={searchRef}
           placeholder={t('workspace.searchPlaceholder')}
           value={q}
           onChange={e => setQ(e.target.value)}
