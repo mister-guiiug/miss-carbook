@@ -52,11 +52,6 @@ export default defineConfig({
             return 'router';
           }
 
-          // Charts séparé
-          if (norm.includes('/recharts/')) {
-            return 'charts';
-          }
-
           // Validation séparée
           if (norm.includes('/zod/')) {
             return 'validation';
@@ -75,7 +70,13 @@ export default defineConfig({
             return 'tailwind';
           }
 
-          return 'vendor';
+          // PAS de fourre-tout `vendor` : forcer TOUT node_modules dans un
+          // chunk initial y traînait recharts et ses dépendances (d3, victory)
+          // que seul l'onglet Comparer, chargé paresseusement, utilise — 95 kB
+          // gzip préchargés pour rien (relevé du 02/09/2026 : 432 kB de JS
+          // initial). Ce que le graphe statique n'atteint pas reste avec le
+          // chunk qui l'importe ; le partagé est découpé par Rolldown.
+          return undefined;
         },
       },
     },
