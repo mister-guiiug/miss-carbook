@@ -21,6 +21,7 @@ import {
 } from '../ui/IconActionButton';
 import { useToast } from '../../contexts/ToastContext';
 import { useI18n } from '../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type UserNoteRow = {
   workspace_id: string;
@@ -117,7 +118,9 @@ export function NotepadTab({
     const rest = [...others].filter(
       m => !ordered.some(o => o.user_id === m.user_id)
     );
-    rest.sort((a, b) => a.display_name.localeCompare(b.display_name, 'fr-FR'));
+    rest.sort((a, b) =>
+      a.display_name.localeCompare(b.display_name, getDefaultLocale())
+    );
     return { myMember: me, orderedOthers: [...ordered, ...rest] };
   }, [members, myId, peerOrder]);
 
@@ -390,7 +393,7 @@ export function NotepadTab({
     const canDrag = Boolean(ro && canReorderOthers);
     const trimmed = value.trim();
     const dateLabel = updatedAt
-      ? new Date(updatedAt).toLocaleString('fr-FR', {
+      ? new Date(updatedAt).toLocaleString(getDefaultLocale(), {
           dateStyle: 'short',
           timeStyle: 'short',
         })
@@ -525,10 +528,13 @@ export function NotepadTab({
                 </span>
                 {updatedAt
                   ? t('notepad.modifiedAt', {
-                      date: new Date(updatedAt).toLocaleString('fr-FR', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                      }),
+                      date: new Date(updatedAt).toLocaleString(
+                        getDefaultLocale(),
+                        {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        }
+                      ),
                     })
                   : t('notepad.noNote')}
               </span>

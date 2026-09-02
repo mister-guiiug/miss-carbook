@@ -19,6 +19,7 @@ import { useCandidateMutations } from './candidates/useCandidateMutations';
 import { useCandidatesQuickAdd } from './candidates/useCandidatesQuickAdd';
 import { useWorkspaceCandidates } from './candidates/useWorkspaceCandidates';
 import type { CandidateRow } from './candidates/candidateTypes';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 export function CandidatesTab({
   workspaceId,
@@ -74,7 +75,7 @@ export function CandidatesTab({
         if (t) uniq.add(t);
       }
       setGarageSuggestions(
-        [...uniq].sort((a, b) => a.localeCompare(b, 'fr-FR'))
+        [...uniq].sort((a, b) => a.localeCompare(b, getDefaultLocale()))
       );
     };
   }, [workspaceId]);
@@ -236,7 +237,7 @@ export function CandidatesTab({
         .filter(x => x.parent_candidate_id === c.parent_candidate_id)
         .sort((a, b) => {
           if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
-          return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR');
+          return (a.trim ?? '').localeCompare(b.trim ?? '', getDefaultLocale());
         }),
     [candidates]
   );

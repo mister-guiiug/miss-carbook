@@ -12,6 +12,9 @@ import {
 } from '../../ui/IconActionButton';
 import { useI18n } from '../../../i18n';
 import './PhotoComparisonGrid.css';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('compare');
 
 type Candidate = {
   id: string;
@@ -90,7 +93,7 @@ export function PhotoComparisonGrid({
 
       if (cancelled) return;
       if (error) {
-        console.error('Erreur chargement photos:', error);
+        log.error('Erreur chargement photos:', { error: error });
         setAttachments([]);
       } else {
         setAttachments((data ?? []) as Attachment[]);
@@ -483,7 +486,7 @@ function PhotoDisplay({ storagePath, zoom, pan }: PhotoDisplayProps) {
         const signedUrl = await signedUrlForPath(storagePath, 7200);
         if (!cancelled) setUrl(signedUrl);
       } catch (err) {
-        console.error('Erreur chargement photo:', err);
+        log.error('Erreur chargement photo:', { error: err });
         if (!cancelled) setError(true);
       }
     })();

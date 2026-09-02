@@ -15,6 +15,10 @@ import {
   IconCalculator,
 } from '../ui/IconActionButton';
 import { useI18n } from '../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('budget');
 
 type Cand = {
   id: string;
@@ -182,7 +186,7 @@ export function BudgetTab({
           setTcoResults(prev => ({ ...prev, [cand.id]: data as TCOResult }));
         }
       } catch (e) {
-        console.error('TCO calc error', e);
+        log.error('TCO calc error', { error: e });
       }
     }
   }, [workspaceId, reportException, t]);
@@ -330,7 +334,7 @@ export function BudgetTab({
   }, [editingTcoCandidate, tcoParams]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(getDefaultLocale(), {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
@@ -771,7 +775,7 @@ export function BudgetTab({
                               {t('budget.tco.overYearsKm', {
                                 years: tco.parameters.ownership_years,
                                 km: tco.parameters.total_km.toLocaleString(
-                                  'fr-FR'
+                                  getDefaultLocale()
                                 ),
                               })}
                             </span>

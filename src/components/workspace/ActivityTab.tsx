@@ -8,6 +8,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { EmptyState } from '../ui/EmptyState';
 import { useI18n } from '../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Row = {
   id: string;
@@ -41,7 +42,7 @@ function formatActivityDayHeading(
   const k = dayKeyFromIso(iso);
   if (k === localDayKey(today)) return labels.today;
   if (k === localDayKey(yesterday)) return labels.yesterday;
-  return d.toLocaleDateString('fr-FR', {
+  return d.toLocaleDateString(getDefaultLocale(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -171,7 +172,7 @@ export function ActivityTab({ workspaceId }: { workspaceId: string }) {
                     ? (names[r.user_id] ?? r.user_id.slice(0, 8))
                     : t('activity.systemAuthor');
                   const timeStr = new Date(r.created_at).toLocaleTimeString(
-                    'fr-FR',
+                    getDefaultLocale(),
                     {
                       hour: '2-digit',
                       minute: '2-digit',

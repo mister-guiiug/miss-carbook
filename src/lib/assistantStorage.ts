@@ -38,17 +38,12 @@ export function setSessionAutoOffered(): void {
   }
 }
 
-export function clearSessionAutoOffered(): void {
+function clearSessionAutoOffered(): void {
   try {
     sessionStorage.removeItem(KEY_SESSION_AUTO);
   } catch {
     /* ignore */
   }
-}
-
-export function isWorkspaceAssistantTourDone(workspaceId: string): boolean {
-  if (typeof localStorage === 'undefined') return false;
-  return localStorage.getItem(KEY_WS_PREFIX + workspaceId) === '1';
 }
 
 export function setWorkspaceAssistantTourDone(workspaceId: string): void {

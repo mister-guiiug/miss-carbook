@@ -5,6 +5,7 @@ import { formatMileageKmDisplay } from './formatMileage';
 import { formatPriceEur } from './formatPrice';
 import { parseManufacturerLinksFromDb } from './manufacturerLinks';
 import type { WorkspaceExportBundle } from './workspaceExportBundle';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 const REQ_LEVEL: Record<string, string> = {
   mandatory: 'Obligatoire',
@@ -42,7 +43,7 @@ function esc(s: unknown): string {
 function isoDate(s: unknown): string {
   if (s == null || s === '') return '';
   try {
-    return new Date(String(s)).toLocaleString('fr-FR', {
+    return new Date(String(s)).toLocaleString(getDefaultLocale(), {
       dateStyle: 'short',
       timeStyle: 'short',
     });

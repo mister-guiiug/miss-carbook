@@ -27,7 +27,7 @@ export const authPasswordSignUpSchema = z
   });
 
 /** Aligné sur Postgres : lettres ASCII, chiffres, `.`, `_`, `-` — pas d’espace ni d’accents. */
-export const DISPLAY_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+const DISPLAY_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 
 export const displayNameRules =
   '3 à 30 caractères : lettres sans accent, chiffres, point, tiret et underscore. Unicité (insensible à la casse).';
@@ -114,7 +114,7 @@ const currentVehicleSpecsShape = candidateSpecsShape.extend({
 });
 
 /** Données techniques du véhicule actuel ; champs supplémentaires autorisés. */
-export const currentVehicleSpecsSchema = currentVehicleSpecsShape
+const currentVehicleSpecsSchema = currentVehicleSpecsShape
   .partial()
   .passthrough();
 

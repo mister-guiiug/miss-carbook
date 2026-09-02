@@ -19,7 +19,7 @@ export function isCandidateSpecDimensionKey(
   return (candidateSpecDimensionKeys as readonly string[]).includes(k);
 }
 
-export const candidateSpecNumericKeys = [
+const candidateSpecNumericKeys = [
   'lengthMm',
   'widthMm',
   'heightMm',
