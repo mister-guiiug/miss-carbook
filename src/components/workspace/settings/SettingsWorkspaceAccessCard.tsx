@@ -8,6 +8,7 @@ import {
 } from '../../ui/IconActionButton';
 import type { InviteRow, Ws } from './settingsTypes';
 import { useI18n } from '../../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 /** Lien permanent + invitations (admin), regroupés pour limiter le défilement. */
 export function SettingsWorkspaceAccessCard({
@@ -155,7 +156,9 @@ export function SettingsWorkspaceAccessCard({
                     <span className="muted">{i.role}</span>
                     <span className="muted">
                       {t('settings.access.expPrefix')}
-                      {new Date(i.expires_at).toLocaleDateString('fr-FR')}
+                      {new Date(i.expires_at).toLocaleDateString(
+                        getDefaultLocale()
+                      )}
                       {i.used_at ? t('settings.access.used') : ''}
                     </span>
                   </span>

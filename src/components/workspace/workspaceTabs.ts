@@ -19,7 +19,7 @@ export const WORKSPACE_TABS = [
 export type TabId = (typeof WORKSPACE_TABS)[number]['id'];
 
 /** Onglets de la bande « Sections » — réglages via la barre du haut ; activité : raccourci à côté du titre. */
-export const WORKSPACE_STRIP_TAB_ORDER = [
+const WORKSPACE_STRIP_TAB_ORDER = [
   'notepad',
   'requirements',
   'requirementsMatrix',

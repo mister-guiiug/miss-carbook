@@ -1,3 +1,4 @@
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 /** Entiers positifs avec séparateurs de milliers (fr-FR) — ex. dimensions en mm. */
 
 const DEFAULT_MAX = 99_999_999;
@@ -29,7 +30,7 @@ export function formatGroupedIntegerFrDisplay(
   const max = options?.max ?? DEFAULT_MAX;
   const n = Math.floor(Number(value));
   if (n < 0 || n > max) return '';
-  return new Intl.NumberFormat('fr-FR', {
+  return new Intl.NumberFormat(getDefaultLocale(), {
     maximumFractionDigits: 0,
     useGrouping: true,
   }).format(n);

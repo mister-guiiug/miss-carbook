@@ -24,6 +24,7 @@ import {
 import { EmptyState } from '../ui/EmptyState';
 import { TrialChecklist } from './TrialChecklist';
 import { useI18n } from '../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Translate = ReturnType<typeof useI18n>['t'];
 
@@ -81,7 +82,7 @@ function formatTimelineDayHeading(iso: string, t: Translate): string {
   const k = dayKeyFromIso(iso);
   if (k === localDayKey(today)) return t('reminders.timeline.today');
   if (k === localDayKey(yesterday)) return t('reminders.timeline.yesterday');
-  return d.toLocaleDateString('fr-FR', {
+  return d.toLocaleDateString(getDefaultLocale(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -106,7 +107,7 @@ function fmtShortDateTimeFr(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('fr-FR', {
+  return d.toLocaleString(getDefaultLocale(), {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -515,7 +516,7 @@ export function RemindersTab({
       if (ad !== bd) return ad - bd;
       return String(a.title ?? '').localeCompare(
         String(b.title ?? ''),
-        'fr-FR'
+        getDefaultLocale()
       );
     });
   }, [openReminders, query, kindFilter, candidateFilter, candidateLabelById]);
@@ -555,7 +556,7 @@ export function RemindersTab({
       if (ad !== bd) return ad - bd;
       return String(a.title ?? '').localeCompare(
         String(b.title ?? ''),
-        'fr-FR'
+        getDefaultLocale()
       );
     });
   }, [doneReminders, query, kindFilter, candidateFilter, candidateLabelById]);
@@ -981,10 +982,13 @@ export function RemindersTab({
                   <ul className="reminders-timeline-day-list">
                     {items.map(ev => {
                       const evDate = new Date(ev.sortIso);
-                      const timeStr = evDate.toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      });
+                      const timeStr = evDate.toLocaleTimeString(
+                        getDefaultLocale(),
+                        {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }
+                      );
                       if (ev.kind === 'visit') {
                         const v = ev.visit;
                         const linkedLabel = v.candidate_id

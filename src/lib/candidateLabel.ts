@@ -1,5 +1,5 @@
 /** Libellé affiché pour la version de base (racine) lorsque le champ est vide. */
-export const ROOT_VERSION_GENERIC_LABEL = 'Générique';
+const ROOT_VERSION_GENERIC_LABEL = 'Générique';
 
 /**
  * Libellé de version pour l’UI : racine → base « Générique » si vide ; fils → complément ou tiret.

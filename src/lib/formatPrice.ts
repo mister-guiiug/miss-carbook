@@ -1,3 +1,4 @@
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 /** Parse une saisie prix (espaces de milliers, virgule décimale fr-FR). */
 export function parsePriceInput(raw: string): number | null {
   if (raw == null) return null;
@@ -17,7 +18,7 @@ export function parsePriceInput(raw: string): number | null {
 export function formatPriceEur(value: number | null | undefined): string {
   if (value == null || Number.isNaN(Number(value))) return '';
   return (
-    new Intl.NumberFormat('fr-FR', {
+    new Intl.NumberFormat(getDefaultLocale(), {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(Number(value)) + ' €'
@@ -27,7 +28,7 @@ export function formatPriceEur(value: number | null | undefined): string {
 /** Valeur pour champ de saisie après blur (sans symbole €). */
 export function formatPriceInputDisplay(value: number | null): string {
   if (value == null || Number.isNaN(Number(value))) return '';
-  return new Intl.NumberFormat('fr-FR', {
+  return new Intl.NumberFormat(getDefaultLocale(), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(Number(value));

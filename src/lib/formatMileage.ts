@@ -1,3 +1,4 @@
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 /** Parse une saisie kilométrage (espaces / espaces insécables, entier km). */
 export function parseMileageKmInput(raw: string): number | null {
   if (raw == null) return null;
@@ -20,7 +21,7 @@ export function formatMileageKmDisplay(
   if (value == null || Number.isNaN(Number(value))) return '';
   const n = Math.floor(Number(value));
   if (n < 0 || n > 9_999_999) return '';
-  return new Intl.NumberFormat('fr-FR', {
+  return new Intl.NumberFormat(getDefaultLocale(), {
     maximumFractionDigits: 0,
     useGrouping: true,
   }).format(n);

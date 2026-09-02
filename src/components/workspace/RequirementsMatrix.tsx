@@ -11,6 +11,7 @@ import {
   IconFilter,
 } from '../ui/IconActionButton';
 import { useI18n } from '../../i18n';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Req = {
   id: string;
@@ -464,7 +465,7 @@ export function RequirementsMatrix({
                             className="muted"
                             style={{ marginLeft: '0.5rem' }}
                           >
-                            {new Intl.NumberFormat('fr-FR', {
+                            {new Intl.NumberFormat(getDefaultLocale(), {
                               style: 'currency',
                               currency: 'EUR',
                             }).format(cand.price)}

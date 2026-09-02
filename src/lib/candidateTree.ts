@@ -1,3 +1,4 @@
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 /**
  * Logique métier : hiérarchie racine ↔ compléments (variations).
  * Aligné sur la contrainte SQL : un seul niveau — le parent doit être une racine
@@ -34,12 +35,12 @@ export function isOrphanVariation(
   return !all.some(x => x.id === pid);
 }
 
-export function compareCandidatesSiblingOrder(
+function compareCandidatesSiblingOrder(
   a: CandidateTreeRow,
   b: CandidateTreeRow
 ): number {
   if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
-  return (a.trim ?? '').localeCompare(b.trim ?? '', 'fr-FR');
+  return (a.trim ?? '').localeCompare(b.trim ?? '', getDefaultLocale());
 }
 
 export function listRootCandidates<T extends CandidateTreeRow>(

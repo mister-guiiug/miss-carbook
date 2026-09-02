@@ -1,3 +1,4 @@
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 /**
  * Algorithme de scoring pour la réduction de la shortlist
  * Combine plusieurs critères pour générer un score composite
@@ -192,7 +193,7 @@ export function calculateCompositeScores(
     if (weights.price > 0 && candidate.price != null) {
       const pct = Math.round(priceScore);
       reasoning.push(
-        `Score prix : ${pct}% (${candidate.price.toLocaleString('fr-FR')} €)`
+        `Score prix : ${pct}% (${candidate.price.toLocaleString(getDefaultLocale())} €)`
       );
     }
 
@@ -278,11 +279,11 @@ export function generateRecommendation(
   if (weights.price > 0.3 && top.price != null) {
     if (top.scores.price >= 60) {
       reasoningParts.push(
-        `Son prix est **compétitif** (${top.price.toLocaleString('fr-FR')} €).`
+        `Son prix est **compétitif** (${top.price.toLocaleString(getDefaultLocale())} €).`
       );
     } else if (top.scores.price <= 40) {
       reasoningParts.push(
-        `Son prix est **élevé**, mais justifié par ses autres qualités (${top.price.toLocaleString('fr-FR')} €).`
+        `Son prix est **élevé**, mais justifié par ses autres qualités (${top.price.toLocaleString(getDefaultLocale())} €).`
       );
     }
   }

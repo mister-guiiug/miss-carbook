@@ -4,6 +4,7 @@ import { getSupabase } from '../lib/supabase';
 import { useFocusTrap } from '@mister-guiiug/dev-wpa-config/react/a11y';
 import { useI18n } from '../i18n';
 import { IconActionButton, IconX } from './ui/IconActionButton';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Item = { type: string; label: string; tab: string; hint?: string };
 
@@ -90,8 +91,8 @@ export function WorkspaceSearchModal({
         const dt = (v as { visit_at: string }).visit_at;
         const loc = ((v as { location?: string | null }).location ?? '').trim();
         const label = loc
-          ? `${loc} · ${new Date(dt).toLocaleDateString('fr-FR')}`
-          : new Date(dt).toLocaleDateString('fr-FR');
+          ? `${loc} · ${new Date(dt).toLocaleDateString(getDefaultLocale())}`
+          : new Date(dt).toLocaleDateString(getDefaultLocale());
         list.push({
           type: t('workspace.visit'),
           label,

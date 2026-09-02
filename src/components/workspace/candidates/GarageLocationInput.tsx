@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 export function GarageLocationInput({
   id,
@@ -26,7 +27,7 @@ export function GarageLocationInput({
       const t = String(s ?? '').trim();
       if (t) uniq.add(t);
     }
-    return [...uniq].sort((a, b) => a.localeCompare(b, 'fr-FR'));
+    return [...uniq].sort((a, b) => a.localeCompare(b, getDefaultLocale()));
   }, [suggestions]);
 
   return (
