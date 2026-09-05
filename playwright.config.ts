@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
-import { definePwaPlaywrightConfig } from '@mister-guiiug/dev-wpa-config/playwright-base';
+import { definePwaPlaywrightConfig } from '@mister-guiiug/dev-pwa-config/playwright-base';
 
 // Factory famille : matrice navigateurs, reporters, snapshots, reducedMotion.
-// `preview: true` (dev-wpa-config 3.x) : les e2e testent un BUILD de prod
+// `preview: true` (dev-pwa-config 3.x) : les e2e testent un BUILD de prod
 // (service worker, minification, cache réels). VITE_BASE_PATH=/ neutralise le
 // base path GitHub Pages ; port 4173 pour ne pas collisionner avec un dev
 // server (5173).

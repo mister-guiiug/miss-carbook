@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
-import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
 import {
   compressImageToMaxBytes,
   stripImageMetadata,
   validateImageFile,
-} from '@mister-guiiug/dev-wpa-config/image';
+} from '@mister-guiiug/dev-pwa-config/image';
 import { getSupabase } from '../../../lib/supabase';
 import { useRealtimeTable } from '../../../hooks/useRealtimeTable';
 import { logActivity } from '../../../lib/activity';

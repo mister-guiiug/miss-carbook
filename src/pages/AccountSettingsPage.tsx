@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { registerSW } from 'virtual:pwa-register';
-import { useUpdatePrompt } from '@mister-guiiug/dev-wpa-config/react/use-update-prompt';
+import { useUpdatePrompt } from '@mister-guiiug/dev-pwa-config/react/use-update-prompt';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -23,7 +23,7 @@ import {
   FamilyApps,
   useThemeContext,
   type ThemePreference,
-} from '@mister-guiiug/dev-wpa-config/react';
+} from '@mister-guiiug/dev-pwa-config/react';
 import { useI18n } from '../i18n';
 
 export function AccountSettingsPage() {

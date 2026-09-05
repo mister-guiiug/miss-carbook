@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatCandidateListLabel } from '../lib/candidateLabel';
 import { getSupabase } from '../lib/supabase';
-import { useFocusTrap } from '@mister-guiiug/dev-wpa-config/react/a11y';
+import { useFocusTrap } from '@mister-guiiug/dev-pwa-config/react/a11y';
 import { useI18n } from '../i18n';
 import { IconActionButton, IconX } from './ui/IconActionButton';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Item = { type: string; label: string; tab: string; hint?: string };
 

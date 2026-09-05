@@ -12,7 +12,7 @@ import {
 } from '../../ui/IconActionButton';
 import { useI18n } from '../../../i18n';
 import './PhotoComparisonGrid.css';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('compare');
 

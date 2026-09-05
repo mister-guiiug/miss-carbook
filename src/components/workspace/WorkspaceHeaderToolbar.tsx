@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSupabase } from '../../lib/supabase';
-import { useOnline } from '@mister-guiiug/dev-wpa-config/react/use-online';
-import { useThemeContext } from '@mister-guiiug/dev-wpa-config/react';
+import { useOnline } from '@mister-guiiug/dev-pwa-config/react/use-online';
+import { useThemeContext } from '@mister-guiiug/dev-pwa-config/react';
 import { PROFILE_UPDATED_EVENT } from '../../lib/profileEvents';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import {

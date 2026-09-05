@@ -1,4 +1,4 @@
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 /** Entiers positifs avec séparateurs de milliers (fr-FR) — ex. dimensions en mm. */
 
 const DEFAULT_MAX = 99_999_999;

@@ -1,4 +1,4 @@
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 /** Parse une saisie prix (espaces de milliers, virgule décimale fr-FR). */
 export function parsePriceInput(raw: string): number | null {
   if (raw == null) return null;

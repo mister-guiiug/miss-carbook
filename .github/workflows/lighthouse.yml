@@ -1,4 +1,4 @@
-# Lighthouse délégué au reusable workflow famille (dev-wpa-config).
+# Lighthouse délégué au reusable workflow famille (dev-pwa-config).
 # `build-env` fournit des VITE_SUPABASE_* factices : `src/lib/supabase.ts` appelle
 # `createClient()` au chargement du module, et supabase-js lève
 # « supabaseUrl is required. » sur une URL vide — la page ne peignait alors jamais
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   lighthouse:
-    uses: mister-guiiug/dev-wpa-config/.github/workflows/pwa-lighthouse.yml@v3
+    uses: mister-guiiug/dev-pwa-config/.github/workflows/pwa-lighthouse.yml@v4
     secrets: inherit
     with:
       # Valeurs factices, jamais des secrets : Lighthouse audite la page

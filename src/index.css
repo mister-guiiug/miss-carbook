@@ -1,9 +1,9 @@
 @import 'tailwindcss';
-@import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
+@import '@mister-guiiug/dev-pwa-config/tailwind-preset.css';
 /* Habillage partagé des composants [data-dwc] (ErrorBoundary, FamilyApps,
    Toast, EmptyState…). Tout est en `@layer components` : le CSS non « layered »
    de ce fichier l'emporte, règle par règle. */
-@import '@mister-guiiug/dev-wpa-config/components.css';
+@import '@mister-guiiug/dev-pwa-config/components.css';
 
 :root {
   color-scheme: light;

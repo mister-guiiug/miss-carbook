@@ -15,8 +15,8 @@ import {
   IconCalculator,
 } from '../ui/IconActionButton';
 import { useI18n } from '../../i18n';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('budget');
 

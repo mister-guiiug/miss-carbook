@@ -1,4 +1,4 @@
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 /**
  * Algorithme de scoring pour la réduction de la shortlist
  * Combine plusieurs critères pour générer un score composite
