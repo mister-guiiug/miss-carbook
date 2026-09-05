@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import {
   baseTestOptions,
   pwaRegisterAlias,
-} from '@mister-guiiug/dev-wpa-config/vitest-base';
+} from '@mister-guiiug/dev-pwa-config/vitest-base';
 
 export default defineConfig({
   plugins: [react()],

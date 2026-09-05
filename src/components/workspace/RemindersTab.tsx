@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
-import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
 import {
   WORKSPACE_QUICK_ADD_EVENT,
   type WorkspaceQuickAddDetail,
@@ -24,7 +24,7 @@ import {
 import { EmptyState } from '../ui/EmptyState';
 import { TrialChecklist } from './TrialChecklist';
 import { useI18n } from '../../i18n';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Translate = ReturnType<typeof useI18n>['t'];
 

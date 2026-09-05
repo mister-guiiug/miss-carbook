@@ -8,10 +8,10 @@ import {
 import {
   ToastProvider as DwcToastProvider,
   useToast as useDwcToast,
-} from '@mister-guiiug/dev-wpa-config/react/toast';
+} from '@mister-guiiug/dev-pwa-config/react/toast';
 
 /**
- * Pont vers le composant partagé Toast (`react/toast` de dev-wpa-config).
+ * Pont vers le composant partagé Toast (`react/toast` de dev-pwa-config).
  *
  * L'API `showToast(message)` est conservée : dix-sept écrans l'appellent.
  * Le rendu, la file (bornée à 4, le plus ancien cède), la durée (5 s),

@@ -3,7 +3,7 @@
  *
  * L'état, la persistance, l'écoute du thème système et l'écriture de
  * `data-theme` sont désormais assurés par `ThemeProvider` /  `useTheme`
- * (`@mister-guiiug/dev-wpa-config/react/theme-provider`). Ne subsiste ici que
+ * (`@mister-guiiug/dev-pwa-config/react/theme-provider`). Ne subsiste ici que
  * la donnée que le socle ne peut pas deviner : l'ANCIENNE CLÉ de stockage.
  *
  * POURQUOI ELLE COMPTE. Le socle stocke sous `dwc_theme` ; miss-carbook

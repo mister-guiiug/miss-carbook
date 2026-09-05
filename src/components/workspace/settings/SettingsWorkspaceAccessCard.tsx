@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
+import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
 import {
   IconActionButton,
   IconBan,
@@ -8,7 +8,7 @@ import {
 } from '../../ui/IconActionButton';
 import type { InviteRow, Ws } from './settingsTypes';
 import { useI18n } from '../../../i18n';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 /** Lien permanent + invitations (admin), regroupés pour limiter le défilement. */
 export function SettingsWorkspaceAccessCard({

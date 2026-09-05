@@ -11,7 +11,7 @@ import {
   IconFilter,
 } from '../ui/IconActionButton';
 import { useI18n } from '../../i18n';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Req = {
   id: string;

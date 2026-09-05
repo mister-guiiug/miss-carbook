@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { validateImageFile } from '@mister-guiiug/dev-wpa-config/image';
+import { validateImageFile } from '@mister-guiiug/dev-pwa-config/image';
 import { parsePriceInput } from '../formatPrice';
 
 const authEmailField = z.string().trim().email('Adresse e-mail invalide');

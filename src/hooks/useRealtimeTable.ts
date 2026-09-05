@@ -4,11 +4,11 @@ import {
   createChannel,
   STATUS,
   type ChannelStatus,
-} from '@mister-guiiug/dev-wpa-config/realtime';
+} from '@mister-guiiug/dev-pwa-config/realtime';
 import {
   supabaseRealtimeTransport,
   type SupabaseChange,
-} from '@mister-guiiug/dev-wpa-config/realtime/supabase';
+} from '@mister-guiiug/dev-pwa-config/realtime/supabase';
 import { getSupabase } from '../lib/supabase';
 
 /**

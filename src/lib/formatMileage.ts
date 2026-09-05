@@ -1,4 +1,4 @@
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 /** Parse une saisie kilométrage (espaces / espaces insécables, entier km). */
 export function parseMileageKmInput(raw: string): number | null {
   if (raw == null) return null;

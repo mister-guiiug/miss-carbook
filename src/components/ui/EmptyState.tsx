@@ -1,4 +1,4 @@
-import { EmptyState as DwcEmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState as DwcEmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 
 interface EmptyStateProps {
   icon?:

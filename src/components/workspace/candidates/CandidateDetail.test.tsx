@@ -83,9 +83,9 @@ vi.mock('../../../lib/storageUpload', () => ({
  * `validateImageFile` reste le VRAI code du socle : c'est lui qui trie le
  * fichier ci-dessous en « trop lourd ».
  */
-vi.mock('@mister-guiiug/dev-wpa-config/image', async importOriginal => ({
+vi.mock('@mister-guiiug/dev-pwa-config/image', async importOriginal => ({
   ...(await importOriginal<
-    typeof import('@mister-guiiug/dev-wpa-config/image')
+    typeof import('@mister-guiiug/dev-pwa-config/image')
   >()),
   compressImageToMaxBytes: (file: File) => compressImageToMaxBytes(file),
   stripImageMetadata: (

@@ -5,7 +5,7 @@ import { formatMileageKmDisplay } from './formatMileage';
 import { formatPriceEur } from './formatPrice';
 import { parseManufacturerLinksFromDb } from './manufacturerLinks';
 import type { WorkspaceExportBundle } from './workspaceExportBundle';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 const REQ_LEVEL: Record<string, string> = {
   mandatory: 'Obligatoire',

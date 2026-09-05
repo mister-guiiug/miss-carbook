@@ -8,7 +8,7 @@ import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useRealtimeTable } from '../../hooks/useRealtimeTable';
 import { EmptyState } from '../ui/EmptyState';
 import { useI18n } from '../../i18n';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Row = {
   id: string;

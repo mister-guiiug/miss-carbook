@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
-import { ThemeProvider } from '@mister-guiiug/dev-wpa-config/react';
+import { ThemeProvider } from '@mister-guiiug/dev-pwa-config/react';
 import { THEME_LEGACY_KEYS } from './theme';
 
 /**

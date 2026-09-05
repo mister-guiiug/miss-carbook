@@ -1,4 +1,4 @@
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 /**
  * Logique métier : hiérarchie racine ↔ compléments (variations).
  * Aligné sur la contrainte SQL : un seul niveau — le parent doit être une racine

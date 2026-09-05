@@ -1,4 +1,4 @@
-import { ConnectionBanner } from '@mister-guiiug/dev-wpa-config/react/connection-banner';
+import { ConnectionBanner } from '@mister-guiiug/dev-pwa-config/react/connection-banner';
 import { useI18n } from '../i18n';
 
 /**

@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
-import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
+import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useI18n } from '../../i18n';
@@ -19,7 +19,7 @@ import { useCandidateMutations } from './candidates/useCandidateMutations';
 import { useCandidatesQuickAdd } from './candidates/useCandidatesQuickAdd';
 import { useWorkspaceCandidates } from './candidates/useWorkspaceCandidates';
 import type { CandidateRow } from './candidates/candidateTypes';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 export function CandidatesTab({
   workspaceId,
