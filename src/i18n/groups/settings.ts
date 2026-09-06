@@ -90,8 +90,40 @@ export const settingsFr = {
     leave: 'Quitter ce dossier',
   },
   exportCard: {
-    title: 'Export',
-    lead: 'Archive JSON ou texte pour l’assistant.',
+    title: 'Export et import',
+    lead: 'Archive JSON ou texte pour l’assistant, et réimport d’une archive.',
+  },
+  import: {
+    label: 'Importer un dossier (ZIP)',
+    busy: 'Import en cours…',
+    desc: 'Relit une archive ZIP exportée depuis Miss Carbook. L’import AJOUTE : il n’efface jamais ce qui est déjà là.',
+    ctxRead: 'Lecture de l’archive ZIP',
+    ctxWrite: 'Écriture des données importées',
+    errNotCarbook: 'Ce fichier n’est pas un export Miss Carbook.',
+    errNotCarbookDetail:
+      'L’archive ne contient pas de « meta.txt » signé par Miss Carbook. Rien n’a été lu ni écrit dans le dossier.',
+    errVersion: 'Version d’export inconnue ({found}).',
+    errVersionDetail:
+      'Cette archive a été produite par une version plus récente de l’application. Rien n’a été importé.',
+    errMissing: 'Archive incomplète : « {entry} » manque.',
+    errMissingDetail:
+      'Le fichier attendu est absent de l’archive. Rien n’a été importé.',
+    errJson: 'Fichier illisible : « {entry} ».',
+    errJsonDetail: 'Le contenu n’est pas du JSON valide. Rien n’a été importé.',
+    errShape: 'Contenu inattendu dans « {entry} ».',
+    confirmTitle: 'Importer dans ce dossier ?',
+    confirmLabel: 'Importer',
+    confirmCounts:
+      'L’archive contient {requirements} exigence(s) et {candidates} modèle(s).',
+    confirmNotEmpty: 'Ce dossier n’est pas vide.',
+    confirmNotEmptyDetail:
+      'Il contient déjà {count} ligne(s) ; l’import s’ajoutera à l’existant, sans rien remplacer.',
+    confirmScope:
+      'Sont restaurés : exigences, modèles (hiérarchie et caractéristiques) et bloc-notes s’il est vide. Ne le sont pas : commentaires, avis, votes, membres et journal — ils portent l’identité de participants.',
+    confirmPhotos:
+      '{count} photo(s) ne seront pas restaurées : l’export ZIP n’en contient que les métadonnées, pas les fichiers. Commentaires, avis, votes, membres et journal ne le sont pas non plus.',
+    toastDone:
+      'Import terminé : {requirements} exigence(s), {candidates} modèle(s)',
   },
   vehicle: {
     title: 'Véhicule actuel (remplacement)',
@@ -204,8 +236,40 @@ export const settingsEn = {
     leave: 'Leave this workspace',
   },
   exportCard: {
-    title: 'Export',
-    lead: 'JSON archive or text for the assistant.',
+    title: 'Export and import',
+    lead: 'JSON archive or text for the assistant, and re-import of an archive.',
+  },
+  import: {
+    label: 'Import a workspace (ZIP)',
+    busy: 'Importing…',
+    desc: 'Reads back a ZIP archive exported from Miss Carbook. Import ADDS: it never erases what is already there.',
+    ctxRead: 'Reading the ZIP archive',
+    ctxWrite: 'Writing the imported data',
+    errNotCarbook: 'This file is not a Miss Carbook export.',
+    errNotCarbookDetail:
+      'The archive has no “meta.txt” signed by Miss Carbook. Nothing was read or written in the workspace.',
+    errVersion: 'Unknown export version ({found}).',
+    errVersionDetail:
+      'This archive was produced by a newer version of the app. Nothing was imported.',
+    errMissing: 'Incomplete archive: “{entry}” is missing.',
+    errMissingDetail:
+      'The expected file is absent from the archive. Nothing was imported.',
+    errJson: 'Unreadable file: “{entry}”.',
+    errJsonDetail: 'The content is not valid JSON. Nothing was imported.',
+    errShape: 'Unexpected content in “{entry}”.',
+    confirmTitle: 'Import into this workspace?',
+    confirmLabel: 'Import',
+    confirmCounts:
+      'The archive holds {requirements} requirement(s) and {candidates} model(s).',
+    confirmNotEmpty: 'This workspace is not empty.',
+    confirmNotEmptyDetail:
+      'It already holds {count} row(s); the import adds to them, replacing nothing.',
+    confirmScope:
+      'Restored: requirements, models (hierarchy and specs) and the shared notepad if empty. Not restored: comments, reviews, votes, members and the activity log — they carry participants’ identities.',
+    confirmPhotos:
+      '{count} photo(s) will not be restored: the ZIP export only holds their metadata, not the files. Comments, reviews, votes, members and the log are not restored either.',
+    toastDone:
+      'Import done: {requirements} requirement(s), {candidates} model(s)',
   },
   vehicle: {
     title: 'Current vehicle (replacement)',

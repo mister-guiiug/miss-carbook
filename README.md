@@ -43,6 +43,7 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 3. **Exigences** : ajouter, filtrer par niveau, ajuster l’ordre d’importance.
 4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
 5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
+6. **Sauvegarder et restaurer** : **Réglages** du dossier → **Données** → _Exporter_ produit une archive ZIP ; _Importer un dossier (ZIP)_ la relit. L’import **ajoute**, il n’efface jamais : il restaure les exigences, les modèles (hiérarchie et caractéristiques) et le bloc-notes s’il est vide. Ne sont pas restaurés les photos (l’archive n’en contient que les métadonnées) ni ce qui porte l’identité d’un participant — commentaires, avis, votes, membres, journal.
 
 Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → _Relancer la visite_. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
 

@@ -1,5 +1,37 @@
 import { getSupabase } from './supabase';
 
+/**
+ * Première ligne de `meta.txt`, et seul marqueur qui distingue notre ZIP de
+ * n'importe quel autre. Elle vit ICI, aux côtés de l'écriture, et non chez le
+ * lecteur : les deux bouts de l'aller-retour lisent la même constante, donc
+ * personne ne peut renommer l'un sans casser le test de l'autre.
+ */
+export const CARBOOK_EXPORT_SIGNATURE = 'Export Miss Carbook';
+
+/** Version du format de bundle. À incrémenter quand le contenu change de forme. */
+export const CARBOOK_EXPORT_VERSION = 2;
+
+/** Le `meta.txt` du ZIP — écrit par l'export, relu par l'import. */
+export function buildExportMetaText(
+  workspaceId: string,
+  generatedAt: string
+): string {
+  return [
+    CARBOOK_EXPORT_SIGNATURE,
+    `export_version=${CARBOOK_EXPORT_VERSION}`,
+    `generated_at=${generatedAt}`,
+    `workspace_id=${workspaceId}`,
+    '',
+    'Contenu : workspace, exigences, modèles (+ specs), notes, journal, visites, rappels, invitations,',
+    'membres, presets de comparaison, véhicule actuel, évaluations matrice, votes MoSCoW,',
+    'commentaires, avis modèles, pièces jointes (métadonnées uniquement, pas de fichiers binaires).',
+    '',
+    'Réimport : Réglages du dossier → Données → « Importer un dossier (ZIP) ». Sont restaurés les',
+    'exigences, les modèles (avec leur hiérarchie et leurs caractéristiques) et le bloc-notes s’il est',
+    'vide. Ne le sont pas : les photos (absentes du ZIP) ni ce qui porte l’identité d’un participant.',
+  ].join('\n');
+}
+
 /** Données brutes alignées sur l’export ZIP (hors fichiers binaires). */
 export type WorkspaceExportBundle = {
   workspace: Record<string, unknown> | null;

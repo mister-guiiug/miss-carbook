@@ -1,8 +1,17 @@
 import { ExportWorkspaceButton } from '../ExportWorkspaceButton';
 import { ExportWorkspacePromptButton } from '../ExportWorkspacePromptButton';
+import { ImportWorkspaceButton } from '../ImportWorkspaceButton';
 import { useI18n } from '../../../i18n';
 
-export function SettingsExportCard({ workspaceId }: { workspaceId: string }) {
+export function SettingsExportCard({
+  workspaceId,
+  canWrite,
+  onImported,
+}: {
+  workspaceId: string;
+  canWrite: boolean;
+  onImported?: () => void;
+}) {
   const { t } = useI18n();
   return (
     <div className="card stack" style={{ boxShadow: 'none' }}>
@@ -16,6 +25,11 @@ export function SettingsExportCard({ workspaceId }: { workspaceId: string }) {
       >
         <ExportWorkspaceButton workspaceId={workspaceId} />
         <ExportWorkspacePromptButton workspaceId={workspaceId} />
+        <ImportWorkspaceButton
+          workspaceId={workspaceId}
+          canWrite={canWrite}
+          onImported={onImported}
+        />
       </div>
     </div>
   );
