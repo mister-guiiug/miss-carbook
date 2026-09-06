@@ -43,8 +43,23 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 3. **Exigences** : ajouter, filtrer par niveau, ajuster l’ordre d’importance.
 4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
 5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
+6. **Sauvegarder et restaurer** : **Réglages** du dossier → **Données** → _Exporter_ produit une archive ZIP ; _Importer un dossier (ZIP)_ la relit. L’import **ajoute**, il n’efface jamais : il restaure les exigences, les modèles (hiérarchie et caractéristiques) et le bloc-notes s’il est vide. Ne sont pas restaurés les photos (l’archive n’en contient que les métadonnées) ni ce qui porte l’identité d’un participant — commentaires, avis, votes, membres, journal.
 
 Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → _Relancer la visite_. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
+
+---
+
+## Vos données, et comment partir
+
+**Supprimer votre compte** : **Paramètres généraux** → _Zone dangereuse_ → recopier le mot demandé, puis confirmer. C’est définitif, et cela ne passe **pas** par un e-mail au mainteneur.
+
+Ce que la suppression fait des **dossiers partagés**, parce que vous devez le savoir avant de cliquer :
+
+- Un dossier où **quelqu’un reste** n’est pas supprimé : il est **transmis** à un participant restant (un administrateur s’il y en a un, sinon le plus ancien), **promu administrateur** si vous étiez le dernier. Sans cette règle, supprimer le compte de la personne qui a créé le dossier emporterait le dossier entier de ses coéquipiers.
+- Un dossier dont vous étiez le **seul** participant est supprimé avec son contenu : plus personne ne pourrait l’ouvrir.
+- Votre profil, vos avis, commentaires, votes, notes personnelles et photos envoyées partent. Le **journal d’activité** et le **bloc-notes** des dossiers transmis restent, **sans votre nom**.
+
+Avant de partir, pensez à **exporter** les dossiers auxquels vous tenez (§ Guide rapide, point 6).
 
 ---
 
@@ -150,6 +165,15 @@ Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https:
 5. `supabase/migrations/20260418120000_rpc_create_workspace.sql` — fonction RPC `create_workspace` : la création de dossier passe par le serveur (`SECURITY DEFINER`) pour éviter les refus RLS sur la table `workspaces` lorsque l’INSERT direct ne passe pas.
 
 Sans l’étape 3, l’application affichera des erreurs API sur les onglets Paramètres (décision, invitations), Évaluations, Rappels et Comparer (presets).
+
+**Suppression de compte** : `supabase/migrations/20260906120000_delete_my_account.sql` ajoute la fonction `delete_my_account()` (`SECURITY DEFINER`, exécutable par `authenticated` seulement). Le rôle de l’API n’a aucun droit sur `auth.users` ; seul `postgres` en a, et il porte `BYPASSRLS` — d’où la fonction. Elle applique la **règle du dernier administrateur** décrite en tête du fichier. Sans cette migration, la carte « Zone dangereuse » des Paramètres généraux remonte une erreur RPC.
+
+**Preuve** : `supabase/tests/delete_my_account.test.sql` (pgTAP, 21 assertions). Docker ne démarrant pas partout, le fichier se joue contre la base **liée** :
+
+```bash
+npm run test:account:pending   # migration pas encore poussée : créée puis défaite dans la transaction
+npm run test:account:remote    # migration déjà poussée
+```
 
 **Remise à zéro complète (manuel)** : le fichier `supabase/scripts/reset_all_data_and_auth.sql` vide les tables métier, supprime les objets Storage du bucket `workspace-media` et **tous les comptes Auth**. À exécuter **à la main** dans le SQL Editor (il n’est **pas** dans `migrations/` pour éviter qu’un `supabase db push` automatique ne détruise une base en production).
 

@@ -1026,6 +1026,31 @@ button.secondary:hover,
   color: var(--primary);
 }
 
+/* Bouton destructeur : la couleur PRÉVIENT, elle ne décore pas. Le dégradé
+   primaire de l'app dirait « action principale » sur un geste définitif.
+   Teintes prises aux jetons `--danger-*`, qui ont TOUS une variante sombre
+   (l'aplat plein `--danger` n'a pas de contraste garanti en sombre, où il vire
+   au rouge clair). Même recette que `button.icon-action-btn--danger`. */
+button.danger,
+.btn.danger {
+  background: var(--danger-surface-soft);
+  color: var(--danger);
+  border-color: var(--danger-border-soft);
+}
+
+button.danger:hover:not(:disabled),
+.btn.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
+/* La carte « Zone dangereuse » se distingue du reste des réglages sans crier :
+   un liseré et un fond très pâle suffisent à dire « ici, on ne clique pas
+   distraitement ». */
+.settings-card[data-destructive] {
+  border: 1px solid var(--danger-border-soft);
+  background: var(--danger-surface-soft);
+}
+
 button:disabled,
 .btn:disabled {
   transform: none;

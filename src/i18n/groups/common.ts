@@ -7,6 +7,10 @@ export const commonFr = {
   save: 'Enregistrer',
   saving: 'Enregistrement…',
   cancel: 'Annuler',
+  // « Revenir en arrière » — distinct de `cancel` (« renoncer avant d'agir »),
+  // que l'anglais sépare en Undo / Cancel là où le français dit deux fois
+  // « Annuler ».
+  undo: 'Annuler',
   close: 'Fermer',
   add: 'Ajouter',
   delete: 'Supprimer',
@@ -41,6 +45,7 @@ export const commonEn = {
   save: 'Save',
   saving: 'Saving…',
   cancel: 'Cancel',
+  undo: 'Undo',
   close: 'Close',
   add: 'Add',
   delete: 'Delete',

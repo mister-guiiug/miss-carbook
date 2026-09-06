@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { IconActionButton, IconArchiveDown } from '../ui/IconActionButton';
-import { fetchWorkspaceExportBundle } from '../../lib/workspaceExportBundle';
+import {
+  buildExportMetaText,
+  fetchWorkspaceExportBundle,
+} from '../../lib/workspaceExportBundle';
 import { useI18n } from '../../i18n';
-
-const EXPORT_VERSION = '2';
 
 export function ExportWorkspaceButton({
   workspaceId,
@@ -59,19 +60,7 @@ export function ExportWorkspaceButton({
       folder.file('attachments.json', JSON.stringify(b.attachments, null, 2));
 
       const generatedAt = new Date().toISOString();
-      folder.file(
-        'meta.txt',
-        [
-          'Export Miss Carbook',
-          `export_version=${EXPORT_VERSION}`,
-          `generated_at=${generatedAt}`,
-          `workspace_id=${workspaceId}`,
-          '',
-          'Contenu : workspace, exigences, modèles (+ specs), notes, journal, visites, rappels, invitations,',
-          'membres, presets de comparaison, véhicule actuel, évaluations matrice, votes MoSCoW,',
-          'commentaires, avis modèles, pièces jointes (métadonnées uniquement, pas de fichiers binaires).',
-        ].join('\n')
-      );
+      folder.file('meta.txt', buildExportMetaText(workspaceId, generatedAt));
 
       const blob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(blob);

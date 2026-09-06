@@ -541,7 +541,11 @@ export function SettingsTab({
             aria-labelledby="workspace-settings-tab-data"
             className="workspace-settings-panel stack"
           >
-            <SettingsExportCard workspaceId={workspace.id} />
+            <SettingsExportCard
+              workspaceId={workspace.id}
+              canWrite={canWrite}
+              onImported={onWorkspaceRefresh}
+            />
             {workspace.replacement_enabled ? (
               <SettingsCurrentVehicleForm
                 canWrite={canWrite}

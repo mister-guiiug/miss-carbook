@@ -324,6 +324,26 @@ export function IconArchiveDown() {
   );
 }
 
+/** Pendant de `IconArchiveDown` : la flèche remonte, l'archive entre. */
+export function IconArchiveUp() {
+  return (
+    <svg {...ic} aria-hidden>
+      <path
+        d="M4 8h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V8zM4 8V6a1 1 0 011-1h3l1-2h8l1 2h3a1 1 0 011 1v2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 17v-6m0 0l-2.5 2.5M12 11l2.5 2.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconCopy() {
   return (
     <svg {...ic} aria-hidden>

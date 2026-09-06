@@ -28,10 +28,11 @@ export const candidatesFr = {
       'Les avis agrégés pour la comparaison proviennent des notes saisies ci-dessous ({count} entrées chargées).',
     confirmDeleteTitle: 'Confirmer la suppression',
     confirmDeletePrefix: 'Supprimer la fiche',
-    confirmDeleteSuffix: ' ? Cette action est définitive.',
+    confirmDeleteSuffix:
+      ' ? La fiche disparaît aussitôt ; vous aurez huit secondes pour annuler.',
     subtreeDeleteNote:
       '{count} fiche(s) au total seront supprimées (compléments et sous-fiches inclus).',
-    deleting: 'Suppression en cours',
+    toastDeleteUndone: 'Suppression annulée',
   },
   card: {
     reorderAria: 'Réordonner : {label}',
@@ -121,10 +122,11 @@ export const candidatesEn = {
       'The aggregated reviews used for comparison come from the notes entered below ({count} entries loaded).',
     confirmDeleteTitle: 'Confirm deletion',
     confirmDeletePrefix: 'Delete the card',
-    confirmDeleteSuffix: '? This action is permanent.',
+    confirmDeleteSuffix:
+      '? The card disappears at once; you will have eight seconds to undo.',
     subtreeDeleteNote:
       '{count} card(s) in total will be deleted (sub-entries and sub-cards included).',
-    deleting: 'Deleting',
+    toastDeleteUndone: 'Deletion undone',
   },
   card: {
     reorderAria: 'Reorder: {label}',

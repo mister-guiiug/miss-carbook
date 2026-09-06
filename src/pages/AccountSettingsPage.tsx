@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { registerSW } from 'virtual:pwa-register';
 import { useUpdatePrompt } from '@mister-guiiug/dev-pwa-config/react/use-update-prompt';
 import { Link, useNavigate } from 'react-router-dom';
+import { DangerZoneCard } from '../components/account/DangerZoneCard';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { authEmailRedirectUrl } from '../lib/authRedirect';
@@ -441,6 +442,10 @@ export function AccountSettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* En DERNIER, après tout ce qui se répare : on ne tombe pas sur la
+            suppression de compte en cherchant à changer de thème. */}
+        <DangerZoneCard />
 
         <section
           className="card stack settings-card mc-family"

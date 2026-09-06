@@ -21,6 +21,7 @@ const ACTION: Record<string, string> = {
   'member.role_change': 'Rôle d’un membre modifié',
   'member.removed': 'Membre retiré',
   'workspace.decision': 'Décision (modèle retenu)',
+  'workspace.import': 'Import d’un export ZIP',
   'workspace.update_meta': 'Nom ou description du dossier',
 };
 

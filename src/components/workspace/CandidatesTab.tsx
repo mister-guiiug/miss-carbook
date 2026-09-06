@@ -1,8 +1,15 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
-import { useToast } from '../../contexts/ToastContext';
+import { TOAST_UNDO_MS, useToast } from '../../contexts/ToastContext';
 import { useI18n } from '../../i18n';
 import { logActivity } from '../../lib/activity';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
@@ -21,6 +28,31 @@ import { useWorkspaceCandidates } from './candidates/useWorkspaceCandidates';
 import type { CandidateRow } from './candidates/candidateTypes';
 import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
+/** Une suppression en sursis : masquée à l'écran, pas encore jouée sur le serveur. */
+type PendingDelete = {
+  workspaceId: string;
+  ids: string[];
+  rootId: string;
+  timer: ReturnType<typeof setTimeout>;
+};
+
+/**
+ * Les lignes partent une par une, des feuilles vers la racine — c'est l'ordre
+ * que `postOrderDeleteIds` calcule. Fonction de module, sans état React :
+ * elle doit rester appelable depuis un démontage, quand plus aucun `setState`
+ * n'a de sens.
+ */
+async function deleteCandidateRows(workspaceId: string, ids: string[]) {
+  for (const id of ids) {
+    const { error } = await getSupabase()
+      .from('candidates')
+      .delete()
+      .eq('id', id)
+      .eq('workspace_id', workspaceId);
+    if (error) throw error;
+  }
+}
+
 export function CandidatesTab({
   workspaceId,
   canWrite,
@@ -33,6 +65,20 @@ export function CandidatesTab({
   const { t } = useI18n();
   const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
+  /**
+   * SUPPRIMER, PUIS POUVOIR SE RAVISER. Les fiches d'une suppression confirmée
+   * disparaissent d'abord de l'écran SEULEMENT : rien ne part au serveur avant
+   * huit secondes. Pendant ce sursis, « Annuler » les rend intactes — avec
+   * leurs compléments, leurs commentaires, leurs avis et leurs photos, que le
+   * `ON DELETE CASCADE` aurait emportés sans retour possible. Réinsérer après
+   * coup aurait rendu une coquille ; ne rien avoir supprimé rend tout.
+   *
+   * Le prix, dit franchement : fermer l'onglet du navigateur pendant ces huit
+   * secondes annule la suppression au lieu de la jouer. Le geste manqué est du
+   * bon côté — on garde une fiche de trop, jamais une de moins. Quitter
+   * l'onglet Modèles, lui, la joue immédiatement (voir le démontage).
+   */
+  const [hiddenIds, setHiddenIds] = useState<readonly string[]>([]);
   const {
     candidates,
     reviews,
@@ -40,7 +86,7 @@ export function CandidatesTab({
     rootCandidates,
     childrenOf,
     orphanVariations,
-  } = useWorkspaceCandidates(workspaceId, reportException);
+  } = useWorkspaceCandidates(workspaceId, reportException, hiddenIds);
   const [open, setOpen] = useState<string | null>(null);
   const [garageSuggestions, setGarageSuggestions] = useState<string[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -49,16 +95,15 @@ export function CandidatesTab({
   const [confirmingDelete, setConfirmingDelete] = useState<CandidateRow | null>(
     null
   );
-  const [deletingCandidate, setDeletingCandidate] = useState(false);
+  const pendingRef = useRef<PendingDelete | null>(null);
 
   /**
-   * SUPPRIMER UNE FICHE EST IRRÉVERSIBLE, et supprime aussi ses compléments :
-   * c'est la boucle `for` de `confirmDeleteCandidate`, une requête par ligne.
-   * Hors connexion, la première échoue et la boîte reste ouverte sur une
-   * erreur — après avoir demandé confirmation d'une suppression qui ne pouvait
-   * pas avoir lieu. Le garde est calculé UNE fois ici et descendu aux cartes :
-   * `useActionGuard` pose un écouteur `online`/`offline`, il serait dommage
-   * d'en poser un par candidat affiché.
+   * La suppression reste une affaire de RÉSEAU, une requête par ligne, même en
+   * sursis : hors connexion, la première échouerait — après avoir demandé
+   * confirmation d'un geste impossible, et après avoir fait disparaître les
+   * fiches de l'écran. Le garde est calculé UNE fois ici et descendu aux
+   * cartes : `useActionGuard` pose un écouteur `online`/`offline`, il serait
+   * dommage d'en poser un par candidat affiché.
    */
   const deleteGuard = useActionGuard({ online: true });
 
@@ -115,56 +160,124 @@ export function CandidatesTab({
   };
 
   const dismissDeleteConfirm = useCallback(() => {
-    if (deletingCandidate) return;
     setConfirmingDelete(null);
-  }, [deletingCandidate]);
+  }, []);
 
   const subtreeDeleteIds = useMemo(() => {
     if (!confirmingDelete) return [];
     return postOrderDeleteIds(confirmingDelete, candidates);
   }, [confirmingDelete, candidates]);
 
-  const confirmDeleteCandidate = useCallback(async () => {
-    if (!confirmingDelete || !canWrite || deletingCandidate) return;
+  /** Le sursis expire (ou on le force) : les lignes partent pour de bon. */
+  const commitDelete = useCallback(
+    async (pending: PendingDelete) => {
+      try {
+        await deleteCandidateRows(pending.workspaceId, pending.ids);
+        await logActivity(
+          pending.workspaceId,
+          'candidate.delete',
+          'candidate',
+          pending.rootId,
+          { subtree_count: pending.ids.length }
+        );
+      } catch (e: unknown) {
+        // Échec : les fiches sont toujours en base, elles doivent revenir à
+        // l'écran. Sans ce démasquage, elles resteraient invisibles jusqu'au
+        // prochain rechargement — un mensonge de plus qu'une erreur.
+        reportException(e, t('candidates.tab.ctxDelete'));
+      } finally {
+        await load();
+        setHiddenIds(prev => prev.filter(id => !pending.ids.includes(id)));
+      }
+    },
+    // `t` suit la locale mais son identité change à chaque rendu du
+    // fournisseur : l'inclure recréerait la fonction sans rien y gagner.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [load, reportException]
+  );
+
+  /** Une seule suppression en sursis à la fois : la précédente est jouée. */
+  const flushPending = useCallback(() => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    pendingRef.current = null;
+    void commitDelete(pending);
+  }, [commitDelete]);
+
+  const undoPending = useCallback(() => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    pendingRef.current = null;
+    setHiddenIds(prev => prev.filter(id => !pending.ids.includes(id)));
+    showToast(t('candidates.tab.toastDeleteUndone'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showToast]);
+
+  const confirmDeleteCandidate = useCallback(() => {
+    if (!confirmingDelete || !canWrite) return;
     const root = confirmingDelete;
     const ids = postOrderDeleteIds(root, candidates);
-    setDeletingCandidate(true);
-    try {
-      for (const id of ids) {
-        const { error } = await getSupabase()
-          .from('candidates')
-          .delete()
-          .eq('id', id)
-          .eq('workspace_id', workspaceId);
-        if (error) throw error;
-      }
-      await logActivity(workspaceId, 'candidate.delete', 'candidate', root.id, {
-        subtree_count: ids.length,
-      });
-      await load();
-      showToast(
-        ids.length > 1
-          ? t('candidates.tab.toastDeletedSubtree', { count: ids.length - 1 })
-          : t('candidates.tab.toastDeleted')
-      );
-      setOpen(o => (o && ids.includes(o) ? null : o));
-      setConfirmingDelete(null);
-    } catch (e: unknown) {
-      reportException(e, t('candidates.tab.ctxDelete'));
-      await load();
-    } finally {
-      setDeletingCandidate(false);
-    }
+
+    flushPending();
+    setConfirmingDelete(null);
+    setOpen(o => (o && ids.includes(o) ? null : o));
+    setHiddenIds(prev => [...prev, ...ids]);
+
+    const timer = setTimeout(() => {
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      if (pending) void commitDelete(pending);
+    }, TOAST_UNDO_MS);
+    pendingRef.current = { workspaceId, ids, rootId: root.id, timer };
+
+    showToast(
+      ids.length > 1
+        ? t('candidates.tab.toastDeletedSubtree', { count: ids.length - 1 })
+        : t('candidates.tab.toastDeleted'),
+      { action: { label: t('common.undo'), onAction: undoPending } }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     confirmingDelete,
     canWrite,
-    deletingCandidate,
     candidates,
     workspaceId,
-    load,
+    flushPending,
+    commitDelete,
     showToast,
-    reportException,
+    undoPending,
   ]);
+
+  /**
+   * QUITTER L'ONGLET JOUE LA SUPPRESSION. Sans ce démontage, changer d'onglet
+   * laisserait une fiche invisible ici et bien vivante pour les autres
+   * participants — l'écart le plus perfide dans un dossier partagé. Tout est
+   * lu dans la ref : aucune valeur du premier rendu n'est figée dans cette
+   * fermeture, et aucun `setState` n'est tenté sur un composant démonté.
+   */
+  useEffect(() => {
+    return () => {
+      const pending = pendingRef.current;
+      if (!pending) return;
+      clearTimeout(pending.timer);
+      pendingRef.current = null;
+      void deleteCandidateRows(pending.workspaceId, pending.ids)
+        .then(() =>
+          logActivity(
+            pending.workspaceId,
+            'candidate.delete',
+            'candidate',
+            pending.rootId,
+            { subtree_count: pending.ids.length }
+          )
+        )
+        .catch(() => {
+          /* Plus d'écran pour porter l'erreur ; la fiche reste, c'est le repli sûr. */
+        });
+    };
+  }, []);
 
   const persistCandidateOrder = useCallback(
     async (orderedIds: string[]) => {
@@ -366,22 +479,19 @@ export function CandidatesTab({
       </p>
 
       {/* Suppression d'une fiche : confirmation à DEUX actions, et destructive
-          — la fiche part, son sous-arbre avec elle. `destructive` porte la
-          teinte, `loading` remplace le `disabled` des deux boutons : la boîte
-          reste ouverte pendant la suppression, comme avant. Échap, le clic sur
-          le fond, le focus initial sur « Annuler » (le choix sûr, que la copie
-          locale posait à la main), le piège de focus et la restitution du focus
-          viennent désormais du socle. */}
+          — la fiche part, son sous-arbre avec elle. La boîte ne fait plus
+          d'aller-retour réseau, donc plus d'état `loading` : elle se ferme
+          aussitôt et laisse la main au sursis de huit secondes. Échap, le clic
+          sur le fond, le focus initial sur « Annuler » (le choix sûr, que la
+          copie locale posait à la main), le piège de focus et la restitution du
+          focus viennent du socle. */}
       <ConfirmDialog
         open={!!confirmingDelete}
         title={t('candidates.tab.confirmDeleteTitle')}
         destructive
-        loading={deletingCandidate}
-        confirmLabel={
-          deletingCandidate ? t('candidates.tab.deleting') : t('common.delete')
-        }
+        confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
-        onConfirm={deleteGuard.wrap(() => void confirmDeleteCandidate())}
+        onConfirm={deleteGuard.wrap(() => confirmDeleteCandidate())}
         onCancel={dismissDeleteConfirm}
       >
         {confirmingDelete ? (

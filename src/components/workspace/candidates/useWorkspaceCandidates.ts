@@ -8,11 +8,21 @@ import { parseManufacturerLinksFromDb } from '../../../lib/manufacturerLinks';
 import { getSupabase } from '../../../lib/supabase';
 import type { CandidateRow } from './candidateTypes';
 
+const NO_HIDDEN: readonly string[] = [];
+
+/**
+ * `hiddenIds` : les fiches d'une suppression EN SURSIS — supprimées à l'écran,
+ * pas encore sur le serveur, le temps que « Annuler » soit possible. Le filtre
+ * est posé ici, avant les mémos de l'arbre, pour qu'une racine masquée ne
+ * transforme pas ses compléments en orphelins dans la liste (le sursis masque
+ * toujours le sous-arbre entier, mais l'ordre du filtre rend la chose sûre).
+ */
 export function useWorkspaceCandidates(
   workspaceId: string,
-  reportException: (e: unknown, ctx: string) => void
+  reportException: (e: unknown, ctx: string) => void,
+  hiddenIds: readonly string[] = NO_HIDDEN
 ) {
-  const [candidates, setCandidates] = useState<CandidateRow[]>([]);
+  const [loaded, setCandidates] = useState<CandidateRow[]>([]);
   const [reviews, setReviews] = useState<
     { candidate_id: string; score: number }[]
   >([]);
@@ -68,6 +78,12 @@ export function useWorkspaceCandidates(
   useEffect(() => {
     void load();
   }, [load]);
+
+  const candidates = useMemo(
+    () =>
+      hiddenIds.length ? loaded.filter(c => !hiddenIds.includes(c.id)) : loaded,
+    [loaded, hiddenIds]
+  );
 
   const rootCandidates = useMemo(
     () => listRootCandidates(candidates),
