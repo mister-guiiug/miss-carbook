@@ -1,0 +1,39 @@
+# Tests pgTAP, délégués au réutilisable de la famille.
+#
+# LE SEUL ENDROIT OÙ LES MIGRATIONS S'EXÉCUTENT VRAIMENT. Le poste de
+# développement n'a pas de démon Docker qui démarre : les vingt-deux migrations
+# de ce dépôt n'y sont que RELUES. Ici, la pile jetable du runner les applique
+# depuis zéro, sur une base vide, puis joue `supabase/tests/`.
+#
+# CE QUE CE DÉPÔT-CI A À Y GAGNER, et qu'aucun autre chemin ne lui donnait :
+# `supabase/tests/delete_my_account.test.sql` porte en toutes lettres
+# « Ce fichier est donc LIVRÉ, PAS ENCORE EXÉCUTÉ » — le jeton d'accès Supabase
+# du poste ne couvre pas ce projet, donc `supabase link` y est refusé et les 21
+# assertions n'ont jamais tourné. La pile jetable, elle, ne demande AUCUN jeton :
+# c'est exactement l'angle mort qu'elle comble.
+#
+# AUCUN SECRET, aucune condition : rien ne touche le projet hébergé — c'est le
+# job `migrate` de `deploy.yml` qui s'en charge, à part.
+name: Supabase tests
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/config.toml'
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+      - '.github/workflows/supabase-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/config.toml'
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pgtap:
+    uses: mister-guiiug/dev-pwa-config/.github/workflows/pwa-supabase-test.yml@v4

@@ -1,0 +1,22 @@
+# Configuration du CLI Supabase — pour la PILE LOCALE, et elle seule.
+#
+# Ce fichier n'existait pas : la base de ce dépôt est poussée par `supabase link`
+# + `supabase db push` (action `supabase-migrate` du socle, appelée par le job
+# `migrate` de `deploy.yml`), qui prennent la ref du projet en argument et n'ont
+# jamais eu besoin d'une configuration locale.
+#
+# Il arrive pour une seule raison : `supabase start` — la pile jetable de
+# `supabase-tests.yml` — n'a rien à démarrer sans lui, et c'est le seul endroit
+# où `supabase/tests/delete_my_account.test.sql` peut s'exécuter. Son en-tête le
+# dit lui-même : « Ce fichier est donc LIVRÉ, PAS ENCORE EXÉCUTÉ », faute d'un
+# jeton d'accès couvrant ce projet. La pile jetable, elle, ne demande aucun
+# jeton.
+#
+# `project_id` ne sert qu'en LOCAL : il préfixe le nom des conteneurs de la pile
+# jetable. Ce N'EST PAS la ref du projet hébergé, qui reste dans le secret
+# `SUPABASE_PROJECT_ID` de `deploy.yml` et n'a pas à être écrite ici.
+#
+# Tout le reste est laissé aux valeurs par défaut du CLI, volontairement : une
+# clé inconnue d'une version du CLI ferait échouer le job `migrate`, qui lit ce
+# même fichier avant de pousser les migrations sur la base réelle.
+project_id = "miss-carbook"
