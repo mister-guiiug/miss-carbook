@@ -21,7 +21,8 @@
     "build:analyze": "cross-env ANALYZE=1 npm run build"
   },
   "bundleBudget": {
-    "totalGzipKb": 505
+    "_pourquoi": "Relevé de 505 à 545 le 06/09/2026, parce que 505 n'a JAMAIS été confronté au bundle de production. Deux angles morts empilés. (1) `pwa-bundle-budget` sortait MUET en CI derrière le lien de node_modules/.bin et rendait 0 (dev-pwa-config#219, corrigé en 4.5.0) : le journal du déploiement 34033801294 ne contient ni « Bundle JS », ni « TOTAL gzip », ni « [budget] ». (2) La CI ne passait aucun `build-env`, donc `import.meta.env.VITE_SUPABASE_URL` valait `undefined` au build, le `throw` de `getSupabase()` devenait inconditionnel, l'appel à `createClient` inatteignable, et Rolldown éliminait `@supabase/supabase-js` EN ENTIER — 49,5 kB gzip absents d'une mesure censée décrire ce que l'utilisateur télécharge. MESURÉ SUR LE SITE DÉPLOYÉ, pas sur un build local : les 18 fichiers JS du precache de https://mister-guiiug.github.io/miss-carbook/sw.js pèsent 514,3 kB gzip, dont `supabase-DyJKyjMH.js` à 49,5 kB. La production dépassait donc 505 de 9,3 kB, en silence, depuis que la borne existe. 545 rend ~6 % de marge — le rapport retenu par mister-puzzle et mister-miss-koh. ATTENTION À LA MESURE : `pwa-bundle-budget` compte en Kio (÷ 1024) avec son propre gzip, le tableau de `vite build` compte en ko (÷ 1000) et annonce ~10 kB de plus POUR LE MÊME BUILD — sommer le tableau fait conclure à un dépassement de 524 kB qui n'existe pas. LES DEUX LEVIERS, le jour où la borne doit redescendre : `esm-*.js` (113,7 kB, 22 % du total) est Sentry — dont `@sentry-internal/replay` pour un tiers —, chargé par un `import()` paresseux dans `main.tsx` ; `CompareTabRadar-*.js` (91,6 kB) est recharts et ses satellites (lodash, d3, decimal.js-light). Aucun des deux n'est sur le chemin critique, mais le budget compte TOUT le JS émis.",
+    "totalGzipKb": 545
   },
   "dependencies": {
     "@sentry/react": "^8.45.0",
@@ -38,7 +39,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",
-    "@mister-guiiug/dev-pwa-config": "^4.4.1",
+    "@mister-guiiug/dev-pwa-config": "^4.5.1",
     "@playwright/test": "^1.49.1",
     "@sentry/vite-plugin": "^5.0.0",
     "@tailwindcss/vite": "^4.3.0",
