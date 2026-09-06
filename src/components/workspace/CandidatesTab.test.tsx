@@ -94,7 +94,8 @@ const { CandidatesTab } = await import('./CandidatesTab');
 const { I18nProvider } = await import('../../i18n');
 const { ErrorDialogProvider } =
   await import('../../contexts/ErrorDialogContext');
-const { ToastProvider } = await import('../../contexts/ToastContext');
+const { ToastProvider, TOAST_UNDO_MS } =
+  await import('../../contexts/ToastContext');
 
 /** Ouvre la confirmation depuis le bouton « Supprimer » de la fiche. */
 async function openConfirm() {
@@ -138,10 +139,76 @@ describe('CandidatesTab — confirmation de suppression', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(deleted).toEqual([]);
   });
+});
 
-  it('confirme et supprime la fiche', async () => {
+/**
+ * LE SURSIS DE HUIT SECONDES.
+ *
+ * Un dossier partagé n'a pas de corbeille : la fiche supprimée par l'un
+ * disparaît pour tous, avec ses compléments, ses commentaires, ses avis et ses
+ * photos que le `ON DELETE CASCADE` emporte. Le choix retenu n'est donc PAS de
+ * réinsérer après coup (on rendrait une coquille) mais de RETARDER la
+ * suppression : rien ne part au serveur avant huit secondes.
+ *
+ * Ce qui est vérifié ici est justement ce qu'aucune relecture ne garantit :
+ * qu'après « Supprimer », le réseau n'a rien reçu ; qu'« Annuler » l'empêche
+ * définitivement ; et qu'à l'expiration du sursis, la suppression part bien —
+ * un sursis qui n'expirerait jamais serait un bug silencieux, l'inverse exact
+ * du précédent.
+ */
+describe('CandidatesTab — annuler la suppression', () => {
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    deleted.length = 0;
+    load.mockClear();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Confirme la suppression et rend la notification qui en découle. */
+  async function confirmDelete() {
     const dialog = await openConfirm();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Supprimer' }));
+    return await screen.findByText('Fiche modèle supprimée');
+  }
+
+  it('la confirmation n’envoie RIEN au serveur, et propose « Annuler »', async () => {
+    const toast = await confirmDelete();
+    expect(deleted).toEqual([]);
+    expect(
+      within(toast.parentElement as HTMLElement).getByRole('button', {
+        name: 'Annuler',
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('« Annuler » empêche la suppression pour de bon, sursis expiré compris', async () => {
+    const toast = await confirmDelete();
+    fireEvent.click(
+      within(toast.parentElement as HTMLElement).getByRole('button', {
+        name: 'Annuler',
+      })
+    );
+    await screen.findByText('Suppression annulée');
+
+    // Le sursis expire : rien ne doit s'être réveillé au passage.
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_UNDO_MS + 1000);
+    });
+    expect(deleted).toEqual([]);
+  });
+
+  it('sans annulation, le sursis expire et la suppression part', async () => {
+    await confirmDelete();
+    expect(deleted).toEqual([]);
+
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_UNDO_MS + 100);
+    });
+
     await waitFor(() => expect(deleted).toContain('candidates'));
     await waitFor(() => expect(load).toHaveBeenCalled());
   });
