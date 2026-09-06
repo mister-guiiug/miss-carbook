@@ -58,6 +58,29 @@ export const accountFr = {
   errEmailInvalid: 'E-mail invalide',
   ctxEmailChange: 'Changement d’adresse e-mail',
   ctxMagicResend: 'Renvoi du lien magique',
+  // Zone dangereuse. Le texte DIT la règle du dernier administrateur avant le
+  // clic : découvrir après coup que son dossier a changé de main serait la
+  // même surprise qu'un dossier perdu.
+  dangerTitle: 'Zone dangereuse',
+  dangerLead:
+    'Supprimer votre compte est définitif : ni nous ni vous ne pourrons le rétablir. Voici exactement ce qui se passe.',
+  dangerBulletMine:
+    'Votre compte, votre pseudo, vos avis, commentaires, votes, notes personnelles et photos envoyées sont supprimés.',
+  dangerBulletShared:
+    'Un dossier partagé où quelqu’un reste n’est PAS supprimé : il est transmis à un participant restant, promu administrateur si vous étiez le dernier.',
+  dangerBulletAlone:
+    'Un dossier dont vous étiez le seul participant est supprimé avec son contenu — plus personne ne pourrait l’ouvrir.',
+  dangerBulletLog:
+    'Le journal d’activité et le bloc-notes des dossiers transmis restent, sans votre nom.',
+  dangerWord: 'SUPPRIMER',
+  dangerTypeLabel: 'Pour continuer, recopiez {word}',
+  dangerButton: 'Supprimer mon compte',
+  dangerBusy: 'Suppression…',
+  dangerConfirmTitle: 'Supprimer définitivement ce compte ?',
+  dangerConfirmBody:
+    'Dernière étape. Votre session sera fermée immédiatement et vous reviendrez à l’accueil, déconnecté.',
+  dangerConfirmLabel: 'Supprimer mon compte',
+  ctxAccountDelete: 'Suppression du compte',
 } as const;
 
 export const accountEn = {
@@ -119,4 +142,24 @@ export const accountEn = {
   errEmailInvalid: 'Invalid email',
   ctxEmailChange: 'Email address change',
   ctxMagicResend: 'Resending the magic link',
+  dangerTitle: 'Danger zone',
+  dangerLead:
+    'Deleting your account is permanent: neither you nor we can bring it back. Here is exactly what happens.',
+  dangerBulletMine:
+    'Your account, nickname, reviews, comments, votes, personal notes and uploaded photos are deleted.',
+  dangerBulletShared:
+    'A shared workspace where someone remains is NOT deleted: it is handed over to a remaining participant, promoted to admin if you were the last one.',
+  dangerBulletAlone:
+    'A workspace where you were the only participant is deleted along with its content — nobody could open it any more.',
+  dangerBulletLog:
+    'The activity log and notepad of handed-over workspaces remain, without your name.',
+  dangerWord: 'DELETE',
+  dangerTypeLabel: 'To continue, type {word}',
+  dangerButton: 'Delete my account',
+  dangerBusy: 'Deleting…',
+  dangerConfirmTitle: 'Permanently delete this account?',
+  dangerConfirmBody:
+    'Last step. Your session will close immediately and you will return to the home page, signed out.',
+  dangerConfirmLabel: 'Delete my account',
+  ctxAccountDelete: 'Account deletion',
 } as const;
