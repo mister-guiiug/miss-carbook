@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { pwaSeoPlugin } from '@mister-guiiug/dev-pwa-config/vite-pwa-base';
+import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
 
 const analyze = process.env.ANALYZE === '1';
 
@@ -82,6 +83,9 @@ export default defineConfig({
     },
   },
   plugins: [
+    // AVANT cspPlugin : il pose un script inline dans le <head>, que la
+    // CSP doit hacher après coup ; et il écrit version.json au build.
+    versionPlugin({ manifest: true }),
     pwaSeoPlugin({
       // Deux <meta name="theme-color"> par schéma : la barre du navigateur suit
       // le mode sombre dès le premier rendu (relevé du 02/09/2026 : 5 apps sur 16).
