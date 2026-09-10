@@ -127,11 +127,21 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any',
           },
+          // UNE IMAGE PAR USAGE. `pwa-512.png` était `any maskable` : la
+          // MÊME image servait au navigateur, qui la montre telle quelle, et
+          // à Android, qui la rogne à son masque. C'est une tuile arrondie
+          // sur fond clair — coins coupés, liseré clair autour du vert.
           {
             src: `${base}pwa-512.png`,
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            src: `${base}pwa-maskable-512.png`,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
         screenshots: [
