@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { PwaInstallPrompt } from '@mister-guiiug/dev-pwa-config/react/pwa-install-prompt';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -331,6 +332,14 @@ export function HomePage() {
           })}
         </ul>
       </section>
+
+      {/* ICI, ET PAS DANS LA COQUILLE : un bandeau global paraîtrait
+          par-dessus une tâche en cours ; sur l'accueil, l'utilisateur est au
+          repos. Ne rend rien tant qu'une installation n'est pas possible, ni
+          une fois l'application installée — et sur iOS, où l'événement natif
+          n'existe pas, donne la marche à suivre. Cadence du socle : au premier
+          lancement, puis une fois par mois, trois fois. */}
+      <PwaInstallPrompt />
     </div>
   );
 }
