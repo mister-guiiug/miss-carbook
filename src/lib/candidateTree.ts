@@ -87,8 +87,7 @@ export function eligibleRootParentsForSelect<T extends CandidateTreeRow>(
 }
 
 export type ParentAssignmentValidation =
-  | { ok: true }
-  | { ok: false; message: string };
+  { ok: true } | { ok: false; message: string };
 
 /** Contrôles UI alignés sur le trigger Postgres `candidates_enforce_parent`. */
 export function validateParentAssignment(

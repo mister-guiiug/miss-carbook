@@ -3,10 +3,7 @@ export const WORKSPACE_QUICK_ADD_EVENT =
   'miss-carbook:workspace-quick-add' as const;
 
 export type WorkspaceQuickAddTab =
-  | 'notepad'
-  | 'requirements'
-  | 'reminders'
-  | 'candidates';
+  'notepad' | 'requirements' | 'reminders' | 'candidates';
 
 export type WorkspaceQuickAddDetail = { tab: WorkspaceQuickAddTab };
 
