@@ -1,11 +1,7 @@
 export type MemberRole = 'read' | 'write' | 'admin';
 export type RequirementLevel = 'mandatory' | 'discuss';
 export type CandidateStatus =
-  | 'to_see'
-  | 'tried'
-  | 'shortlist'
-  | 'selected'
-  | 'rejected';
+  'to_see' | 'tried' | 'shortlist' | 'selected' | 'rejected';
 
 export type Json =
   | string

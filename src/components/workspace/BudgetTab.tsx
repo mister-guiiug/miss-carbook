@@ -454,10 +454,7 @@ export function BudgetTab({
                       onChange={e =>
                         setItemFrequency(
                           e.target.value as
-                            | 'one_time'
-                            | 'monthly'
-                            | 'annual'
-                            | 'per_km'
+                            'one_time' | 'monthly' | 'annual' | 'per_km'
                         )
                       }
                     >

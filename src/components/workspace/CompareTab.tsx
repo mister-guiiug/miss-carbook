@@ -336,7 +336,7 @@ export function CompareTab({
       raw[p.id] = row;
       const spec = (p.candidate_specs?.specs ?? {}) as Record<string, unknown>;
       for (const k of keys) {
-        let v = 0;
+        let v: number;
         if (k === 'price') v = p.price ?? 0;
         else if (k === 'scoreAvg') v = avgByCand[p.id] ?? 0;
         else v = Number(spec[k]) || 0;
