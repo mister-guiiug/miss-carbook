@@ -30,6 +30,7 @@ export function UpdateBanner() {
 
   return (
     <UpdatePromptBanner
+      checkEvery="1h"
       registerSW={registerSW}
       title={t('app.updateAvailable')}
       updateLabel={t('common.update')}
