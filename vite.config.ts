@@ -106,7 +106,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['logo.png', 'pwa-192.svg', 'pwa-512.svg', 'offline.html'],
+      // `pwa-192.svg` et `pwa-512.svg` ont été RETIRÉS : ils portaient un
+      // dessin différent de celui des PNG livrés — le commentaire de l'ancien
+      // générateur le constatait déjà. `favicon.svg` les remplace, et c'est
+      // désormais l'une des deux seules sources du jeu d'icônes.
+      includeAssets: ['logo.png', 'favicon.svg', 'offline.html'],
       manifest: {
         name: 'Miss Carbook',
         short_name: 'Miss Carbook',

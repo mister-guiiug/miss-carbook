@@ -21,7 +21,14 @@
          dwc_theme, migration depuis l'ancienne clé mc-theme. Il est inline,
          donc couvert par le 'unsafe-inline' de script-src ci-dessus. -->
     __ANALYTICS_HEAD__
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <!-- `%BASE_URL%` et pas `/` : le site est servi sous `/miss-carbook/` sur
+         GitHub Pages, où un chemin absolu part de la racine du domaine et
+         tombe en 404. La balise apple-touch ci-dessous le faisait déjà bien,
+         celle-ci était la seule à l'oublier.
+         Le SVG d'abord : les navigateurs qui le gèrent le préfèrent, et il
+         reste net à toutes les tailles. Le PNG sert de repli. -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="icon" type="image/png" href="%BASE_URL%logo.png" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5"
