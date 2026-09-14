@@ -52,6 +52,20 @@ jobs:
           VITE_PUBLIC_SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # SANS CETTE LIGNE, SENTRY EST ÉTEINT — et sans le dire. `main.tsx`
+          # appelle `initSentry({ dsn: import.meta.env.VITE_SENTRY_DSN })`, et
+          # `initSentry` sort sur `if (!dsn) return null`. Le secret existait
+          # depuis le début, mais rien ne l'injectait au build : la variable
+          # valait `undefined`, l'import paresseux de `@sentry/react` ne partait
+          # jamais, et aucune erreur de production n'a été remontée.
+          #
+          # Le budget ne bouge pas (534,6 → 534,7 ko gzip, mesuré) : le morceau
+          # Sentry était DÉJÀ émis et compté. Ce qui change est à l'exécution —
+          # ces 113,7 ko, que personne ne téléchargeait, descendent désormais
+          # chez chaque visiteur, après le premier rendu. C'est le prix de la
+          # supervision, et il est connu : c'est le premier des deux leviers
+          # cités par le `_pourquoi` du budget dans `package.json`.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: npm run build
 
       - name: Upload Pages artifact
