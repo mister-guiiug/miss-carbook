@@ -20,7 +20,20 @@
          (option themeBoot, @mister-guiiug/dev-pwa-config/theme-boot) : clé
          dwc_theme, migration depuis l'ancienne clé mc-theme. Il est inline,
          donc couvert par le 'unsafe-inline' de script-src ci-dessus. -->
-    __ANALYTICS_HEAD__
+    <!--
+      LES MARQUEURS `__ANALYTICS_*__` ONT ÉTÉ RETIRÉS.
+
+      `pwaSeoPlugin` les remplaçait AU BUILD par le tag de Google dès
+      qu'un identifiant était posé — précédé d'un `consent default` tout
+      refusé, donc sans collecte, mais le script partait quand même au
+      chargement de la page.
+
+      `ConsentBanner`, monté depuis la campagne de mesure, fait le même
+      travail autrement : il n'injecte RIEN avant l'accord. Garder les deux
+      chemins ferait partir DEUX tags le jour où la variable serait posée.
+      Le socle porte deux réponses à la même question ; cette app
+      n'en garde qu'une.
+    -->
     <!-- `%BASE_URL%` et pas `/` : le site est servi sous `/miss-carbook/` sur
          GitHub Pages, où un chemin absolu part de la racine du domaine et
          tombe en 404. La balise apple-touch ci-dessous le faisait déjà bien,
@@ -68,7 +81,6 @@
     <title>Miss Carbook</title>
   </head>
   <body>
-    __ANALYTICS_BODY__
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
