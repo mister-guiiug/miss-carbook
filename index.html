@@ -4,8 +4,12 @@
     <meta charset="UTF-8" />
     <!--
       Content-Security-Policy en défense en profondeur.
-      'unsafe-inline' : styles Tailwind/vite-plugin-pwa + snippet GTM injecté
-      au build. connect-src : Supabase (https + wss) et GA4/GTM.
+      'unsafe-inline' : styles Tailwind/vite-plugin-pwa + le script anti-FOUC
+      posé par pwaSeoPlugin. connect-src : Supabase (https + wss) et GA4.
+
+      `www.googletagmanager.com` reste autorisé bien que GTM ait été retiré :
+      c'est de CET hôte que GA4 sert `gtag/js`, chargé par ConsentBanner après
+      l'accord. Le retirer éteindrait la mesure d'audience.
     -->
     <meta
       http-equiv="Content-Security-Policy"
@@ -15,7 +19,9 @@
       name="google-site-verification"
       content="iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30"
     />
-    <!-- Analytics (GTM) injecté par pwaSeoPlugin() au build. -->
+    <!-- Aucune mesure d'audience n'est injectée ici : `ConsentBanner`
+         (src/App.tsx) charge GA4 depuis le navigateur, et seulement après
+         l'accord. Voir le bloc `__ANALYTICS_*__` plus bas. -->
     <!-- Le script anti-FOUC est injecté en tête de <head> par pwaSeoPlugin()
          (option themeBoot, @mister-guiiug/dev-pwa-config/theme-boot) : clé
          dwc_theme, migration depuis l'ancienne clé mc-theme. Il est inline,

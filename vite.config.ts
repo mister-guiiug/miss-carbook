@@ -14,13 +14,29 @@ const analyze = process.env.ANALYZE === '1';
  */
 const base = process.env.VITE_BASE_PATH ?? '/';
 
-/**
- * Google Tag Manager — conteneur (injecté par pwaSeoPlugin via __ANALYTICS_*__).
- * GA4 reste possible via la variable d'env VITE_GA_MEASUREMENT_ID (lue par le
- * plugin), mais à configurer plutôt comme balise dans GTM pour éviter le double
- * comptage. La balise google-site-verification est statique dans index.html.
- */
-const GTM_CONTAINER_ID = 'GTM-WMFQTNFX';
+// `GTM-WMFQTNFX` A QUITTÉ CE FICHIER. Il était passé à `pwaSeoPlugin`, qui
+// l'injectait à la place des marqueurs `__ANALYTICS_*__` d'`index.html` — et
+// ces marqueurs ont été retirés quand `ConsentBanner` a pris la mesure en
+// charge : lui n'injecte RIEN avant l'accord, là où le plugin chargeait le tag
+// dès le premier rendu, `consent default` refusé ou pas.
+//
+// Le conteneur était donc déjà INERTE, et c'est précisément ce qui en faisait
+// un piège : rétablir un marqueur aurait suffi à faire repartir GTM avant tout
+// consentement, sans que personne relie les deux gestes.
+//
+// S'y ajoute la décision du parc, le 15/09/2026, d'abandonner GTM : quand les
+// deux identifiants sont posés, le socle ne charge QUE GTM, et GA4 ne remonte
+// alors rien tant qu'il n'est pas configuré dans le conteneur — une panne
+// silencieuse pour rien.
+//
+// La mesure passe par `VITE_GA_MEASUREMENT_ID`, que `ConsentBanner` lit dans
+// `src/App.tsx`. La balise `google-site-verification` reste statique dans
+// `index.html` : elle ne mesure rien, elle prouve la propriété du site.
+//
+// LA CSP NE BOUGE PAS. GA4 se sert depuis `www.googletagmanager.com`, le même
+// hôte que GTM : retirer cet hôte éteindrait la mesure. `miss-contraction` et
+// `mister-cim10`, qui ont fait ce retrait avant, ont gardé les mêmes
+// directives — `frame-src` compris, comme le préréglage `analytics` du socle.
 
 export default defineConfig({
   base,
@@ -91,7 +107,6 @@ export default defineConfig({
       // le mode sombre dès le premier rendu (relevé du 02/09/2026 : 5 apps sur 16).
       themeColor: { light: '#f8fafc', dark: '#0f172a' },
       siteName: 'Miss Carbook',
-      gtmContainerId: GTM_CONTAINER_ID,
       // Script anti-FOUC engendré par le socle (theme-boot), injecté en tête
       // de <head>. Avant, le thème n'était posé que par initTheme() dans
       // main.tsx : la page s'affichait en clair le temps du bundle, puis
