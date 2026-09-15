@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { ConsentBanner } from '@mister-guiiug/dev-pwa-config/react/consent-banner';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorDialogProvider } from './contexts/ErrorDialogContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -78,6 +79,9 @@ export default function App() {
               </main>
             </WorkspaceChromeProvider>
           </PseudoGate>
+          <ConsentBanner
+            gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
+          />
           <SiteFooter />
           <UpdateBanner />
         </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useOnline } from '@mister-guiiug/dev-pwa-config/react/use-online';
@@ -122,6 +123,12 @@ function isWorkspacePath(pathname: string) {
 export function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Une vue de page par navigation. La barre est le seul composant monté sur
+  // TOUS les ecrans ET sous le routeur. GA4 n envoie page_view qu au chargement
+  // du document ; sans ce hook la navigation serait invisible. Rien sans
+  // consentement : il se monte sans condition.
+  usePageViews(location.pathname);
   const { api: workspaceChrome } = useWorkspaceChrome();
   const { user } = useAuth();
   // État partagé du ThemeProvider monté dans main.tsx : persistance, écoute
