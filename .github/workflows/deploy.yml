@@ -66,6 +66,7 @@ jobs:
           # supervision, et il est connu : c'est le premier des deux leviers
           # cités par le `_pourquoi` du budget dans `package.json`.
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
         run: npm run build
 
       - name: Upload Pages artifact
