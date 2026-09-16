@@ -65,7 +65,14 @@ jobs:
           # chez chaque visiteur, après le premier rendu. C'est le prix de la
           # supervision, et il est connu : c'est le premier des deux leviers
           # cités par le `_pourquoi` du budget dans `package.json`.
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          #
+          # ET C'EST UNE VARIABLE, PLUS UN SECRET. Un DSN part dans le bundle
+          # comme toute `VITE_*` : le ranger en secret ne masquait que les
+          # journaux de CI. La preuve tient en une ligne — la valeur du secret
+          # était DÉJÀ lisible dans `.env.example` de ce dépôt, et dans le
+          # bundle servi par GitHub Pages, à l'octet près. Le secret homonyme
+          # peut être supprimé ; il n'est plus lu.
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
         run: npm run build
 
