@@ -16,7 +16,7 @@ import { useI18n } from '../i18n';
  * CE QUI CHANGE POUR L'UTILISATEUR. La copie locale n'offrait aucune sortie :
  * le bandeau restait posé en bas de l'écran jusqu'au rechargement. Le socle
  * pose toujours un second bouton — ici « Plus tard », qui masque le bandeau
- * pour la session (`snoozeHours` non fourni ⇒ écartement simple, sans
+ * pour la session (`snoozeHours={0}` ⇒ écartement simple, sans
  * persistance).
  *
  * LES AUTRES LIBELLÉS NE SONT PAS CÂBLÉS : `I18nProvider` monte lui-même le
@@ -30,6 +30,7 @@ export function UpdateBanner() {
 
   return (
     <UpdatePromptBanner
+      snoozeHours={0}
       checkEvery="1h"
       registerSW={registerSW}
       title={t('app.updateAvailable')}
