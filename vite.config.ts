@@ -50,6 +50,12 @@ export default defineConfig({
 
           const norm = id.replace(/\\/g, '/');
 
+          // Sentry est chargé par un `import()` que `loader` rend analysable.
+          // Sans cette ligne, son morceau reprend un nom automatique (`esm-*`),
+          // instable d'une version à l'autre et partagé avec d'autres paquets :
+          // le `globIgnores` du service worker n'aurait pas de cible fiable.
+          if (norm.includes('/@sentry/')) return 'sentry';
+
           // Séparer React et écosystème
           if (
             norm.includes('/react-dom/') ||
@@ -182,6 +188,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
+        /*
+         * LE MORCEAU SENTRY HORS DU PRÉCACHE. C'est la seule app du parc dont
+         * le DSN est posé : elle télécharge donc vraiment le SDK, et c'est
+         * voulu. Mais le précache le fait descendre à l'INSTALLATION du service
+         * worker, avant toute erreur et quoi qu'il arrive ensuite. Hors
+         * précache, il part au premier `initSentry` réussi — même moment utile,
+         * sans bloquer la mise en cache de la coquille.
+         *
+         * Sur les apps sans DSN, l'écart est plus net encore : mesuré le
+         * 16/09/2026 sur miss-contraction et mister-puzzle, 345 et 463 KiB
+         * téléchargés par chaque visiteur pour une observabilité éteinte.
+         */
+        globIgnores: ['**/sentry-*.js'],
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
