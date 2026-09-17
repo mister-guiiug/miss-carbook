@@ -1,4 +1,3 @@
-import { AppVersion } from '@mister-guiiug/dev-pwa-config/react/app-version';
 import { useI18n } from '../i18n';
 
 const REPO_URL = 'https://github.com/mister-guiiug/miss-carbook';
@@ -12,16 +11,11 @@ export function SiteFooter() {
         <div className="site-footer-meta">
           <span className="site-footer-title">{t('common.appName')}</span>
           <span className="site-footer-tagline">{t('app.footerTagline')}</span>
-          {/* LE NUMÉRO DE BUILD, là où on le cherche pour un rapport de bug.
-              `versionPlugin({ manifest: true })` écrit déjà `version.json` au
-              build (vite.config.ts) et rien ne le lisait : quand quelqu'un
-              signale un comportement, personne ne pouvait dire sur quelle
-              version il était.
-              `updates` fait sonder ce fichier au montage : une PWA installée
-              apprend ainsi qu'une version l'attend, sans fournisseur à poser.
-              Sans version injectée, le composant rend `null` — il n'y a pas de
-              « v » solitaire à craindre. */}
-          <AppVersion repoUrl={REPO_URL} updates />
+          {/* PAS DE NUMÉRO DE VERSION ICI. Il y en avait un, et il portait un
+              lien vers `…/releases/tag/vX.Y.Z` : aucune app du parc ne pose de
+              tag git, ce lien répondait donc 404. `versionPlugin` continue
+              d'écrire `version.json` au build — ce que le bandeau de mise à
+              jour du service worker lit, lui, et qui reste en place. */}
         </div>
         <nav
           className="site-footer-nav"
