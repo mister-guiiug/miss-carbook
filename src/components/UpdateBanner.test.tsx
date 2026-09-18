@@ -77,9 +77,9 @@ describe('UpdateBanner', () => {
 
     const node = screen.getByRole('status');
     expect(node).toHaveAttribute('data-dwc', 'update-banner');
-    expect(node).toHaveTextContent(
-      'Une nouvelle version de l’application est disponible.'
-    );
+    // Le titre vient du SOCLE, comme le bouton juste en dessous : ce test fige
+    // l'alignement du parc, et non une phrase propre à cette application.
+    expect(node).toHaveTextContent('Mise à jour disponible');
     expect(
       screen.getByRole('button', { name: 'Mettre à jour' })
     ).toBeInTheDocument();
