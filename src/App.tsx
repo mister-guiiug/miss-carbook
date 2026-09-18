@@ -80,7 +80,8 @@ export default function App() {
             </WorkspaceChromeProvider>
           </PseudoGate>
           <ConsentBanner
-            gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
+            posthogKey={import.meta.env.VITE_POSTHOG_KEY}
+            loader={() => import('posthog-js/dist/module.slim.js')}
           />
           <SiteFooter />
           <UpdateBanner />
