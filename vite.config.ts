@@ -24,19 +24,20 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 // un piège : rétablir un marqueur aurait suffi à faire repartir GTM avant tout
 // consentement, sans que personne relie les deux gestes.
 //
-// S'y ajoute la décision du parc, le 15/09/2026, d'abandonner GTM : quand les
-// deux identifiants sont posés, le socle ne charge QUE GTM, et GA4 ne remonte
-// alors rien tant qu'il n'est pas configuré dans le conteneur — une panne
-// silencieuse pour rien.
+// S'y ajoute la décision du parc, le 15/09/2026, d'abandonner GTM ; puis celle
+// du 18/09 (ADR 0012) d'abandonner Google tout entier pour PostHog sur le nuage
+// EUROPÉEN. Le motif n'est pas la mesure — au volume du parc, GA4 faisait le
+// travail — mais une dette RGPD qu'il valait mieux supprimer que documenter.
 //
-// La mesure passe par `VITE_GA_MEASUREMENT_ID`, que `ConsentBanner` lit dans
+// La mesure passe par `VITE_POSTHOG_KEY`, que `ConsentBanner` lit dans
 // `src/App.tsx`. La balise `google-site-verification` reste statique dans
 // `index.html` : elle ne mesure rien, elle prouve la propriété du site.
 //
-// LA CSP NE BOUGE PAS. GA4 se sert depuis `www.googletagmanager.com`, le même
-// hôte que GTM : retirer cet hôte éteindrait la mesure. `miss-contraction` et
-// `mister-cim10`, qui ont fait ce retrait avant, ont gardé les mêmes
-// directives — `frame-src` compris, comme le préréglage `analytics` du socle.
+// LA CSP BOUGE, ELLE. Ce commentaire disait le contraire, et il avait raison
+// tant que la mesure venait de chez Google : `www.googletagmanager.com` était
+// l'hôte de `gtag.js` autant que de GTM, et le retirer aurait éteint la mesure.
+// Il n'y a plus rien à y chercher : `index.html` autorise désormais
+// `eu.i.posthog.com` et `eu-assets.i.posthog.com`, et rien d'autre de tiers.
 
 export default defineConfig({
   base,

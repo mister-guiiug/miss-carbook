@@ -124,10 +124,12 @@ export function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Une vue de page par navigation. La barre est le seul composant monté sur
-  // TOUS les ecrans ET sous le routeur. GA4 n envoie page_view qu au chargement
-  // du document ; sans ce hook la navigation serait invisible. Rien sans
-  // consentement : il se monte sans condition.
+  // Une vue de page par navigation — ni zero, ni deux. La barre est le seul
+  // composant monte sur TOUS les ecrans ET sous le routeur. Sans ce hook la
+  // navigation serait invisible ; et si on laissait PostHog compter seul,
+  // chaque navigation serait comptee DEUX fois, d ou le
+  // `capture_pageview: false` du socle. Rien sans consentement : il se monte
+  // sans condition.
   usePageViews(location.pathname);
   const { api: workspaceChrome } = useWorkspaceChrome();
   const { user } = useAuth();

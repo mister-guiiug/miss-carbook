@@ -5,22 +5,31 @@
     <!--
       Content-Security-Policy en défense en profondeur.
       'unsafe-inline' : styles Tailwind/vite-plugin-pwa + le script anti-FOUC
-      posé par pwaSeoPlugin. connect-src : Supabase (https + wss) et GA4.
+      posé par pwaSeoPlugin. connect-src : Supabase (https + wss) et PostHog.
 
-      `www.googletagmanager.com` reste autorisé bien que GTM ait été retiré :
-      c'est de CET hôte que GA4 sert `gtag/js`, chargé par ConsentBanner après
-      l'accord. Le retirer éteindrait la mesure d'audience.
+      LES HÔTES GOOGLE SONT PARTIS (ADR 0012) : le parc a quitté GA4 pour
+      PostHog sur le nuage EUROPÉEN, pour supprimer une dette RGPD plutôt que
+      la documenter. Restent `eu.i.posthog.com` pour l'ingestion et
+      `eu-assets.i.posthog.com` en `script-src` — mesuré le 19/09/2026, la
+      bibliothèque y charge sa configuration distante à chaque `init` ;
+      l'omettre couperait la mesure en silence.
+
+      `frame-ancestors` A ÉTÉ RETIRÉE, et ce n'est pas un oubli : la
+      spécification l'IGNORE dans une politique posée par `<meta>`. Elle n'a
+      donc jamais protégé cette page du clickjacking, tout en en donnant
+      l'apparence. Elle demande un en-tête HTTP, que GitHub Pages ne permet pas
+      de poser.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://eu.i.posthog.com https://eu-assets.i.posthog.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <meta
       name="google-site-verification"
       content="iUfQ7_dOztC3XoSGesC2b7IkxyNL2O9fegKXECoOg30"
     />
     <!-- Aucune mesure d'audience n'est injectée ici : `ConsentBanner`
-         (src/App.tsx) charge GA4 depuis le navigateur, et seulement après
+         (src/App.tsx) charge PostHog depuis le navigateur, et seulement après
          l'accord. Voir le bloc `__ANALYTICS_*__` plus bas. -->
     <!-- Le script anti-FOUC est injecté en tête de <head> par pwaSeoPlugin()
          (option themeBoot, @mister-guiiug/dev-pwa-config/theme-boot) : clé
