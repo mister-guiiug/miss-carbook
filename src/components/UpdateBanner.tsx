@@ -1,11 +1,10 @@
 import { registerSW } from 'virtual:pwa-register';
 import { UpdatePromptBanner } from '@mister-guiiug/dev-pwa-config/react/update-prompt-banner';
-import { useI18n } from '../i18n';
 
 /**
- * Bandeau « nouvelle version disponible », rendu par le socle
+ * Bandeau « mise à jour disponible », rendu par le socle
  * (`react/update-prompt-banner`). Ce fichier ne garde que le câblage propre à
- * Carbook : `registerSW` et les deux libellés qui portent le ton de l'app.
+ * Carbook : `registerSW`, et rien d'autre.
  *
  * POURQUOI `registerSW` EST PASSÉ ICI. Le bandeau du socle n'importe pas
  * `virtual:pwa-register` — ce module virtuel n'existe que dans un build Vite
@@ -19,22 +18,20 @@ import { useI18n } from '../i18n';
  * pour la session (`snoozeHours={0}` ⇒ écartement simple, sans
  * persistance).
  *
- * LES AUTRES LIBELLÉS NE SONT PAS CÂBLÉS : `I18nProvider` monte lui-même le
- * `LabelsProvider` du socle avec la locale courante, donc « Mise à jour… » et
- * « Plus tard » suivent déjà fr/en. Seuls le titre et l'appel à l'action sont
- * repris du dictionnaire Carbook, dont la formulation diffère de celle du
- * socle.
+ * PLUS AUCUN LIBELLÉ N'EST CÂBLÉ. `I18nProvider` monte lui-même le
+ * `LabelsProvider` du socle avec la locale courante : titre, appel à l'action,
+ * « Mise à jour… » et « Plus tard » viennent donc tous du même endroit et
+ * suivent fr/en ensemble. Le titre et le bouton étaient repris du dictionnaire
+ * Carbook « dont la formulation diffère de celle du socle » — c'était vrai, et
+ * c'était le problème : relevé du 18/09/2026, onze applications du parc
+ * annonçaient une mise à jour de neuf façons, avec trois verbes d'action.
  */
 export function UpdateBanner() {
-  const { t } = useI18n();
-
   return (
     <UpdatePromptBanner
       snoozeHours={0}
       checkEvery="1h"
       registerSW={registerSW}
-      title={t('app.updateAvailable')}
-      updateLabel={t('common.update')}
     />
   );
 }
