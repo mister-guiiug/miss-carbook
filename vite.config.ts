@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { pwaSeoPlugin } from '@mister-guiiug/dev-pwa-config/vite-pwa-base';
+import { cspPlugin } from '@mister-guiiug/dev-pwa-config/vite-csp';
 import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
 
 const analyze = process.env.ANALYZE === '1';
@@ -39,7 +40,7 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 // Il n'y a plus rien à y chercher : `index.html` autorise désormais
 // `eu.i.posthog.com` et `eu-assets.i.posthog.com`, et rien d'autre de tiers.
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base,
   build: {
     sourcemap: true,
@@ -126,6 +127,28 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    // LA CSP VIENT DU SOCLE, ET PLUS D'UNE BALISE ÉCRITE À LA MAIN.
+    //
+    // `index.html` portait sa propre `<meta http-equiv>`, recopiée et
+    // entretenue ici seule. Ce que ça a coûté : le 19/09/2026, le socle a
+    // ouvert `connect-src` à l'hôte du DSN Sentry pour tout le parc — et
+    // cette app ne l'a pas reçu, parce qu'aucune montée de paquet n'atteint
+    // une chaîne de caractères. Elle embarque pourtant un DSN : sa remontée
+    // d'erreurs était entièrement morte, et rien ne pouvait le dire.
+    //
+    // Le greffon apporte en prime ce que la balise ne faisait pas :
+    // `script-src` par HASH des scripts inline en production, au lieu de
+    // `'unsafe-inline'` — c'est-à-dire la différence entre une CSP qui
+    // protège et une CSP qui en a l'air. Le seul script inline est celui
+    // qu'injecte `pwaSeoPlugin` (thème anti-FOUC), d'où le placement APRÈS.
+    cspPlugin({
+      dev: command === 'serve',
+      // Ouvre les hôtes de PostHog — le nuage EUROPÉEN (ADR 0012).
+      analytics: true,
+      // Supabase en https ET wss : le temps réel passe par la WebSocket, et
+      // l'oublier ne se verrait qu'en console, sur le site déployé.
+      connectSrc: ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co'],
+    }),
     VitePWA({
       registerType: 'prompt',
       // `pwa-192.svg` et `pwa-512.svg` ont été RETIRÉS : ils portaient un
@@ -231,4 +254,4 @@ export default defineConfig({
         ]
       : []),
   ],
-});
+}));
