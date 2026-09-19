@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { IconActionButton, IconArchiveDown } from '../ui/IconActionButton';
 import {
@@ -69,6 +70,9 @@ export function ExportWorkspaceButton({
       a.download = `miss-carbook-export-${workspaceId.slice(0, 8)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
+      // L'archive complète du dossier, après sa fabrication : une lecture
+      // refusée par RLS lève avant. Rien du contenu ne part — seul le format.
+      trackEvent(GESTES.EXPORT, { format: 'zip' });
     } catch (e: unknown) {
       reportException(e, t('workspace.ctxExportZip'));
     } finally {

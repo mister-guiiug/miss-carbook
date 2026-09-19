@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { getSupabase } from '../../../lib/supabase';
 import { logActivity } from '../../../lib/activity';
 import { legacyManufacturerUrlFromLinks } from '../../../lib/manufacturerLinks';
@@ -118,6 +119,22 @@ export function useAddCandidateForm({
           data.id,
           {}
         );
+        /*
+         * LE GESTE RÉPÉTÉ DE L'APP : mettre un modèle à l'étude. Après les
+         * deux insertions et le journal — un refus RLS ou une contrainte lève
+         * et part dans le `catch`, où il ne compte pas.
+         *
+         * NI LA MARQUE, NI LE MODÈLE, NI LE PRIX, NI LE GARAGE. Le prix est
+         * un budget, le garage une adresse, et marque plus modèle finissent
+         * par désigner une personne dans un petit groupe. `variante` ne dit
+         * qu'une chose : cette ligne est-elle une version d'un modèle déjà
+         * posé ? C'est la structure à deux niveaux de l'app, et on ne sait
+         * pas si elle sert.
+         */
+        trackEvent(GESTES.CREATION, {
+          objet: 'candidat',
+          variante: !isRootRow,
+        });
         setForm(emptyForm());
         await load();
       } catch (e: unknown) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { getSupabase } from '../lib/supabase';
 import { useErrorDialog } from '../contexts/ErrorDialogContext';
 import { useToast } from '../contexts/ToastContext';
@@ -175,6 +176,11 @@ export function WorkspaceTemplates({
 
     if (error) reportException(error, tr('templates.ctxCreateWorkspace'));
     else {
+      // Le même dossier que sur l'accueil, par l'autre chemin : `depuis` dit
+      // si les modèles servent, ce qu'aucun autre chiffre ne dira. Ni le nom
+      // du dossier, ni celui du modèle choisi — un modèle peut être privé et
+      // porter le vocabulaire de son auteur.
+      trackEvent(GESTES.CREATION, { objet: 'dossier', depuis: 'modele' });
       setShowCreateFromTemplate(false);
       setNewWorkspaceName('');
       setNewWorkspaceDesc('');
