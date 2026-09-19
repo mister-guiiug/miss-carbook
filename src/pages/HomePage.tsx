@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PwaInstallPrompt } from '@mister-guiiug/dev-pwa-config/react/pwa-install-prompt';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -107,6 +108,12 @@ export function HomePage() {
       next.delete('invite');
       setSearchParams(next, { replace: true });
       if (data) {
+        // Même geste que `joinWs`, par l'autre porte : le lien d'invitation.
+        trackEvent(GESTES.OPERATION, {
+          nom: 'adhesion',
+          etape: 'reussie',
+          voie: 'lien',
+        });
         try {
           sessionStorage.setItem('mc_invite_welcome', data);
         } catch {
@@ -156,6 +163,16 @@ export function HomePage() {
       await load();
       const newId = typeof data === 'string' ? data : null;
       if (newId) {
+        /*
+         * OUVRIR UN DOSSIER — le premier geste de l'app, et celui sans lequel
+         * aucun autre n'existe. Après la RPC, qui lève sur un refus : compter
+         * la soumission gonflerait le chiffre de dossiers jamais nés.
+         *
+         * NI LE NOM, NI LA DESCRIPTION, NI L'IDENTIFIANT DU DOSSIER. Un nom de
+         * dossier, c'est « Deuxième voiture 2026 » — un projet de vie. `depuis`
+         * ne dit que ceci : parti d'une page blanche, ou d'un modèle ?
+         */
+        trackEvent(GESTES.CREATION, { objet: 'dossier', depuis: 'vierge' });
         sessionStorage.setItem('mc_new_ws', newId);
         showToast(t('home.toastCreated'));
         navigate(`/w/${newId}`);
@@ -187,6 +204,20 @@ export function HomePage() {
       setCode('');
       await load();
       if (data) {
+        /*
+         * REJOINDRE, L'AUTRE MOITIÉ DE LA PROMESSE : cet outil n'a de sens
+         * qu'à plusieurs. `voie` distingue les deux portes d'entrée — un code
+         * recopié, ou un lien d'invitation suivi — et c'est exactement ce
+         * qu'on ne sait pas : laquelle des deux les gens utilisent vraiment.
+         *
+         * Après la RPC : un code inconnu ou périmé lève, et ne compte pas.
+         * Ni le code, ni l'identifiant du dossier, ni l'e-mail.
+         */
+        trackEvent(GESTES.OPERATION, {
+          nom: 'adhesion',
+          etape: 'reussie',
+          voie: 'code',
+        });
         showToast(t('home.toastJoined'));
         navigate(`/w/${data}`);
       }

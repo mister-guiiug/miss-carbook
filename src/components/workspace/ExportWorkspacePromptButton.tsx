@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import { fetchWorkspaceExportBundle } from '../../lib/workspaceExportBundle';
@@ -28,6 +29,9 @@ export function ExportWorkspacePromptButton({
       a.download = `miss-carbook-contexte-ia-${workspaceId.slice(0, 8)}.md`;
       a.click();
       URL.revokeObjectURL(url);
+      // Le contexte pour une IA, en Markdown : l'autre export de l'app, et le
+      // seul moyen de savoir lequel des deux sert.
+      trackEvent(GESTES.EXPORT, { format: 'md' });
       showToast(t('workspace.toastMarkdownExported'));
     } catch (e: unknown) {
       reportException(e, t('workspace.ctxExportPrompt'));
