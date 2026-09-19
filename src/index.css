@@ -491,6 +491,14 @@ a.app-profile-chip-action {
     padding: 0;
     border-width: 2px;
     border-color: rgb(15 23 42 / 0.08);
+    /* `overflow: visible`, et ce n'est pas décoratif : la feuille de style de
+       l'agent utilisateur donne `overflow: hidden` à TOUT `<button>` — un
+       `<div>` au même endroit ne rognerait rien. Comme ce bouton est rond
+       (`border-radius: 999px`), la pastille du chevron posée juste en dessous
+       à `right/bottom: -3px` était coupée par l'ARRONDI, pas par un bord :
+       elle s'affichait en croissant sous l'avatar. Mesuré à 375 px le
+       19/09/2026 — 3 px rognés à droite et 3 px en bas. */
+    overflow: visible;
   }
 
   .app-home-account-btn-name {
@@ -3257,6 +3265,12 @@ label.compare-pick-card input[type='checkbox'] {
   background: none;
   cursor: pointer;
   border-radius: 999px;
+  /* Même piège que `.app-home-account-btn` : `overflow: hidden` est le défaut
+     de l'agent utilisateur sur un `<button>`, et ce bouton est rond. Sans
+     cette ligne, `.workspace-toolbar-avatar-chevron` (`right/bottom: -3px`)
+     sortait en croissant. Ici le rognage ne dépendait d'AUCUNE largeur : il se
+     voyait sur bureau autant que sur mobile. */
+  overflow: visible;
   touch-action: manipulation;
   box-shadow: 0 2px 10px rgb(15 23 42 / 0.08);
   transition: box-shadow 0.15s ease;
