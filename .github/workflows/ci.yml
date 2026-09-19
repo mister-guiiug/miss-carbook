@@ -19,7 +19,26 @@ jobs:
     # secrets du dépôt à un workflow qui n'en demande pas un seul.
     with:
       run-doctor: true # la checklist du parc, lue sur le dépôt et sur dist/ (AMELIORATIONS.md, T2)
-      run-e2e: false # passer à true quand Playwright est en place
+      # `doctor-strict` reste à `false`, et voici pourquoi. Relevé du 19/09/2026 :
+      # le docteur rend « 0 défaut(s) » ici, mais pas « 0 dette(s) » — et
+      # `--strict` échoue sur une dette (pwa-doctor.mjs:1631). Ce qui bloque,
+      # cette PR appliquée :
+      #   · déploiement Pages écrit à la main : ni repli SPA 404.html, ni required-env, ni base path
+      #   · VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY en secret alors que Vite les copie dans le bundle
+      #   · code source + soutien sur tous les écrans, rendus par la coquille
+      # Le mode strict s'active quand cette liste est vide. Pas avant : une CI
+      # rouge sur une dette connue et non traitée n'apprend rien à personne.
+      # `false`, et la raison d'avant était devenue fausse. L'outil EST en
+      # place : `@playwright/test` est installé et trois fichiers de spec
+      # existent. Ce qui manque, c'est une suite qui passe — mesuré le
+      # 19/09/2026 avec la commande exacte du réutilisable : 11 tests en échec
+      # sur 24 (un `nav` attendu visible à 375 px, une page d'accueil qui ne se
+      # charge pas), dans basic.spec.ts et carbook-critical.spec.ts. Sous le
+      # filtre par défaut un seul test passe, et ces deux fichiers restent
+      # entièrement dehors.
+      #
+      # La bascule attend la réparation de la suite, pas l'arrivée de l'outil.
+      run-e2e: false
       # Des VITE_* FACTICES — jamais les vraies clés, qui ne servent à rien ici.
       # Sans elles, `import.meta.env.VITE_SUPABASE_URL` vaut `undefined` au
       # build : le `throw` de `getSupabase()` devient inconditionnel, l'appel à
