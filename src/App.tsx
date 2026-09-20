@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import { ConsentBanner } from '@mister-guiiug/dev-pwa-config/react/consent-banner';
+import { useIdlePrefetch } from '@mister-guiiug/dev-pwa-config/react/use-prefetch';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorDialogProvider } from './contexts/ErrorDialogContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -15,7 +16,7 @@ import { useI18n } from './i18n';
 
 // CHAQUE IMPORT D'UNE PAGE PRÉCHARGÉE EST NOMMÉ, parce qu'il sert DEUX FOIS : à
 // `lazy` ci-dessous, et au préchargement à l'inactivité de
-// `usePrechargeLesPagesDuMenu`. Deux `import()` du même spécificateur ne
+// `chargeLesPagesDuMenu`. Deux `import()` du même spécificateur ne
 // téléchargent qu'une fois — le registre de modules dédoublonne — mais encore
 // faut-il que ce soit LITTÉRALEMENT le même spécificateur, sinon le bundler
 // émet deux morceaux et le préchargement ne sert plus à rien.
@@ -23,6 +24,8 @@ const chargeReglages = () => import('./pages/AccountSettingsPage');
 const chargeDossier = () => import('./pages/WorkspacePage');
 
 /**
+ * PRÉCHARGE LES PAGES DU MENU DÈS QUE LE FIL PRINCIPAL SOUFFLE.
+ *
  * Les deux pages qu'un clic de la coquille ou de l'accueil peut atteindre :
  * « Paramètres généraux » depuis le volet compte, et l'ouverture d'un dossier
  * depuis la liste de l'accueil.
@@ -30,8 +33,31 @@ const chargeDossier = () => import('./pages/WorkspacePage');
  * `AssistantWelcomePage` reste dehors : c'est la visite guidée, qu'on ouvre une
  * fois. La précharger pour tous ferait payer à chacun un morceau que presque
  * personne ne rouvre.
+ *
+ * Sans préchargement, le morceau d'une page n'est demandé qu'AU CLIC : un
+ * aller-retour réseau complet, payé au pire moment — pendant que le reste du
+ * bundle arrive et que le service worker précharge ses entrées. Mesuré à froid
+ * le 20/09/2026 sur deux sites publiés du parc, première visite : 133 ms sur
+ * mister-settle, 161 ms sur mister-molkky, pendant lesquelles l'URL indique
+ * déjà la nouvelle route et l'écran affiche encore l'ancien.
+ *
+ * UN SEUL chargeur pour `useIdlePrefetch` : le socle ne déclenche un chargeur
+ * qu'une fois (dédoublonné sur son identité, d'où la constante de module) et en
+ * avale le rejet. `allSettled` étend ces deux garanties à chaque morceau — un
+ * échec n'en fait taire aucun autre. Au clic, `lazy` redemandera le morceau
+ * manquant et c'est LUI qui portera l'erreur, dans son propre `Suspense`.
+ *
+ * Le socle porte le reste : `requestIdleCallback` et son repli minuté quand il
+ * manque (Safari avant la 17), et le renoncement quand le visiteur a demandé
+ * d'épargner son forfait (`saveData`) ou quand la connexion est en 2G — c'est
+ * précisément pour ce cas-là que le volet compte, lui, sait dire qu'il charge.
+ *
+ * N'entre PAS dans `bundleBudget.preloadGzipKb` : ce budget ne compte que ce
+ * qui est `modulepreload` dans le document, et un `import()` tardif n'y entre
+ * pas.
  */
-const CHARGEURS_DU_MENU = [chargeReglages, chargeDossier];
+const chargeLesPagesDuMenu = () =>
+  Promise.allSettled([chargeReglages(), chargeDossier()]);
 
 const AccountSettingsPage = lazy(() =>
   chargeReglages().then(m => ({ default: m.AccountSettingsPage }))
@@ -45,56 +71,6 @@ const AssistantWelcomePage = lazy(() =>
   }))
 );
 
-/** `navigator.connection` n'est pas dans les types du DOM : il reste un brouillon. */
-type NavigateurEconome = Navigator & { connection?: { saveData?: boolean } };
-
-/**
- * PRÉCHARGE LES PAGES DU MENU DÈS QUE LE FIL PRINCIPAL SOUFFLE.
- *
- * Sans préchargement, le morceau d'une page n'est demandé qu'AU CLIC : un
- * aller-retour réseau complet, payé au pire moment — pendant que le reste du
- * bundle arrive et que le service worker précharge ses entrées. Mesuré à froid
- * le 20/09/2026 sur deux sites publiés du parc, première visite : 133 ms sur
- * mister-settle, 161 ms sur mister-molkky, pendant lesquelles l'URL indique
- * déjà la nouvelle route et l'écran affiche encore l'ancien.
- *
- * N'entre PAS dans `bundleBudget.preloadGzipKb` : ce budget ne compte que ce
- * qui est `modulepreload` dans le document, et un `import()` tardif n'y entre
- * pas.
- */
-function usePrechargeLesPagesDuMenu() {
-  useEffect(() => {
-    // `saveData` : le visiteur a demandé qu'on épargne son forfait. On ne
-    // télécharge alors que ce qu'il demande vraiment — et c'est précisément
-    // pour ce cas-là que le volet compte, lui, sait désormais dire qu'il
-    // charge.
-    if ((navigator as NavigateurEconome).connection?.saveData) return;
-
-    let annule = false;
-    const precharge = () => {
-      if (annule) return;
-      // Un échec ici est sans conséquence : au clic, `lazy` redemandera le
-      // morceau et c'est LUI qui portera l'erreur, dans son propre `Suspense`.
-      for (const charge of CHARGEURS_DU_MENU) void charge().catch(() => {});
-    };
-
-    // `requestIdleCallback` manque encore à Safari avant la 17 ; le repli
-    // minuté vaut mieux que rien.
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(precharge, { timeout: 3000 });
-      return () => {
-        annule = true;
-        window.cancelIdleCallback?.(id);
-      };
-    }
-    const id = window.setTimeout(precharge, 1200);
-    return () => {
-      annule = true;
-      window.clearTimeout(id);
-    };
-  }, []);
-}
-
 function RouteFallback() {
   const { t } = useI18n();
   return (
@@ -105,7 +81,9 @@ function RouteFallback() {
 }
 
 export default function App() {
-  usePrechargeLesPagesDuMenu();
+  // 3000 ms : le plafond que `requestIdleCallback` avait déjà ici. Le socle n'a
+  // qu'un délai, qui sert aussi de repli quand l'API manque.
+  useIdlePrefetch(chargeLesPagesDuMenu, { timeout: 3000 });
   const { t } = useI18n();
   return (
     <ErrorDialogProvider>
