@@ -3716,6 +3716,36 @@ label.compare-pick-card input[type='checkbox'] {
   border: 0;
 }
 
+/* Pastille d'attente d'une entrée de menu, le temps que le morceau `lazy` de
+   la page arrive. C'est le SEUL retour visible d'un clic de navigation : le
+   repli de `<Suspense>` ne peut pas paraître, react-router ouvrant une
+   transition que React 19 honore en gardant l'écran courant.
+   La taille suit celle des icônes du volet (`app-topbar-flyout-svg`). */
+.app-nav-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: app-nav-spin 0.8s linear infinite;
+}
+
+@keyframes app-nav-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Qui a demandé moins de mouvement voit une pastille FIXE — toujours
+   distincte de l'icône qu'elle remplace, donc toujours lisible comme un
+   changement d'état, et `aria-busy` la dit de toute façon. */
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-spinner {
+    animation: none;
+  }
+}
+
 @keyframes workspace-skeleton-pulse {
   0%,
   100% {

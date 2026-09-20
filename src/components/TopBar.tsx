@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTransitionDeMenu } from './nav-transition.tsx';
 import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { getSupabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -207,6 +208,20 @@ export function TopBar() {
 
   const closeAccountMenu = () => setAccountMenuOpen(false);
 
+  /*
+   * LE VOLET NE SE REFERME PLUS AU CLIC SUR « Réglages généraux ».
+   *
+   * Il le faisait, et c'était le défaut : `AccountSettingsPage` est chargée à
+   * la demande, le volet s'escamotait AVANT que son morceau soit là, et l'écran
+   * restait sur la page précédente sans que rien n'indique un travail en cours.
+   * Il emportait le seul endroit qui pouvait dire « je charge ».
+   *
+   * Rien à ajouter pour le refermer : l'effet sur `location.pathname` ci-dessus
+   * s'en charge déjà — et il se déclenche quand la route a RÉELLEMENT changé,
+   * donc la vue prête à peindre. C'est le bon instant, gratuitement.
+   */
+  const menu = useTransitionDeMenu();
+
   if (!user) return null;
 
   const label = loading ? '…' : displayName?.trim() || t('nav.profile');
@@ -322,15 +337,29 @@ export function TopBar() {
                       </span>
                     </div>
                   </div>
+                  {/* HORS DES LIENS, pour ne pas changer leur nom accessible
+                      en cours de route : un lecteur d'écran annoncerait
+                      « Réglages généraux, chargement… » puis « Réglages
+                      généraux », sur le lien qui a le focus. */}
+                  <span className="sr-only" role="status" aria-live="polite">
+                    {menu.enCours ? t('nav.loading') : ''}
+                  </span>
                   <div className="app-topbar-flyout-list">
                     <Link
                       role="menuitem"
                       to="/parametres"
                       className="app-topbar-flyout-row"
-                      onClick={closeAccountMenu}
+                      {...menu.lien('/parametres')}
                     >
+                      {/* LA PASTILLE TOURNE pendant que le morceau arrive :
+                          c'est le seul retour visible, le repli de `Suspense`
+                          ne paraîtra pas. */}
                       <span className="app-topbar-flyout-ic" aria-hidden="true">
-                        <IconGear className="app-topbar-flyout-svg" />
+                        {menu.enAttente === '/parametres' ? (
+                          <span className="app-nav-spinner" />
+                        ) : (
+                          <IconGear className="app-topbar-flyout-svg" />
+                        )}
                       </span>
                       <span className="app-topbar-flyout-txt">
                         {t('nav.generalSettings')}
