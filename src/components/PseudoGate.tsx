@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react';
+import { AuthGate } from '@mister-guiiug/dev-pwa-config/react/auth-gate';
+import { useAuthContext } from '@mister-guiiug/dev-pwa-config/react/auth-provider';
 import { getSupabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
 import { authEmailRedirectUrl } from '../lib/authRedirect';
 import {
   formatAuthCredentialError,
@@ -17,10 +18,41 @@ type GateMode = 'magic' | 'password_login' | 'password_signup';
 
 type Feedback = { variant: 'success' | 'error'; text: string } | null;
 
+/**
+ * LA PORTE D'ENTRÉE : chargement → connexion → application.
+ *
+ * L'aiguillage est celui du socle — `AuthGate`, sur le client que
+ * `AuthProvider` tient dans `App.tsx` — et les écrans restent d'ici : le socle
+ * n'en fournit aucun, ce sont des décisions de produit. Une garde d'interface
+ * se contourne dans l'inspecteur ; la sécurité réelle est dans les politiques
+ * RLS, côté serveur.
+ */
 export function PseudoGate({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
+  const { client } = useAuthContext();
+  return (
+    <AuthGate
+      client={client}
+      loading={
+        <div className="shell">
+          <p className="muted">{t('common.loading')}</p>
+        </div>
+      }
+      fallback={<SignInCard />}
+    >
+      {children}
+    </AuthGate>
+  );
+}
+
+/**
+ * Le formulaire de connexion — lien magique, mot de passe, inscription. Les
+ * actions parlent au SDK directement ; leur effet revient par
+ * `onAuthStateChange`, que le port du socle écoute.
+ */
+function SignInCard() {
   const { reportException, reportMessage } = useErrorDialog();
   const { t } = useI18n();
-  const { user, loading } = useAuth();
   const [gateMode, setGateMode] = useState<GateMode>('magic');
 
   const [email, setEmail] = useState('');
@@ -155,173 +187,157 @@ export function PseudoGate({ children }: { children: ReactNode }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="shell">
-        <p className="muted">{t('common.loading')}</p>
-      </div>
-    );
-  }
+  return (
+    <div className="shell">
+      <div className="card stack">
+        <h1>{t('common.appName')}</h1>
+        <p className="muted">{t('auth.intro')}</p>
 
-  if (!user) {
-    return (
-      <div className="shell">
-        <div className="card stack">
-          <h1>{t('common.appName')}</h1>
-          <p className="muted">{t('auth.intro')}</p>
-
-          <div
-            className="auth-gate-tabs row"
-            role="tablist"
-            aria-label={t('auth.methodAria')}
+        <div
+          className="auth-gate-tabs row"
+          role="tablist"
+          aria-label={t('auth.methodAria')}
+        >
+          <button
+            type="button"
+            className={gateMode === 'magic' ? undefined : 'secondary'}
+            role="tab"
+            aria-selected={gateMode === 'magic'}
+            onClick={() => setMode('magic')}
           >
-            <button
-              type="button"
-              className={gateMode === 'magic' ? undefined : 'secondary'}
-              role="tab"
-              aria-selected={gateMode === 'magic'}
-              onClick={() => setMode('magic')}
-            >
-              {t('auth.tabMagic')}
-            </button>
-            <button
-              type="button"
-              className={
-                gateMode === 'password_login' ? undefined : 'secondary'
-              }
-              role="tab"
-              aria-selected={gateMode === 'password_login'}
-              onClick={() => setMode('password_login')}
-            >
-              {t('auth.tabPassword')}
-            </button>
-            <button
-              type="button"
-              className={
-                gateMode === 'password_signup' ? undefined : 'secondary'
-              }
-              role="tab"
-              aria-selected={gateMode === 'password_signup'}
-              onClick={() => setMode('password_signup')}
-            >
-              {t('auth.tabSignup')}
-            </button>
-          </div>
+            {t('auth.tabMagic')}
+          </button>
+          <button
+            type="button"
+            className={gateMode === 'password_login' ? undefined : 'secondary'}
+            role="tab"
+            aria-selected={gateMode === 'password_login'}
+            onClick={() => setMode('password_login')}
+          >
+            {t('auth.tabPassword')}
+          </button>
+          <button
+            type="button"
+            className={gateMode === 'password_signup' ? undefined : 'secondary'}
+            role="tab"
+            aria-selected={gateMode === 'password_signup'}
+            onClick={() => setMode('password_signup')}
+          >
+            {t('auth.tabSignup')}
+          </button>
+        </div>
 
-          {gateMode === 'magic' ? (
-            <form onSubmit={sendMagicLink} className="stack">
-              <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                {t('auth.magicHint')}
+        {gateMode === 'magic' ? (
+          <form onSubmit={sendMagicLink} className="stack">
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              {t('auth.magicHint')}
+            </p>
+            <div>
+              <label htmlFor="gate-email">{t('auth.emailLabel')}</label>
+              <input
+                id="gate-email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder={t('auth.emailPlaceholder')}
+                required
+              />
+            </div>
+            {magicFeedback ? (
+              <p
+                className={
+                  magicFeedback.variant === 'error' ? 'error' : 'muted'
+                }
+              >
+                {magicFeedback.text}
               </p>
+            ) : null}
+            <button type="submit" disabled={busyMagic}>
+              {busyMagic ? t('common.sending') : t('auth.receiveLink')}
+            </button>
+          </form>
+        ) : (
+          <form
+            onSubmit={
+              gateMode === 'password_login'
+                ? signInWithPassword
+                : signUpWithPassword
+            }
+            className="stack"
+          >
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              {gateMode === 'password_login'
+                ? t('auth.loginHint')
+                : t('auth.signupHint')}
+            </p>
+            <div>
+              <label htmlFor="gate-pw-email">{t('auth.emailLabel')}</label>
+              <input
+                id="gate-pw-email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder={t('auth.emailPlaceholder')}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="gate-pw-password">
+                {t('auth.passwordLabel')}
+              </label>
+              <input
+                id="gate-pw-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete={
+                  gateMode === 'password_login'
+                    ? 'current-password'
+                    : 'new-password'
+                }
+                required
+              />
+            </div>
+            {gateMode === 'password_signup' ? (
               <div>
-                <label htmlFor="gate-email">{t('auth.emailLabel')}</label>
-                <input
-                  id="gate-email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  autoComplete="email"
-                  placeholder={t('auth.emailPlaceholder')}
-                  required
-                />
-              </div>
-              {magicFeedback ? (
-                <p
-                  className={
-                    magicFeedback.variant === 'error' ? 'error' : 'muted'
-                  }
-                >
-                  {magicFeedback.text}
-                </p>
-              ) : null}
-              <button type="submit" disabled={busyMagic}>
-                {busyMagic ? t('common.sending') : t('auth.receiveLink')}
-              </button>
-            </form>
-          ) : (
-            <form
-              onSubmit={
-                gateMode === 'password_login'
-                  ? signInWithPassword
-                  : signUpWithPassword
-              }
-              className="stack"
-            >
-              <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                {gateMode === 'password_login'
-                  ? t('auth.loginHint')
-                  : t('auth.signupHint')}
-              </p>
-              <div>
-                <label htmlFor="gate-pw-email">{t('auth.emailLabel')}</label>
-                <input
-                  id="gate-pw-email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  autoComplete="email"
-                  placeholder={t('auth.emailPlaceholder')}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="gate-pw-password">
-                  {t('auth.passwordLabel')}
+                <label htmlFor="gate-pw-confirm">
+                  {t('auth.confirmPasswordLabel')}
                 </label>
                 <input
-                  id="gate-pw-password"
+                  id="gate-pw-confirm"
                   type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  autoComplete={
-                    gateMode === 'password_login'
-                      ? 'current-password'
-                      : 'new-password'
-                  }
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
                   required
                 />
               </div>
-              {gateMode === 'password_signup' ? (
-                <div>
-                  <label htmlFor="gate-pw-confirm">
-                    {t('auth.confirmPasswordLabel')}
-                  </label>
-                  <input
-                    id="gate-pw-confirm"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-              ) : null}
-              {passwordFeedback ? (
-                <p
-                  className={
-                    passwordFeedback.variant === 'error' ? 'error' : 'muted'
-                  }
-                >
-                  {passwordFeedback.text}
-                </p>
-              ) : null}
-              <button type="submit" disabled={busyPassword}>
-                {busyPassword
-                  ? t('auth.pleaseWait')
-                  : gateMode === 'password_login'
-                    ? t('auth.signIn')
-                    : t('auth.createAccount')}
-              </button>
-            </form>
-          )}
+            ) : null}
+            {passwordFeedback ? (
+              <p
+                className={
+                  passwordFeedback.variant === 'error' ? 'error' : 'muted'
+                }
+              >
+                {passwordFeedback.text}
+              </p>
+            ) : null}
+            <button type="submit" disabled={busyPassword}>
+              {busyPassword
+                ? t('auth.pleaseWait')
+                : gateMode === 'password_login'
+                  ? t('auth.signIn')
+                  : t('auth.createAccount')}
+            </button>
+          </form>
+        )}
 
-          <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
-            {t('auth.providerNote')}
-          </p>
-        </div>
+        <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
+          {t('auth.providerNote')}
+        </p>
       </div>
-    );
-  }
-
-  return <>{children}</>;
+    </div>
+  );
 }

@@ -13,6 +13,8 @@ import { OfflineBanner } from './components/OfflineBanner';
 import { UpdateBanner } from './components/UpdateBanner';
 import { HomePage } from './pages/HomePage';
 import { useI18n } from './i18n';
+import { AuthProvider } from '@mister-guiiug/dev-pwa-config/react/auth-provider';
+import { authAdapter } from './lib/authAdapter';
 
 // CHAQUE IMPORT D'UNE PAGE PRÉCHARGÉE EST NOMMÉ, parce qu'il sert DEUX FOIS : à
 // `lazy` ci-dessous, et au préchargement à l'inactivité de
@@ -103,29 +105,40 @@ export default function App() {
               pseudo, ce qui est déjà une écriture réseau : être prévenu AVANT
               d'essayer vaut mieux qu'un formulaire qui échoue. */}
           <OfflineBanner />
-          <PseudoGate>
-            <WorkspaceChromeProvider>
-              <TrustBanner />
-              <TopBar />
-              <main className="app-main" id="contenu-principal" tabIndex={-1}>
-                <Suspense fallback={<RouteFallback />}>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route
-                      path="/assistant"
-                      element={<AssistantWelcomePage />}
-                    />
-                    <Route
-                      path="/parametres"
-                      element={<AccountSettingsPage />}
-                    />
-                    <Route path="/w/:workspaceId" element={<WorkspacePage />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </Suspense>
-              </main>
-            </WorkspaceChromeProvider>
-          </PseudoGate>
+          {/* LA SESSION, LUE UNE FOIS POUR TOUS. `authAdapter()` demande le
+              client Supabase ICI, pendant le rendu — sous l'ErrorBoundary de
+              main.tsx : sans configuration, c'est elle qui affiche l'erreur,
+              pas un écran blanc. Un adaptateur mémorisé, donc un seul client
+              du port et un seul abonnement `onAuthStateChange`, là où chaque
+              écran ouvrait le sien. */}
+          <AuthProvider adapter={authAdapter()}>
+            <PseudoGate>
+              <WorkspaceChromeProvider>
+                <TrustBanner />
+                <TopBar />
+                <main className="app-main" id="contenu-principal" tabIndex={-1}>
+                  <Suspense fallback={<RouteFallback />}>
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route
+                        path="/assistant"
+                        element={<AssistantWelcomePage />}
+                      />
+                      <Route
+                        path="/parametres"
+                        element={<AccountSettingsPage />}
+                      />
+                      <Route
+                        path="/w/:workspaceId"
+                        element={<WorkspacePage />}
+                      />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </Suspense>
+                </main>
+              </WorkspaceChromeProvider>
+            </PseudoGate>
+          </AuthProvider>
           <ConsentBanner
             posthogKey={import.meta.env.VITE_POSTHOG_KEY}
             loader={() => import('posthog-js/dist/module.slim.js')}
