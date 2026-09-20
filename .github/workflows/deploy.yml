@@ -32,7 +32,7 @@ jobs:
       - uses: mister-guiiug/dev-pwa-config/.github/actions/supabase-migrate@v6
         with:
           access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          project-id: ${{ secrets.SUPABASE_PROJECT_ID }}
+          project-id: ${{ vars.SUPABASE_PROJECT_ID }}
           db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
   # ── Build frontend ──────────────────────────────────────────────────────────
@@ -50,8 +50,8 @@ jobs:
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_PUBLIC_SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           # SANS CETTE LIGNE, SENTRY EST ÉTEINT — et sans le dire. `main.tsx`
           # appelle `initSentry({ dsn: import.meta.env.VITE_SENTRY_DSN })`, et
           # `initSentry` sort sur `if (!dsn) return null`. Le secret existait
