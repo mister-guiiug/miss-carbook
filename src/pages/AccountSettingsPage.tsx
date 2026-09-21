@@ -447,14 +447,19 @@ export function AccountSettingsPage() {
             suppression de compte en cherchant à changer de thème. */}
         <DangerZoneCard />
 
-        <section
-          className="card stack settings-card mc-family"
-          aria-labelledby="settings-family-heading"
-        >
+        {/* Pas d'`aria-labelledby` ici : il visait `settings-family-heading`,
+            un id qui n'existe dans aucun fichier — la section restait donc
+            ANONYME. Le composant rend lui-même une `<section>` nommée par son
+            `aria-label`, ce qui suffit et ne peut pas se désaccorder. */}
+        <section className="card stack settings-card mc-family">
           <FamilyApps
             currentAppId="miss-carbook"
             showSource={false}
             showSponsor={false}
+            // Une colonne, sur demande : l'app refaisait la grille en flex.
+            layout="list"
+            // Dix-neuf cartes d'affilée : repliées par catégorie, sept lignes.
+            groupBy="category"
             labels={{ otherApps: t('account.otherApps') }}
           />
         </section>
