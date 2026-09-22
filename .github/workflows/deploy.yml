@@ -27,7 +27,7 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: mister-guiiug/dev-pwa-config/.github/actions/supabase-migrate@v6
         with:
@@ -40,7 +40,7 @@ jobs:
     needs: migrate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: mister-guiiug/dev-pwa-config/.github/actions/setup-pwa@v6
         with:
