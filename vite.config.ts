@@ -134,6 +134,7 @@ export default defineConfig(({ command }) => ({
     // CSP doit hacher après coup ; et il écrit version.json au build.
     versionPlugin({ manifest: true }),
     pwaSeoPlugin({
+      logoPath: '/pwa-512.png',
       // Deux <meta name="theme-color"> par schéma : la barre du navigateur suit
       // le mode sombre dès le premier rendu (relevé du 02/09/2026 : 5 apps sur 16).
       themeColor: { light: '#f8fafc', dark: '#0f172a' },
