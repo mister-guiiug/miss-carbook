@@ -21,13 +21,20 @@ permissions:
   id-token: write
   packages: read
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
+# PAS DE `concurrency` AU NIVEAU DU WORKFLOW. Le réutilisable prend déjà le
+# groupe `pages` pour lui-même : un appelant qui le prend aussi attend ce que
+# l'appelé veut obtenir, et GitHub rejette le run au démarrage (« workflow file
+# issue ») — sur `push`, sans même en lister un. C'est ce qui a empêché le
+# premier déploiement par le réutilisable, le 25/09/2026.
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    # Les migrations dans leur propre file, et SANS annulation : une seconde
+    # poussée attend la fin de la première au lieu de l'interrompre à mi-schéma.
+    concurrency:
+      group: supabase-migrate
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
       - uses: mister-guiiug/dev-pwa-config/.github/actions/supabase-migrate@v6
