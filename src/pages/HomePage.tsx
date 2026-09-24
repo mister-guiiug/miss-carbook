@@ -17,6 +17,7 @@ import {
   workspaceCreateSchema,
 } from '../lib/validation/schemas';
 import { useI18n } from '../i18n';
+import { SiteFooter } from '../components/SiteFooter';
 
 type Row = {
   workspace_id: string;
@@ -371,6 +372,10 @@ export function HomePage() {
           n'existe pas, donne la marche à suivre. Cadence du socle : au premier
           lancement, puis une fois par mois, trois fois. */}
       <PwaInstallPrompt />
+
+      {/* Le code source et le soutien : ici et dans les Paramètres, nulle
+          part ailleurs (règle famille du 06/09/2026). */}
+      <SiteFooter />
     </div>
   );
 }
