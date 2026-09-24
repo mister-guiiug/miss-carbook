@@ -6,7 +6,6 @@ import { ErrorDialogProvider } from './contexts/ErrorDialogContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { WorkspaceChromeProvider } from './contexts/WorkspaceChromeProvider';
 import { PseudoGate } from './components/PseudoGate';
-import { SiteFooter } from './components/SiteFooter';
 import { TrustBanner } from './components/TrustBanner';
 import { TopBar } from './components/TopBar';
 import { OfflineBanner } from './components/OfflineBanner';
@@ -143,7 +142,9 @@ export default function App() {
             posthogKey={import.meta.env.VITE_POSTHOG_KEY}
             loader={() => import('posthog-js/dist/module.slim.js')}
           />
-          <SiteFooter />
+          {/* PAS DE PIED DE PAGE ICI : la règle famille (06/09/2026) le veut
+              sur l'accueil et les Paramètres seulement — voir HomePage et
+              AccountSettingsPage. */}
           <UpdateBanner />
         </div>
       </ToastProvider>

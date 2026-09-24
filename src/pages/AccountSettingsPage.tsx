@@ -26,6 +26,7 @@ import {
   type ThemePreference,
 } from '@mister-guiiug/dev-pwa-config/react';
 import { useI18n } from '../i18n';
+import { SiteFooter } from '../components/SiteFooter';
 
 export function AccountSettingsPage() {
   const navigate = useNavigate();
@@ -464,6 +465,10 @@ export function AccountSettingsPage() {
           />
         </section>
       </div>
+
+      {/* Le code source et le soutien : ici et sur l'accueil, nulle part
+          ailleurs (règle famille du 06/09/2026). */}
+      <SiteFooter />
     </div>
   );
 }

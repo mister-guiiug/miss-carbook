@@ -29,14 +29,14 @@
     "_pourquoiPreload": "Reposé le 16/09/2026 sur les mesures de la CI, pas du poste : un build local n’a pas les VITE_* de backend, le SDK correspondant disparaît du bundle et le total est SOUS-ESTIMÉ. Mesuré en CI 575.4 kB au total et 244.8 kB préchargés ; budgets à +10 %. Les valeurs posées depuis le poste (545 et 211) sortaient rouges."
   },
   "dependencies": {
-    "@sentry/react": "^10.75.3",
+    "@sentry/react": "^11.0.0",
     "@supabase/supabase-js": "^2.117.1",
     "jszip": "^3.10.2",
     "posthog-js": "^1.434.11",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4",
-    "recharts": "^2.15.4",
+    "recharts": "^3.10.1",
     "tailwindcss": "^4.3.3",
     "web-vitals": "^6.2.2",
     "zod": "^4.6.5",
@@ -45,9 +45,8 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
-    "@mister-guiiug/dev-pwa-config": "^6.13.0",
+    "@mister-guiiug/dev-pwa-config": "^6.15.1",
     "@playwright/test": "^1.63.0",
-    "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
