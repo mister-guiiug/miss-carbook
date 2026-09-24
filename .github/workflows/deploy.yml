@@ -1,6 +1,13 @@
-# Déploiement GitHub Pages avec migrations Supabase préalables.
-# Utilise la composite action setup-pwa pour le checkout/setup-node/install.
-# Le job migrate reste custom (Supabase CLI).
+# Déploiement Pages par le RÉUTILISABLE du socle, et plus à la main.
+#
+# Écrit à la main, ce workflow n'avait ni le repli SPA `404.html`, ni
+# `required-env`, ni la base de chemin calculée — `pwa-doctor` le comptait en
+# dette. Le réutilisable pose lui-même `VITE_BASE_PATH` et
+# `VITE_PUBLIC_SITE_ORIGIN` ; les autres `VITE_*` passent par `build-env`.
+#
+# LES MIGRATIONS PASSENT D'ABORD, dans leur propre tâche : un bundle qui lirait
+# un schéma pas encore migré casserait en production. Le déploiement attend
+# qu'elles aboutissent.
 name: Deploy to GitHub Pages
 
 on:
@@ -19,74 +26,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Migrations Supabase ─────────────────────────────────────────────────────
-  # Secrets à définir dans Settings > Secrets > Actions :
-  #   SUPABASE_ACCESS_TOKEN  : token personnel  https://supabase.com/dashboard/account/tokens
-  #   SUPABASE_PROJECT_ID    : ref du projet    (slug dans l'URL du dashboard)
-  #   SUPABASE_DB_PASSWORD   : mot de passe DB  (défini à la création du projet)
   migrate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
       - uses: mister-guiiug/dev-pwa-config/.github/actions/supabase-migrate@v6
         with:
           access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           project-id: ${{ vars.SUPABASE_PROJECT_ID }}
           db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
-  # ── Build frontend ──────────────────────────────────────────────────────────
-  build:
-    needs: migrate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: mister-guiiug/dev-pwa-config/.github/actions/setup-pwa@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build
-        env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          VITE_PUBLIC_SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-          # SANS CETTE LIGNE, SENTRY EST ÉTEINT — et sans le dire. `main.tsx`
-          # appelle `initSentry({ dsn: import.meta.env.VITE_SENTRY_DSN })`, et
-          # `initSentry` sort sur `if (!dsn) return null`. Le secret existait
-          # depuis le début, mais rien ne l'injectait au build : la variable
-          # valait `undefined`, l'import paresseux de `@sentry/react` ne partait
-          # jamais, et aucune erreur de production n'a été remontée.
-          #
-          # Le budget ne bouge pas (534,6 → 534,7 ko gzip, mesuré) : le morceau
-          # Sentry était DÉJÀ émis et compté. Ce qui change est à l'exécution —
-          # ces 113,7 ko, que personne ne téléchargeait, descendent désormais
-          # chez chaque visiteur, après le premier rendu. C'est le prix de la
-          # supervision, et il est connu : c'est le premier des deux leviers
-          # cités par le `_pourquoi` du budget dans `package.json`.
-          #
-          # ET C'EST UNE VARIABLE, PLUS UN SECRET. Un DSN part dans le bundle
-          # comme toute `VITE_*` : le ranger en secret ne masquait que les
-          # journaux de CI. La preuve tient en une ligne — la valeur du secret
-          # était DÉJÀ lisible dans `.env.example` de ce dépôt, et dans le
-          # bundle servi par GitHub Pages, à l'octet près. Le secret homonyme
-          # peut être supprimé ; il n'est plus lu.
-          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
-          VITE_POSTHOG_KEY: ${{ vars.VITE_POSTHOG_KEY }}
-        run: npm run build
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: dist
-
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+    needs: migrate
+    uses: mister-guiiug/dev-pwa-config/.github/workflows/pwa-deploy.yml@v6
+    with:
+      use-base-path: true
+      build-env: |
+        VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY }}
+        VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+        VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
+      # Sans Supabase, l'app publiée ne sait rien faire : mieux vaut arrêter
+      # le déploiement que publier ce bundle-là.
+      required-env: |
+        VITE_SUPABASE_URL
+        VITE_SUPABASE_ANON_KEY
