@@ -65,7 +65,7 @@ Le modèle B coûte 4 000 € de plus à l'achat, mais 2 700 € de moins sur ci
 
 ## Comment Miss Carbook vous aide
 
-Miss Carbook est un carnet partagé pour choisir un véhicule à plusieurs. Chaque projet est un dossier, que vous ouvrez après connexion et où vous invitez les autres par un code ou par un lien.
+[Miss Carbook](https://mister-guiiug.github.io/miss-carbook/) est un carnet partagé pour choisir un véhicule à plusieurs. Chaque projet est un dossier, que vous ouvrez après connexion et où vous invitez les autres par un code ou par un lien.
 
 - **Des exigences** classées « obligatoire » ou « à discuter », avec un poids facultatif, et le vote MoSCoW de chaque membre.
 - **Des fiches modèles** avec photos, avis et commentaires, et un statut : à voir, essayé, shortlist, sélectionné, exclu.
