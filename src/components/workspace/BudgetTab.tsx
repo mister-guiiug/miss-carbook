@@ -70,6 +70,11 @@ type TCOParams = {
 type TCOResult = {
   candidate_id: string;
   total_tco: number;
+  /**
+   * Chaque poste sur TOUTE la durée de possession. Hors `purchase_price`
+   * (une information : le total compte la dépréciation), leur somme égale
+   * `total_tco` (migration 20260928120000_tco_mensualites.sql).
+   */
   breakdown: {
     purchase_price: number;
     one_time_costs: number;
@@ -1096,10 +1101,13 @@ export function BudgetTab({
                           >
                             {Object.entries(tco.breakdown).map(
                               ([key, value]) => {
-                                if (value === 0) return null;
+                                // Le prix d'achat n'entre pas dans le total
+                                // (la dépréciation le remplace) : il n'a pas
+                                // de part dans la répartition.
+                                if (value === 0 || key === 'purchase_price')
+                                  return null;
                                 const percent = (value / tco.total_tco) * 100;
                                 const colors: Record<string, string> = {
-                                  purchase_price: '#3b82f6',
                                   one_time_costs: '#8b5cf6',
                                   annual_costs: '#10b981',
                                   per_km_costs: '#f59e0b',
@@ -1133,9 +1141,9 @@ export function BudgetTab({
                           >
                             {Object.entries(tco.breakdown).map(
                               ([key, value]) => {
-                                if (value === 0) return null;
+                                if (value === 0 || key === 'purchase_price')
+                                  return null;
                                 const colors: Record<string, string> = {
-                                  purchase_price: '#3b82f6',
                                   one_time_costs: '#8b5cf6',
                                   annual_costs: '#10b981',
                                   per_km_costs: '#f59e0b',
