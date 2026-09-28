@@ -32,20 +32,20 @@ En résumé : **un fil conducteur** de la prise de besoin jusqu’à l’arbitra
 - **Collaboration en direct** : les mises à jour et commentaires se synchronisent entre participants.
 - **Transparence** : exigences, candidats et échanges restent visibles pour les membres du dossier.
 - **Décision progressive** : vous pouvez faire évoluer les poids, les avis (par ex. ce qui est indispensable vs. souhaitable) et la short-list au fil des échanges.
-- **Photos sans métadonnées** : les photos **JPEG** et **WebP** sont ré-encodées dans le navigateur avant d’être envoyées, ce qui retire les données EXIF — dont la **position GPS** du lieu de la prise de vue et le **numéro de série de l’appareil**. Le format est conservé, la définition ramenée à 2560 px au plus. Les PNG et les GIF, qui ne transportent pas ces données, partent tels quels (un GIF animé garde donc son animation).
+- **Photos sans métadonnées** : les photos **JPEG** et **WebP** sont ré-encodées dans le navigateur avant d’être envoyées, ce qui retire les données EXIF — dont la **position GPS** du lieu de la prise de vue et le **numéro de série de l’appareil**. Le format est conservé, la définition ramenée à 2560 px au plus. Les PNG et les GIF de moins de 5 Mo, qui ne transportent pas ces données, partent tels quels (un GIF animé garde donc son animation). Au-delà de 5 Mo, une compression est proposée : l'image part alors en JPEG, et un GIF animé n'en garde que la première image.
 
 ---
 
 ## Guide rapide
 
 1. **Créer un dossier** depuis l’accueil (après connexion par e-mail) : nom, description éventuelle.
-2. **Inviter** depuis les paramètres du dossier : partager le **code** ou le **lien** ; les invités utilisent « Rejoindre avec un code ».
+2. **Inviter** depuis les paramètres du dossier : partager le **code** ou le **lien** ; les invités utilisent la carte _Rejoindre un dossier_ de l’accueil.
 3. **Exigences** : ajouter, filtrer par niveau, ajuster l’ordre d’importance.
 4. **Modèles** : ajouter un candidat ; ouvrir le détail pour la fiche, les avis, les commentaires et les **photos** (taille limitée pour rester fluide).
 5. **Comparer** : sélectionner des modèles et des critères, puis exporter en JSON ou CSV si besoin.
 6. **Sauvegarder et restaurer** : **Réglages** du dossier → **Données** → _Exporter_ produit une archive ZIP ; _Importer un dossier (ZIP)_ la relit. L’import **ajoute**, il n’efface jamais : il restaure les exigences, les modèles (hiérarchie et caractéristiques) et le bloc-notes s’il est vide. Ne sont pas restaurés les photos (l’archive n’en contient que les métadonnées) ni ce qui porte l’identité d’un participant — commentaires, avis, votes, membres, journal.
 
-Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → _Relancer la visite_. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
+Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvrir automatiquement au premier passage sur l’accueil ; vous pouvez aussi la lancer depuis le lien sur l’accueil, la route `/assistant`, ou **Paramètres généraux** → _Lancer la visite d’accueil_. Après **acceptation d’une invitation** ou **création d’un dossier**, de courts écrans expliquent les onglets (réinitialisables comme ci-dessus).
 
 ---
 
@@ -56,8 +56,10 @@ Sur **téléphone** ou **PWA installée**, une **visite guidée** peut s’ouvri
 Ce que la suppression fait des **dossiers partagés**, parce que vous devez le savoir avant de cliquer :
 
 - Un dossier où **quelqu’un reste** n’est pas supprimé : il est **transmis** à un participant restant (un administrateur s’il y en a un, sinon le plus ancien), **promu administrateur** si vous étiez le dernier. Sans cette règle, supprimer le compte de la personne qui a créé le dossier emporterait le dossier entier de ses coéquipiers.
-- Un dossier dont vous étiez le **seul** participant est supprimé avec son contenu : plus personne ne pourrait l’ouvrir.
-- Votre profil, vos avis, commentaires, votes, notes personnelles et photos envoyées partent. Le **journal d’activité** et le **bloc-notes** des dossiers transmis restent, **sans votre nom**.
+- Un dossier dont vous étiez le **seul** participant est supprimé avec son contenu, sauf les fichiers photo, qui restent dans le stockage : plus personne ne pourrait l’ouvrir.
+- Votre profil, vos avis, commentaires, votes et notes personnelles partent, ainsi que la référence de vos photos. **Les fichiers des photos, eux, restent dans le stockage du projet** (limite connue) : ils ne sont plus affichés, mais pas effacés. Le **journal d’activité** et le **bloc-notes** des dossiers transmis restent, **sans votre nom**.
+
+**Ce qui part vers des services tiers** : Sentry (région UE) démarre à l’ouverture, sans consentement préalable, et ne reçoit un rapport technique que lorsqu’une erreur survient. La mesure d’audience (PostHog, nuage européen) ne démarre qu’après votre accord dans le bandeau.
 
 Avant de partir, pensez à **exporter** les dossiers auxquels vous tenez (§ Guide rapide, point 6).
 
@@ -67,7 +69,7 @@ Avant de partir, pensez à **exporter** les dossiers auxquels vous tenez (§ Gui
 
 - L’outil est pensé pour **aider à la décision** entre personnes informées ; il ne remplace pas un essai routier, une expertise mécanique ou des conseils professionnels.
 - Hébergement type **site web classique** : ne placez pas d’informations hautement sensibles (données bancaires, pièces d’identité, etc.) dans les dossiers.
-- Le retrait des métadonnées des photos ne vaut que pour les **nouveaux envois** : les photos déjà présentes dans un dossier n’ont pas été retraitées. Supprimez-les et renvoyez-les si leur position GPS vous gêne.
+- Le retrait des métadonnées des photos ne vaut que pour les **nouveaux envois** : les photos déjà présentes dans un dossier n’ont pas été retraitées. L’application ne permet pas de supprimer une photo seule, et supprimer la fiche qui la porte ne l’efface que de l’écran : le fichier d’origine, métadonnées comprises, reste dans le stockage du projet. Pour l’effacer vraiment, il faut le retirer du bucket `workspace-media` depuis le tableau de bord Supabase (mainteneur).
 
 ---
 
@@ -80,29 +82,30 @@ Voir le fichier `LICENSE` du dépôt.
 <details>
 <summary><strong>Pour les développeurs (installation, base de données, déploiement)</strong></summary>
 
-Application **PWA** (React 19 + Vite 7 + TypeScript strict ES2025) ; front statique compatible **GitHub Pages** ; collaboration via **Supabase** (Auth, Postgres, Realtime, Storage) avec RLS et clé **anon** côté client uniquement.
+Application **PWA** (React 19 + Vite 8 + TypeScript strict ES2025) ; front statique compatible **GitHub Pages** ; collaboration via **Supabase** (Auth, Postgres, Realtime, Storage) avec RLS et clé **anon** côté client uniquement.
 
 ### Stack
 
-| Couche            | Technologie                                                                                                                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework         | [React 19](https://react.dev/) + [react-router-dom 7](https://reactrouter.com/)                                                                                                                       |
-| Build             | [Vite 7](https://vitejs.dev/) (cible ES2025)                                                                                                                                                          |
-| Style             | [Tailwind CSS 4](https://tailwindcss.com/) + CSS classique                                                                                                                                            |
-| State             | [Zustand 5](https://zustand-demo.pmnd.rs/)                                                                                                                                                            |
-| Validation        | [Zod 3](https://zod.dev/)                                                                                                                                                                             |
-| Backend           | [Supabase](https://supabase.com/) (`@supabase/supabase-js`)                                                                                                                                           |
-| Charts            | [Recharts](https://recharts.org/)                                                                                                                                                                     |
-| Tests             | [Vitest 3](https://vitest.dev/) (jsdom) + [Testing Library](https://testing-library.com/) + [Playwright](https://playwright.dev/) + [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) |
-| Monitoring        | [@sentry/react](https://docs.sentry.io/platforms/javascript/guides/react/) + [web-vitals 4](https://web.dev/vitals/)                                                                                  |
-| Configs partagées | [`@mister-guiiug/dev-pwa-config`](../dev-pwa-config/README.md) (ESLint, Prettier, TS, Vitest)                                                                                                         |
-| PWA               | [`vite-plugin-pwa 1.2`](https://vite-pwa-org.netlify.app/) (Workbox `generateSW`)                                                                                                                     |
+| Couche            | Technologie                                                                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework         | [React 19](https://react.dev/) + [react-router-dom 7](https://reactrouter.com/)                                                                                                                                                   |
+| Build             | [Vite 8](https://vitejs.dev/)                                                                                                                                                                                                     |
+| Style             | [Tailwind CSS 4](https://tailwindcss.com/) + CSS classique                                                                                                                                                                        |
+| State             | Contextes React (`src/contexts/`) ; `zustand` est déclaré mais inutilisé                                                                                                                                                          |
+| Validation        | [Zod 4](https://zod.dev/)                                                                                                                                                                                                         |
+| Backend           | [Supabase](https://supabase.com/) (`@supabase/supabase-js`)                                                                                                                                                                       |
+| Charts            | [Recharts](https://recharts.org/)                                                                                                                                                                                                 |
+| Tests             | [Vitest 5](https://vitest.dev/) (jsdom) + [Testing Library](https://testing-library.com/) + [Playwright](https://playwright.dev/) + [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm)                             |
+| Monitoring        | [@sentry/react](https://docs.sentry.io/platforms/javascript/guides/react/) (erreurs) + [posthog-js](https://posthog.com/) (mesure d’audience, après accord) + [web-vitals 6](https://web.dev/vitals/) (console, en développement) |
+| Configs partagées | [`@mister-guiiug/dev-pwa-config`](https://github.com/mister-guiiug/dev-pwa-config#readme) (ESLint, Prettier, TS, Vitest)                                                                                                          |
+| PWA               | [`vite-plugin-pwa 1.3`](https://vite-pwa-org.netlify.app/) (Workbox `generateSW`)                                                                                                                                                 |
 
 Référence déploiement Pages via Actions : [Configurer une source de publication GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow).
 
 ### Prérequis
 
-- Node.js 22+ (voir `.github/workflows`)
+- Node.js 22.22 ou plus (CI et `.nvmrc` : 26.10.0)
+- Un jeton GitHub (droit `read:packages`) dans `NODE_AUTH_TOKEN` : `npm install` tire `@mister-guiiug` de GitHub Packages
 - Un projet Supabase (plan Free acceptable)
 - Compte GitHub (Pages + Actions)
 
@@ -117,11 +120,11 @@ npm run dev
 
 Scripts utiles :
 
-- `npm run build` — `tsc -b && vite build && copy-404` (TS strict + production + SPA Pages)
+- `npm run build` : `tsc -b && vite build && copy-404 && pwa-bundle-budget` (TS strict, production, SPA Pages, budget de poids)
 - `npm run build:analyze` — build avec `rollup-plugin-visualizer` (`dist/stats.html`)
 - `npm run preview` — prévisualiser le build
 - `npm run lint` / `npm run format` / `npm run format:check`
-- `npm run type-check` — `tsc --noEmit` (strict)
+- `npm run type-check` : `tsc -b` (strict)
 - `npm run test` / `npm run test:watch` — Vitest (jsdom + Testing Library)
 - `npm run test:e2e` / `npm run test:e2e:ui` — Playwright
 - `npm run gen:types` — régénère `src/types/database.gen.ts` depuis le projet **Supabase lié** (`supabase link`). Fichier ignoré par git : comparer ou fusionner avec `src/types/database.ts` à la main après migration.
@@ -140,6 +143,8 @@ Scripts utiles :
 | `VITE_SUPABASE_URL`      | URL du projet (`https://xxx.supabase.co`)                     |
 | `VITE_SUPABASE_ANON_KEY` | Clé **anon** publique (compatible navigateur)                 |
 | `VITE_BASE_PATH`         | Chemin de base (ex. `/nom-du-repo/` sur Pages ; `/` en local) |
+| `VITE_SENTRY_DSN`        | DSN Sentry ; absent, aucun rapport d’erreur ne part           |
+| `VITE_POSTHOG_KEY`       | Clé PostHog (nuage UE) ; absente, ni bandeau ni mesure        |
 
 **Ne jamais** exposer la clé `service_role` ni d’autres secrets dans le dépôt ou le bundle.
 
@@ -149,14 +154,14 @@ Scripts utiles :
 
 Dans **Authentication → Providers** :
 
-- Activer **Email** (lien magique / OTP, sans mot de passe côté app).
+- Activer **Email** : l’application propose le lien magique (OTP) et la connexion par mot de passe, avec création de compte.
 - **Désactiver Anonymous sign-ins** (l’application ne crée plus de session anonyme).
 
 Dans **Authentication → URL Configuration**, renseigner **Site URL** et **Redirect URLs** pour votre déploiement (ex. `https://<user>.github.io/<repo>/` et variantes avec / sans slash final, plus `http://localhost:5173/` en local).
 
 #### 2. Schéma SQL
 
-Exécuter les migrations **dans cet ordre** (SQL Editor ou [Supabase CLI](https://supabase.com/docs/guides/cli)) :
+Toutes les migrations de `supabase/migrations/` (24 fichiers) s’appliquent dans l’ordre de leur horodatage : `supabase db push`, ou le job `migrate` de `deploy.yml`, qui les pousse avant chaque déploiement. Pour une base montée à la main, les exécuter toutes dans cet ordre (SQL Editor ou [Supabase CLI](https://supabase.com/docs/guides/cli)). Les premières :
 
 1. `supabase/migrations/20260414000000_initial_schema.sql` — schéma de base, RLS, `join_workspace`, Realtime, Storage.
 2. `supabase/migrations/20260414180000_fix_workspace_members_first_insert_rls.sql` — correctif RLS pour la première insertion membre à la création d’un dossier.
@@ -177,7 +182,7 @@ npm run test:account:remote    # migration déjà poussée
 
 **Remise à zéro complète (manuel)** : le fichier `supabase/scripts/reset_all_data_and_auth.sql` vide les tables métier, supprime les objets Storage du bucket `workspace-media` et **tous les comptes Auth**. À exécuter **à la main** dans le SQL Editor (il n’est **pas** dans `migrations/` pour éviter qu’un `supabase db push` automatique ne détruise une base en production).
 
-**Nouveaux comptes** : le trigger crée une ligne `profiles` avec un pseudo dérivé de la partie locale de l’e-mail (ou un identifiant `u_…` si collision). L’utilisateur peut changer son pseudo depuis l’accueil.
+**Nouveaux comptes** : le trigger crée une ligne `profiles` avec un pseudo dérivé de la partie locale de l’e-mail (ou un identifiant `u_…` si collision). L’utilisateur peut changer son pseudo dans **Paramètres généraux** → _Pseudo_.
 
 **CI / `supabase db push`** : les fichiers du dossier `supabase/migrations/` sont rédigés pour être **ré-appliquables** si la base a déjà été créée via le SQL Editor (types / tables / policies déjà présents). Si le schéma distant est à jour mais que l’historique `supabase_migrations` ne l’est pas, on peut aussi marquer des versions comme déjà appliquées sans les ré-exécuter : `supabase migration repair --status applied <version>` (voir la doc CLI).
 
@@ -205,14 +210,14 @@ Chemins Storage conseillés : `{workspace_id}/{candidate_id}/{uuid}-{nomfichier}
 ### Déploiement GitHub Pages
 
 1. **Réglages du dépôt** → **Pages** → Source : **GitHub Actions**.
-2. Ajouter les secrets du dépôt : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-3. Le workflow `.github/workflows/deploy.yml` définit `VITE_BASE_PATH: /${{ github.event.repository.name }}/` pour l’URL `https://<user>.github.io/<repo>/`.
+2. Poser les **variables** `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (requises : le déploiement s’arrête sans elles), `SUPABASE_PROJECT_ID`, et en option `VITE_SENTRY_DSN` et `VITE_POSTHOG_KEY` ; puis les **secrets** `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD`, sans lesquels le job `migrate`, préalable au déploiement, échoue.
+3. `.github/workflows/deploy.yml` appelle le workflow réutilisable `pwa-deploy.yml` du socle avec `use-base-path: true`, qui pose `VITE_BASE_PATH=/<repo>/` pour l’URL `https://<user>.github.io/<repo>/`.
 
-Site utilisateur `https://<user>.github.io` à la racine : adapter le workflow (par ex. `VITE_BASE_PATH: /`) et la config du dépôt Pages.
+Site utilisateur `https://<user>.github.io` à la racine : passer `use-base-path: false`, et adapter la config du dépôt Pages.
 
 ### PWA & cache
 
-- **Manifest** et **icônes** : générés par `vite-plugin-pwa` (voir `vite.config.ts`).
+- **Manifest** : généré par `vite-plugin-pwa` (voir `vite.config.ts`). **Icônes** : PNG de `public/`, rendus depuis `public/favicon.svg` par `npm run icons`.
 - **Service worker** : Workbox en mode `generateSW`, précache de l’app shell.
 - **API Supabase** : stratégie **NetworkFirst** (documentée dans `vite.config.ts` — délai réseau puis cache).
 - **Page offline** : `public/offline.html` (incluse dans les assets) ; la coque peut s’afficher hors ligne, les données live nécessitent le réseau.
