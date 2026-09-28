@@ -59,7 +59,7 @@ Ce que la suppression fait des **dossiers partagés**, parce que vous devez le s
 - Un dossier dont vous étiez le **seul** participant est supprimé avec son contenu, sauf les fichiers photo, qui restent dans le stockage : plus personne ne pourrait l’ouvrir.
 - Votre profil, vos avis, commentaires, votes et notes personnelles partent, ainsi que la référence de vos photos. **Les fichiers des photos, eux, restent dans le stockage du projet** (limite connue) : ils ne sont plus affichés, mais pas effacés. Le **journal d’activité** et le **bloc-notes** des dossiers transmis restent, **sans votre nom**.
 
-**Ce qui part vers des services tiers** : Sentry (région UE) démarre à l’ouverture, sans consentement préalable : il signale la session et reçoit un rapport technique quand une erreur survient. La mesure d’audience (PostHog, nuage européen) ne démarre qu’après votre accord dans le bandeau.
+**Ce qui part vers des services tiers** : Sentry (région UE) démarre à l’ouverture, sans consentement préalable, et ne reçoit un rapport technique que lorsqu’une erreur survient. La mesure d’audience (PostHog, nuage européen) ne démarre qu’après votre accord dans le bandeau.
 
 Avant de partir, pensez à **exporter** les dossiers auxquels vous tenez (§ Guide rapide, point 6).
 
