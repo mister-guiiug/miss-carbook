@@ -2,6 +2,7 @@
 title: Coût total d'une voiture (TCO) : le calcul, poste par poste
 description: Calculer le coût total de possession d'une voiture : perte de valeur, énergie, assurance, entretien, immatriculation, crédit. Méthode, exemple, coût au km.
 date: 2026-09-29
+updated: 2026-09-30
 answer: Le coût total de possession d'une voiture additionne, sur toute la durée où vous la gardez, la perte de valeur, l'énergie, l'assurance, l'entretien, l'immatriculation et le coût du crédit. Divisé par les kilomètres parcourus, il donne un coût au kilomètre : dans notre exemple sur 60 000 km, environ 0,44 € pour l'essence et 0,43 € pour l'électrique.
 ---
 
@@ -49,10 +50,11 @@ Pour comparer deux offres, regardez le TAEG : il représente le coût total du c
 
 [Miss Carbook](https://mister-guiiug.github.io/miss-carbook/) est un carnet partagé pour choisir un véhicule à plusieurs. Son onglet Budget et TCO fait ce calcul pour chaque modèle du dossier.
 
-- **Les paramètres** : kilométrage annuel, durée de possession, assurance par an, valeur résiduelle en pourcentage du prix, taux du crédit.
-- **Des frais propres à chaque modèle** : uniques, mensuels, annuels ou au kilomètre. L'énergie peut y entrer comme un coût au kilomètre : 6 litres aux 100 km à 1,80 € font 0,108 € par kilomètre.
-- **Un détail qui s'additionne** : dépréciation, frais uniques, récurrents et au kilomètre, assurance et financement, jusqu'au total sur la durée.
-- **Des hypothèses à connaître** : sans valeur résiduelle saisie, l'application applique une décote de 15 % par an ; quand vous saisissez un taux, le crédit est calculé sur le prix entier, sur 60 mois. Avec un apport, le coût du financement est donc surestimé.
+- **Les paramètres** : kilométrage annuel, durée de possession, assurance par an, prix du litre de carburant et du kWh, valeur résiduelle en pourcentage du prix, taux du crédit.
+- **L'énergie, calculée pour vous** : l'application reprend la consommation saisie dans les données constructeur du modèle, en litres ou en kWh aux 100 km, et la multiplie par les kilomètres parcourus et par le prix de l'énergie. Pour une hybride rechargeable, saisissez ses deux consommations pondérées, en carburant et en électricité : elles s'additionnent.
+- **Des frais propres à chaque modèle** : uniques, mensuels, annuels ou au kilomètre, comme l'entretien, les pneus ou le stationnement. N'y ajoutez pas l'énergie : elle serait comptée deux fois.
+- **Un détail qui s'additionne** : dépréciation, énergie, frais uniques, récurrents et au kilomètre, assurance et financement, jusqu'au total sur la durée.
+- **Des hypothèses à connaître** : sans prix saisi, l'énergie est comptée à 1,80 € le litre et à 0,22 € le kWh, et seulement une fois les paramètres du modèle enregistrés. Sans valeur résiduelle saisie, l'application applique une décote de 15 % par an. Quand vous saisissez un taux, le crédit est calculé sur le prix entier, sur 60 mois : avec un apport, le coût du financement est donc surestimé. Enfin, les frais communs à tous les modèles n'entrent dans le TCO d'aucun d'eux.
 
 ## Questions fréquentes
 

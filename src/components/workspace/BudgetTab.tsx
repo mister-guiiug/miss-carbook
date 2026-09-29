@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import { formatPriceEur } from '../../lib/formatPrice';
 import { getSupabase } from '../../lib/supabase';
+import {
+  hasTcoEnergyConsumption,
+  specsOfRelation,
+  tcoEnergyConsumption,
+} from '../../lib/tcoEnergy';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import type { CandidateStatus } from '../../types/database';
@@ -28,6 +33,8 @@ type Cand = {
   parent_candidate_id: string | null;
   status: CandidateStatus;
   price: number | null;
+  /** Les données constructeur, d'où le poste énergie tire les consommations. */
+  candidate_specs?: unknown;
 };
 
 type BudgetCategory = {
@@ -80,6 +87,10 @@ type TCOResult = {
     one_time_costs: number;
     annual_costs: number;
     per_km_costs: number;
+    /**
+     * L'énergie, carburant ET électricité, tirée des consommations des
+     * données constructeur (migration 20260930120000_tco_energie.sql).
+     */
     fuel_cost: number;
     insurance_cost: number;
     depreciation: number;
@@ -148,6 +159,7 @@ export function BudgetTab({
   const [tcoOwnershipYears, setTcoOwnershipYears] = useState('5');
   const [tcoInsuranceCost, setTcoInsuranceCost] = useState('');
   const [tcoFuelPrice, setTcoFuelPrice] = useState('');
+  const [tcoElectricityPrice, setTcoElectricityPrice] = useState('');
   const [tcoResidualValue, setTcoResidualValue] = useState('');
   const [tcoLoanRate, setTcoLoanRate] = useState('');
   const [tcoLoanMonths, setTcoLoanMonths] = useState('');
@@ -156,7 +168,9 @@ export function BudgetTab({
     const [c, cat, i, tcoRes] = await Promise.all([
       getSupabase()
         .from('candidates')
-        .select('id, brand, model, trim, parent_candidate_id, status, price')
+        .select(
+          'id, brand, model, trim, parent_candidate_id, status, price, candidate_specs ( specs )'
+        )
         .eq('workspace_id', workspaceId)
         .order('parent_candidate_id', { ascending: true, nullsFirst: true })
         .order('sort_order', { ascending: true }),
@@ -295,7 +309,9 @@ export function BudgetTab({
           ? parseFloat(tcoInsuranceCost) || null
           : null,
         fuel_price: tcoFuelPrice ? parseFloat(tcoFuelPrice) || null : null,
-        electricity_price: null,
+        electricity_price: tcoElectricityPrice
+          ? parseFloat(tcoElectricityPrice) || null
+          : null,
         residual_value_percent: tcoResidualValue
           ? parseFloat(tcoResidualValue) || null
           : null,
@@ -321,6 +337,9 @@ export function BudgetTab({
       existing?.insurance_cost ? String(existing.insurance_cost) : ''
     );
     setTcoFuelPrice(existing?.fuel_price ? String(existing.fuel_price) : '');
+    setTcoElectricityPrice(
+      existing?.electricity_price ? String(existing.electricity_price) : ''
+    );
     setTcoResidualValue(
       existing?.residual_value_percent
         ? String(existing.residual_value_percent)
@@ -344,6 +363,17 @@ export function BudgetTab({
       currency: 'EUR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Un coût au kilomètre se lit au centime : arrondi à l'euro comme les
+  // totaux, 0,108 € s'affichait « 0 € ».
+  const formatCurrencyPerKm = (amount: number) => {
+    return new Intl.NumberFormat(getDefaultLocale(), {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -718,6 +748,15 @@ export function BudgetTab({
               {candidates.map(cand => {
                 const tco = tcoResults[cand.id];
                 const editing = editingTcoCandidate === cand.id;
+                // Ce que la base compte en énergie, pour dire pourquoi ce
+                // poste vaut 0 : pas de consommation dans la fiche, ou pas
+                // encore de paramètres enregistrés (voir tcoEnergy.ts).
+                const hasEnergyConsumption = hasTcoEnergyConsumption(
+                  tcoEnergyConsumption(specsOfRelation(cand.candidate_specs))
+                );
+                const hasTcoParams = tcoParams.some(
+                  p => p.candidate_id === cand.id
+                );
 
                 return (
                   <div
@@ -816,8 +855,11 @@ export function BudgetTab({
                           style={{ flexWrap: 'wrap', gap: '1rem' }}
                         >
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.annualKmLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-annual-km`}>
+                              {t('budget.tco.annualKmLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-annual-km`}
                               type="number"
                               min="0"
                               max="100000"
@@ -826,8 +868,11 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.durationLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-years`}>
+                              {t('budget.tco.durationLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-years`}
                               type="number"
                               min="1"
                               max="15"
@@ -838,8 +883,11 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.insuranceLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-insurance`}>
+                              {t('budget.tco.insuranceLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-insurance`}
                               type="number"
                               min="0"
                               step="0.01"
@@ -851,19 +899,43 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.fuelPriceLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-fuel-price`}>
+                              {t('budget.tco.fuelPriceLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-fuel-price`}
                               type="number"
                               min="0"
                               step="0.001"
                               value={tcoFuelPrice}
                               onChange={e => setTcoFuelPrice(e.target.value)}
-                              placeholder={t('common.optional')}
+                              placeholder={t('budget.tco.fuelPricePlaceholder')}
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.residualValueLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-electricity-price`}>
+                              {t('budget.tco.electricityPriceLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-electricity-price`}
+                              type="number"
+                              min="0"
+                              step="0.001"
+                              value={tcoElectricityPrice}
+                              onChange={e =>
+                                setTcoElectricityPrice(e.target.value)
+                              }
+                              placeholder={t(
+                                'budget.tco.electricityPricePlaceholder'
+                              )}
+                            />
+                          </div>
+                          <div style={{ flex: '1 1 150px' }}>
+                            <label htmlFor={`tco-${cand.id}-residual`}>
+                              {t('budget.tco.residualValueLabel')}
+                            </label>
+                            <input
+                              id={`tco-${cand.id}-residual`}
                               type="number"
                               min="0"
                               max="100"
@@ -876,8 +948,11 @@ export function BudgetTab({
                             />
                           </div>
                           <div style={{ flex: '1 1 150px' }}>
-                            <label>{t('budget.tco.loanRateLabel')}</label>
+                            <label htmlFor={`tco-${cand.id}-loan-rate`}>
+                              {t('budget.tco.loanRateLabel')}
+                            </label>
                             <input
+                              id={`tco-${cand.id}-loan-rate`}
                               type="number"
                               min="0"
                               max="20"
@@ -888,6 +963,12 @@ export function BudgetTab({
                             />
                           </div>
                         </div>
+                        <p
+                          className="muted"
+                          style={{ margin: 0, fontSize: '0.85rem' }}
+                        >
+                          {t('budget.tco.energyHint')}
+                        </p>
                         <div className="row icon-action-toolbar">
                           <button
                             type="button"
@@ -998,7 +1079,7 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.85rem' }}
                             >
-                              {t('budget.tco.fuel')}
+                              {t('budget.tco.energy')}
                             </div>
                             <div
                               style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -1009,12 +1090,18 @@ export function BudgetTab({
                               className="muted"
                               style={{ fontSize: '0.8rem' }}
                             >
-                              {t('budget.tco.perKm', {
-                                amount: formatCurrency(
-                                  tco.breakdown.fuel_cost /
-                                    tco.parameters.total_km
-                                ),
-                              })}
+                              {!hasEnergyConsumption
+                                ? t('budget.tco.energyNoConsumption')
+                                : !hasTcoParams
+                                  ? t('budget.tco.energyNeedsParameters')
+                                  : t('budget.tco.perKm', {
+                                      amount: formatCurrencyPerKm(
+                                        tco.parameters.total_km > 0
+                                          ? tco.breakdown.fuel_cost /
+                                              tco.parameters.total_km
+                                          : 0
+                                      ),
+                                    })}
                             </div>
                           </div>
                           <div
