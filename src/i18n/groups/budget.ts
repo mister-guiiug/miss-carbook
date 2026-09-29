@@ -64,6 +64,11 @@ export const budgetFr = {
     electricityPricePlaceholder: 'Par défaut : 0,22',
     residualValueLabel: 'Valeur résiduelle (%)',
     loanRateLabel: 'Taux crédit (%)',
+    loanMonthsLabel: 'Durée du crédit (mois)',
+    // La durée par défaut de `calculate_candidate_tco`.
+    loanMonthsPlaceholder: 'Par défaut : 60',
+    loanMonthsInvalid:
+      'La durée du crédit doit être un nombre entier de mois, de {min} à {max}.',
     energyHint:
       "L'énergie vient des consommations saisies dans les données constructeur du modèle (onglet Modèles) : les litres au prix du carburant, les kWh au prix de l'électricité, les deux pour une hybride rechargeable.",
     calculate: 'Calculer le TCO',
@@ -148,6 +153,10 @@ export const budgetEn = {
     electricityPricePlaceholder: 'Default: 0.22',
     residualValueLabel: 'Residual value (%)',
     loanRateLabel: 'Loan rate (%)',
+    loanMonthsLabel: 'Loan term (months)',
+    loanMonthsPlaceholder: 'Default: 60',
+    loanMonthsInvalid:
+      'The loan term must be a whole number of months, from {min} to {max}.',
     energyHint:
       "Energy comes from the consumption entered in the model's manufacturer data (Models tab): litres at the fuel price, kWh at the electricity price, both for a plug-in hybrid.",
     calculate: 'Calculate TCO',

@@ -50,11 +50,11 @@ Pour comparer deux offres, regardez le TAEG : il représente le coût total du c
 
 [Miss Carbook](https://mister-guiiug.github.io/miss-carbook/) est un carnet partagé pour choisir un véhicule à plusieurs. Son onglet Budget et TCO fait ce calcul pour chaque modèle du dossier.
 
-- **Les paramètres** : kilométrage annuel, durée de possession, assurance par an, prix du litre de carburant et du kWh, valeur résiduelle en pourcentage du prix, taux du crédit.
+- **Les paramètres** : kilométrage annuel, durée de possession, assurance par an, prix du litre de carburant et du kWh, valeur résiduelle en pourcentage du prix, taux et durée du crédit.
 - **L'énergie, calculée pour vous** : l'application reprend la consommation saisie dans les données constructeur du modèle, en litres ou en kWh aux 100 km, et la multiplie par les kilomètres parcourus et par le prix de l'énergie. Pour une hybride rechargeable, saisissez ses deux consommations pondérées, en carburant et en électricité : elles s'additionnent.
 - **Des frais propres à chaque modèle** : uniques, mensuels, annuels ou au kilomètre, comme l'entretien, les pneus ou le stationnement. N'y ajoutez pas l'énergie : elle serait comptée deux fois.
 - **Un détail qui s'additionne** : dépréciation, énergie, frais uniques, récurrents et au kilomètre, assurance et financement, jusqu'au total sur la durée.
-- **Des hypothèses à connaître** : sans prix saisi, l'énergie est comptée à 1,80 € le litre et à 0,22 € le kWh, et seulement une fois les paramètres du modèle enregistrés. Sans valeur résiduelle saisie, l'application applique une décote de 15 % par an. Quand vous saisissez un taux, le crédit est calculé sur le prix entier, sur 60 mois : avec un apport, le coût du financement est donc surestimé. Enfin, les frais communs à tous les modèles n'entrent dans le TCO d'aucun d'eux.
+- **Des hypothèses à connaître** : sans prix saisi, l'énergie est comptée à 1,80 € le litre et à 0,22 € le kWh, et seulement une fois les paramètres du modèle enregistrés. Sans valeur résiduelle saisie, l'application applique une décote de 15 % par an. Quand vous saisissez un taux, le crédit est calculé sur le prix entier, sur la durée saisie, ou sur 60 mois si vous n'en saisissez aucune : avec un apport, le coût du financement est donc surestimé. Enfin, les frais communs à tous les modèles n'entrent dans le TCO d'aucun d'eux.
 
 ## Questions fréquentes
 

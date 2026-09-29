@@ -113,6 +113,13 @@ const CATEGORY_COLORS = {
   info: 'var(--info-light)',
 };
 
+/**
+ * Bornes de la durée du crédit : la contrainte de `tco_parameters.loan_months`
+ * (20260424150000_budget_tco.sql). Vide, la base compte 60 mois.
+ */
+const LOAN_MONTHS_MIN = 12;
+const LOAN_MONTHS_MAX = 96;
+
 export function BudgetTab({
   workspaceId,
   canWrite,
@@ -121,7 +128,7 @@ export function BudgetTab({
   canWrite: boolean;
 }) {
   const { t } = useI18n();
-  const { reportException } = useErrorDialog();
+  const { reportException, reportMessage } = useErrorDialog();
   const { showToast } = useToast();
   const frequencyLabels: Record<
     'one_time' | 'monthly' | 'annual' | 'per_km',
@@ -296,6 +303,27 @@ export function BudgetTab({
 
   const saveTcoParams = async (candidateId: string) => {
     if (!canWrite) return;
+    // Vérifiée ici, et non laissée à la base : son refus (contrainte, 23514)
+    // s'afficherait « Pseudo refusé par la base », `formatProfileSaveError`
+    // prenant toute violation de contrainte pour une erreur de profil.
+    const loanMonths =
+      tcoLoanMonths.trim() === '' ? null : Number(tcoLoanMonths);
+    if (
+      loanMonths !== null &&
+      !(
+        Number.isInteger(loanMonths) &&
+        loanMonths >= LOAN_MONTHS_MIN &&
+        loanMonths <= LOAN_MONTHS_MAX
+      )
+    ) {
+      reportMessage(
+        t('budget.tco.loanMonthsInvalid', {
+          min: LOAN_MONTHS_MIN,
+          max: LOAN_MONTHS_MAX,
+        })
+      );
+      return;
+    }
     const existing = tcoParams.find(t => t.candidate_id === candidateId);
     const { error } = await getSupabase()
       .from('tco_parameters')
@@ -318,7 +346,7 @@ export function BudgetTab({
         loan_interest_rate: tcoLoanRate
           ? parseFloat(tcoLoanRate) || null
           : null,
-        loan_months: tcoLoanMonths ? parseInt(tcoLoanMonths) || null : null,
+        loan_months: loanMonths,
       });
 
     if (error) reportException(error, t('budget.errors.saveTcoParams'));
@@ -960,6 +988,23 @@ export function BudgetTab({
                               value={tcoLoanRate}
                               onChange={e => setTcoLoanRate(e.target.value)}
                               placeholder={t('common.optional')}
+                            />
+                          </div>
+                          <div style={{ flex: '1 1 150px' }}>
+                            <label htmlFor={`tco-${cand.id}-loan-months`}>
+                              {t('budget.tco.loanMonthsLabel')}
+                            </label>
+                            <input
+                              id={`tco-${cand.id}-loan-months`}
+                              type="number"
+                              min={LOAN_MONTHS_MIN}
+                              max={LOAN_MONTHS_MAX}
+                              step="1"
+                              value={tcoLoanMonths}
+                              onChange={e => setTcoLoanMonths(e.target.value)}
+                              placeholder={t(
+                                'budget.tco.loanMonthsPlaceholder'
+                              )}
                             />
                           </div>
                         </div>
