@@ -28,10 +28,13 @@ values
   ('f4444444-4444-4444-8444-444444444444', 'f2222222-2222-4222-8222-222222222222',
    'Marque fictive', 'Mensualité seule', 10000);
 
--- Essence, 6 L/100 km.
+-- Essence, 6 L/100 km, sous la clé qu'écrit l'interface. Ce décor portait
+-- `consumption` et `fuelType`, les clés que lisait la fonction et que
+-- l'interface n'écrit pas ; 20260930120000_tco_energie.sql lit les bonnes
+-- (voir tco_energie.test.sql).
 insert into candidate_specs (candidate_id, specs)
 values ('f3333333-3333-4333-8333-333333333333',
-        '{"consumption": 6, "fuelType": "essence"}');
+        '{"consumptionL100": 6}');
 
 -- Le candidat complet : un poste de chaque fréquence.
 insert into budget_items (workspace_id, candidate_id, name, amount, frequency, created_by)
