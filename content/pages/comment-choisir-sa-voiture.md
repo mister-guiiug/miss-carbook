@@ -1,6 +1,9 @@
 ---
 title: Comment choisir sa voiture : critères, essai et coût réel
 description: Choisir une voiture à plusieurs : fixer ses critères, comparer les modèles, préparer l'essai et calculer le coût total sur cinq ans, avec un exemple chiffré.
+date: 2026-09-25
+updated: 2026-09-29
+answer: Pour choisir une voiture à plusieurs, listez vos critères et classez-les, de l'indispensable au superflu, présélectionnez trois à six modèles, comparez-les avec une grille pondérée, préparez l'essai, puis calculez le coût total sur la durée de possession : dans notre exemple sur cinq ans, le modèle le plus cher à l'achat revient 2 700 € moins cher.
 ---
 
 # Comment choisir sa voiture : critères, comparaison et coût total
@@ -61,7 +64,7 @@ Exemple avec des chiffres fictifs, sur 5 ans et 15 000 km par an (75 000 km), ca
 - **Modèle A** : acheté 22 000 €, revendu 8 000 €, 7 litres aux 100 km, assurance 550 € par an, entretien 450 € par an. Perte de valeur 14 000 €, carburant 9 450 €, assurance 2 750 €, entretien 2 250 € : **28 450 €**, soit environ 0,38 € par kilomètre.
 - **Modèle B** : acheté 26 000 €, revendu 12 000 €, 5 litres aux 100 km, assurance 600 € par an, entretien 400 € par an. Perte de valeur 14 000 €, carburant 6 750 €, assurance 3 000 €, entretien 2 000 € : **25 750 €**, soit environ 0,34 € par kilomètre.
 
-Le modèle B coûte 4 000 € de plus à l'achat, mais 2 700 € de moins sur cinq ans.
+Le modèle B coûte 4 000 € de plus à l'achat, mais 2 700 € de moins sur cinq ans. Le calcul complet, avec le crédit, l'immatriculation et l'énergie électrique, est dans [Calculer le coût total d'une voiture](cout-total-de-possession-voiture.html).
 
 ## Comment Miss Carbook vous aide
 
@@ -72,7 +75,7 @@ Le modèle B coûte 4 000 € de plus à l'achat, mais 2 700 € de moins sur ci
 - **Une matrice exigences et modèles** qui calcule un score pondéré à partir des évaluations « OK », « partiel » et « non ».
 - **Une comparaison** avec graphique radar, exportable en CSV ou en JSON, et imprimable.
 - **Des visites et des rappels**, avec une checklist d'essai à cocher pendant la visite.
-- **Un onglet Budget et TCO** qui estime le coût total de chaque modèle à partir du prix, du kilométrage annuel, de la durée, de l'assurance, du carburant, de la valeur de revente et du taux de crédit.
+- **Un onglet Budget et TCO** qui estime le coût total de chaque modèle à partir du prix, du kilométrage annuel, de la durée, de l'assurance, de la valeur de revente, du taux de crédit et des frais que vous ajoutez : uniques, mensuels, annuels ou au kilomètre.
 
 L'outil aide à décider entre personnes informées : il ne remplace ni un essai, ni l'avis d'un professionnel.
 
@@ -93,3 +96,9 @@ Additionnez, sur la durée de possession, la perte de valeur (prix d'achat moins
 ### Miss Carbook demande-t-il un compte ?
 
 Oui. La connexion se fait par e-mail, avec un lien de connexion ou un mot de passe. Les membres d'un dossier voient les mêmes exigences, les mêmes modèles et les mêmes échanges.
+
+## Sources
+
+- [Car Labelling](https://carlabelling.ademe.fr/), ADEME : consommation, coût d'usage aux 100 km et émissions de CO2 des voitures neuves.
+- [Prix des carburants](https://www.prix-carburants.gouv.fr/), site gouvernemental : les prix pratiqués par station.
+- [Qu'est-ce que le taux annuel effectif global (TAEG) ?](https://www.service-public.gouv.fr/particuliers/vosdroits/F2456), service-public.gouv.fr : le coût total d'un crédit.
