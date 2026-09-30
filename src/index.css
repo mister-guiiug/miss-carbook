@@ -1729,6 +1729,13 @@ th {
   box-shadow: 0 -6px 28px rgb(0 0 0 / 0.35);
 }
 
+/* Les gestes, groupés par le socle depuis la 6.21.0, restent au centre avec
+   le titre : le conteneur s'étire par défaut pour aligner les boutons à
+   droite, ce qui défaisait la barre centrée de Carbook. */
+[data-dwc='update-banner-actions'] {
+  flex: 0 1 auto;
+}
+
 /* La règle globale `button` peint TOUT bouton en aplat primaire : le second
    bouton du socle (« Plus tard ») arriverait au même niveau que « Mettre à
    jour ». On le ramène au rendu secondaire, comme `button.secondary`. */
