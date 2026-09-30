@@ -25,6 +25,7 @@ import {
   useThemeContext,
   type ThemePreference,
 } from '@mister-guiiug/dev-pwa-config/react';
+import { ConsentSection } from '@mister-guiiug/dev-pwa-config/react/consent-section';
 import { useI18n } from '../i18n';
 import { SiteFooter } from '../components/SiteFooter';
 
@@ -443,6 +444,16 @@ export function AccountSettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* Revenir sur son choix de mesure d’audience : le retrait se fait
+            ici, en un clic (RGPD, art. 7.3). Mêmes clé et chargeur que le
+            bandeau. */}
+        <ConsentSection
+          posthogKey={import.meta.env.VITE_POSTHOG_KEY}
+          loader={() => import('posthog-js/dist/module.slim.js')}
+          className="card stack settings-card"
+          actionClassName="secondary"
+        />
 
         {/* En DERNIER, après tout ce qui se répare : on ne tombe pas sur la
             suppression de compte en cherchant à changer de thème. */}
