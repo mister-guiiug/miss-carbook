@@ -8,11 +8,12 @@ import {
 } from '@testing-library/react';
 
 /**
- * Le poste énergie du calculateur TCO (migration
- * 20260930120000_tco_energie.sql).
+ * Le poste énergie du calculateur TCO (migrations
+ * 20260930120000_tco_energie.sql et
+ * 20260930140000_tco_energie_sans_parametres.sql).
  *
  * Le montant vient de `calculate_candidate_tco`, simulée ici : sa règle est
- * éprouvée par supabase/tests/tco_energie.test.sql. Ce qui se vérifie ici est
+ * éprouvée par supabase/tests/tco_energie*.test.sql. Ce qui se vérifie ici est
  * ce que l'ÉCRAN en fait : le poste s'appelle « Énergie », son coût au
  * kilomètre se lit au centime, un poste à 0 dit pourquoi, et le prix de
  * l'électricité s'enregistre enfin avec celui du carburant.
@@ -83,7 +84,9 @@ const tco = (candidate_id: string, fuel_cost: number) => ({
 const tcoByCandidate: Record<string, unknown> = {
   essence: tco('essence', 8100),
   vide: tco('vide', 0),
-  electrique: tco('electrique', 0),
+  // Sans paramètres, la base compte l'énergie aux valeurs par défaut :
+  // 16 kWh/100 km × 15 000 km × 0,22 € × 5 ans.
+  electrique: tco('electrique', 2640),
 };
 
 /** Constructeur de requête Supabase minimal : chaînable, et qui note les écritures. */
@@ -168,11 +171,13 @@ describe('BudgetTab — le poste énergie du TCO', () => {
     );
   });
 
-  it('dit quand l’énergie attend l’enregistrement des paramètres', async () => {
+  it('compte l’énergie d’un modèle sans paramètres enregistrés', async () => {
     const post = await energyPost(await openTcoCard('Électrique'));
-    expect(post).toHaveTextContent(
-      'Comptée une fois les paramètres enregistrés'
-    );
+    expect(post).toHaveTextContent(/2\s640\s€/);
+    // 2 640 € sur 75 000 km : 0,0352 €.
+    expect(post).toHaveTextContent(/soit 0,04\s€ \/ km/);
+    // Plus d'excuse : l'énergie n'attend plus d'enregistrement.
+    expect(post).not.toHaveTextContent(/paramètres enregistrés/);
   });
 
   it('enregistre le prix de l’électricité avec celui du carburant', async () => {
