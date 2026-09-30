@@ -777,13 +777,12 @@ export function BudgetTab({
                 const tco = tcoResults[cand.id];
                 const editing = editingTcoCandidate === cand.id;
                 // Ce que la base compte en énergie, pour dire pourquoi ce
-                // poste vaut 0 : pas de consommation dans la fiche, ou pas
-                // encore de paramètres enregistrés (voir tcoEnergy.ts).
+                // poste vaut 0 : pas de consommation dans la fiche (voir
+                // tcoEnergy.ts). Sans paramètres enregistrés, il est compté
+                // aux valeurs par défaut
+                // (20260930140000_tco_energie_sans_parametres.sql).
                 const hasEnergyConsumption = hasTcoEnergyConsumption(
                   tcoEnergyConsumption(specsOfRelation(cand.candidate_specs))
-                );
-                const hasTcoParams = tcoParams.some(
-                  p => p.candidate_id === cand.id
                 );
 
                 return (
@@ -1137,16 +1136,14 @@ export function BudgetTab({
                             >
                               {!hasEnergyConsumption
                                 ? t('budget.tco.energyNoConsumption')
-                                : !hasTcoParams
-                                  ? t('budget.tco.energyNeedsParameters')
-                                  : t('budget.tco.perKm', {
-                                      amount: formatCurrencyPerKm(
-                                        tco.parameters.total_km > 0
-                                          ? tco.breakdown.fuel_cost /
-                                              tco.parameters.total_km
-                                          : 0
-                                      ),
-                                    })}
+                                : t('budget.tco.perKm', {
+                                    amount: formatCurrencyPerKm(
+                                      tco.parameters.total_km > 0
+                                        ? tco.breakdown.fuel_cost /
+                                            tco.parameters.total_km
+                                        : 0
+                                    ),
+                                  })}
                             </div>
                           </div>
                           <div

@@ -196,13 +196,18 @@ select is(
   0::numeric,
   '... elle est ignorée, comme le formulaire l''ignore'
 );
+
+-- ── 6. Sans paramètres enregistrés ─────────────────────────────────────────
+-- Cette assertion valait 0 : depuis 20260930140000_tco_energie_sans_parametres
+-- .sql, l'énergie est comptée aux valeurs par défaut (voir
+-- tco_energie_sans_parametres.test.sql).
 select is(
   (current_setting('t.sans_params')::json->'breakdown'->>'fuel_cost')::numeric,
-  0::numeric,
-  'sans paramètres TCO enregistrés, l''énergie n''est pas comptée (inchangé)'
+  8100::numeric,
+  'sans paramètres enregistrés, l''énergie est comptée aux valeurs par défaut : 8 100 €'
 );
 
--- ── 6. La garde d'appartenance et les droits, inchangés ────────────────────
+-- ── 7. La garde d'appartenance et les droits, inchangés ────────────────────
 select devenir_energie('d2222222-2222-4222-8222-222222222222');
 select set_config('t.etranger',
   public.calculate_candidate_tco('d5555555-5555-4555-8555-555555555555')::text, true);
