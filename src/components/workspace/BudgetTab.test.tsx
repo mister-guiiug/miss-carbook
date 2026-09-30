@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 
 /**
  * Le poste énergie du calculateur TCO (migration
@@ -26,7 +32,7 @@ const variant = (id: string, trim: string, candidate_specs: unknown) => ({
   candidate_specs,
 });
 
-const params = (candidate_id: string) => ({
+const params = (candidate_id: string, overrides: object = {}) => ({
   id: `p-${candidate_id}`,
   workspace_id: 'w1',
   candidate_id,
@@ -38,6 +44,7 @@ const params = (candidate_id: string) => ({
   residual_value_percent: 100,
   loan_interest_rate: null,
   loan_months: null,
+  ...overrides,
 });
 
 const dataByTable: Record<string, unknown[]> = {
@@ -50,7 +57,10 @@ const dataByTable: Record<string, unknown[]> = {
   budget_categories: [],
   budget_items: [],
   // « Électrique » n'a pas encore de paramètres enregistrés.
-  tco_parameters: [params('essence'), params('vide')],
+  tco_parameters: [
+    params('essence'),
+    params('vide', { loan_interest_rate: 5, loan_months: 84 }),
+  ],
 };
 
 /** Réponse de la RPC : un total fait de la seule énergie, sur 75 000 km. */
@@ -209,5 +219,82 @@ describe('BudgetTab — le poste énergie du TCO', () => {
     expect(
       within(card).getByText(/données constructeur du modèle/)
     ).toBeInTheDocument();
+  });
+});
+
+/**
+ * La durée du crédit : la colonne `loan_months` et sa lecture par
+ * `calculate_candidate_tco` existaient, mais aucun champ ne la saisissait. Le
+ * crédit était donc toujours calculé sur 60 mois (voir
+ * supabase/tests/tco_credit.test.sql pour ce que la base en fait).
+ */
+describe('BudgetTab — la durée du crédit', () => {
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    upserts.length = 0;
+  });
+
+  /** Ouvre les paramètres TCO du modèle nommé, et rend sa carte. */
+  async function openParameters(trim: string) {
+    const card = await openTcoCard(trim);
+    fireEvent.click(within(card).getByRole('button', { name: 'Paramètres' }));
+    return card;
+  }
+
+  it('enregistre la durée saisie', async () => {
+    const card = await openParameters('Essence');
+    const months = within(card).getByLabelText('Durée du crédit (mois)');
+    expect(months).toHaveValue(null);
+    expect(months).toHaveAttribute('placeholder', 'Par défaut : 60');
+
+    fireEvent.change(months, { target: { value: '48' } });
+    fireEvent.click(
+      within(card).getByRole('button', { name: 'Calculer le TCO' })
+    );
+
+    expect(upserts).toHaveLength(1);
+    expect(upserts[0]).toMatchObject({
+      table: 'tco_parameters',
+      payload: { candidate_id: 'essence', loan_months: 48 },
+    });
+    expect(
+      await screen.findByText('Paramètres TCO enregistrés')
+    ).toBeInTheDocument();
+  });
+
+  it('reprend la durée enregistrée, et un champ vidé rend la main aux 60 mois', async () => {
+    const card = await openParameters('Fiche vide');
+    const months = within(card).getByLabelText('Durée du crédit (mois)');
+    expect(months).toHaveValue(84);
+
+    fireEvent.change(months, { target: { value: '' } });
+    fireEvent.click(
+      within(card).getByRole('button', { name: 'Calculer le TCO' })
+    );
+
+    expect(upserts[0]).toMatchObject({
+      table: 'tco_parameters',
+      payload: { candidate_id: 'vide', loan_months: null },
+    });
+  });
+
+  it('refuse une durée que la base refuserait, avec un message qui la nomme', async () => {
+    const card = await openParameters('Essence');
+    const months = within(card).getByLabelText('Durée du crédit (mois)');
+
+    for (const value of ['120', '6', '48.5']) {
+      fireEvent.change(months, { target: { value } });
+      fireEvent.click(
+        within(card).getByRole('button', { name: 'Calculer le TCO' })
+      );
+      const dialog = await screen.findByRole('alertdialog');
+      expect(dialog).toHaveTextContent(
+        'La durée du crédit doit être un nombre entier de mois, de 12 à 96.'
+      );
+      // Pas un « pseudo refusé » : rien n'est parti vers la base.
+      expect(upserts).toHaveLength(0);
+      fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    }
   });
 });
