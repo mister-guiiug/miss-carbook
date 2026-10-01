@@ -5,6 +5,15 @@ const JWT_HINT =
   /jwt expired|invalid jwt|session (expired|not found)|refresh token/i;
 
 /**
+ * Les deux contraintes du profil, `profiles_display_name_check` et
+ * `profiles_display_name_lower_uidx`, ont leurs messages, qui parlent du
+ * pseudo. C'est le message de PostgREST, qui nomme la contrainte en cause,
+ * qui désigne le profil : les codes 23505 et 23514 valent pour toutes les
+ * tables.
+ */
+const PROFILE_CONSTRAINT = /profiles_display_name/;
+
+/**
  * Le socle préfixe ses messages d'erreur par `[dwc]` (ex. « [dwc] Impossible de
  * lire cette image. »). Utile comme marqueur d'origine dans le bloc technique,
  * qui le garde ; du bruit dans le message montré à l'utilisateur, qui le perd.
@@ -72,12 +81,18 @@ function toUserMessage(err: unknown): string {
     return 'Connexion réseau impossible. Vérifiez votre connexion ou réessayez plus tard.';
   }
 
-  if (
-    code === '23505' ||
-    code === '23514' ||
-    msg.includes('profiles_display_name')
-  ) {
+  // Ce test prenait tout code 23505 ou 23514 pour une erreur de profil : une
+  // valeur hors des bornes de `tco_parameters` (km annuel, durée, taux…)
+  // s'affichait « Pseudo refusé par la base ».
+  if (PROFILE_CONSTRAINT.test(msg)) {
     return formatProfileSaveError(err);
+  }
+
+  // Contrainte CHECK (23514), ou nombre trop grand pour sa colonne (22003,
+  // « numeric field overflow »). Le nom de la contrainte, qui désigne le
+  // champ, reste dans le bloc technique.
+  if (code === '23514' || code === '22003') {
+    return 'Une valeur saisie sort des limites acceptées. Vérifiez les champs du formulaire.';
   }
 
   if (code === '42501' || RLS_HINT.test(msg)) {
@@ -88,7 +103,7 @@ function toUserMessage(err: unknown): string {
     return 'Votre session n’est plus valide. Rechargez la page ou reconnectez-vous.';
   }
 
-  if (/duplicate key|unique constraint/i.test(msg)) {
+  if (code === '23505' || /duplicate key|unique constraint/i.test(msg)) {
     return 'Cette valeur existe déjà (contrainte d’unicité en base).';
   }
 

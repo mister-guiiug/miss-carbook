@@ -84,7 +84,8 @@ select is(
 
 -- ── 3. Les bornes que l'écran vérifie (LOAN_MONTHS_MIN / MAX de BudgetTab) ─
 -- Hors de ces bornes, la base refuse par une violation de contrainte
--- (23514), que l'application afficherait « Pseudo refusé par la base ».
+-- (23514). L'application la rend par un message générique de valeur hors
+-- limites ; l'écran, lui, nomme la durée et ses bornes.
 select lives_ok(
   $$update tco_parameters set loan_months = 12
      where candidate_id = 'c3333333-3333-4333-8333-333333333333'$$,

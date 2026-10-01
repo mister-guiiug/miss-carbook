@@ -303,9 +303,9 @@ export function BudgetTab({
 
   const saveTcoParams = async (candidateId: string) => {
     if (!canWrite) return;
-    // Vérifiée ici, et non laissée à la base : son refus (contrainte, 23514)
-    // s'afficherait « Pseudo refusé par la base », `formatProfileSaveError`
-    // prenant toute violation de contrainte pour une erreur de profil.
+    // Vérifiée ici : la base refuserait aussi (contrainte, 23514), mais avec
+    // le message générique d'une valeur hors limites (`errorReporting.ts`),
+    // qui ne nomme ni la durée ni ses bornes.
     const loanMonths =
       tcoLoanMonths.trim() === '' ? null : Number(tcoLoanMonths);
     if (
