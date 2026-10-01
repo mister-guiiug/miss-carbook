@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fireEvent,
   render,
@@ -21,6 +21,9 @@ import {
 
 /** Écritures demandées par l'onglet, table par table. */
 const upserts: { table: string; payload: Record<string, unknown> }[] = [];
+
+/** L'erreur que la base rend à la prochaine écriture (`null` : aucune). */
+let upsertError: unknown = null;
 
 const variant = (id: string, trim: string, candidate_specs: unknown) => ({
   id,
@@ -97,14 +100,17 @@ function queryBuilder(table: string) {
   chain.eq = self;
   chain.order = self;
   chain.delete = self;
+  let isUpsert = false;
   chain.upsert = (payload: Record<string, unknown>) => {
     upserts.push({ table, payload });
+    isUpsert = true;
     return chain;
   };
   chain.then = (resolve: (v: unknown) => unknown) =>
-    Promise.resolve({ data: dataByTable[table] ?? [], error: null }).then(
-      resolve
-    );
+    Promise.resolve({
+      data: dataByTable[table] ?? [],
+      error: isUpsert ? upsertError : null,
+    }).then(resolve);
   return chain;
 }
 
@@ -141,6 +147,13 @@ async function openTcoCard(trim: string) {
     name: `Marque Modèle · ${trim}`,
   });
   return heading.closest('.card') as HTMLElement;
+}
+
+/** Ouvre les paramètres TCO du modèle nommé, et rend sa carte. */
+async function openParameters(trim: string) {
+  const card = await openTcoCard(trim);
+  fireEvent.click(within(card).getByRole('button', { name: 'Paramètres' }));
+  return card;
 }
 
 /** Le poste « Énergie » du détail de cette carte. */
@@ -239,13 +252,6 @@ describe('BudgetTab — la durée du crédit', () => {
     upserts.length = 0;
   });
 
-  /** Ouvre les paramètres TCO du modèle nommé, et rend sa carte. */
-  async function openParameters(trim: string) {
-    const card = await openTcoCard(trim);
-    fireEvent.click(within(card).getByRole('button', { name: 'Paramètres' }));
-    return card;
-  }
-
   it('enregistre la durée saisie', async () => {
     const card = await openParameters('Essence');
     const months = within(card).getByLabelText('Durée du crédit (mois)');
@@ -296,10 +302,53 @@ describe('BudgetTab — la durée du crédit', () => {
       expect(dialog).toHaveTextContent(
         'La durée du crédit doit être un nombre entier de mois, de 12 à 96.'
       );
-      // Pas un « pseudo refusé » : rien n'est parti vers la base.
+      // Rien n'est parti vers la base.
       expect(upserts).toHaveLength(0);
       fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
       await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     }
+  });
+});
+
+/**
+ * Un refus de la base sur un champ que l'écran ne vérifie pas : la boîte
+ * d'erreur annonçait « Pseudo refusé par la base » pour TOUTE contrainte
+ * violée (voir src/lib/errorReporting.test.ts).
+ */
+describe('BudgetTab — un refus de la base', () => {
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    upserts.length = 0;
+  });
+
+  afterEach(() => {
+    upsertError = null;
+  });
+
+  it('s’affiche comme une valeur hors limites, et non comme un pseudo refusé', async () => {
+    upsertError = {
+      code: '23514',
+      message:
+        'new row for relation "tco_parameters" violates check constraint "tco_parameters_annual_km_check"',
+      details: 'Failing row contains (200000).',
+      hint: null,
+    };
+    const card = await openParameters('Essence');
+    fireEvent.change(within(card).getByLabelText('Km annuel'), {
+      target: { value: '200000' },
+    });
+    fireEvent.click(
+      within(card).getByRole('button', { name: 'Calculer le TCO' })
+    );
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(
+      'Une valeur saisie sort des limites acceptées. Vérifiez les champs du formulaire.'
+    );
+    expect(dialog).not.toHaveTextContent(/pseudo/i);
+    expect(upserts[0]).toMatchObject({
+      table: 'tco_parameters',
+      payload: { annual_km: 200000 },
+    });
   });
 });
