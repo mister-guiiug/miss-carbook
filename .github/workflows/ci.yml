@@ -28,17 +28,17 @@ jobs:
       #   · code source + soutien sur tous les écrans, rendus par la coquille
       # Le mode strict s'active quand cette liste est vide. Pas avant : une CI
       # rouge sur une dette connue et non traitée n'apprend rien à personne.
-      # `false`, et la raison d'avant était devenue fausse. L'outil EST en
-      # place : `@playwright/test` est installé et trois fichiers de spec
-      # existent. Ce qui manque, c'est une suite qui passe — mesuré le
-      # 19/09/2026 avec la commande exacte du réutilisable : 11 tests en échec
-      # sur 24 (un `nav` attendu visible à 375 px, une page d'accueil qui ne se
-      # charge pas), dans basic.spec.ts et carbook-critical.spec.ts. Sous le
-      # filtre par défaut un seul test passe, et ces deux fichiers restent
-      # entièrement dehors.
-      #
-      # La bascule attend la réparation de la suite, pas l'arrivée de l'outil.
-      run-e2e: false
+      # E2E JOUÉS depuis le 01/10/2026 : filtre `@critical|@a11y`, projet
+      # chromium (les valeurs par défaut du réutilisable). Jusque-là `false` :
+      # la suite était faite de gabarits, et 11 tests sur 24 échouaient (un
+      # `nav` attendu à 375 px, une page d'accueil qui ne se chargeait pas).
+      # Deux causes, réparées ensemble. (1) Le job E2E n'injecte pas le
+      # `build-env` ci-dessous : sans `VITE_SUPABASE_*`, `AuthProvider`
+      # cédait la place à l'écran d'erreur — le Supabase factice vit
+      # désormais dans playwright.config.ts. (2) Sans session, l'application
+      # n'affiche que sa porte de connexion : les tests portent maintenant
+      # sur elle, et interceptent les appels d'authentification.
+      run-e2e: true
       # Des VITE_* FACTICES — jamais les vraies clés, qui ne servent à rien ici.
       # Sans elles, `import.meta.env.VITE_SUPABASE_URL` vaut `undefined` au
       # build : le `throw` de `getSupabase()` devient inconditionnel, l'appel à

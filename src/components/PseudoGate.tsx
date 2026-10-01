@@ -187,8 +187,11 @@ function SignInCard() {
     }
   };
 
+  // `<main id="contenu-principal">`, comme le contenu de l'application qu'elle
+  // remplace : le lien d'évitement d'App.tsx, rendu au-dessus de la porte,
+  // visait sinon une cible absente de cet écran.
   return (
-    <div className="shell">
+    <main className="shell" id="contenu-principal" tabIndex={-1}>
       <div className="card stack">
         <h1>{t('common.appName')}</h1>
         <p className="muted">{t('auth.intro')}</p>
@@ -338,6 +341,6 @@ function SignInCard() {
           {t('auth.providerNote')}
         </p>
       </div>
-    </div>
+    </main>
   );
 }
