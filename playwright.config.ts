@@ -26,7 +26,7 @@ import { definePwaPlaywrightConfig } from '@mister-guiiug/dev-pwa-config/playwri
 // l'objet de la fabrique, d'où ses quatre champs repris ici.
 const port = 4173;
 const command =
-  'cross-env VITE_BASE_PATH=/ VITE_SUPABASE_URL=https://e2e-factice.supabase.co VITE_SUPABASE_ANON_KEY=e2e-factice npm run build && cross-env VITE_BASE_PATH=/ vite preview --port 4173 --strictPort';
+  'node scripts/with-env.mjs VITE_BASE_PATH=/ VITE_SUPABASE_URL=https://e2e-factice.supabase.co VITE_SUPABASE_ANON_KEY=e2e-factice -- npm run build && node scripts/with-env.mjs VITE_BASE_PATH=/ -- vite preview --port 4173 --strictPort';
 
 export default defineConfig(
   definePwaPlaywrightConfig({
