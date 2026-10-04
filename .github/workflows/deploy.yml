@@ -49,12 +49,10 @@ jobs:
     with:
       use-base-path: true
       build-env: |
-        VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}
-        VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY }}
-        VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
         VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
-      # Sans Supabase, l'app publiée ne sait rien faire : mieux vaut arrêter
-      # le déploiement que publier ce bundle-là.
+        VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+        VITE_SUPABASE_ANON_KEY=${{ vars.VITE_SUPABASE_ANON_KEY }}
+        VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}
       required-env: |
-        VITE_SUPABASE_URL
         VITE_SUPABASE_ANON_KEY
+        VITE_SUPABASE_URL
