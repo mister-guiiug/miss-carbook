@@ -24,7 +24,10 @@ const SUPABASE = 'https://e2e-factice.supabase.co';
 function supabaseRequests(page: Page): string[] {
   const requests: string[] = [];
   page.on('request', r => {
-    if (r.url().startsWith(SUPABASE)) requests.push(`${r.method()} ${r.url()}`);
+    // L'ORIGINE, pas un préfixe : `startsWith` laisserait passer
+    // https://e2e-factice.supabase.co.ailleurs.example (CodeQL, alerte #1).
+    if (new URL(r.url()).origin === SUPABASE)
+      requests.push(`${r.method()} ${r.url()}`);
   });
   return requests;
 }
