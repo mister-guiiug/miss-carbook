@@ -104,7 +104,7 @@ Référence déploiement Pages via Actions : [Configurer une source de publicati
 
 ### Prérequis
 
-- Node.js 22.22 ou plus (CI et `.nvmrc` : 26.10.0)
+- Node.js 22.22 ou plus (CI et `.nvmrc` : 26.13.0)
 - Un jeton GitHub (droit `read:packages`) dans `NODE_AUTH_TOKEN` : `npm install` tire `@mister-guiiug` de GitHub Packages
 - Un projet Supabase (plan Free acceptable)
 - Compte GitHub (Pages + Actions)
