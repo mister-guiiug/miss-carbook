@@ -2,7 +2,7 @@
 title: Coût total d'une voiture (TCO) : le calcul, poste par poste
 description: Calculer le coût total de possession d'une voiture : perte de valeur, énergie, assurance, entretien, immatriculation, crédit. Méthode, exemple, coût au km.
 date: 2026-09-29
-updated: 2026-09-30
+updated: 2026-11-02
 answer: Le coût total de possession d'une voiture additionne, sur toute la durée où vous la gardez, la perte de valeur, l'énergie, l'assurance, l'entretien, l'immatriculation et le coût du crédit. Divisé par les kilomètres parcourus, il donne un coût au kilomètre : dans notre exemple sur 60 000 km, environ 0,44 € pour l'essence et 0,43 € pour l'électrique.
 ---
 
@@ -36,6 +36,7 @@ Le modèle électrique coûte 8 000 € de plus à l'achat, mais 310 € de moin
 ## Ce qui fait basculer le calcul
 
 - **Le kilométrage.** À 20 000 km par an, soit 100 000 km, le même exemple donne 30 600 € pour l'essence et 27 250 € pour l'électrique, soit 3 350 € d'écart. Ce calcul garde la même revente, ce qui est optimiste : testez aussi une revente plus basse.
+- **Le seuil de bascule.** Dans cet exemple, les coûts qui ne dépendent pas des kilomètres (perte de valeur, assurance, entretien, immatriculation) font 19 800 € pour l'essence et 24 050 € pour l'électrique, soit 4 250 € d'écart. Au kilomètre, l'énergie coûte 10,8 centimes à l'essence et 3,2 centimes à l'électrique, soit 7,6 centimes d'écart. L'électrique devient moins chère au-delà de 4 250 € ÷ 0,076 € ≈ **55 900 km**, soit environ 11 200 km par an sur cinq ans. En dessous, l'essence revient moins cher. Refaites ce calcul avec vos propres chiffres : c'est la question la plus utile avant de choisir.
 - **Le prix de l'énergie.** Le ministère chargé de la transition écologique estime la recharge à domicile à environ 3 € pour 100 km ; notre exemple, 16 kWh à 0,20 €, donne 3,20 €. Le prix du kWh dépend de l'endroit où vous rechargez : reprenez celui que vous paierez vraiment.
 - **La durée de possession.** Garder la voiture plus longtemps étale la perte de valeur sur plus de kilomètres, mais l'entretien augmente en général avec l'âge.
 - **La revente.** C'est l'hypothèse la plus incertaine : calculez avec une revente basse et une revente haute.
