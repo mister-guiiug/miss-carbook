@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { purgeSupabaseApiCacheOnSignOut } from './supabaseApiCache';
 
 let client: SupabaseClient | null = null;
 
@@ -28,5 +29,8 @@ export function getSupabase(): SupabaseClient {
       detectSessionInUrl: true,
     },
   });
+  // Ici, à la création du client UNIQUE : chaque fin de session y passe,
+  // quel que soit l'écran qui la provoque (`supabaseApiCache.ts`).
+  purgeSupabaseApiCacheOnSignOut(client);
   return client;
 }

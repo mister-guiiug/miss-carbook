@@ -96,9 +96,10 @@ describe('OfflineBanner', () => {
     const node = screen.getByRole('status');
     expect(node).toHaveAttribute('data-dwc', 'connection-banner');
     // Le texte est celui de Carbook, pas le défaut français en dur du socle :
-    // il dit ce qui est vrai ici — ni lecture, ni écriture sans réseau.
+    // il dit ce qui est vrai ici — le service worker relit les données déjà
+    // consultées, mais aucune écriture ne part sans réseau.
     expect(node).toHaveTextContent(
-      'Hors connexion — Miss Carbook ne peut ni charger ni enregistrer tant que le réseau ne revient pas.'
+      'Hors connexion — les données déjà consultées peuvent s’afficher, mais rien ne s’enregistre tant que le réseau ne revient pas.'
     );
   });
 
@@ -137,7 +138,7 @@ describe('OfflineBanner', () => {
     advance(1500);
 
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Offline — Miss Carbook can neither load nor save until the network is back.'
+      'Offline — data you have already viewed may still show, but nothing is saved until the network is back.'
     );
   });
 });
