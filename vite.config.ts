@@ -254,8 +254,25 @@ export default defineConfig(({ command }) => ({
         // Un fichier (sitemap.xml, llms.txt…) va au réseau, pas à index.html.
         navigateFallbackDenylist: [NAVIGATE_FALLBACK_DENY_FILES, /^\/api\//],
         runtimeCaching: [
+          /*
+           * LES LECTURES DE DONNÉES, ET RIEN D'AUTRE (audit hors ligne du
+           * 05/11/2026). Le motif attrapait tout `*.supabase.co` :
+           *   - les URL SIGNÉES du Storage, chacune unique (un jeton par
+           *     appel, `storageUpload.ts`) — jamais relues, elles poussaient
+           *     les données hors des 64 entrées ;
+           *   - les points `/auth/v1/` (session, jetons), qu'aucun cache ne
+           *     doit garder.
+           * `/rest/v1/` seul, donc : ce sont les réponses que l'écran relit.
+           * Workbox ne cache que les GET : une écriture ne passe jamais ici.
+           *
+           * CE CACHE IGNORE L'EN-TÊTE `Authorization` : la clé est l'URL. Sur
+           * un appareil partagé, le compte suivant relirait hors ligne les
+           * réponses du précédent — `purgeSupabaseApiCache` le vide à la
+           * déconnexion (`src/lib/supabaseApiCache.ts`). Son nom y est
+           * repris : le changer ici, c'est le changer là.
+           */
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            urlPattern: /^https:\/\/[a-z0-9-]+\.supabase\.co\/rest\/v1\//i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api',

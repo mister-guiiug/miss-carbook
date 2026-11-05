@@ -219,7 +219,7 @@ Site utilisateur `https://<user>.github.io` à la racine : passer `use-base-path
 
 - **Manifest** : généré par `vite-plugin-pwa` (voir `vite.config.ts`). **Icônes** : PNG de `public/`, rendus depuis `public/favicon.svg` par `npm run icons`.
 - **Service worker** : Workbox en mode `generateSW`, précache de l’app shell.
-- **API Supabase** : stratégie **NetworkFirst** (documentée dans `vite.config.ts` — délai réseau puis cache).
+- **API Supabase** : les seules lectures de données (`/rest/v1/`) en **NetworkFirst** (documentée dans `vite.config.ts` — délai réseau puis cache, 24 h) ; ni l’authentification ni les URL signées du Storage. Le cache est vidé à la déconnexion (`src/lib/supabaseApiCache.ts`) : il ignore l’en-tête `Authorization`, et le compte suivant relirait sinon les réponses du précédent.
 - **Page offline** : `public/offline.html` (incluse dans les assets) ; la coque peut s’afficher hors ligne, les données live nécessitent le réseau.
 
 ### Alternative backend gratuite
