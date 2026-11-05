@@ -26,6 +26,7 @@ import {
   type ThemePreference,
 } from '@mister-guiiug/dev-pwa-config/react';
 import { ConsentSection } from '@mister-guiiug/dev-pwa-config/react/consent-section';
+import { PrivacyNotice } from '@mister-guiiug/dev-pwa-config/react/privacy-notice';
 import { useI18n } from '../i18n';
 import { SiteFooter } from '../components/SiteFooter';
 
@@ -445,6 +446,10 @@ export function AccountSettingsPage() {
           </div>
         </section>
 
+        <PrivacyNotice
+          env={import.meta.env}
+          className="card stack settings-card"
+        />
         {/* Revenir sur son choix de mesure d’audience : le retrait se fait
             ici, en un clic (RGPD, art. 7.3). Mêmes clé et chargeur que le
             bandeau. */}
