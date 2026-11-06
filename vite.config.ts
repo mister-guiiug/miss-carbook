@@ -6,7 +6,12 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { pwaSeoPlugin } from '@mister-guiiug/dev-pwa-config/vite-pwa-base';
 import { cspPlugin } from '@mister-guiiug/dev-pwa-config/vite-csp';
 import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
-import { NAVIGATE_FALLBACK_DENY_FILES } from '@mister-guiiug/dev-pwa-config/vite-pwa';
+import {
+  NAVIGATE_FALLBACK_DENY_FILES,
+  SENTRY_CHUNK,
+  sentryChunkFileNames,
+  sentryGlobIgnores,
+} from '@mister-guiiug/dev-pwa-config/vite-pwa';
 
 const analyze = process.env.ANALYZE === '1';
 
@@ -48,29 +53,8 @@ export default defineConfig(({ command }) => ({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        /*
-         * LE MORCEAU SENTRY GARDE SON NOM, SANS EMPREINTE — parce qu'il est
-         * exclu du précache (`globIgnores` plus bas) et qu'une URL empreintée
-         * y meurt à chaque déploiement.
-         *
-         * Le service worker sert la coquille précachée jusqu'à ce que
-         * l'utilisateur accepte la mise à jour ; cette coquille demande
-         * l'ANCIENNE empreinte, que le déploiement suivant a supprimée de
-         * `assets/`. Mesuré en production sur mister-qowa le 22/09/2026 :
-         * HTTP 404, « Échec du chargement pour le module » dans la console.
-         * `initSentry` avale l'échec (son `try/catch`), donc l'application ne
-         * casse pas — elle rapporte ses erreurs à personne, sans le dire.
-         *
-         * Rien n'est perdu au cache : GitHub Pages répond
-         * `Cache-Control: max-age=600` sur TOUS les fichiers, empreinte ou pas.
-         *
-         * `pwa-doctor` tient l'invariant depuis le socle 6.8.0
-         * (règle `chunk-hors-precache`).
-         */
-        chunkFileNames: chunk =>
-          chunk.name === 'sentry'
-            ? 'assets/sentry.js'
-            : 'assets/[name]-[hash].js',
+        // Le morceau Sentry, nom sans empreinte : socle (`vite-pwa`, 6.32.0).
+        chunkFileNames: sentryChunkFileNames,
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
 
@@ -80,7 +64,7 @@ export default defineConfig(({ command }) => ({
           // Sans cette ligne, son morceau reprend un nom automatique (`esm-*`),
           // instable d'une version à l'autre et partagé avec d'autres paquets :
           // le `globIgnores` du service worker n'aurait pas de cible fiable.
-          if (norm.includes('/@sentry/')) return 'sentry';
+          if (norm.includes('/@sentry/')) return SENTRY_CHUNK;
 
           // Séparer React et écosystème
           if (
@@ -172,7 +156,7 @@ export default defineConfig(({ command }) => ({
       analytics: true,
       // Supabase en https ET wss : le temps réel passe par la WebSocket, et
       // l'oublier ne se verrait qu'en console, sur le site déployé.
-      connectSrc: ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co'],
+      connectSrc: ["'self'"],
     }),
     VitePWA({
       registerType: 'prompt',
@@ -237,19 +221,8 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
-        /*
-         * LE MORCEAU SENTRY HORS DU PRÉCACHE. C'est la seule app du parc dont
-         * le DSN est posé : elle télécharge donc vraiment le SDK, et c'est
-         * voulu. Mais le précache le fait descendre à l'INSTALLATION du service
-         * worker, avant toute erreur et quoi qu'il arrive ensuite. Hors
-         * précache, il part au premier `initSentry` réussi — même moment utile,
-         * sans bloquer la mise en cache de la coquille.
-         *
-         * Sur les apps sans DSN, l'écart est plus net encore : mesuré le
-         * 16/09/2026 sur miss-contraction et mister-puzzle, 345 et 463 KiB
-         * téléchargés par chaque visiteur pour une observabilité éteinte.
-         */
-        globIgnores: ['**/sentry.js', '**/sentry-*.js'],
+        // Le morceau Sentry hors du précache : socle (`vite-pwa`, 6.32.0).
+        globIgnores: sentryGlobIgnores(),
         navigateFallback: `${base}index.html`,
         // Un fichier (sitemap.xml, llms.txt…) va au réseau, pas à index.html.
         navigateFallbackDenylist: [NAVIGATE_FALLBACK_DENY_FILES, /^\/api\//],
