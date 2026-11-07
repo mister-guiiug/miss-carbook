@@ -420,6 +420,7 @@ export function WorkspacePage() {
             workspaceId={workspaceId}
             canWrite={canWrite}
             userId={user.id}
+            workspaceName={workspace.name}
           />
         ) : null}
         {tab === 'budget' ? (

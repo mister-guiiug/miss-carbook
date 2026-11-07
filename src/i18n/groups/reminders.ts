@@ -134,6 +134,26 @@ export const remindersFr = {
     deleteReminder: 'Suppression d’un rappel',
     deleteVisit: 'Suppression d’une visite',
   },
+  // Export agenda (.ics) : `lib/remindersIcs.ts`.
+  ics: {
+    exportAll:
+      'Ajouter à mon agenda (.ics) : rappels à faire et visites à venir du dossier',
+    exportModel:
+      'Ajouter à mon agenda (.ics) : rappels à faire et visites à venir de {model}',
+    nothing:
+      'Rien à ajouter à l’agenda : aucun rappel à faire avec une échéance, ni visite à venir.',
+    exportedOne:
+      '{count} événement exporté, avec ses rappels : ouvrez le fichier pour l’ajouter à votre agenda.',
+    exportedOther:
+      '{count} événements exportés, avec leurs rappels : ouvrez le fichier pour les ajouter à votre agenda.',
+    calName: '{scope} — visites et rappels',
+    fileSuffix: 'visites-et-rappels',
+    withModel: '{title} — {model}',
+    visitSummary: 'Visite — {main}',
+    typeLine: 'Type : {kind}',
+    alarmDay: 'Demain — {what}',
+    alarmHour: 'Dans une heure — {what}',
+  },
 } as const;
 
 export const remindersEn = {
@@ -267,5 +287,25 @@ export const remindersEn = {
     toggleReminder: 'Updating a reminder (done / reopen)',
     deleteReminder: 'Deleting a reminder',
     deleteVisit: 'Deleting a visit',
+  },
+  // Calendar export (.ics): `lib/remindersIcs.ts`.
+  ics: {
+    exportAll:
+      'Add to my calendar (.ics): open reminders and upcoming visits of the workspace',
+    exportModel:
+      'Add to my calendar (.ics): open reminders and upcoming visits for {model}',
+    nothing:
+      'Nothing to add to the calendar: no open reminder with a due date, and no upcoming visit.',
+    exportedOne:
+      '{count} event exported, with its alerts: open the file to add it to your calendar.',
+    exportedOther:
+      '{count} events exported, with their alerts: open the file to add them to your calendar.',
+    calName: '{scope} — visits and reminders',
+    fileSuffix: 'visits-and-reminders',
+    withModel: '{title} — {model}',
+    visitSummary: 'Visit — {main}',
+    typeLine: 'Type: {kind}',
+    alarmDay: 'Tomorrow — {what}',
+    alarmHour: 'In one hour — {what}',
   },
 } as const;

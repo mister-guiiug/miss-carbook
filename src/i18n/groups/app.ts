@@ -8,6 +8,7 @@ export const appFr = {
   footerExternalLinks: 'Liens externes',
   footerSource: 'Code source (GitHub)',
   footerSupport: 'Soutenir le projet',
+  footerReportIssue: 'Signaler un problème',
   trustTitle: 'Usage responsable :',
   trustBody:
     'Miss Carbook sert à organiser un choix de véhicule entre proches ou collègues. N’y stockez pas de données bancaires, de mots de passe ni de contrats signés — ce n’est pas un coffre-fort certifié.',
@@ -23,6 +24,7 @@ export const appEn = {
   footerExternalLinks: 'External links',
   footerSource: 'Source code (GitHub)',
   footerSupport: 'Support the project',
+  footerReportIssue: 'Report a problem',
   trustTitle: 'Responsible use:',
   trustBody:
     'Miss Carbook helps you organise a car choice with family or colleagues. Don’t store bank details, passwords or signed contracts here — it isn’t a certified vault.',
