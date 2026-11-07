@@ -10,6 +10,7 @@ import {
 import { formatCandidateListLabel } from '../../lib/candidateLabel';
 import { getSupabase } from '../../lib/supabase';
 import { logActivity } from '../../lib/activity';
+import { downloadAgendaIcs } from '../../lib/remindersIcs';
 import { useErrorDialog } from '../../contexts/ErrorDialogContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
@@ -20,6 +21,7 @@ import {
   IconTrash,
   IconX,
   IconClipboard,
+  IconCalendar,
 } from '../ui/IconActionButton';
 import { EmptyState } from '../ui/EmptyState';
 import { TrialChecklist } from './TrialChecklist';
@@ -128,14 +130,17 @@ export function RemindersTab({
   workspaceId,
   canWrite,
   userId,
+  workspaceName,
 }: {
   workspaceId: string;
   canWrite: boolean;
   userId: string;
+  /** Nomme le calendrier exporté et son fichier. */
+  workspaceName?: string;
 }) {
   const { reportException } = useErrorDialog();
   const { showToast } = useToast();
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const reminderKindLabel: Record<ReminderKind, string> = {
     contact: t('reminders.kind.contact'),
     visit: t('reminders.kind.visit'),
@@ -482,6 +487,33 @@ export function RemindersTab({
     return m;
   }, [candidates]);
 
+  /**
+   * L'export agenda suit le filtre « Modèle » — un véhicule, ou tout le
+   * dossier — et lui seul : la recherche et le type trient l'écran, pas ce qui
+   * doit sonner dans un agenda (`lib/remindersIcs.ts`).
+   */
+  const exportModelLabel =
+    candidateFilter === 'all'
+      ? null
+      : (candidateLabelById.get(candidateFilter) ?? null);
+
+  const exportAgenda = () => {
+    const count = downloadAgendaIcs(rows, visits, {
+      t,
+      modelLabels: candidateLabelById,
+      candidateId: candidateFilter === 'all' ? null : candidateFilter,
+      workspaceName,
+    });
+    showToast(
+      count === 0
+        ? t('reminders.ics.nothing')
+        : fmt.plural(count, {
+            one: t('reminders.ics.exportedOne'),
+            other: t('reminders.ics.exportedOther'),
+          })
+    );
+  };
+
   const filteredOpen = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = openReminders.filter(r => {
@@ -726,9 +758,21 @@ export function RemindersTab({
             </button>
           </div>
 
-          {canWrite ? (
-            <div className="row icon-action-toolbar" style={{ gap: '0.35rem' }}>
-              {view !== 'visits' && view !== 'timeline' ? (
+          <div className="row icon-action-toolbar" style={{ gap: '0.35rem' }}>
+            {/* Lire suffit pour exporter : pas de `canWrite` ici. */}
+            <IconActionButton
+              variant="secondary"
+              label={
+                exportModelLabel
+                  ? t('reminders.ics.exportModel', { model: exportModelLabel })
+                  : t('reminders.ics.exportAll')
+              }
+              onClick={exportAgenda}
+            >
+              <IconCalendar />
+            </IconActionButton>
+            {canWrite ? (
+              view !== 'visits' && view !== 'timeline' ? (
                 <IconActionButton
                   variant="secondary"
                   label={
@@ -752,9 +796,9 @@ export function RemindersTab({
                 >
                   {showAddVisit ? <IconX /> : <IconPencil />}
                 </IconActionButton>
-              )}
-            </div>
-          ) : null}
+              )
+            ) : null}
+          </div>
         </div>
 
         <div className="row reminders-filters" style={{ flexWrap: 'wrap' }}>

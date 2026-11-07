@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fireEvent,
   render,
@@ -78,6 +78,16 @@ vi.mock('../../lib/supabase', () => ({
 
 vi.mock('../../lib/activity', () => ({ logActivity: vi.fn() }));
 
+/** Fichiers que l'export agenda a demandé de télécharger. */
+const downloads: Array<{ text: string; filename: string; type?: string }> = [];
+
+vi.mock('@mister-guiiug/dev-pwa-config/download', () => ({
+  downloadText: (text: string, filename: string, type?: string) => {
+    downloads.push({ text, filename, type });
+    return true;
+  },
+}));
+
 // La checklist a ses propres requêtes et son propre écran : ce qui se teste ici
 // est la FEUILLE qui l'accueille, pas son contenu.
 vi.mock('./TrialChecklist', () => ({
@@ -92,12 +102,17 @@ const { ErrorDialogProvider } =
   await import('../../contexts/ErrorDialogContext');
 const { ToastProvider } = await import('../../contexts/ToastContext');
 
-function renderTab() {
+function renderTab(props: { canWrite?: boolean; workspaceName?: string } = {}) {
   return render(
     <I18nProvider>
       <ErrorDialogProvider>
         <ToastProvider>
-          <RemindersTab workspaceId="w1" canWrite userId="u1" />
+          <RemindersTab
+            workspaceId="w1"
+            canWrite={props.canWrite ?? true}
+            userId="u1"
+            workspaceName={props.workspaceName}
+          />
         </ToastProvider>
       </ErrorDialogProvider>
     </I18nProvider>
@@ -174,5 +189,71 @@ describe('RemindersTab — feuille de la checklist d’essai', () => {
     expect(within(sheet).queryByRole('button', { name: 'Annuler' })).toBeNull();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Fermer' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+/**
+ * Le bouton d'export agenda. Le contenu du `.ics` est vérifié par
+ * `lib/remindersIcs.test.ts` ; ici, le branchement : qui voit le bouton, ce
+ * qui est téléchargé, et ce qui est dit quand il n'y a rien à exporter.
+ */
+describe('RemindersTab — export agenda (.ics)', () => {
+  const EXPORT_ALL =
+    'Ajouter à mon agenda (.ics) : rappels à faire et visites à venir du dossier';
+
+  beforeEach(() => {
+    localStorage.setItem('carbook_locale', 'fr');
+    downloads.length = 0;
+  });
+
+  // Un test ajoute un rappel daté : les autres blocs retrouvent le jeu commun.
+  afterEach(() => {
+    dataByTable.reminders = [reminder];
+  });
+
+  it('lire suffit : le bouton est là sans droit d’écriture', async () => {
+    renderTab({ canWrite: false });
+    expect(
+      await screen.findByRole('button', { name: EXPORT_ALL })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Ajouter un rappel' })
+    ).toBeNull();
+  });
+
+  it('rien à faire de daté ni de visite à venir : rien n’est téléchargé, et c’est dit', async () => {
+    // Le rappel listé n'a pas d'échéance, la visite est passée.
+    renderTab();
+    await screen.findByText('Appeler le garage');
+    fireEvent.click(screen.getByRole('button', { name: EXPORT_ALL }));
+    expect(
+      await screen.findByText(/^Rien à ajouter à l’agenda/)
+    ).toBeInTheDocument();
+    expect(downloads).toEqual([]);
+  });
+
+  it('télécharge le calendrier du dossier, nommé d’après lui', async () => {
+    dataByTable.reminders = [
+      reminder,
+      {
+        ...reminder,
+        id: 'r2',
+        title: 'Relancer',
+        due_at: '2099-03-01T09:00:00Z',
+      },
+    ];
+    renderTab({ workspaceName: 'Deuxième voiture' });
+    await screen.findByText('Relancer');
+    fireEvent.click(screen.getByRole('button', { name: EXPORT_ALL }));
+    expect(await screen.findByText(/^1 événement exporté/)).toBeInTheDocument();
+    expect(downloads).toHaveLength(1);
+    const [file] = downloads;
+    expect(file?.filename).toBe('deuxieme-voiture-visites-et-rappels.ics');
+    expect(file?.type).toBe('text/calendar;charset=utf-8');
+    expect(file?.text).toContain('UID:rappel-r2@miss-carbook');
+    expect(file?.text).toContain(
+      'X-WR-CALNAME:Deuxième voiture — visites et rappels'
+    );
+    expect(file?.text).not.toContain('rappel-r1');
   });
 });
