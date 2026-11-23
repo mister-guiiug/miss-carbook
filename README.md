@@ -6,6 +6,11 @@ Miss Carbook est un espace de travail partagé pour les personnes (famille, amis
 
 ---
 
+## Guides
+
+- [Comment choisir sa voiture](https://mister-guiiug.github.io/miss-carbook/comment-choisir-sa-voiture.html)
+- [Coût total d'une voiture (TCO)](https://mister-guiiug.github.io/miss-carbook/cout-total-de-possession-voiture.html)
+
 ## À qui s’adresse l’outil ?
 
 - **Couples ou familles** qui veulent aligner leurs critères (budget, sécurité, place, consommation…) avant d’aller en concession.
